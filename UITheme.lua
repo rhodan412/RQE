@@ -1,12 +1,5 @@
---[[
-RQE presentation-only theme support.
-
-Every public Style* function records its target before it attempts to skin it.
-Most RQE frames are constructed before AceDB restores the selected profile, so
-the deferred registry is what makes "theme off + reload" preserve the original
-Blizzard/RQE appearance exactly. No click handlers, secure attributes, quest
-state, waypoint state, or visibility rules are owned here.
-]]
+--[[ RQE tracker themes. The registry keeps each control's native presentation
+so theme changes can restore Basic without rebuilding live quest frames. ]]
 
 RQE = RQE or {}
 RQE.UI = RQE.UI or {}
@@ -16,8 +9,24 @@ local ROOT = "Interface\\AddOns\\RQE\\Media\\UI\\"
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 
 -- A future theme only needs these semantic asset keys and its own palette.
+-- Preview textures have transparent padding to 1024x1024; dimensions below
+-- identify the screenshot area that the settings page displays.
 UI.Themes = UI.Themes or {
+	Basic = {
+		name = "Basic", native = true,
+		description = "Simple black frames, native controls, and Blizzard scenario artwork.",
+		previews = {
+			helper = { texture = ROOT .. "Previews\\BasicHelper.tga", width = 768, height = 647 },
+			tracker = { texture = ROOT .. "Previews\\BasicTracker.tga", width = 645, height = 800 },
+		},
+	},
 	AzureGold = {
+		name = "Azure & Gold",
+		description = "Azure and gold borders, icon controls, and themed scenario artwork.",
+		previews = {
+			helper = { texture = ROOT .. "Previews\\AzureGoldHelper.tga", width = 764, height = 646 },
+			tracker = { texture = ROOT .. "Previews\\AzureGoldTracker.tga", width = 643, height = 800 },
+		},
 		colors = {
 			azure = { 0 / 255, 87 / 255, 184 / 255 }, -- #0057B8
 			azureBright = { 35 / 255, 145 / 255, 1 },
@@ -29,6 +38,12 @@ UI.Themes = UI.Themes or {
 		textures = {
 			header = ROOT .. "Panels\\Header.tga",
 			sectionHeader = ROOT .. "Panels\\SectionHeader.tga",
+			scenarioTimed = ROOT .. "Panels\\ScenarioTimed.tga",
+			scenarioTorghast = ROOT .. "Panels\\ScenarioTorghast.tga",
+			scenarioUntimed = ROOT .. "Panels\\ScenarioUntimed.tga",
+			dungeonFollower = ROOT .. "Panels\\ScenarioDungeonFollower.tga",
+			dungeonNormal = ROOT .. "Panels\\ScenarioDungeonNormal.tga",
+			dungeonHeroic = ROOT .. "Panels\\ScenarioDungeonHeroic.tga",
 			buttonNormal = ROOT .. "Buttons\\Normal.tga",
 			buttonHover = ROOT .. "Buttons\\Hover.tga",
 			buttonPressed = ROOT .. "Buttons\\Pressed.tga",
@@ -38,15 +53,127 @@ UI.Themes = UI.Themes or {
 		},
 	},
 }
+UI.ThemeOrder = UI.ThemeOrder or { "Basic", "AzureGold" }
+
+-- Card styles are independent of the overall tracker theme.  Keep each
+-- activity's choices together so future artwork cannot leak into another
+-- scenario type, and keep saved choices when the player visits Basic.
+UI.CardStyleOrder = { "timed", "heroic", "normal", "follower", "delve", "torghast" }
+UI.CardStyles = {
+	AzureGold = {
+		torghast = { name = "Torghast", default = "veiledSouls", width = 1024, height = 512, styles = {
+			{ id = "frostforgedSteel", name = "Frostforged Steel", texture = ROOT .. "Panels\\ScenarioTorghastFrostforgedSteel.tga" },
+			{ id = "soulglass", name = "Soulglass", texture = ROOT .. "Panels\\ScenarioTorghastSoulglass.tga" },
+			{ id = "runicBastion", name = "Runic Bastion", texture = ROOT .. "Panels\\ScenarioTorghast.tga" },
+			{ id = "mawboundChains", name = "Mawbound Chains", texture = ROOT .. "Panels\\ScenarioTorghastMawboundChains.tga" },
+			{ id = "veiledSouls", name = "Veiled Souls", texture = ROOT .. "Panels\\ScenarioTorghastVeiledSouls.tga" },
+			{ id = "runicRelay", name = "Runic Relay", texture = ROOT .. "Panels\\ScenarioTorghastRunicRelay.tga" },
+		} },
+		delve = { name = "Delves", default = "gildedSlate", width = 1024, height = 512, styles = {
+			{ id = "azureArchive", name = "Azure Archive", texture = ROOT .. "Panels\\ScenarioDelveAzureArchive.tga" },
+			{ id = "gildedSlate", name = "Gilded Slate", texture = ROOT .. "Panels\\ScenarioDelveGildedSlate.tga" },
+			{ id = "lapisExpedition", name = "Lapis Expedition", texture = ROOT .. "Panels\\ScenarioUntimed.tga" },
+			{ id = "lanternlitDepths", name = "Lanternlit Depths", texture = ROOT .. "Panels\\ScenarioDelveLanternlitDepths.tga" },
+			{ id = "crystalSeam", name = "Crystal Seam", texture = ROOT .. "Panels\\ScenarioDelveCrystalSeam.tga" },
+			{ id = "emberSprint", name = "Ember Sprint", texture = ROOT .. "Panels\\ScenarioDelveEmberSprint.tga" },
+		} },
+		timed = { name = "Timed Scenario", default = "hourglassSands", width = 1024, height = 512, styles = {
+			{ id = "stormSigil", name = "Storm Sigil", texture = ROOT .. "Panels\\ScenarioTimedStormSigil.tga" },
+			{ id = "gildedSpiral", name = "Gilded Spiral", texture = ROOT .. "Panels\\ScenarioTimedGildedSpiral.tga" },
+			{ id = "verdantWeave", name = "Verdant Weave", texture = ROOT .. "Panels\\ScenarioTimedVerdantWeave.tga" },
+			{ id = "astralClock", name = "Astral Clock", texture = ROOT .. "Panels\\ScenarioTimedAstralClock.tga" },
+			{ id = "dawnRun", name = "Dawn Run", texture = ROOT .. "Panels\\ScenarioTimedDawnRun.tga" },
+			{ id = "hourglassSands", name = "Hourglass Sands", texture = ROOT .. "Panels\\ScenarioTimedHourglassSands.tga" },
+			{ id = "frostwindRush", name = "Frostwind Rush", texture = ROOT .. "Panels\\ScenarioTimedFrostwindRush.tga" },
+			{ id = "eclipseMantle", name = "Eclipse Mantle", texture = ROOT .. "Panels\\ScenarioTimedEclipseMantle.tga" },
+		} },
+		follower = { name = "Follower Dungeon", default = "gatheredCamp", width = 1024, height = 256, styles = {
+			{ id = "guidedExpedition", name = "Guided Expedition", texture = ROOT .. "Panels\\ScenarioDungeonFollower.tga" },
+			{ id = "companionsBanner", name = "Companion's Banner", texture = ROOT .. "Panels\\ScenarioDungeonFollowerCompanionsBanner.tga" },
+			{ id = "waystone", name = "Waystone", texture = ROOT .. "Panels\\ScenarioDungeonFollowerWaystone.tga" },
+			{ id = "lanternCompany", name = "Lantern Company", texture = ROOT .. "Panels\\ScenarioDungeonFollowerLanternCompany.tga" },
+			{ id = "gatheredCamp", name = "Gathered Camp", texture = ROOT .. "Panels\\ScenarioDungeonFollowerGatheredCamp.tga" },
+			{ id = "battlewornAegis", name = "Battleworn Aegis", texture = ROOT .. "Panels\\ScenarioDungeonBattlewornAegis.tga" },
+		} },
+		normal = { name = "Normal Dungeon", default = "moonlitPassage", width = 1024, height = 256, styles = {
+			{ id = "stoneAndBrass", name = "Stone and Brass", texture = ROOT .. "Panels\\ScenarioDungeonNormalStoneAndBrass.tga" },
+			{ id = "azureVault", name = "Azure Vault", texture = ROOT .. "Panels\\ScenarioDungeonNormalAzureVault.tga" },
+			{ id = "arcaneMap", name = "Arcane Map", texture = ROOT .. "Panels\\ScenarioDungeonNormal.tga" },
+			{ id = "moonlitPassage", name = "Moonlit Passage", texture = ROOT .. "Panels\\ScenarioDungeonNormalMoonlitPassage.tga" },
+			{ id = "battlewornAegis", name = "Battleworn Aegis", texture = ROOT .. "Panels\\ScenarioDungeonBattlewornAegis.tga" },
+		} },
+		heroic = { name = "Heroic Dungeon", default = "sunwardCitadel", width = 1024, height = 256, styles = {
+			{ id = "obsidiansCrest", name = "Obsidian's Crest", texture = ROOT .. "Panels\\ScenarioDungeonHeroic.tga" },
+			{ id = "stormforged", name = "Stormforged", texture = ROOT .. "Panels\\ScenarioDungeonHeroicStormforged.tga" },
+			{ id = "royalChallenge", name = "Royal Challenge", texture = ROOT .. "Panels\\ScenarioDungeonHeroicRoyalChallenge.tga" },
+			{ id = "sunwardCitadel", name = "Sunward Citadel", texture = ROOT .. "Panels\\ScenarioDungeonHeroicSunwardCitadel.tga" },
+			{ id = "azureWaygate", name = "Azure Waygate", texture = ROOT .. "Panels\\ScenarioDungeonHeroicAzureWaygate.tga" },
+			{ id = "championsForge", name = "Champion's Forge", texture = ROOT .. "Panels\\ScenarioDungeonHeroicChampionsForge.tga" },
+		} },
+	},
+}
+
+function UI:GetCardStyleGroup(slot, themeKey)
+	local themeStyles = self.CardStyles[themeKey or self.ActiveTheme or "AzureGold"]
+	return themeStyles and themeStyles[slot]
+end
+
+function UI:GetCardStyleRecord(slot, themeKey)
+	themeKey = themeKey or self.ActiveTheme or "AzureGold"
+	local group = self:GetCardStyleGroup(slot, themeKey)
+	if not group then return end
+	local profile = RQE.db and RQE.db.profile
+	local saved = profile and profile.cardStyles and profile.cardStyles[themeKey]
+	local selected = saved and saved[slot] or group.default
+	local defaultStyle
+	for _, style in ipairs(group.styles) do
+		if style.id == group.default then defaultStyle = style end
+		if style.id == selected then return style end
+	end
+	return defaultStyle
+end
+
+function UI:GetCardTexture(slot, themeKey)
+	local style = self:GetCardStyleRecord(slot, themeKey)
+	return style and style.texture
+end
+
+function UI:RefreshCardStyles()
+	if RQE.API and RQE.API.Client and RQE.API.Client.InCombatLockdown() then
+		self.pendingCardStyleRefresh = true
+		return
+	end
+	self.pendingCardStyleRefresh = nil
+	if RQE.UpdateScenarioFrame then RQE.UpdateScenarioFrame() end
+end
+
+function UI:SetCardStyle(slot, styleID, themeKey)
+	themeKey = themeKey or "AzureGold"
+	local group = self:GetCardStyleGroup(slot, themeKey)
+	if not group or not (RQE.db and RQE.db.profile) then return false end
+	local valid
+	for _, style in ipairs(group.styles) do
+		if style.id == styleID then valid = true; break end
+	end
+	if not valid then return false end
+	local profile = RQE.db.profile
+	profile.cardStyles = profile.cardStyles or {}
+	profile.cardStyles[themeKey] = profile.cardStyles[themeKey] or {}
+	profile.cardStyles[themeKey][slot] = styleID == group.default and nil or styleID
+	self:RefreshCardStyles()
+	return true
+end
 
 UI.ActiveTheme = UI.ActiveTheme or "AzureGold"
-UI.Colors = UI.Themes[UI.ActiveTheme].colors
-UI.Textures = UI.Themes[UI.ActiveTheme].textures
+UI.Colors = (UI.Themes[UI.ActiveTheme].colors or UI.Themes.AzureGold.colors)
+UI.Textures = (UI.Themes[UI.ActiveTheme].textures or UI.Themes.AzureGold.textures)
 UI.Registry = UI.Registry or {
 	panels = {}, headers = {}, iconButtons = {}, textButtons = {}, searchBoxes = {},
 	legacyButtons = {}, aceFrames = {}, locationBars = {},
 }
 UI.Registry.locationBars = UI.Registry.locationBars or {}
+UI.Registry.questIndexButtons = UI.Registry.questIndexButtons or {}
+UI.Native = UI.Native or setmetatable({}, { __mode = "k" })
 
 local function profileReady()
 	return RQE.db and type(RQE.db.GetCurrentProfile) == "function" and RQE.db.profile
@@ -54,6 +181,13 @@ end
 
 function UI:IsEnabled()
 	return self._sessionThemeEnabled == true
+end
+
+function UI:GetSelectedTheme()
+	local profile = RQE.db and RQE.db.profile
+	local selected = profile and profile.trackerTheme
+	if selected and self.Themes[selected] then return selected end
+	return profile and profile.useModernTheme == false and "Basic" or "AzureGold"
 end
 
 local function remember(list, target, data)
@@ -65,6 +199,160 @@ local function remember(list, target, data)
 		end
 	end
 	table.insert(list, { target = target, data = data or {} })
+end
+
+local function copyPoints(region)
+	local points = {}
+	if region and region.GetNumPoints then
+		for index = 1, region:GetNumPoints() do
+			local point, relativeTo, relativePoint, x, y = region:GetPoint(index)
+			points[index] = { point, relativeTo, relativePoint, x, y }
+		end
+	end
+	return points
+end
+
+local function restorePoints(region, points)
+	if not region or not region.ClearAllPoints then return end
+	region:ClearAllPoints()
+	for _, point in ipairs(points or {}) do region:SetPoint(unpack(point, 1, 5)) end
+end
+
+local function captureRegion(region)
+	local original = { region = region, shown = region:IsShown(), points = copyPoints(region) }
+	if region.GetObjectType and region:GetObjectType() == "Texture" then
+		original.atlas = region.GetAtlas and region:GetAtlas()
+		original.texture = region.GetTexture and region:GetTexture()
+		original.texCoord = region.GetTexCoord and { region:GetTexCoord() }
+		original.vertexColor = region.GetVertexColor and { region:GetVertexColor() }
+		original.desaturated = region.IsDesaturated and region:IsDesaturated()
+		original.alpha = region:GetAlpha()
+	elseif region.GetObjectType and region:GetObjectType() == "FontString" then
+		original.font = region.GetFont and { region:GetFont() }
+		original.textColor = region.GetTextColor and { region:GetTextColor() }
+	end
+	return original
+end
+
+local function restoreRegion(original)
+	local region = original.region
+	if original.atlas and region.SetAtlas then region:SetAtlas(original.atlas)
+	elseif original.texture and region.SetTexture then region:SetTexture(original.texture) end
+	if original.texCoord and region.SetTexCoord and #original.texCoord == 4 then region:SetTexCoord(unpack(original.texCoord)) end
+	if original.vertexColor and region.SetVertexColor then region:SetVertexColor(unpack(original.vertexColor)) end
+	if original.desaturated ~= nil and region.SetDesaturated then region:SetDesaturated(original.desaturated) end
+	if original.alpha then region:SetAlpha(original.alpha) end
+	if original.font and original.font[1] and region.SetFont then region:SetFont(unpack(original.font)) end
+	if original.textColor and region.SetTextColor then region:SetTextColor(unpack(original.textColor)) end
+	restorePoints(region, original.points)
+	region:SetShown(original.shown)
+end
+
+local function captureNative(owner)
+	if not owner or UI.Native[owner] then return end
+	local original = { width = owner:GetWidth(), height = owner:GetHeight(), points = copyPoints(owner), regions = {} }
+	if owner.GetBackdrop then
+		local backdrop = owner:GetBackdrop()
+		if backdrop then
+			-- WoW can retain the table passed to SetBackdrop. Keep an independent
+			-- copy so later theme calls cannot change the saved Basic backdrop.
+			original.backdrop = {}
+			for key, value in pairs(backdrop) do
+				if type(value) == "table" then
+					local nested = {}
+					for nestedKey, nestedValue in pairs(value) do nested[nestedKey] = nestedValue end
+					original.backdrop[key] = nested
+				else
+					original.backdrop[key] = value
+				end
+			end
+		end
+		if original.backdrop then
+			original.backdropColor = { owner:GetBackdropColor() }
+			original.borderColor = { owner:GetBackdropBorderColor() }
+		end
+	end
+	if owner.GetObjectType and owner:GetObjectType() == "Button" then
+		original.isButton = true
+		original.text = owner:GetText()
+		original.normal = owner:GetNormalTexture()
+		original.highlight = owner:GetHighlightTexture()
+		original.pushed = owner:GetPushedTexture()
+		original.disabled = owner:GetDisabledTexture()
+		original.buttonAssets = {
+			normal = original.normal and original.normal:GetTexture(),
+			highlight = original.highlight and original.highlight:GetTexture(),
+			pushed = original.pushed and original.pushed:GetTexture(),
+			disabled = original.disabled and original.disabled:GetTexture(),
+		}
+		original.normalFont = owner.GetNormalFontObject and owner:GetNormalFontObject()
+		original.highlightFont = owner.GetHighlightFontObject and owner:GetHighlightFontObject()
+	end
+	if owner.GetRegions then
+		for _, region in ipairs({ owner:GetRegions() }) do
+			original.regions[#original.regions + 1] = captureRegion(region)
+		end
+	else
+		original.regions[1] = captureRegion(owner)
+	end
+	if owner.NineSlice then
+		original.nineShown = owner.NineSlice:IsShown()
+		for _, region in ipairs({ owner.NineSlice:GetRegions() }) do
+			original.regions[#original.regions + 1] = captureRegion(region)
+		end
+	end
+	UI.Native[owner] = original
+end
+
+local function restoreNative(owner, geometry)
+	local original = UI.Native[owner]
+	if not original then return end
+	if owner.SetBackdrop then
+		owner:SetBackdrop(original.backdrop)
+		if original.backdropColor then owner:SetBackdropColor(unpack(original.backdropColor)) end
+		if original.borderColor then owner:SetBackdropBorderColor(unpack(original.borderColor)) end
+	end
+	if original.isButton then
+		for _, state in ipairs({
+			{ "normal", "SetNormalTexture", "GetNormalTexture" },
+			{ "highlight", "SetHighlightTexture", "GetHighlightTexture" },
+			{ "pushed", "SetPushedTexture", "GetPushedTexture" },
+			{ "disabled", "SetDisabledTexture", "GetDisabledTexture" },
+		}) do
+			local asset = original.buttonAssets[state[1]]
+			if asset then
+				owner[state[2]](owner, asset)
+			else
+				local current = owner[state[3]](owner)
+				if current then current:SetTexture(nil); current:Hide() end
+			end
+		end
+		owner:SetText(original.text or "")
+		if original.normalFont then owner:SetNormalFontObject(original.normalFont) end
+		if original.highlightFont then owner:SetHighlightFontObject(original.highlightFont) end
+		owner.RQEThemeBlizzardStripped = nil
+	end
+	for _, region in ipairs(original.regions) do restoreRegion(region) end
+	if owner.NineSlice and original.nineShown ~= nil then owner.NineSlice:SetShown(original.nineShown) end
+	-- Some controls register additional regions after their first snapshot. Keep
+	-- themed artwork hidden after restoring all native regions and button states.
+	for _, key in ipairs({
+		"RQEThemeBorderTL", "RQEThemeBorderTR", "RQEThemeBorderBL", "RQEThemeBorderBR",
+		"RQEThemeBorderTop", "RQEThemeBorderBottom", "RQEThemeBorderLeft", "RQEThemeBorderRight",
+		"RQEThemeAzureTop", "RQEThemeAzureBottom", "RQEThemeAzureLeft", "RQEThemeAzureRight",
+		"RQEThemeGoldTop", "RQEThemeHeaderLeft", "RQEThemeHeaderMiddle", "RQEThemeHeaderRight",
+		"RQEThemeHeaderAccent", "RQEThemeLocationAzure", "RQEThemeLocationGold",
+		"RQEThemeIcon", "RQEThemeSearchBackground", "RQEThemeSearchTL", "RQEThemeSearchTR",
+		"RQEThemeSearchBL", "RQEThemeSearchBR", "RQEThemeSearchEdgeTop", "RQEThemeSearchEdgeBottom",
+		"RQEThemeSearchEdgeLeft", "RQEThemeSearchEdgeRight", "RQEThemeSearchGold",
+		"RQEThemeQuestBadge", "RQEThemeQuestActiveGlow",
+	}) do
+		if owner[key] and owner[key].Hide then owner[key]:Hide() end
+	end
+	if geometry then
+		owner:SetSize(original.width, original.height)
+		restorePoints(owner, original.points)
+	end
 end
 
 local function hideRegion(region)
@@ -180,8 +468,26 @@ function UI:_ApplyPanel(frame, opacity, role)
 end
 
 function UI:StylePanel(frame, opacity, role)
+	captureNative(frame)
 	remember(self.Registry.panels, frame, { opacity = opacity, role = role })
 	if self:IsEnabled() then self:_ApplyPanel(frame, opacity, role) end
+end
+
+function UI:UpdatePanelOpacity()
+	if not profileReady() then return end
+	for _, entry in ipairs(self.Registry.panels) do
+		local opacity
+		if entry.data.role == "main" then opacity = RQE.db.profile.MainFrameOpacity
+		elseif entry.data.role == "tracker" then opacity = RQE.db.profile.QuestFrameOpacity end
+		if opacity and entry.target.SetBackdropColor then
+			if self:IsEnabled() then
+				local color = self.Colors.charcoal
+				entry.target:SetBackdropColor(color[1], color[2], color[3], opacity)
+			else
+				entry.target:SetBackdropColor(0, 0, 0, opacity)
+			end
+		end
+	end
 end
 
 local function ensureHeaderSlice(header, key, path, leftUV, rightUV)
@@ -217,6 +523,7 @@ function UI:_ApplyHeader(header, child)
 end
 
 function UI:StyleHeader(header, child)
+	captureNative(header)
 	remember(self.Registry.headers, header, { child = child })
 	if self:IsEnabled() then self:_ApplyHeader(header, child) end
 end
@@ -275,8 +582,9 @@ function UI:_ApplyLocationInfoBar(bar)
 end
 
 function UI:StyleLocationInfoBar(bar)
-	remember(self.Registry.locationBars, bar)
 	self:_ApplyLegacyLocationInfoBar(bar)
+	captureNative(bar)
+	remember(self.Registry.locationBars, bar)
 	if self:IsEnabled() then self:_ApplyLocationInfoBar(bar) end
 end
 
@@ -392,6 +700,7 @@ function UI:_ApplyIconButton(button, iconName, options)
 end
 
 function UI:StyleIconButton(button, iconName, options)
+	captureNative(button)
 	remember(self.Registry.iconButtons, button, { iconName = iconName, options = options or {} })
 	if self:IsEnabled() then self:_ApplyIconButton(button, iconName, options) end
 end
@@ -422,6 +731,7 @@ function UI:_ApplyTextButton(button, options)
 end
 
 function UI:StyleTextButton(button, options)
+	captureNative(button)
 	remember(self.Registry.textButtons, button, options or {})
 	if self:IsEnabled() then self:_ApplyTextButton(button, options) end
 end
@@ -483,12 +793,16 @@ function UI:_ApplySearchBox(editBox)
 end
 
 function UI:StyleSearchBox(editBox)
+	captureNative(editBox)
 	remember(self.Registry.searchBoxes, editBox)
 	if self:IsEnabled() then self:_ApplySearchBox(editBox) end
 end
 
 function UI:StyleLegacyActionButton(button, background, label, iconName, options)
 	options = options or { size = 30, iconInset = 2 }
+	captureNative(button)
+	if background then captureNative(background) end
+	if label then captureNative(label) end
 	remember(self.Registry.legacyButtons, button, {
 		background = background, label = label, iconName = iconName, options = options,
 	})
@@ -519,7 +833,10 @@ local QUEST_BADGE_SIZE = {
 }
 
 function UI:StyleQuestIndexButton(button, active, questKind)
-	if not self:IsEnabled() or not button then return end
+	if not button then return end
+	captureNative(button)
+	remember(self.Registry.questIndexButtons, button)
+	if not self:IsEnabled() then return end
 	local iconName = questKind and QUEST_BADGE_ICON[questKind]
 	local bg = button.bg
 	if bg then
@@ -583,11 +900,16 @@ function UI:UpdateMagicButtonActionIcon(button, macroBody)
 	if not self:IsEnabled() then
 		button.RQEThemeActionIcon:Hide()
 		if button.RQEThemeMagicBackdrop then button.RQEThemeMagicBackdrop:Hide() end
+		if button.RQENativeMagicSize then
+			button:SetSize(unpack(button.RQENativeMagicSize))
+			button.RQEThemeMagicSized = nil
+		end
 		return
 	end
 	-- Theme sizing and the surround are installed once during profile startup,
 	-- avoiding protected geometry changes when a macro updates in combat later.
 	if not button.RQEThemeMagicSized then
+		if not button.RQENativeMagicSize then button.RQENativeMagicSize = { button:GetSize() } end
 		button:SetSize(38, 38)
 		button:SetFrameLevel(math.max(1, button:GetFrameLevel()))
 		button.RQEThemeMagicSized = true
@@ -651,6 +973,18 @@ function UI:UpdateMagicButtonActionIcon(button, macroBody)
 end
 
 function UI:_ApplyFrameLayout()
+	self.LayoutTargets = self.LayoutTargets or {}
+	for _, target in ipairs({
+		RQE.QuestNameText, RQE.headerText, RQE.QuestTrackerHeaderText,
+		RQE.QuestTrackerSearchRow, RQE.QuestTrackerSearchInput,
+		RQE.QuestTrackerSearchButton, RQE.QuestTrackerRestoreButton,
+		RQE.QTScrollFrame, RQE.QMQTslider, RQE.SeparateFocusSlider,
+	}) do
+		if target and not self.Native[target] then
+			captureNative(target)
+			self.LayoutTargets[#self.LayoutTargets + 1] = target
+		end
+	end
 	-- The themed buttons keep their established size; the header grows around
 	-- them and the end groups move inside the ornate border/keylines.
 	local mainFrame = RQE.RQEFrame or RQEFrame or _G["RQE.RQEFrame"]
@@ -746,7 +1080,16 @@ end
 
 function UI:StyleAceFrame(widget)
 	remember(self.Registry.aceFrames, widget)
-	if self:IsEnabled() then self:_ApplyAceFrame(widget) end
+	self:ApplyConfigFrame(widget)
+end
+
+function UI:ApplyConfigFrame(widget)
+	-- Configuration chrome is permanently Azure & Gold, regardless of the
+	-- tracker selection. The temporary palette change does not touch the tracker.
+	local colors, textures = self.Colors, self.Textures
+	self.Colors, self.Textures = self.Themes.AzureGold.colors, self.Themes.AzureGold.textures
+	self:_ApplyAceFrame(widget)
+	self.Colors, self.Textures = colors, textures
 end
 
 function UI:StyleContributionButton(button)
@@ -758,39 +1101,110 @@ function UI:RefreshExternalButtons()
 	if RQE.Buttons and RQE.Buttons.RefreshContributionButton then RQE.Buttons.RefreshContributionButton() end
 end
 
--- Called after AceDB restores the profile. Application is one-way for this
--- session; the option's reload guarantees a pristine legacy-mode construction.
+function UI:SelectTheme(key)
+	if not self.Themes[key] or not profileReady() then return false end
+	RQE.db.profile.trackerTheme = key
+	-- Keep older profiles and external consumers of this saved boolean coherent.
+	RQE.db.profile.useModernTheme = key ~= "Basic"
+	return self:ApplySavedTheme()
+end
+
 function UI:ApplySavedTheme()
-	self._sessionThemeEnabled = profileReady() and RQE.db.profile.useModernTheme ~= false
-	if not self:IsEnabled() then return end
-	for _, e in ipairs(self.Registry.panels) do
-		local opacity = e.data.opacity
-		if e.data.role == "main" then opacity = RQE.db.profile.MainFrameOpacity
-		elseif e.data.role == "tracker" then opacity = RQE.db.profile.QuestFrameOpacity end
-		self:_ApplyPanel(e.target, opacity, e.data.role)
+	if not profileReady() then return false end
+	local selected = self:GetSelectedTheme()
+	if RQE.API and RQE.API.Client and RQE.API.Client.InCombatLockdown()
+		then self.pendingTheme = selected; return false end
+	self.pendingTheme = nil
+	if self.appliedTheme == selected then
+		-- Profile changes can alter a card style without changing the overall
+		-- theme. Refresh its live card even on this otherwise no-op path.
+		self:RefreshCardStyles()
+		return true
 	end
-	for _, e in ipairs(self.Registry.headers) do self:_ApplyHeader(e.target, e.data.child) end
-	for _, e in ipairs(self.Registry.iconButtons) do self:_ApplyIconButton(e.target, e.data.iconName, e.data.options) end
-	for _, e in ipairs(self.Registry.textButtons) do self:_ApplyTextButton(e.target, e.data) end
-	for _, e in ipairs(self.Registry.searchBoxes) do self:_ApplySearchBox(e.target) end
-	for _, e in ipairs(self.Registry.legacyButtons) do
-		hideRegion(e.data.background); hideRegion(e.data.label)
-		self:_ApplyIconButton(e.target, e.data.iconName, e.data.options or { size = 30, iconInset = 2 })
+	self.ActiveTheme = selected
+	local theme = self.Themes[selected]
+	self.Colors = theme.colors or self.Themes.AzureGold.colors
+	self.Textures = theme.textures or self.Themes.AzureGold.textures
+	self._sessionThemeEnabled = not theme.native
+	if not self:IsEnabled() then
+		for _, list in ipairs({ self.Registry.panels, self.Registry.locationBars, self.Registry.questIndexButtons }) do
+			for _, entry in ipairs(list) do restoreNative(entry.target) end
+		end
+		for _, entry in ipairs(self.Registry.headers) do
+			restoreNative(entry.target)
+			local native = self.Native[entry.target]
+			if native then entry.target:SetHeight(native.height) end
+		end
+		for _, list in ipairs({ self.Registry.iconButtons, self.Registry.textButtons,
+			self.Registry.searchBoxes, self.Registry.legacyButtons }) do
+			for _, entry in ipairs(list) do restoreNative(entry.target, true) end
+		end
+		for _, entry in ipairs(self.Registry.legacyButtons) do
+			restoreNative(entry.data.background)
+			restoreNative(entry.data.label)
+		end
+		for _, target in ipairs(self.LayoutTargets or {}) do
+			local isText = target == RQE.headerText or target == RQE.QuestTrackerHeaderText
+				or target == RQE.QuestNameText
+			restoreNative(target, not isText)
+			if target == RQE.QuestNameText then restorePoints(target, self.Native[target].points) end
+		end
+		if RQE.MagicButton then
+			if RQE.MagicButton.RQEThemeMagicBackdrop then RQE.MagicButton.RQEThemeMagicBackdrop:Hide() end
+			if RQE.MagicButton.RQEThemeActionIcon then RQE.MagicButton.RQEThemeActionIcon:Hide() end
+		end
+	else
+		for _, e in ipairs(self.Registry.panels) do
+			local opacity = e.data.opacity
+			if e.data.role == "main" then opacity = RQE.db.profile.MainFrameOpacity
+			elseif e.data.role == "tracker" then opacity = RQE.db.profile.QuestFrameOpacity end
+			self:_ApplyPanel(e.target, opacity, e.data.role)
+		end
+		for _, e in ipairs(self.Registry.headers) do self:_ApplyHeader(e.target, e.data.child) end
+		for _, e in ipairs(self.Registry.iconButtons) do self:_ApplyIconButton(e.target, e.data.iconName, e.data.options) end
+		for _, e in ipairs(self.Registry.textButtons) do self:_ApplyTextButton(e.target, e.data) end
+		for _, e in ipairs(self.Registry.searchBoxes) do self:_ApplySearchBox(e.target) end
+		for _, e in ipairs(self.Registry.legacyButtons) do
+			hideRegion(e.data.background); hideRegion(e.data.label)
+			self:_ApplyIconButton(e.target, e.data.iconName, e.data.options or { size = 30, iconInset = 2 })
+		end
+		for _, e in ipairs(self.Registry.locationBars) do self:_ApplyLocationInfoBar(e.target) end
+		self:_ApplyFrameLayout()
+		if RQE.headerText then RQE.headerText:SetFont("Fonts\\SKURRI.TTF", 17, "OUTLINE") end
+		if RQE.QuestTrackerHeaderText then RQE.QuestTrackerHeaderText:SetFont("Fonts\\SKURRI.TTF", 14, "OUTLINE") end
 	end
-	for _, e in ipairs(self.Registry.locationBars) do self:_ApplyLocationInfoBar(e.target) end
-	for _, e in ipairs(self.Registry.aceFrames) do self:_ApplyAceFrame(e.target) end
-	self:_ApplyFrameLayout()
-	if RQE.headerText then RQE.headerText:SetFont("Fonts\\SKURRI.TTF", 17, "OUTLINE") end
-	if RQE.QuestTrackerHeaderText then RQE.QuestTrackerHeaderText:SetFont("Fonts\\SKURRI.TTF", 14, "OUTLINE") end
+	self.appliedTheme = selected
+	self:UpdatePanelOpacity()
+	self:RefreshLocationInfoBar()
+	if RQE.LayoutSeparateFocusFrame then RQE:LayoutSeparateFocusFrame() end
+	if RQE.UpdateContentSize then RQE:UpdateContentSize() end
 	if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then RQE.Buttons.UpdateHeaderNavigation() end
 	if RQE.Buttons and RQE.Buttons.UpdateQuestTrackerHeaderTitle then RQE.Buttons.UpdateQuestTrackerHeaderTitle() end
+	if RQE.Buttons and RQE.Buttons.RefreshLegacyBorders then RQE.Buttons.RefreshLegacyBorders() end
 	self:RefreshExternalButtons()
-	if RQE.MagicButton and RQE.Buttons and RQE.Buttons.UpdateMagicButtonIcon then RQE.Buttons.UpdateMagicButtonIcon() end
+	if RQE.RefreshQuestToolTheme then RQE:RefreshQuestToolTheme() end
+	if RQE.Buttons and RQE.Buttons.UpdateMagicButtonIcon then RQE.Buttons.UpdateMagicButtonIcon() end
+	C_Timer.After(0, function()
+		if RQE.UI ~= self then return end
+		if RQE.API and RQE.API.Client and RQE.API.Client.InCombatLockdown() then
+			self.pendingTheme = self:GetSelectedTheme()
+			self.appliedTheme = nil
+			return
+		end
+		if RQE.RefreshQuestTrackerAfterSearch then RQE:RefreshQuestTrackerAfterSearch() end
+		if RQE.UpdateScenarioFrame then RQE.UpdateScenarioFrame() end
+	end)
+	return true
 end
 
 local externalSkinWatcher = CreateFrame("Frame")
 externalSkinWatcher:RegisterEvent("ADDON_LOADED")
 externalSkinWatcher:RegisterEvent("PLAYER_LOGIN")
+externalSkinWatcher:RegisterEvent("PLAYER_REGEN_ENABLED")
 externalSkinWatcher:SetScript("OnEvent", function(_, event, addonName)
+	if event == "PLAYER_REGEN_ENABLED" then
+		if UI.pendingTheme then UI:ApplySavedTheme() end
+		if UI.pendingCardStyleRefresh then UI:RefreshCardStyles() end
+	end
 	if event == "PLAYER_LOGIN" or addonName == "RQE_Contribution" then UI:RefreshExternalButtons() end
 end)
