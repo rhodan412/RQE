@@ -42,7 +42,7 @@ RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect qu
 
 On Retail, RQE keeps Blizzard's live stage displays in the Quest Tracker's **Scenario** section. With Azure & Gold enabled, Torghast, timed events such as Superbloom, and Delves each have their own stage artwork. Floor information, countdowns, tier, objectives, currencies, and weighted progress remain live and readable. This panel combines screenshots from three separate activities.
 
-[![Azure and Gold scenario artwork for Torghast, Superbloom, and Delves](https://github.com/user-attachments/assets/863998cf-7e6e-4cca-8fc6-2dd54702d3bf)](https://github.com/user-attachments/assets/863998cf-7e6e-4cca-8fc6-2dd54702d3bf)
+[![Azure and Gold scenario artwork for Torghast, Superbloom, and Delves](https://github.com/user-attachments/assets/dc222588-1155-43be-92fd-ccd6ebb4c2c4)](https://github.com/user-attachments/assets/dc222588-1155-43be-92fd-ccd6ebb4c2c4)
 
 Hover stage icons and Torghast powers for Blizzard's details; the **Anima Powers** control opens a power list. Mythic+ runs can also show the countdown, keystone, affixes, and death penalty. For smoother transitions into and out of scenarios, leave **Mythic/Scenario Mode** unchecked and use RQE's Scenario section. See the [scenario tracker guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#live-scenario-stages) for the tracker choice.
 
@@ -50,14 +50,14 @@ Hover stage icons and Torghast powers for Blizzard's details; the **Anima Powers
 
 With Azure & Gold, **Follower**, **Normal**, and **Heroic** dungeons have distinct name-card backgrounds and difficulty badges. **Mythic 0** and **Mythic+** both keep the simpler Blizzard background, without an added difficulty badge, so the name, timer, and run icons stay clear. The Mythic 0 example below illustrates that shared background; it is not a Mythic+ screenshot.
 
-[![Follower, Normal, Heroic, and Mythic 0 dungeon cards in RQE](https://github.com/user-attachments/assets/c76d6f64-2684-47e0-9edf-6e23b3854103)](https://github.com/user-attachments/assets/c76d6f64-2684-47e0-9edf-6e23b3854103)
+[![Follower, Normal, Heroic, and Mythic 0 dungeon cards in RQE](https://github.com/user-attachments/assets/fdbad68e-5a98-448f-8dcc-776951eb2245)](https://github.com/user-attachments/assets/fdbad68e-5a98-448f-8dcc-776951eb2245)
 
-Hover a Follower, Normal, or Heroic difficulty badge for its difficulty and player-count tooltip. Follower identifies the mode as **Follower Dungeon**; Normal and Heroic use Blizzard-style details. See the [dungeon card guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#dungeon-cards-by-difficulty) for more context.
+Hover a Follower, Normal, or Heroic difficulty badge for its difficulty and player-count tooltip. Follower identifies the mode as **Follower Dungeon**; Normal and Heroic use Blizzard-style details. See the [dungeon card guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#dungeon-cards-by-difficulty) for more context and the [card-style gallery](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#azure--gold-card-style-gallery) for every Azure & Gold activity style.
 
 <details>
 <summary>See the three dungeon difficulty tooltips</summary>
 
-[![Follower, Normal, and Heroic dungeon difficulty badge hover tooltips](https://github.com/user-attachments/assets/0d22f26b-a97a-4ecb-8ef2-9dfd11b1b1a2)](https://github.com/user-attachments/assets/0d22f26b-a97a-4ecb-8ef2-9dfd11b1b1a2)
+[![Follower, Normal, and Heroic dungeon difficulty badge hover tooltips](https://github.com/user-attachments/assets/8f969fe9-807e-4741-acde-6b7698c7ff09)](https://github.com/user-attachments/assets/8f969fe9-807e-4741-acde-6b7698c7ff09)
 
 </details>
 
@@ -107,9 +107,9 @@ Click a panel to view it at full size. The [player guide](https://github.com/rho
 
 ### Azure & Gold interface
 
-The optional Azure & Gold theme gives RQE's frames, sections, and controls a consistent look.
+The optional Azure & Gold theme gives RQE's frames, sections, and controls a consistent look. Switch between Basic and Azure & Gold in **Themes**, and choose separate card artwork for each supported activity. See [Themes and card styles](https://github.com/rhodan412/RQE/wiki/Settings-and-Controls#themes-and-card-styles) for the controls and defaults.
 
-![RQE Azure and Gold theme](https://github.com/user-attachments/assets/20cc73c9-fd9f-4ffc-a3c6-f596f17b79b7)
+[![RQE Basic and Azure & Gold theme comparison](https://github.com/user-attachments/assets/0c6e9d43-cab9-4af3-acdb-e240cc3edbee)](https://github.com/user-attachments/assets/0c6e9d43-cab9-4af3-acdb-e240cc3edbee)
 
 ### A quest item when time matters
 
