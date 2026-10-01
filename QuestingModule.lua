@@ -781,6 +781,29 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-------------------------------------------------------
 
 	-- ScenarioChildFrame header
+	local FALLBACK_SCENARIO_TEXT_INSET = 22
+	local function FitTorghastScenarioTitle(frame)
+		local title = frame and frame.scenarioTitle
+		if not title then return end
+		local availableWidth = math.max(1, frame:GetWidth() - 20)
+		title:SetWidth(availableWidth)
+		title:SetWordWrap(false)
+		local fontSize = 16
+		title:SetFont("Fonts\\FRIZQT__.TTF", fontSize, "OUTLINE")
+		local textWidth = (title.GetUnboundedStringWidth and title:GetUnboundedStringWidth()) or title:GetStringWidth()
+		while fontSize > 10 and textWidth > availableWidth do
+			fontSize = fontSize - 1
+			title:SetFont("Fonts\\FRIZQT__.TTF", fontSize, "OUTLINE")
+			textWidth = (title.GetUnboundedStringWidth and title:GetUnboundedStringWidth()) or title:GetStringWidth()
+		end
+		frame.torghastTitleFitted = true
+	end
+	local function IsTorghastScenarioTitle()
+		if RQE.IsScenarioCardTestEnabled and RQE:IsScenarioCardTestEnabled() then
+			return RQE.ScenarioCardTestKind == "torghast"
+		end
+		return RQE.API.Client.IsInJailersTower()
+	end
 	-- Function to create a unique header for the ScenarioChildFrame
 	local function CreateUniqueScenarioHeader(scenarioFrame, title)
 		local header = CreateFrame("Frame", nil, scenarioFrame, "BackdropTemplate")
@@ -815,11 +838,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function to dynamically set ScenarioChildFrame height based on the number of criteria
 	function RQE.SetScenarioChildFrameHeight()
 		local frame = RQE.ScenarioChildFrame
-		if not frame or not RQE.API.Client.C_Scenario.IsInScenario() then return end
+		if not frame or not (RQE.API.Client.C_Scenario.IsInScenario()
+			or (RQE.IsScenarioCardTestEnabled and RQE:IsScenarioCardTestEnabled())) then return end
 		local headerHeight = 115
 		local stageHeight = 0
-		if frame.challengePanel and frame.challengePanel:IsShown() then
-			headerHeight = 132
+		if frame.previewTestHeaderHeight then
+			headerHeight = frame.previewTestHeaderHeight
+		elseif frame.challengePanel and frame.challengePanel:IsShown() then
+			headerHeight = frame.dungeonStageCard and frame.dungeonStageCard:IsShown() and 225 or 132
+		elseif frame.dungeonStageCard and frame.dungeonStageCard:IsShown() then
+			headerHeight = 126
 		elseif frame.stageWidgets and frame.stageWidgets:IsShown()
 			and frame.stageWidgets:HasAnyWidgetsShowing() then
 			stageHeight = math.max(100, frame.stageWidgets:GetHeight() or 0)
@@ -827,14 +855,15 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 		if frame.topWidgets and frame.topWidgets:IsShown()
 			and frame.topWidgets:HasAnyWidgetsShowing() then
-			local topOffset = (frame.challengePanel and frame.challengePanel:IsShown()) and 133
-				or (stageHeight > 0 and stageHeight + 55 or 105)
+			local topOffset = (frame.challengePanel and frame.challengePanel:IsShown())
+				and (frame.dungeonStageCard and frame.dungeonStageCard:IsShown() and 226 or 133)
+				or (stageHeight > 0 and stageHeight + 55 or (frame.dungeonStageCard and frame.dungeonStageCard:IsShown() and 132 or 105))
 			frame.topWidgets:ClearAllPoints()
 			frame.topWidgets:SetPoint("TOP", frame.header, "TOP", 0, -topOffset)
 			headerHeight = math.max(headerHeight, topOffset + math.max(28, frame.topWidgets:GetHeight() or 0) + 12)
 		end
 		frame.header:SetHeight(headerHeight)
-		local hasMawBuffs = frame.mawBuffs and frame.mawBuffs:IsShown()
+		local hasMawBuffs = frame.previewTestMawBuffs or (frame.mawBuffs and frame.mawBuffs:IsShown())
 		if frame.body then
 			frame.body:ClearAllPoints()
 			frame.body:SetWidth(math.max(1, frame:GetWidth() - 44))
@@ -842,7 +871,19 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				-headerHeight - (hasMawBuffs and 65 or 0) - 14)
 		end
 		if frame.scenarioTitle then
-			frame.scenarioTitle:SetWidth(math.max(1, frame:GetWidth() - 135))
+			if IsTorghastScenarioTitle() then
+				FitTorghastScenarioTitle(frame)
+			else
+				if frame.torghastTitleFitted then
+					frame.scenarioTitle:SetWordWrap(true)
+					if not frame.fallbackTextThemed then
+						frame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
+					end
+					frame.torghastTitleFitted = nil
+				end
+				local reservedWidth = frame.fallbackTextThemed and FALLBACK_SCENARIO_TEXT_INSET * 2 or 135
+				frame.scenarioTitle:SetWidth(math.max(1, frame:GetWidth() - reservedWidth))
+			end
 		end
 		local bodyHeight = frame.body and frame.body:GetStringHeight() or 0
 		if frame.scenarioProgressBar and frame.scenarioProgressBar:IsShown() then
@@ -1019,6 +1060,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		RQE.UpdateRecipeTrackingAnchor()
 	end
+
+	-- Scenario exit can hide this child without a zone load or quest-list refresh.
+	RQE.ScenarioChildFrame:HookScript("OnHide", function()
+		if not content:IsShown() then return end
+		UpdateFrameAnchors()
+		RQE.RefreshQuestTrackerScrollRange()
+	end)
 
 
 	-------------------------------------------------------
@@ -1382,7 +1430,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		-- Adjust width for RQE.ScenarioChildFrame.scenarioTitle using dynamic padding if not nil
-		if RQE.ScenarioChildFrame.scenarioTitle then
+		if RQE.ScenarioChildFrame.scenarioTitle and not IsTorghastScenarioTitle() then
 			RQE.ScenarioChildFrame.scenarioTitle:SetWidth(frameWidth - (basePadding.ScenarioChildFrameScenarioTitle * (1 + paddingMultiplier)))
 		end
 
@@ -1426,6 +1474,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					end
 				end
 			end
+		end
+		if IsTorghastScenarioTitle() then
+			FitTorghastScenarioTitle(RQE.ScenarioChildFrame)
 		end
 
 		-- Adjustment for RQE.AchievementsFrame specific elements
@@ -2558,7 +2609,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdown(self, questID)
-		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			-- Previous Blizzard call changed 2026.09.25: local isPlayerInGroup = IsInGroup()
 			local isPlayerInGroup = RQE.API.Client.IsInGroup()
 			-- Previous Blizzard call changed 2026.09.25: local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
@@ -2574,8 +2625,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				if RQE_SandboxEditor then
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
-				rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
-				rootDescription:CreateButton("Check Coordinate Status for Quest", function() RQE:CheckCoordHotspotsInSteps(questID) end)
+				rootDescription:CreateContributionButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+				rootDescription:CreateContributionButton("Check Coordinate Status for Quest", function() RQE:CheckCoordHotspotsInSteps(questID) end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			end
 
@@ -2598,9 +2649,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
-				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
-				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
+				rootDescription:CreateContributionButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+				rootDescription:CreateContributionButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+				rootDescription:CreateContributionButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			else
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
@@ -2608,6 +2659,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 			rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
 			rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+			rootDescription:AppendQuestContextActions(questID)
 			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
 				RQE.ToggleRQEQuestFrameLock()
@@ -2624,13 +2676,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowDropdownRQEQuestFrame(self)
-		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
-				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
-				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
+				rootDescription:CreateContributionButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+				rootDescription:CreateContributionButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+				rootDescription:CreateContributionButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
 				rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			end
 			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
@@ -2650,6 +2702,28 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-------------------------------------------------------
 
 	-- [Functions related to the scenario frame, such as RQE.InitializeScenarioFrame, RQE.UpdateScenarioFrame]
+	local function IsPartyDungeon()
+		-- IsMythicPlusActive is also true in follower, Normal, and Heroic dungeons.
+		-- The party instance type covers those as well as Mythic and live keys.
+		local _, instanceType, difficultyID = GetInstanceInfo()
+		return instanceType == "party", difficultyID
+	end
+
+	local function GetThemedDungeonCardTexture(difficultyID, timerID)
+		if timerID or difficultyID == 23 or difficultyID == 8
+			or not RQE.UI or not RQE.UI:IsEnabled() then return end
+		-- A running key must keep Blizzard's stage card even if its difficulty
+		-- has not yet updated to the challenge ID.
+		local isChallengeActive = C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive
+		if type(isChallengeActive) == "function" and isChallengeActive() then return end
+		local getChallengeMap = C_ChallengeMode and C_ChallengeMode.GetActiveChallengeMapID
+		if type(getChallengeMap) == "function" and getChallengeMap() then return end
+		local cardType = difficultyID == 205 and "follower"
+			or difficultyID == 1 and "normal"
+			or difficultyID == 2 and "heroic"
+		return cardType and RQE.UI:GetCardTexture(cardType)
+	end
+
 	local function GetActiveChallengeRun()
 		local getTimers = RQE.API.ResolveClientAPI("GetWorldElapsedTimers")
 		local getTimer = RQE.API.ResolveClientAPI("GetWorldElapsedTime")
@@ -2696,7 +2770,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			insets = { left = 4, right = 4, top = 4, bottom = 4 } })
 		panel:SetBackdropColor(0.06, 0.06, 0.06, 0.9)
 		panel:SetBackdropBorderColor(0.52, 0.48, 0.38, 1)
-		if RQE.UI then RQE.UI:StylePanel(panel, 0.94, "section") end
+		-- Keep Blizzard's stock backdrop on the key timer panel in every theme.
 		panel.level = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 		panel.level:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -11)
 		panel.clock = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
@@ -2735,6 +2809,95 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		panel:Hide()
 		frame.challengePanel = panel
 		return panel
+	end
+
+	local function LayoutDungeonStageCard(card)
+		local badge = card.difficultyBadge
+		local width = card:GetWidth()
+		badge:ClearAllPoints()
+		badge:SetPoint("TOP", card, "TOPLEFT", width * 0.72, -5)
+		card.name:ClearAllPoints()
+		card.name:SetPoint("TOPLEFT", card, "TOPLEFT", 18, -16)
+		card.name:SetPoint("TOPRIGHT", card, "TOPRIGHT",
+			card.difficultyBadgeVisible and -math.max(18, width * 0.35) or -18, -16)
+	end
+
+	local function EnsureDungeonStageCard(frame)
+		if frame.dungeonStageCard then return frame.dungeonStageCard end
+		local card = CreateFrame("Frame", nil, frame.header)
+		card:SetPoint("TOPLEFT", frame.header, "TOPLEFT", 12, -21)
+		card:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -12, -21)
+		card:SetHeight(80)
+		card.background = card:CreateTexture(nil, "BACKGROUND")
+		card.background:SetAllPoints()
+		card.name = card:CreateFontString(nil, "OVERLAY", "Game18Font")
+		card.name:SetHeight(48)
+		card.name:SetJustifyH("LEFT")
+		card.name:SetJustifyV("MIDDLE")
+		card.name:SetTextColor(1, 0.914, 0.682)
+		local badge = CreateFrame("Button", nil, card)
+		badge:SetSize(35.5, 36.5)
+		-- The header is on LOW strata; raise the hover target above the tracker
+		-- scroll frame just as we do for Blizzard's live scenario widgets.
+		badge:SetFrameStrata(frame:GetFrameStrata())
+		badge:SetFrameLevel(frame:GetFrameLevel() + 5)
+		badge:EnableMouse(true)
+		badge.background = badge:CreateTexture(nil, "BACKGROUND")
+		badge.background:SetAtlas("ui-hud-minimap-guildbanner-background-top", true)
+		badge.background:SetPoint("CENTER")
+		badge.border = badge:CreateTexture(nil, "OVERLAY")
+		badge.border:SetAtlas("ui-hud-minimap-guildbanner-border-top", true)
+		badge.border:SetPoint("CENTER")
+		badge.icon = badge:CreateTexture(nil, "ARTWORK")
+		badge.icon:SetPoint("TOP", badge, "TOP", 0, -4)
+		badge.count = badge:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+		badge.count:SetPoint("BOTTOM", badge, "BOTTOM", 0, 2)
+		badge:SetScript("OnEnter", function(self)
+			if self.difficultyID == 205 then
+				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT", 8, 8)
+				GameTooltip_SetTitle(GameTooltip, "Follower Dungeon")
+				GameTooltip_AddNormalLine(GameTooltip, "5 Players")
+			else
+				local _, instanceType, difficultyID, _, maxPlayers, _, _, _, instanceGroupSize = GetInstanceInfo()
+				if instanceType ~= "party" or difficultyID ~= self.difficultyID then return end
+				local difficultyName = DifficultyUtil.GetDifficultyName(difficultyID)
+				if not difficultyName then return end
+				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT", 8, 8)
+				GameTooltip_SetTitle(GameTooltip, DUNGEON_DIFFICULTY_BANNER_TOOLTIP:format(difficultyName))
+				if maxPlayers and maxPlayers > 0 then
+					GameTooltip_AddNormalLine(GameTooltip,
+						DUNGEON_DIFFICULTY_BANNER_TOOLTIP_PLAYER_COUNT:format(instanceGroupSize, maxPlayers))
+				end
+			end
+			GameTooltip:Show()
+		end)
+		badge:SetScript("OnLeave", GameTooltip_Hide)
+		badge:Hide()
+		card.difficultyBadge = badge
+		card:SetScript("OnSizeChanged", LayoutDungeonStageCard)
+		LayoutDungeonStageCard(card)
+		card:Hide()
+		frame.dungeonStageCard = card
+		return card
+	end
+
+	local function UpdateDungeonDifficultyBadge(card, difficultyID, hasThemedTexture)
+		local badge = card.difficultyBadge
+		local showBadge = hasThemedTexture and (difficultyID == 205 or difficultyID == 1 or difficultyID == 2)
+		if card.difficultyBadgeVisible ~= showBadge then
+			card.difficultyBadgeVisible = showBadge
+			badge:SetShown(showBadge)
+			LayoutDungeonStageCard(card)
+		end
+		if not showBadge then return end
+		if badge.difficultyID ~= difficultyID then
+			badge.difficultyID = difficultyID
+			badge.icon:SetAtlas(difficultyID == 2 and "ui-hud-minimap-guildbanner-heroic-large"
+				or "ui-hud-minimap-guildbanner-normal-large", true)
+		end
+		local instanceGroupSize = select(9, GetInstanceInfo())
+		badge.count:SetText(difficultyID == 205 and "5"
+			or (instanceGroupSize and instanceGroupSize > 0 and tostring(instanceGroupSize) or ""))
 	end
 
 	local function UpdateChallengePanel(frame, timerID, elapsed, limit)
@@ -2800,9 +2963,386 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return ok and hasCountdown or false
 	end
 
+	local scenarioWidgetArtHooked
+	local delveFlagArtHooked
+	local torghastCurrencyArtHooked
+	local function ApplyDelveFlagArt(widget, widgetContainer)
+		local frame = RQE.ScenarioChildFrame
+		if not frame or widgetContainer ~= frame.stageWidgets or not RQE.UI
+			or not RQE.UI:IsEnabled() or not widget.TierFrame or not widget.TierFrame.Flag then return end
+
+		local flag = widget.TierFrame.Flag
+		local atlas = flag:GetAtlas()
+		if not atlas then return end
+		if not widget.RQEThemeNativeFlagColor then
+			widget.RQEThemeNativeFlagColor = { flag:GetVertexColor() }
+			widget.RQEThemeNativeFlagDesaturated = flag:IsDesaturated()
+		end
+		local goldGlow = widget.TierFrame.RQEThemeFlagGoldGlow
+		if not goldGlow then
+			goldGlow = widget.TierFrame:CreateTexture(nil, "ARTWORK", nil, 1)
+			goldGlow.ignoreInLayout = true
+			goldGlow:SetAllPoints(flag)
+			goldGlow:SetBlendMode("ADD")
+			widget.TierFrame.RQEThemeFlagGoldGlow = goldGlow
+		end
+		local blueInset = widget.TierFrame.RQEThemeFlagBlueInset
+		if not blueInset then
+			-- Leave Blizzard's gold perimeter visible beneath a smaller blue copy.
+			-- Both are textures on the native tooltip frame, not new hit regions.
+			blueInset = widget.TierFrame:CreateTexture(nil, "ARTWORK", nil, 2)
+			blueInset.ignoreInLayout = true
+			blueInset:SetPoint("TOPLEFT", flag, "TOPLEFT", 4, -4)
+			blueInset:SetPoint("BOTTOMRIGHT", flag, "BOTTOMRIGHT", -4, 5)
+			widget.TierFrame.RQEThemeFlagBlueInset = blueInset
+		end
+		local topEdge = widget.TierFrame.RQEThemeFlagTopEdge
+		if not topEdge then
+			topEdge = widget.TierFrame:CreateTexture(nil, "ARTWORK", nil, 3)
+			topEdge.ignoreInLayout = true
+			topEdge:SetPoint("TOPLEFT", flag, "TOPLEFT", 4, -2)
+			topEdge:SetPoint("TOPRIGHT", flag, "TOPRIGHT", -4, -2)
+			topEdge:SetHeight(2)
+			topEdge:SetColorTexture(1, 0.84, 0.08, 0.8)
+			widget.TierFrame.RQEThemeFlagTopEdge = topEdge
+		end
+		flag:SetDesaturated(true)
+		flag:SetVertexColor(1, 0.9, 0.04)
+		goldGlow:SetAtlas(atlas)
+		goldGlow:SetDesaturated(true)
+		goldGlow:SetVertexColor(1, 0.94, 0.04)
+		goldGlow:SetAlpha(0.7)
+		goldGlow:SetShown(flag:IsShown())
+		blueInset:SetAtlas(atlas)
+		blueInset:SetDesaturated(true)
+		blueInset:SetVertexColor(0.18, 0.43, 1)
+		blueInset:SetShown(flag:IsShown())
+		topEdge:SetShown(flag:IsShown())
+	end
+
+	local function ApplyTorghastCurrencyField(widget, showField)
+		local border = widget.RQETorghastCurrencyBorder
+		local fill = widget.RQETorghastCurrencyFill
+		local highlight = widget.RQETorghastCurrencyHighlight
+		if not showField or not widget.CurrencyContainer then
+			if border then border:Hide() end
+			if fill then fill:Hide() end
+			if highlight then highlight:Hide() end
+			return
+		end
+
+		-- Currency frames are owned by Blizzard and sit above the header artwork.
+		-- Anchor the inset to the rightmost live currency so its icon, number,
+		-- and tooltip remain in their native positions as the widget updates.
+		local rightmostCurrency
+		for _, currency in ipairs({ widget.CurrencyContainer:GetChildren() }) do
+			if currency:IsShown() and currency.Icon and currency.Text
+				and currency:GetLeft() and (not rightmostCurrency or currency:GetLeft() > rightmostCurrency:GetLeft()) then
+				rightmostCurrency = currency
+			end
+		end
+		if not rightmostCurrency then
+			if border then border:Hide() end
+			if fill then fill:Hide() end
+			if highlight then highlight:Hide() end
+			return
+		end
+
+		if not border then
+			border = widget:CreateTexture(nil, "BORDER", nil, 2)
+			border.ignoreInLayout = true
+			border:SetColorTexture(0.025, 0.07, 0.10, 0.98)
+			widget.RQETorghastCurrencyBorder = border
+			fill = widget:CreateTexture(nil, "BORDER", nil, 3)
+			fill.ignoreInLayout = true
+			fill:SetColorTexture(0.13, 0.21, 0.26, 0.96)
+			fill:SetPoint("TOPLEFT", border, "TOPLEFT", 2, -2)
+			fill:SetPoint("BOTTOMRIGHT", border, "BOTTOMRIGHT", -2, 2)
+			widget.RQETorghastCurrencyFill = fill
+			highlight = widget:CreateTexture(nil, "BORDER", nil, 4)
+			highlight.ignoreInLayout = true
+			highlight:SetColorTexture(0.28, 0.43, 0.50, 0.6)
+			highlight:SetHeight(1)
+			highlight:SetPoint("TOPLEFT", fill, "TOPLEFT", 0, 0)
+			highlight:SetPoint("TOPRIGHT", fill, "TOPRIGHT", 0, 0)
+			widget.RQETorghastCurrencyHighlight = highlight
+		end
+		border:ClearAllPoints()
+		border:SetPoint("TOPLEFT", rightmostCurrency, "TOPLEFT", -7, 5)
+		border:SetPoint("BOTTOMRIGHT", rightmostCurrency, "BOTTOMRIGHT", 12, -5)
+		border:Show()
+		fill:Show()
+		highlight:Show()
+	end
+
+	local function SaveScenarioNativeArt(widget)
+		local art = widget.Frame
+		if not art then return end
+		local points = {}
+		for index = 1, art:GetNumPoints() do
+			local point, relativeTo, relativePoint, x, y = art:GetPoint(index)
+			points[index] = { point, relativeTo, relativePoint, x, y }
+		end
+		widget.RQEThemeNativeArt = {
+			atlas = art.GetAtlas and art:GetAtlas(), texture = art:GetTexture(),
+			texCoord = { art:GetTexCoord() }, color = { art:GetVertexColor() },
+			width = art:GetWidth(), height = art:GetHeight(), widgetWidth = widget:GetWidth(),
+			points = points,
+		}
+		if widget.DecorationBottomLeft then
+			local skull = widget.DecorationBottomLeft
+			widget.RQEThemeNativeArt.skullPoints = {}
+			for index = 1, skull:GetNumPoints() do
+				local point, relativeTo, relativePoint, x, y = skull:GetPoint(index)
+				widget.RQEThemeNativeArt.skullPoints[index] = { point, relativeTo, relativePoint, x, y }
+			end
+		end
+		return widget.RQEThemeNativeArt
+	end
+
+	local function CaptureScenarioNativeArt(widget)
+		local previousNative = widget.RQEThemeNativeArt
+		local previousTheme = widget.RQEThemeAppliedArt
+		local native = SaveScenarioNativeArt(widget)
+		if not native then return end
+
+		if previousNative and previousTheme then
+			-- A stage update can reuse a widget without resetting every dimension
+			-- changed by the theme. Never promote those dimensions to native ones.
+			local function IsStillThemed(value, themedValue, nativeValue)
+				return type(value) == "number" and type(themedValue) == "number"
+					and type(nativeValue) == "number"
+					and math.abs(value - themedValue) < 0.5
+					and math.abs(themedValue - nativeValue) >= 0.5
+			end
+			local staleWidth = IsStillThemed(native.width, previousTheme.width, previousNative.width)
+			local staleHeight = IsStillThemed(native.height, previousTheme.height, previousNative.height)
+			local staleWidgetWidth = IsStillThemed(native.widgetWidth, previousTheme.widgetWidth, previousNative.widgetWidth)
+			local staleTexture = previousTheme.texture ~= nil and not native.atlas
+				and native.texture == previousTheme.texture
+			if staleWidth then native.width = previousNative.width end
+			if staleHeight then native.height = previousNative.height end
+			if staleWidgetWidth then native.widgetWidth = previousNative.widgetWidth end
+			if staleWidth or staleHeight or staleWidgetWidth or staleTexture then
+				native.points = previousNative.points
+				native.skullPoints = previousNative.skullPoints
+			end
+			if staleTexture then
+				native.atlas = previousNative.atlas
+				native.texture = previousNative.texture
+				native.texCoord = previousNative.texCoord
+				native.color = previousNative.color
+			end
+		end
+
+		widget.RQENativeStageWidth = native.width
+		widget.RQENativeStageHeight = native.height
+	end
+
+	local function RestoreScenarioNativeArt(widget)
+		local native = widget.RQEThemeNativeArt
+		if native and widget.Frame then
+			local art = widget.Frame
+			if native.atlas then art:SetAtlas(native.atlas, false)
+			elseif native.texture then art:SetTexture(native.texture) end
+			if #native.texCoord == 4 then art:SetTexCoord(unpack(native.texCoord)) end
+			art:SetVertexColor(unpack(native.color))
+			art:SetSize(native.width, native.height)
+			art:ClearAllPoints()
+			for _, point in ipairs(native.points) do art:SetPoint(unpack(point, 1, 5)) end
+			if widget:GetWidth() ~= native.widgetWidth then
+				widget:SetWidth(native.widgetWidth)
+				local frame = RQE.ScenarioChildFrame
+				local container = frame and frame.stageWidgets
+				if container and container.MarkDirtyLayout then container:MarkDirtyLayout() end
+			end
+			if widget.DecorationBottomLeft and native.skullPoints then
+				widget.DecorationBottomLeft:ClearAllPoints()
+				for _, point in ipairs(native.skullPoints) do widget.DecorationBottomLeft:SetPoint(unpack(point, 1, 5)) end
+			end
+		end
+		if widget.TierFrame and widget.TierFrame.Flag then
+			local flag = widget.TierFrame.Flag
+			if widget.RQEThemeNativeFlagColor then flag:SetVertexColor(unpack(widget.RQEThemeNativeFlagColor)) end
+			if widget.RQEThemeNativeFlagDesaturated ~= nil then flag:SetDesaturated(widget.RQEThemeNativeFlagDesaturated) end
+			for _, key in ipairs({ "RQEThemeFlagGoldGlow", "RQEThemeFlagBlueInset", "RQEThemeFlagTopEdge" }) do
+				if widget.TierFrame[key] then widget.TierFrame[key]:Hide() end
+			end
+		end
+		ApplyTorghastCurrencyField(widget, false)
+	end
+
+	local function ApplyScenarioWidgetArt(widget, widgetInfo, widgetContainer, fromSetup)
+		local frame = RQE.ScenarioChildFrame
+		if not frame or widgetContainer ~= frame.stageWidgets or not widgetInfo
+			or widget.WaitTimer or not widget.Frame or not RQE.UI then return end
+		if not RQE.UI:IsEnabled() then
+			-- Blizzard has just rebuilt this widget. Keep its newly selected
+			-- texture kit instead of replaying a previous scenario's snapshot.
+			if fromSetup then
+				widget.RQEThemeNativeArt = nil
+				widget.RQENativeStageWidth = nil
+				widget.RQENativeStageHeight = nil
+				widget.RQEThemeHasTimer = nil
+				widget.RQEThemeNativeFlagColor = nil
+				widget.RQEThemeNativeFlagDesaturated = nil
+				widget.RQEThemeAppliedArt = nil
+			end
+			RestoreScenarioNativeArt(widget)
+			return
+		end
+		if IsPartyDungeon() then return end
+
+		local textures = RQE.UI.Textures
+		local textureKit = widgetInfo.frameTextureKit or ""
+		local inTorghast = textureKit:find("jailerstower", 1, true) ~= nil
+			or RQE.API.Client.IsInJailersTower()
+		local hasTimer = widgetInfo.hasTimer or (type(widgetInfo.timerMax) == "number" and widgetInfo.timerMax > 0)
+			or widget.Timer ~= nil or (not fromSetup and widget.RQEThemeHasTimer)
+		if fromSetup then widget.RQEThemeHasTimer = not not hasTimer end
+		local isDelve = widget.TierFrame or (C_DelvesUI and C_DelvesUI.HasActiveDelve
+			and C_DelvesUI.HasActiveDelve())
+		local artwork = inTorghast and RQE.UI:GetCardTexture("torghast")
+			or (isDelve and RQE.UI:GetCardTexture("delve"))
+			or (hasTimer and RQE.UI:GetCardTexture("timed") or textures.scenarioUntimed)
+		if not artwork then return end
+
+		-- Capture Blizzard's art on Setup, or on the first visit to a widget that
+		-- predates theme initialization. Reused widgets can retain themed geometry.
+		if fromSetup or not widget.RQENativeStageWidth then
+			CaptureScenarioNativeArt(widget)
+		end
+
+		-- Blizzard owns the live widget, timer, icons, and tooltip hit regions.
+		-- Replace only its frame artwork after Blizzard has applied the texture kit.
+		widget.Frame:SetTexture(artwork)
+		widget.Frame:SetTexCoord(0, 1, 0, 1)
+		widget.Frame:SetVertexColor(1, 1, 1, 1)
+		widget.Frame:ClearAllPoints()
+		widget.Frame:SetPoint("TOPLEFT", widget, "TOPLEFT", 0, isDelve and 4 or 0)
+		if inTorghast and widget.RQENativeStageWidth then
+			-- Fill the space inside the header rails without moving Blizzard's
+			-- floor label, currency frames, skull, or their tooltip hit regions.
+			local nativeWidth = widget.RQENativeStageWidth
+			local targetWidth = math.min(nativeWidth + 64, math.max(nativeWidth, frame.header:GetWidth() - 28))
+			widget.Frame:ClearAllPoints()
+			widget.Frame:SetPoint("TOPLEFT", widget, "TOPLEFT", -(targetWidth - nativeWidth) / 2, 7)
+			if widget.Frame:GetWidth() ~= targetWidth then widget.Frame:SetWidth(targetWidth) end
+		elseif not inTorghast and not hasTimer and widget.RQENativeStageWidth and widget.RQENativeStageHeight then
+			-- Fit the untimed card between the header's gold side rails. Its native
+			-- widget height stays intact so the objective line and header retain room.
+			local nativeWidth = widget.RQENativeStageWidth
+			local targetWidth = math.min(nativeWidth + 44, math.max(nativeWidth, frame.header:GetWidth() - 28))
+			local targetHeight = math.max(1, widget.RQENativeStageHeight + (isDelve and 4 or -12))
+			if widget.Frame:GetWidth() ~= targetWidth then widget.Frame:SetWidth(targetWidth) end
+			if widget.Frame:GetHeight() ~= targetHeight then widget.Frame:SetHeight(targetHeight) end
+			if widget:GetWidth() ~= targetWidth then
+				widget:SetWidth(targetWidth)
+				-- Blizzard only schedules a new layout for a changed widget order or
+				-- direction. A theme width change also needs its container measured.
+				if widgetContainer.MarkDirtyLayout then widgetContainer:MarkDirtyLayout() end
+			end
+		elseif not inTorghast and hasTimer and widget.RQENativeStageWidth then
+			-- Widen only the timed backdrop; Blizzard keeps ownership of the timer,
+			-- countdown text, progress fill, and the widget's native dimensions.
+			local nativeWidth = widget.RQENativeStageWidth
+			local targetWidth = math.min(nativeWidth + 64, math.max(nativeWidth, frame.header:GetWidth() - 28))
+			widget.Frame:ClearAllPoints()
+			widget.Frame:SetPoint("TOPLEFT", widget, "TOPLEFT", -(targetWidth - nativeWidth) / 2, 0)
+			if widget.Frame:GetWidth() ~= targetWidth then widget.Frame:SetWidth(targetWidth) end
+		end
+		ApplyTorghastCurrencyField(widget, inTorghast and RQE.UI.ActiveTheme == "AzureGold")
+		if inTorghast and widget.DecorationBottomLeft then
+			-- The skull is Blizzard's bottom-left decoration. Keep it inside the
+			-- new rim without moving the widget or its interactive children.
+			widget.DecorationBottomLeft:ClearAllPoints()
+			widget.DecorationBottomLeft:SetPoint("BOTTOMLEFT", widget, "BOTTOMLEFT", 1, -7)
+		elseif widget.TierFrame then
+			ApplyDelveFlagArt(widget, widgetContainer)
+		end
+		widget.RQEThemeAppliedArt = {
+			texture = widget.Frame:GetTexture(), width = widget.Frame:GetWidth(),
+			height = widget.Frame:GetHeight(), widgetWidth = widget:GetWidth(),
+		}
+		return not inTorghast and hasTimer
+	end
+
+	local function EnsureScenarioWidgetArtHook()
+		if not scenarioWidgetArtHooked and type(UIWidgetBaseScenarioHeaderTemplateMixin) == "table"
+			and type(UIWidgetBaseScenarioHeaderTemplateMixin.Setup) == "function" then
+			hooksecurefunc(UIWidgetBaseScenarioHeaderTemplateMixin, "Setup", function(widget, widgetInfo, widgetContainer)
+				ApplyScenarioWidgetArt(widget, widgetInfo, widgetContainer, true)
+			end)
+			scenarioWidgetArtHooked = true
+		end
+		if not delveFlagArtHooked and type(UIWidgetTemplateScenarioHeaderDelvesMixin) == "table"
+			and type(UIWidgetTemplateScenarioHeaderDelvesMixin.Setup) == "function" then
+			hooksecurefunc(UIWidgetTemplateScenarioHeaderDelvesMixin, "Setup", function(widget, _, widgetContainer)
+				-- Remember the live story spell's finished icon for the Delve test card.
+				-- Reading this widget does not change its artwork, geometry, or tooltip.
+				local frame = RQE.ScenarioChildFrame
+				if frame and widgetContainer == frame.stageWidgets and widget.spellPool then
+					for spell in widget.spellPool:EnumerateActive() do
+						if spell:IsShown() and spell.Icon and spell.Icon:GetTexture() then
+							RQE.ScenarioCardTestDelveStoryTexture = spell.Icon:GetTexture()
+							RQE.ScenarioCardTestDelveStoryRingAtlas = spell.Border and spell.Border:GetAtlas()
+							RQE.ScenarioCardTestDelveStoryRingColor = spell.Border
+								and { spell.Border:GetVertexColor() } or nil
+							RQE.ScenarioCardTestDelveStorySize = spell.Icon:GetWidth()
+							break
+						end
+					end
+				end
+				ApplyDelveFlagArt(widget, widgetContainer)
+			end)
+			delveFlagArtHooked = true
+		end
+		if not torghastCurrencyArtHooked
+			and type(UIWidgetTemplateScenarioHeaderCurrenciesAndBackgroundMixin) == "table"
+			and type(UIWidgetTemplateScenarioHeaderCurrenciesAndBackgroundMixin.Setup) == "function" then
+			hooksecurefunc(UIWidgetTemplateScenarioHeaderCurrenciesAndBackgroundMixin, "Setup", function(widget, widgetInfo, widgetContainer)
+				local frame = RQE.ScenarioChildFrame
+				if frame and widgetContainer == frame.stageWidgets then
+					local textureKit = widgetInfo and widgetInfo.frameTextureKit or ""
+					local inTorghast = textureKit:find("jailerstower", 1, true) ~= nil
+						or RQE.API.Client.IsInJailersTower()
+					ApplyTorghastCurrencyField(widget, inTorghast and RQE.UI and RQE.UI:IsEnabled()
+						and RQE.UI.ActiveTheme == "AzureGold")
+				end
+			end)
+			torghastCurrencyArtHooked = true
+		end
+	end
+
+	local function ApplyExistingScenarioWidgetArt(widgetContainer, setHasCountdown)
+		if not RQE.UI then return end
+		local widgetInfo = {
+			hasTimer = setHasCountdown,
+			frameTextureKit = RQE.API.Client.IsInJailersTower() and "jailerstower" or "",
+		}
+		local visibleTimedWidget = false
+		local function Visit(parent)
+			for _, child in ipairs({ parent:GetChildren() }) do
+				if child.Frame and child.HeaderText and child:IsShown() then
+					if RQE.UI:IsEnabled() then
+						visibleTimedWidget = ApplyScenarioWidgetArt(child, widgetInfo, widgetContainer) or visibleTimedWidget
+					else
+						RestoreScenarioNativeArt(child)
+						visibleTimedWidget = child.Timer ~= nil or child.RQEThemeHasTimer or visibleTimedWidget
+					end
+				end
+				Visit(child)
+			end
+		end
+		Visit(widgetContainer)
+		return visibleTimedWidget
+	end
+
 	local function EnsureScenarioNativeWidgets(frame)
+		EnsureScenarioWidgetArtHook()
 		local function QueueLayout()
-			if frame:IsShown() and not frame.widgetLayoutQueued then
+			local themedStage = RQE.UI and RQE.UI:IsEnabled() and not IsPartyDungeon()
+			if (frame:IsShown() or themedStage) and not frame.widgetLayoutQueued then
 				frame.widgetLayoutQueued = true
 				RQE.API.Client.C_Timer.After(0, function()
 					frame.widgetLayoutQueued = nil
@@ -2810,9 +3350,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end)
 			end
 		end
+		if not frame.scenarioHeaderLayoutHooked then
+			-- Entry can resize the tracker after its scenario widgets were set up.
+			-- Reapply the same card geometry once the header reaches its live width.
+			frame.header:HookScript("OnSizeChanged", function()
+				if RQE.UI and RQE.UI:IsEnabled() and not IsPartyDungeon() then QueueLayout() end
+			end)
+			frame.scenarioHeaderLayoutHooked = true
+		end
 		if not frame.stageWidgets then
 			local ok, widgetContainer = pcall(CreateFrame, "Frame", nil, frame.header, "UIWidgetContainerTemplate")
 			if ok and widgetContainer and type(widgetContainer.RegisterForWidgetSet) == "function" then
+				EnsureScenarioWidgetArtHook()
 				-- The scenario header uses LOW strata for its artwork. Keep the live
 				-- widget hit regions above the tracker scroll frame so Blizzard's
 				-- built-in icon tooltip handlers receive mouseover events.
@@ -3017,8 +3566,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Update scenarioTitle and stage based on Torghast information
 		-- Previous Blizzard call changed 2026.09.25: if IsInJailersTower() and RQE.TorghastType and RQE.TorghastLayerNum and RQE.TorghastFloorID then
 		if RQE.API.Client.IsInJailersTower() and RQE.TorghastType and RQE.TorghastLayerNum and RQE.TorghastFloorID then
-			local torghastTypeString = RQE.ConvertTorghastTypeToString(RQE.TorghastType)
-			RQE.ScenarioChildFrame.scenarioTitle:SetText("Torghast, Tower of the Damned\n" .. torghastTypeString)
+			RQE.ScenarioChildFrame.scenarioTitle:SetText("Torghast, Tower of the Damned")
 			RQE.ScenarioChildFrame.stage:SetText("Layer " .. RQE.TorghastLayerNum .. " - Floor " .. RQE.TorghastFloorID)
 		end
 	end
@@ -3075,9 +3623,360 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-------------------------------------------------------
 
 	-- Function to update the scenario frame with the latest information
+	local function StyleFallbackScenarioHeader(frame, themedFallback)
+		if frame.fallbackTextThemed == themedFallback then return end
+		frame.fallbackTextThemed = themedFallback
+		frame.scenarioTitle:ClearAllPoints()
+		frame.stage:ClearAllPoints()
+		frame.title:ClearAllPoints()
+		if themedFallback then
+			-- Keep all three lines inside the inner card, with stage and step grouped below the event name.
+			frame.scenarioTitle:SetPoint("TOPLEFT", frame.header, "TOPLEFT", FALLBACK_SCENARIO_TEXT_INSET, -30)
+			frame.scenarioTitle:SetHeight(20)
+			frame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+			frame.stage:SetPoint("TOPLEFT", frame.header, "TOPLEFT", FALLBACK_SCENARIO_TEXT_INSET, -58)
+			frame.stage:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -FALLBACK_SCENARIO_TEXT_INSET, -58)
+			frame.stage:SetHeight(18)
+			frame.stage:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+			frame.title:SetPoint("TOPLEFT", frame.header, "TOPLEFT", FALLBACK_SCENARIO_TEXT_INSET, -72)
+			frame.title:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -FALLBACK_SCENARIO_TEXT_INSET, -72)
+			frame.title:SetHeight(24)
+			frame.title:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
+		else
+			frame.scenarioTitle:SetPoint("TOPLEFT", frame.header, "TOPLEFT", 10, -10)
+			frame.scenarioTitle:SetHeight(0)
+			frame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
+			frame.stage:SetPoint("TOPLEFT", frame.scenarioTitle, "TOPLEFT", 0, -40)
+			frame.stage:SetHeight(0)
+			frame.stage:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
+			frame.title:SetPoint("TOPLEFT", frame.stage, "TOPLEFT", 0, -25)
+			frame.title:SetHeight(0)
+			frame.title:SetFont("Fonts\\SKURRI.TTF", 17, "OUTLINE")
+		end
+	end
+
+	local scenarioCardTestKinds = {
+		follower = true, normal = true, heroic = true, mythic = true,
+		torghast = true, timed = true, delve = true,
+	}
+
+	function RQE:IsScenarioCardTestEnabled()
+		return self.IsRetail and self.ScenarioCardTestEnabled == true
+			and ((self.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution"))
+				or (self.API.IsAddOnLoaded and self.API.IsAddOnLoaded("RQE_Contribution")))
+	end
+
+	local function RefreshScenarioCardTestLayout()
+		RQE.UpdateScenarioFrame()
+		if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+		if RQE.UpdateCampaignFrameAnchor then RQE.UpdateCampaignFrameAnchor() end
+		if RQE.UpdateRQEQuestFrameVisibility then RQE:UpdateRQEQuestFrameVisibility() end
+		if RQE.QuestScrollFrameToTop then RQE.QuestScrollFrameToTop(true) end
+	end
+
+	function RQE:SetScenarioCardTestEnabled(enabled)
+		if not self.IsRetail or self.API.Client.InCombatLockdown() then return false end
+		if enabled and not (self.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			or (self.API.IsAddOnLoaded and self.API.IsAddOnLoaded("RQE_Contribution"))) then return false end
+		self.ScenarioCardTestEnabled = enabled == true
+		self.ScenarioCardTestKind = self.ScenarioCardTestKind or "timed"
+		if enabled and self.ScenarioCardTestKind == "timed" then self.ScenarioCardTestTimerStart = GetTime() end
+		RefreshScenarioCardTestLayout()
+		return true
+	end
+
+	function RQE:SetScenarioCardTestKind(kind)
+		if not self:IsScenarioCardTestEnabled() or not scenarioCardTestKinds[kind]
+			or self.API.Client.InCombatLockdown() then return false end
+		self.ScenarioCardTestKind = kind
+		if kind == "timed" then self.ScenarioCardTestTimerStart = GetTime() end
+		RefreshScenarioCardTestLayout()
+		return true
+	end
+
+	local function UpdateScenarioCardTestClock(preview)
+		local left = math.max(0, 633 - (GetTime() - (RQE.ScenarioCardTestTimerStart or GetTime())))
+		local seconds = math.ceil(left)
+		preview.clock:SetText(("%02d:%02d"):format(math.floor(seconds / 60), seconds % 60))
+	end
+
+	local function EnsureScenarioCardTestStage(frame)
+		if frame.scenarioCardTestStage then return frame.scenarioCardTestStage end
+		local preview = CreateFrame("Frame", nil, frame.header)
+		preview:SetPoint("TOPLEFT", frame.header, "TOPLEFT", 12, -32)
+		preview:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -12, -32)
+		preview:SetHeight(80)
+		preview:EnableMouse(false)
+		preview.art = preview:CreateTexture(nil, "BACKGROUND")
+		preview.art:SetAllPoints()
+		preview.heading = preview:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		preview.heading:SetPoint("TOPLEFT", preview, "TOPLEFT", 48, -12)
+		preview.heading:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
+		preview.heading:SetTextColor(1, 0.91, 0.69)
+		preview.delveHeading = preview:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		preview.delveHeading:SetPoint("TOPLEFT", preview, "TOPLEFT", 26, -7)
+		preview.delveHeading:SetSize(230, 36)
+		preview.delveHeading:SetFont("Fonts\\FRIZQT__.TTF", 17, "OUTLINE")
+		preview.delveHeading:SetJustifyH("LEFT")
+		preview.delveHeading:SetJustifyV("MIDDLE")
+		preview.delveHeading:SetTextColor(1, 0.91, 0.69)
+		preview.delveHeading:SetShadowOffset(1, -1)
+		preview.delveHeading:SetShadowColor(0, 0, 0)
+		preview.delveHeading:SetText("Collegiate Calamity")
+		preview.clock = preview:CreateFontString(nil, "OVERLAY", "GameFontHighlightHuge")
+		preview.clock:SetPoint("TOPLEFT", preview, "TOPLEFT", 35, -36)
+		preview.clock:SetFont("Fonts\\FRIZQT__.TTF", 24, "OUTLINE")
+		preview.clock:SetTextColor(1, 1, 1)
+		preview.bar = preview:CreateTexture(nil, "OVERLAY")
+		preview.bar:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 29, 6)
+		preview.bar:SetPoint("BOTTOMRIGHT", preview, "BOTTOMRIGHT", -54, 6)
+		preview.bar:SetHeight(10)
+		preview.bar:SetTexture("Interface\\TargetingFrame\\UI-StatusBar")
+		preview.bar:SetVertexColor(1, 0.74, 0.03)
+		preview.skull = preview:CreateTexture(nil, "OVERLAY")
+		preview.skull:SetSize(32, 32)
+		preview.skull:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 23, 16)
+		preview.skull:SetAtlas("jailerstower-scenario-decoration", false)
+		preview.deathsIcon = preview:CreateTexture(nil, "OVERLAY")
+		preview.deathsIcon:SetSize(14, 18)
+		preview.deathsIcon:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 63, 10)
+		preview.lives = preview:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		preview.lives:SetPoint("LEFT", preview.deathsIcon, "RIGHT", 8, 0)
+		preview.lives:SetText("5")
+		preview.currencyIcon = preview:CreateTexture(nil, "OVERLAY")
+		preview.currencyIcon:SetSize(21, 21)
+		preview.currencyIcon:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 155, 9)
+		local deathsInfo = C_CurrencyInfo.GetCurrencyInfo(1763)
+		local phantasmaInfo = C_CurrencyInfo.GetCurrencyInfo(1728)
+		preview.deathsIcon:SetTexture(deathsInfo and deathsInfo.iconFileID)
+		preview.currencyIcon:SetTexture(phantasmaInfo and phantasmaInfo.iconFileID)
+		preview.currencyField = preview:CreateTexture(nil, "BORDER", nil, 2)
+		preview.currencyField:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 148, 6)
+		preview.currencyField:SetPoint("BOTTOMRIGHT", preview, "BOTTOMRIGHT", -28, 6)
+		preview.currencyField:SetHeight(27)
+		preview.currencyField:SetColorTexture(0.025, 0.07, 0.10, 0.98)
+		preview.currencyFill = preview:CreateTexture(nil, "BORDER", nil, 3)
+		preview.currencyFill:SetPoint("TOPLEFT", preview.currencyField, "TOPLEFT", 2, -2)
+		preview.currencyFill:SetPoint("BOTTOMRIGHT", preview.currencyField, "BOTTOMRIGHT", -2, 2)
+		preview.currencyFill:SetColorTexture(0.13, 0.21, 0.26, 0.96)
+		preview.currency = preview:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		preview.currency:SetPoint("LEFT", preview.currencyIcon, "RIGHT", 7, 0)
+		preview.currency:SetText("0")
+		preview.tier = CreateFrame("Frame", nil, preview)
+		preview.tier:SetPoint("TOPRIGHT", preview, "TOPRIGHT", -20, -2)
+		preview.tier.flag = preview.tier:CreateTexture(nil, "ARTWORK")
+		preview.tier.flag:SetPoint("TOPLEFT")
+		preview.tier.flag:SetAtlas("delves-scenario-flag", true)
+		preview.tier:SetSize(preview.tier.flag:GetWidth(), preview.tier.flag:GetHeight())
+		preview.tier.flag:SetDesaturated(true)
+		preview.tier.flag:SetVertexColor(1, 0.9, 0.04)
+		preview.tier.goldGlow = preview.tier:CreateTexture(nil, "ARTWORK", nil, 1)
+		preview.tier.goldGlow:SetAllPoints(preview.tier.flag)
+		preview.tier.goldGlow:SetBlendMode("ADD")
+		preview.tier.goldGlow:SetAtlas("delves-scenario-flag", false)
+		preview.tier.goldGlow:SetDesaturated(true)
+		preview.tier.goldGlow:SetVertexColor(1, 0.94, 0.04)
+		preview.tier.goldGlow:SetAlpha(0.7)
+		preview.tier.inset = preview.tier:CreateTexture(nil, "ARTWORK", nil, 2)
+		preview.tier.inset:SetPoint("TOPLEFT", preview.tier.flag, "TOPLEFT", 4, -4)
+		preview.tier.inset:SetPoint("BOTTOMRIGHT", preview.tier.flag, "BOTTOMRIGHT", -4, 5)
+		preview.tier.inset:SetAtlas("delves-scenario-flag", false)
+		preview.tier.inset:SetDesaturated(true)
+		preview.tier.inset:SetVertexColor(0.18, 0.43, 1)
+		preview.tier.topEdge = preview.tier:CreateTexture(nil, "ARTWORK", nil, 3)
+		preview.tier.topEdge:SetPoint("TOPLEFT", preview.tier.flag, "TOPLEFT", 4, -2)
+		preview.tier.topEdge:SetPoint("TOPRIGHT", preview.tier.flag, "TOPRIGHT", -4, -2)
+		preview.tier.topEdge:SetHeight(2)
+		preview.tier.topEdge:SetColorTexture(1, 0.84, 0.08, 0.8)
+		preview.tier.text = preview.tier:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		preview.tier.text:SetFontObject(GameFontHighlightLarge)
+		preview.tier.text:SetPoint("TOP", preview.tier.flag, "TOP", -2, -7)
+		preview.tier.text:SetText("1")
+		preview.story = CreateFrame("Frame", nil, preview)
+		preview.story:SetSize(28, 28)
+		preview.story:SetPoint("LEFT", preview, "BOTTOMLEFT", 24, 27)
+		preview.story:EnableMouse(false)
+		preview.story.icon = preview.story:CreateTexture(nil, "ARTWORK")
+		preview.story.icon:SetAllPoints()
+		preview.story.mask = preview.story:CreateMaskTexture()
+		preview.story.mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
+		preview.story.mask:SetPoint("TOPLEFT", preview.story.icon, "TOPLEFT", 2, -2)
+		preview.story.mask:SetPoint("BOTTOMRIGHT", preview.story.icon, "BOTTOMRIGHT", -2, 2)
+		preview.story.icon:AddMaskTexture(preview.story.mask)
+		preview.story.border = preview.story:CreateTexture(nil, "OVERLAY")
+		preview.story.border:SetAllPoints()
+		preview.anima = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+		preview.anima:SetPoint("TOPLEFT", frame.header, "BOTTOMLEFT", 38, -14)
+		preview.anima:SetPoint("TOPRIGHT", frame.header, "BOTTOMRIGHT", -38, -14)
+		preview.anima:SetHeight(36)
+		preview.anima:SetBackdrop({ bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+			edgeFile = "Interface/Tooltips/UI-Tooltip-Border", edgeSize = 12 })
+		preview.anima:SetBackdropColor(0.13, 0.13, 0.14, 1)
+		preview.anima:SetBackdropBorderColor(0.42, 0.42, 0.44, 1)
+		preview.anima.text = preview.anima:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+		preview.anima.text:SetPoint("CENTER")
+		preview.anima.text:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+		preview.anima.text:SetText("Anima Powers |cffffd100(0)|r")
+		preview:SetScript("OnUpdate", function(self, elapsed)
+			if RQE.ScenarioCardTestKind ~= "timed" then return end
+			self.testClockElapsed = (self.testClockElapsed or 0) + elapsed
+			if self.testClockElapsed >= 0.1 then
+				self.testClockElapsed = 0
+				UpdateScenarioCardTestClock(self)
+			end
+		end)
+		preview:Hide()
+		preview.anima:Hide()
+		frame.scenarioCardTestStage = preview
+		return preview
+	end
+
+	local function RenderScenarioCardTest(frame)
+		local kind = RQE.ScenarioCardTestKind or "timed"
+		local dungeon = kind == "follower" or kind == "normal" or kind == "heroic" or kind == "mythic"
+		frame.scenarioCardTestActive = true
+		StyleFallbackScenarioHeader(frame, false)
+		if frame.stageWidgets then frame.stageWidgets:RegisterForWidgetSet(nil); frame.stageWidgets:Hide() end
+		frame.stageWidgetSetID = nil
+		if frame.topWidgets then frame.topWidgets:RegisterForWidgetSet(nil); frame.topWidgets:Hide() end
+		frame.topWidgetsRegistered = nil
+		if frame.bottomWidgets then frame.bottomWidgets:RegisterForWidgetSet(nil); frame.bottomWidgets:Hide() end
+		frame.bottomWidgetsRegistered = nil
+		if frame.mawBuffs then frame.mawBuffs:Hide(); frame.mawBuffs.List:Hide() end
+		if frame.challengePanel then frame.challengePanel:Hide(); frame.challengeTimerID = nil end
+		if frame.scenarioProgressBar then frame.scenarioProgressBar:Hide() end
+		if frame.timerFrame then frame.timerFrame:Hide() end
+		frame.stage:Hide()
+		frame.title:Hide()
+		frame.scenarioTitle:Show()
+		frame.body:Show()
+		-- Dungeon cards use the live 126-unit header. The sample widgets occupy
+		-- the same 148-unit header as their native stage counterparts.
+		if dungeon then
+			frame.previewTestHeaderHeight = nil
+		else
+			frame.previewTestHeaderHeight = 148
+		end
+		frame.previewTestMawBuffs = kind == "torghast"
+		frame.timedCriteriaIndex = nil
+		frame.hasNativeCountdown = kind == "timed"
+		local preview = EnsureScenarioCardTestStage(frame)
+		preview:SetShown(not dungeon)
+		preview.anima:SetShown(kind == "torghast")
+		if dungeon then
+			local card = EnsureDungeonStageCard(frame)
+			local texture = kind ~= "mythic" and RQE.UI and RQE.UI:IsEnabled()
+				and RQE.UI:GetCardTexture(kind)
+			if texture then
+				card.background:SetTexture(texture)
+				card.background:SetTexCoord(0, 1, 0, 1)
+			else
+				card.background:SetAtlas("evergreen-scenario-trackerheader", false)
+			end
+			local difficulty = kind == "follower" and 205 or kind == "normal" and 1
+				or kind == "heroic" and 2 or 23
+			UpdateDungeonDifficultyBadge(card, difficulty, kind ~= "mythic")
+			card.difficultyBadge:EnableMouse(false)
+			if kind ~= "mythic" then card.difficultyBadge.count:SetText("5") end
+			card.name:SetText("Murder Row")
+			card:Show()
+			frame.scenarioTitle:SetText(TRACKER_HEADER_DUNGEON or "Dungeon")
+			frame.body:SetText("0/1  Kystia Manaheart defeated\n0/1  Zaen Bladesorrow defeated\n0/1  Xathluux the Annihilator defeated\n0/1  Lithiel Cinderfury defeated")
+		else
+			if frame.dungeonStageCard then frame.dungeonStageCard:Hide() end
+			preview.art:ClearAllPoints()
+			if kind == "delve" then
+				preview.art:SetPoint("TOPLEFT", preview, "TOPLEFT", 2, 5)
+				preview.art:SetPoint("BOTTOMRIGHT", preview, "BOTTOMRIGHT", -2, -3)
+			else
+				preview.art:SetAllPoints()
+			end
+			local texture = RQE.UI and RQE.UI:IsEnabled() and RQE.UI:GetCardTexture(kind)
+			if texture then
+				preview.art:SetTexture(texture)
+				preview.art:SetTexCoord(0, 1, 0, 1)
+			else
+				local atlas = kind == "torghast" and "jailerstower-scenario-trackerheader"
+					or "evergreen-scenario-trackerheader"
+				if not C_Texture.GetAtlasInfo(atlas) then atlas = "evergreen-scenario-trackerheader" end
+				preview.art:SetAtlas(atlas, false)
+			end
+			preview.clock:SetShown(kind == "timed")
+			preview.bar:SetShown(kind == "timed")
+			preview.skull:SetShown(kind == "torghast")
+			preview.deathsIcon:SetShown(kind == "torghast")
+			preview.lives:SetShown(kind == "torghast")
+			preview.currencyIcon:SetShown(kind == "torghast")
+			preview.currencyField:SetShown(kind == "torghast")
+			preview.currencyFill:SetShown(kind == "torghast")
+			preview.currency:SetShown(kind == "torghast")
+			preview.tier:SetShown(kind == "delve")
+			preview.delveHeading:SetShown(kind == "delve")
+			preview.heading:SetShown(kind ~= "delve")
+			preview.story:SetShown(kind == "delve")
+			local azure = RQE.UI and RQE.UI:IsEnabled()
+			preview.tier.flag:SetDesaturated(not not azure)
+			preview.tier.flag:SetVertexColor(1, azure and 0.9 or 1, azure and 0.04 or 1)
+			preview.tier.goldGlow:SetShown(not not azure)
+			preview.tier.inset:SetShown(not not azure)
+			preview.tier.topEdge:SetShown(not not azure)
+			if kind == "delve" then
+				local storySize = RQE.ScenarioCardTestDelveStorySize or 28
+				preview.story:SetSize(storySize, storySize)
+				preview.story.icon:SetTexture(RQE.ScenarioCardTestDelveStoryTexture
+					or "Interface\\Icons\\Spell_Shadow_Twilight")
+				local ringAtlas = RQE.ScenarioCardTestDelveStoryRingAtlas or "delves-scenario-affix-ring-frame"
+				preview.story.border:SetAtlas(C_Texture.GetAtlasInfo(ringAtlas) and ringAtlas
+					or "Artifacts-PerkRing-Final", false)
+				if RQE.ScenarioCardTestDelveStoryRingColor then
+					preview.story.border:SetVertexColor(unpack(RQE.ScenarioCardTestDelveStoryRingColor))
+				else
+					preview.story.border:SetVertexColor(1, 1, 1, 1)
+				end
+			end
+			if kind == "timed" then
+				preview.heading:ClearAllPoints()
+				preview.heading:SetPoint("TOPLEFT", preview, "TOPLEFT", 38, -12)
+				frame.scenarioTitle:SetText("Superbloom")
+				preview.heading:SetText("The Tree Rises")
+				frame.body:SetText("0/1  Consume Dreamfruit for the journey")
+				UpdateScenarioCardTestClock(preview)
+			elseif kind == "torghast" then
+				preview.heading:ClearAllPoints()
+				preview.heading:SetPoint("TOPLEFT", preview, "TOPLEFT", 50, -18)
+				frame.scenarioTitle:SetText("Torghast, Tower of the Damned")
+				preview.heading:SetText("Floor 1")
+				frame.body:SetText("")
+			else
+				frame.scenarioTitle:SetText("Delves")
+				frame.body:SetText("0/1  Sir Finley Mrrgglton spoken to")
+			end
+		end
+		frame:Show()
+		RQE.SetScenarioChildFrameHeight()
+	end
+
 	function RQE.UpdateScenarioFrame()
 			local frame = RQE.ScenarioChildFrame
 			if not frame then return end
+			if RQE:IsScenarioCardTestEnabled() then
+				if RQE.API.Client.InCombatLockdown() then return end
+				RQE.InitializeScenarioFrame()
+				RenderScenarioCardTest(frame)
+				return
+			end
+			frame.previewTestHeaderHeight = nil
+			frame.previewTestMawBuffs = nil
+			if frame.scenarioCardTestActive then
+				frame.scenarioCardTestActive = nil
+				if frame.topWidgets then frame.topWidgets:Show() end
+				if frame.bottomWidgets then frame.bottomWidgets:Show() end
+			end
+			if frame.scenarioCardTestStage then
+				frame.scenarioCardTestStage:Hide()
+				frame.scenarioCardTestStage.anima:Hide()
+			end
+			if frame.dungeonStageCard then frame.dungeonStageCard.difficultyBadge:EnableMouse(true) end
 			if RQE.db.profile.mythicScenarioMode or not RQE.API.Client.C_Scenario.IsInScenario() then
 				if frame.stageWidgets then frame.stageWidgets:RegisterForWidgetSet(nil) end
 				frame.stageWidgetSetID = nil
@@ -3100,12 +3999,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				frame.bottomWidgets:RegisterForWidgetSet(252)
 				frame.bottomWidgetsRegistered = true
 			end
-			local scenarioName, currentStage, numStages = RQE.API.Client.C_Scenario.GetInfo()
+			local scenarioName, currentStage, numStages, _, _, _, _, _, _, _, _, textureKit = RQE.API.Client.C_Scenario.GetInfo()
 			if not scenarioName or not numStages or numStages < 1 then
 				frame:Hide()
 				return
 			end
 			local stepName, stepDescription, numCriteria, _, _, _, _, _, _, weightedProgress, _, widgetSetID = RQE.API.Client.C_Scenario.GetStepInfo()
+			local isPartyDungeon, dungeonDifficultyID = IsPartyDungeon()
 			local timerID, elapsed, timeLimit = GetActiveChallengeRun()
 			if timerID then
 				UpdateChallengePanel(frame, timerID, elapsed, timeLimit)
@@ -3115,6 +4015,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 
 			local showNativeStage = false
+			local stageHasCountdown = false
 			local hasWidgetSet = type(widgetSetID) == "number" and widgetSetID > 0
 			if frame.stageWidgets then
 				if frame.stageWidgetSetID ~= (hasWidgetSet and widgetSetID or nil) then
@@ -3123,17 +4024,71 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end
 				frame.stageWidgets:SetShown(hasWidgetSet and not timerID)
 				showNativeStage = not timerID and hasWidgetSet and frame.stageWidgets:HasAnyWidgetsShowing()
+				EnsureScenarioWidgetArtHook()
+				stageHasCountdown = showNativeStage and WidgetSetHasCountdown(widgetSetID)
+				if showNativeStage then
+					-- A live scenario header can expose its timer even when the widget-set
+					-- metadata probe misses it. Use the same timer state as its artwork.
+					stageHasCountdown = ApplyExistingScenarioWidgetArt(frame.stageWidgets, stageHasCountdown)
+						or stageHasCountdown
+				end
+			local themedStage = showNativeStage and RQE.UI and RQE.UI:IsEnabled()
+					and not RQE.API.Client.IsInJailersTower()
+					and not isPartyDungeon
+				local themedUntimedStage = themedStage and not stageHasCountdown
+				local themedTimedStage = themedStage and stageHasCountdown
+				local isDelve = C_DelvesUI and C_DelvesUI.HasActiveDelve and C_DelvesUI.HasActiveDelve()
+				local stageOffsetY = themedUntimedStage and (isDelve and -31 or -36) or (themedTimedStage and -32 or -38)
+				-- The container measures the themed widget width. Its TOP anchor
+				-- already centers the entire card, so no second width offset is needed.
+				local stageOffsetX = 0
+				-- A stage widget set can be empty briefly between steps. Keep its last
+				-- anchor until the next live widget is ready to determine placement.
+				if showNativeStage and (frame.stageWidgetsAnchorX ~= stageOffsetX or frame.stageWidgetsAnchorY ~= stageOffsetY) then
+					frame.stageWidgets:ClearAllPoints()
+					frame.stageWidgets:SetPoint("TOP", frame.header, "TOP", stageOffsetX, stageOffsetY)
+					frame.stageWidgetsAnchorX = stageOffsetX
+					frame.stageWidgetsAnchorY = stageOffsetY
+				end
 			end
 			-- Native timer widgets read the live scenario state, including a stage
 			-- already running when the player arrives. Other widgets keep RQE's clock.
-			frame.hasNativeCountdown = (showNativeStage and WidgetSetHasCountdown(widgetSetID))
+			frame.hasNativeCountdown = stageHasCountdown
 				or (frame.topWidgets and frame.topWidgets:IsShown()
 					and frame.topWidgets:HasAnyWidgetsShowing() and WidgetSetHasCountdown(514))
 				or (frame.bottomWidgets and frame.bottomWidgets:IsShown()
 					and frame.bottomWidgets:HasAnyWidgetsShowing() and WidgetSetHasCountdown(252))
 
-			frame.scenarioTitle:SetText(scenarioName)
-			if timerID or showNativeStage then
+			local showDungeonCard = isPartyDungeon and not showNativeStage
+			if showDungeonCard then
+				local card = EnsureDungeonStageCard(frame)
+				local themedTexture = GetThemedDungeonCardTexture(dungeonDifficultyID, timerID)
+				if themedTexture then
+					card.background:SetTexture(themedTexture)
+					card.background:SetTexCoord(0, 1, 0, 1)
+				else
+					local atlas = (textureKit or "evergreen-scenario") .. "-trackerheader"
+					if not C_Texture.GetAtlasInfo(atlas) then
+						atlas = "evergreen-scenario-trackerheader"
+					end
+					card.background:SetAtlas(atlas, false)
+				end
+				UpdateDungeonDifficultyBadge(card, dungeonDifficultyID, themedTexture ~= nil)
+				card.name:SetText(scenarioName)
+				card:Show()
+			elseif frame.dungeonStageCard then
+				frame.dungeonStageCard:Hide()
+			end
+			if frame.challengePanel then
+				frame.challengePanel:ClearAllPoints()
+				local panelTop = showDungeonCard and -125 or -36
+				frame.challengePanel:SetPoint("TOPLEFT", frame.header, "TOPLEFT", 10, panelTop)
+				frame.challengePanel:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -10, panelTop)
+			end
+			frame.scenarioTitle:SetText(isPartyDungeon and (TRACKER_HEADER_DUNGEON or "Dungeon") or scenarioName)
+			local showFallbackStage = not timerID and not showNativeStage and not showDungeonCard
+			StyleFallbackScenarioHeader(frame, not not (showFallbackStage and RQE.UI and RQE.UI:IsEnabled()))
+			if not showFallbackStage then
 				frame.stage:Hide()
 				frame.title:Hide()
 			else
@@ -3437,6 +4392,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			GameTooltip:SetHeight(0)
 			GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 			GameTooltip:SetText(questTitle)
+			RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 
 			GameTooltip:AddLine(" ")
 
@@ -3446,10 +4402,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				GameTooltip:AddLine(" ")
 			end
 
-			RQE:QuestRewardsTooltip(GameTooltip, questID)
+			RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 			GameTooltip:AddLine(" ")
-			GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)
+			GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)
 			GameTooltip:Show()
 		end)
 
@@ -3476,6 +4432,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Use Blizzard's live challenge and scenario countdowns when available.
 	local function UpdateScenarioTimer(self, elapsed)
+		if RQE:IsScenarioCardTestEnabled() then return end
 		self.updateAccumulator = (self.updateAccumulator or 0) + elapsed
 		if self.updateAccumulator < 0.5 then return end
 		self.updateAccumulator = 0
@@ -4196,7 +5153,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-------------------------------------------------------
 
 	-- Populates the Game Tooltip with Quest Reward information when hovering over a quest
-	function RQE:QuestRewardsTooltip(tooltip, questID)
+	function RQE:QuestRewardsTooltip(tooltip, questID, includeReputationChoices)
 		-- Reward Qualities
 		local customItemQualityColors = {
 			[0] = { r = 0.62, g = 0.62, b = 0.62 },  -- Poor (grey)
@@ -4243,6 +5200,20 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Previous Blizzard call changed 2026.09.25: if RQE.API.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
 		if RQE.API.IsWorldQuest(questID) or RQE.API.Client.C_TaskQuest.IsActive(questID) then
 			tooltip:AddLine("Rewards:", 1, 1, 1)
+
+			-- Task/world reward paths return before the ordinary choice renderer.
+			-- Frame hovers opt in; chat-link reward presentation stays unchanged.
+			local reputationChoices = includeReputationChoices and RQE.API.GetQuestReputationChoiceRewards(questID, choiceItemsCount) or {}
+			if #reputationChoices > 0 then
+				tooltip:AddLine(choiceItemsCount == 1 and "You will receive:" or "Choose one of the following rewards:")
+				for _, reward in ipairs(reputationChoices) do
+					local icon = reward.texture and ("|T" .. reward.texture .. ":16|t ") or ""
+					local text = icon .. FormatLargeNumber(reward.amount) .. " " .. reward.name
+					local color = customItemQualityColors[reward.quality] or { r = 1, g = 1, b = 1 }
+					tooltip:AddLine(text, color.r, color.g, color.b, true)
+				end
+				tooltip:AddLine(" ")
+			end
 
 			-- XP and money
 			-- Previous Blizzard call changed 2026.09.25: local xp = GetQuestLogRewardXP(questID)
@@ -5220,6 +6191,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						GameTooltip:SetHeight(0)
 						GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 						GameTooltip:SetText(info.title)
+						RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 
 						GameTooltip:AddLine(" ")
 
@@ -5249,33 +6221,6 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							GameTooltip:AddLine(" ")
 						end
 
-						if questID then
-							-- Check if the quest is ready to be turned in
-							-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.ReadyForTurnIn(questID) then
-							if RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) then
-								GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
-							-- Check if the quest is completed
-							-- Previous Blizzard call changed 2026.09.25: elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
-							elseif RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) then
-								GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
-								-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-								if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-									GameTooltip:AddLine("Status: Completed on Warband", 0, 1, 0) -- Green color for completed on warband & character
-								else
-									GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
-								end
-							else
-								GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-								-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-								if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-									GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
-								else
-									GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
-								end
-							end
-							GameTooltip:AddLine(" ")
-						end
-
 						-- Add objectives
 						if objectivesText and objectivesText ~= "" then
 							GameTooltip:AddLine("Objectives:")
@@ -5286,13 +6231,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						end
 
 						-- Add Rewards
-						RQE:QuestRewardsTooltip(GameTooltip, questID)
+						RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 						-- Party Members' Quest Progress
-						-- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
-						if RQE.API.Client.IsInGroup() then
-							-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
-							if RQE.API.Client.IsInRaid() then return end
+						-- Party progress is only available outside raid groups.
+						if RQE.API.Client.IsInGroup() and not RQE.API.Client.IsInRaid() then
 							-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
 							local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
 							if tooltipData and tooltipData.lines then
@@ -5331,7 +6274,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						end
 
 						GameTooltip:AddLine(" ")
-						GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
+						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 						GameTooltip:Show()
 					end)
 
@@ -5341,6 +6284,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						GameTooltip:SetHeight(0)
 						GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 						GameTooltip:SetText(info.title)
+						RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 
 						GameTooltip:AddLine(" ")
 
@@ -5370,33 +6314,6 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							GameTooltip:AddLine(" ")
 						end
 
-						if questID then
-							-- Check if the quest is ready to be turned in
-							-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.ReadyForTurnIn(questID) then
-							if RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) then
-								GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
-							-- Check if the quest is completed
-							-- Previous Blizzard call changed 2026.09.25: elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
-							elseif RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) then
-								GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
-								-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-								if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-									GameTooltip:AddLine("Status: Completed on Warband", 0, 1, 0) -- Green color for completed on warband & character
-								else
-									GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
-								end
-							else
-								GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-								-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-								if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-									GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
-								else
-									GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
-								end
-							end
-							GameTooltip:AddLine(" ")
-						end
-
 						-- Add objectives
 						if objectivesText and objectivesText ~= "" then
 							GameTooltip:AddLine("Objectives:")
@@ -5407,13 +6324,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						end
 
 						-- Add Rewards
-						RQE:QuestRewardsTooltip(GameTooltip, questID)
+						RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 						-- Party Members' Quest Progress
-						-- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
-						if RQE.API.Client.IsInGroup() then
-							-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
-							if RQE.API.Client.IsInRaid() then return end
+						-- Party progress is only available outside raid groups.
+						if RQE.API.Client.IsInGroup() and not RQE.API.Client.IsInRaid() then
 							GameTooltip:AddLine(" ")
 							-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
 							local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
@@ -5453,7 +6368,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						end
 
 						GameTooltip:AddLine(" ")
-						GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
+						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 						GameTooltip:Show()
 					end)
 
@@ -5943,6 +6858,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 					-- Add the quest title
 					GameTooltip:AddLine(questTitle)
+					RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 					GameTooltip:AddLine(" ")  -- Blank line
 
 					-- Add description
@@ -5968,7 +6884,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					end
 
 					-- Add Rewards
-					RQE:QuestRewardsTooltip(GameTooltip, questID)
+					RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 					-- Add time left
 					-- Previous Blizzard call changed 2026.09.25: local timeLeftString = FormatTimeLeft(C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
@@ -5979,7 +6895,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					end
 
 					-- Add the quest ID
-					GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)  -- Aquamarine color
+					GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)  -- Aquamarine color
 
 					GameTooltip:Show()
 				end)
