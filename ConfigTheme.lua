@@ -16,6 +16,16 @@ local COMPOSED_OPTIONS = setmetatable({}, { __mode = "k" })
 local ROOT = "Interface\\AddOns\\RQE\\Media\\UI\\"
 local PORTRAIT = "Interface\\AddOns\\RQE\\Textures\\rhodan.tga"
 local WHITE = "Interface\\Buttons\\WHITE8X8"
+local PREVIEW_TEXTURE_SIZE = 1024
+local PREVIEW_CARD_WIDTH = 2.5
+local PREVIEW_IMAGE_SIZE = {
+	helper = { 384, 324 },
+	tracker = { 336, 416 },
+}
+-- AceGUI Flow uses alignoffset when measuring a shared row. Give both cards
+-- the same offset, large enough for the taller image, so the scroll frame
+-- receives the full row height while the two headings stay top-aligned.
+local PREVIEW_ROW_ALIGN_OFFSET = math.ceil((math.max(PREVIEW_IMAGE_SIZE.helper[2], PREVIEW_IMAGE_SIZE.tracker[2]) + 96) / 2)
 
 local COLORS = {
 	azure = { 0 / 255, 87 / 255, 184 / 255 },
@@ -25,6 +35,141 @@ local COLORS = {
 	raised = { 18 / 255, 24 / 255, 34 / 255 },
 	muted = { 145 / 255, 156 / 255, 174 / 255 },
 }
+
+-- Keep each caption with its image when AceConfig wraps the cards into one
+-- column. The fixed sizes also give future themes the same preview layout.
+local function registerThemePreviewWidget()
+	local AceGUI = LibStub("AceGUI-3.0", true)
+	local widgetType = "RQEThemePreview"
+	if not AceGUI or AceGUI:GetWidgetVersion(widgetType) then return end
+
+	local function updateLayout(widget)
+		if widget.resizing then return end
+		widget.resizing = true
+		local width = widget.frame.width or widget.frame:GetWidth() or 425
+		widget.caption:SetWidth(width - 20)
+		local captionHeight = math.max(widget.caption:GetStringHeight() or 0, 16)
+		local imageWidth = math.min(widget.previewWidth or 32, width - 20)
+		local imageHeight = (widget.previewHeight or 32) * imageWidth / (widget.previewWidth or 32)
+		widget.rule:SetWidth(width - 20)
+		widget.rule:ClearAllPoints()
+		widget.rule:SetPoint("TOPLEFT", widget.frame, "TOPLEFT", 10, -(16 + captionHeight + 7))
+		widget.image:SetSize(imageWidth, imageHeight)
+		widget.image:ClearAllPoints()
+		widget.image:SetPoint("TOP", widget.frame, "TOP", 0, -(16 + captionHeight + 16))
+		local height = 16 + captionHeight + 16 + imageHeight + 18
+		widget.frame:SetHeight(height)
+		widget.frame.height = height
+		widget.resizing = nil
+	end
+
+	local methods = {
+		OnAcquire = function(self)
+			self.alignoffset = PREVIEW_ROW_ALIGN_OFFSET
+			self.previewWidth, self.previewHeight = 32, 32
+			self.frame:SetWidth(425)
+			self.frame.width = 425
+			self.caption:SetText("")
+			self.image:SetTexture(nil)
+			updateLayout(self)
+		end,
+		OnRelease = function(self)
+			self.image:SetTexture(nil)
+		end,
+		OnWidthSet = function(self)
+			updateLayout(self)
+		end,
+		SetText = function(self, value)
+			self.caption:SetText(value or "")
+			updateLayout(self)
+		end,
+		SetFontObject = function(self, font)
+			self.caption:SetFontObject(font or GameFontHighlightSmall)
+			updateLayout(self)
+		end,
+		SetImage = function(self, path, ...)
+			self.image:SetTexture(path)
+			local count = select("#", ...)
+			if count == 4 or count == 8 then
+				self.image:SetTexCoord(...)
+			else
+				self.image:SetTexCoord(0, 1, 0, 1)
+			end
+			updateLayout(self)
+		end,
+		SetImageSize = function(self, width, height)
+			self.previewWidth, self.previewHeight = width, height
+			updateLayout(self)
+		end,
+	}
+
+	local function Constructor()
+		local frame = CreateFrame("Frame", nil, UIParent)
+		frame:Hide()
+		local caption = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		caption:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -16)
+		caption:SetJustifyH("LEFT")
+		local rule = frame:CreateTexture(nil, "ARTWORK")
+		rule:SetColorTexture(COLORS.azureBright[1], COLORS.azureBright[2], COLORS.azureBright[3], 0.85)
+		rule:SetHeight(1)
+		local image = frame:CreateTexture(nil, "ARTWORK")
+		local widget = { type = widgetType, frame = frame, caption = caption, rule = rule, image = image }
+		for name, method in pairs(methods) do widget[name] = method end
+		return AceGUI:RegisterAsWidget(widget)
+	end
+
+	AceGUI:RegisterWidgetType(widgetType, Constructor, 1)
+end
+
+-- Compact artwork previews share one widget type and fixed per-card dimensions.
+-- Their reported height lets the standalone scroll frame include every row.
+local function registerCardStylePreviewWidget()
+	local AceGUI = LibStub("AceGUI-3.0", true)
+	local widgetType = "RQECardStylePreview"
+	if not AceGUI or AceGUI:GetWidgetVersion(widgetType) then return end
+
+	local function updateLayout(widget)
+		local width = widget.frame.width or widget.frame:GetWidth() or 260
+		local imageWidth = math.max(1, math.min(widget.previewWidth or 256, width - 12))
+		local imageHeight = (widget.previewHeight or 128) * imageWidth / (widget.previewWidth or 256)
+		widget.image:SetSize(imageWidth, imageHeight)
+		widget.image:ClearAllPoints()
+		widget.image:SetPoint("TOP", widget.frame, "TOP", 0, -4)
+		widget.frame:SetHeight(imageHeight + 8)
+		widget.frame.height = imageHeight + 8
+	end
+
+	local methods = {
+		OnAcquire = function(self)
+			self.previewWidth, self.previewHeight = 256, 128
+			self.frame:SetWidth(260)
+			self.frame.width = 260
+			self.image:SetTexture(nil)
+			updateLayout(self)
+		end,
+		OnRelease = function(self) self.image:SetTexture(nil) end,
+		OnWidthSet = function(self) updateLayout(self) end,
+		SetText = function() end,
+		SetFontObject = function() end,
+		SetImage = function(self, path)
+			self.image:SetTexture(path)
+			self.image:SetTexCoord(0, 1, 0, 1)
+		end,
+		SetImageSize = function(self, width, height)
+			self.previewWidth, self.previewHeight = width, height
+			updateLayout(self)
+		end,
+	}
+	local function Constructor()
+		local frame = CreateFrame("Frame", nil, UIParent)
+		frame:Hide()
+		local image = frame:CreateTexture(nil, "ARTWORK")
+		local widget = { type = widgetType, frame = frame, image = image }
+		for name, method in pairs(methods) do widget[name] = method end
+		return AceGUI:RegisterAsWidget(widget)
+	end
+	AceGUI:RegisterWidgetType(widgetType, Constructor, 1)
+end
 
 -- Register the shared color-preview controls after the active client Config.lua
 -- has populated RQE's named font-color registry.
@@ -767,12 +912,11 @@ end
 
 local function composeFramePage(page)
 	local source = page.args
-	local used = { framePosition = true, QuestFramePosition = true, trackerSectionOrder = true }
+	local used = { framePosition = true, QuestFramePosition = true, trackerSectionOrder = true, useModernTheme = true }
 	local behavior = createOptionGroup("ShowAll", "Display Behavior", 1)
 	placeOption(behavior.args, source, used, "toggleBlizzObjectiveTracker", "Blizzard Objective Tracker", 1, 1.5)
 	placeOption(behavior.args, source, used, "mythicScenarioMode", "Use Blizzard tracker in scenarios", 2, 1.85)
 	placeOption(behavior.args, source, used, "enableStepControls", "Manual step navigation", 3, 1.5)
-	placeOption(behavior.args, source, used, "useModernTheme", "Azure & Gold tracker frames", 4, 1.6)
 	placeOption(behavior.args, source, used, "creatureObjectPreview", "Creature and object previews", 5, "full")
 	appendRemaining(behavior, source, used, 5)
 
@@ -965,6 +1109,141 @@ end
 function ConfigUI:ComposeOptions(options)
 	if not options or COMPOSED_OPTIONS[options] then return end
 	COMPOSED_OPTIONS[options] = true
+	registerThemePreviewWidget()
+	registerCardStylePreviewWidget()
+	local function themeLabels()
+		local labels = {}
+		for _, key in ipairs(RQE.UI.ThemeOrder) do
+			if RQE.UI.Themes[key] then labels[key] = RQE.UI.Themes[key].name or key end
+		end
+		return labels
+	end
+	local function selectedPreview(part)
+		local theme = RQE.UI.Themes[RQE.UI:GetSelectedTheme()]
+		return theme and theme.previews and theme.previews[part]
+	end
+	options.args.themes = {
+		type = "group", name = "Themes",
+		args = {
+			intro = {
+				type = "description", order = 1, width = "full",
+				name = "Choose the appearance of the Quest Helper and Quest Tracker. The configuration window and AddOn Settings keep their current styling. Changes made in combat appear after combat ends.",
+			},
+			choice = {
+				type = "select", name = "Tracker theme", order = 2, width = 1.2,
+				values = themeLabels, sorting = RQE.UI.ThemeOrder,
+				get = function() return RQE.UI:GetSelectedTheme() end,
+				set = function(_, key)
+					RQE.UI:SelectTheme(key)
+					LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
+				end,
+			},
+			previewDescription = {
+				type = "description", order = 3, width = "full", fontSize = "medium",
+				name = function()
+					local theme = RQE.UI.Themes[RQE.UI:GetSelectedTheme()]
+					return "|cffffd700" .. (theme.name or "Theme") .. "|r  " .. (theme.description or "")
+				end,
+			},
+			helperPreview = {
+				type = "description", dialogControl = "RQEThemePreview",
+				order = 4, width = PREVIEW_CARD_WIDTH, fontSize = "medium",
+				name = "|cffffd700QUEST HELPER|r  |cff76caffQuest details|r",
+				image = function() local preview = selectedPreview("helper"); return preview and preview.texture end,
+				imageCoords = function()
+					local preview = selectedPreview("helper")
+					return preview and { 0, preview.width / PREVIEW_TEXTURE_SIZE, 0, preview.height / PREVIEW_TEXTURE_SIZE }
+				end,
+				imageWidth = PREVIEW_IMAGE_SIZE.helper[1], imageHeight = PREVIEW_IMAGE_SIZE.helper[2],
+			},
+			trackerPreview = {
+				type = "description", dialogControl = "RQEThemePreview",
+				order = 5, width = PREVIEW_CARD_WIDTH, fontSize = "medium",
+				name = "|cffffd700QUEST TRACKER|r  |cff76caffTimed scenario and quest sections|r",
+				image = function() local preview = selectedPreview("tracker"); return preview and preview.texture end,
+				imageCoords = function()
+					local preview = selectedPreview("tracker")
+					return preview and { 0, preview.width / PREVIEW_TEXTURE_SIZE, 0, preview.height / PREVIEW_TEXTURE_SIZE }
+				end,
+				imageWidth = PREVIEW_IMAGE_SIZE.tracker[1], imageHeight = PREVIEW_IMAGE_SIZE.tracker[2],
+			},
+		},
+	}
+	local function selectedCardTheme()
+		local selected = RQE.UI:GetSelectedTheme()
+		return RQE.UI.CardStyles[selected] and selected or nil
+	end
+	for index, slot in ipairs(RQE.UI.CardStyleOrder) do
+		local cardType = slot
+		local group = RQE.UI:GetCardStyleGroup(cardType, "AzureGold")
+		local function activeGroup()
+			return RQE.UI:GetCardStyleGroup(cardType, selectedCardTheme()) or group
+		end
+		local function styleValues()
+			local values = {}
+			for _, style in ipairs(activeGroup().styles) do values[style.id] = style.name end
+			return values
+		end
+		local function styleOrder()
+			local styles = {}
+			for _, style in ipairs(activeGroup().styles) do styles[#styles + 1] = style end
+			table.sort(styles, function(left, right)
+				local leftName, rightName = left.name:lower(), right.name:lower()
+				if leftName == rightName then return left.id < right.id end
+				return leftName < rightName
+			end)
+			local order = {}
+			for _, style in ipairs(styles) do order[#order + 1] = style.id end
+			return order
+		end
+		options.args.themes.args["cardStyle" .. index] = {
+			type = "group", name = group.name, inline = true, order = 5 + index,
+			hidden = function() return not selectedCardTheme() end,
+			args = {
+				choice = {
+					type = "select", name = "Card style", order = 1, width = 1.1,
+					values = styleValues, sorting = styleOrder,
+					get = function()
+						local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
+						return style and style.id
+					end,
+					set = function(_, id)
+						RQE.UI:SetCardStyle(cardType, id, selectedCardTheme())
+						LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
+					end,
+				},
+				preview = {
+					type = "description", dialogControl = "RQECardStylePreview",
+					name = "", order = 2, width = 1.4,
+					image = function()
+						local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
+						return style and style.texture
+					end,
+					imageWidth = 256, imageHeight = group.height == 256 and 64 or 128,
+				},
+				reset = {
+					type = "execute", name = "Reset", order = 3, width = 0.5,
+					disabled = function()
+						local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
+						return not style or style.id == activeGroup().default
+					end,
+					func = function()
+						RQE.UI:SetCardStyle(cardType, activeGroup().default, selectedCardTheme())
+						LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
+					end,
+				},
+				default = {
+					type = "description", order = 4, width = "full",
+					name = function()
+						for _, style in ipairs(activeGroup().styles) do
+							if style.id == activeGroup().default then return "Default: " .. style.name end
+						end
+						return ""
+					end,
+				},
+			},
+		}
+	end
 	if options.args.general then composeGeneralPage(options.args.general) end
 	if options.args.frame then composeFramePage(options.args.frame) end
 	if options.args.font then composeFontPage(options.args.font) end
@@ -1238,7 +1517,7 @@ function ConfigUI:SkinConfigFrame(widget)
 	-- surface changed profiles. Rebuild its selected page when shown again.
 	frame:HookScript("OnShow", function() ConfigUI:RefreshStandalonePage() end)
 	skinSurface(frame, 0.96, 2)
-	if RQE.UI and RQE.UI._ApplyAceFrame then RQE.UI:_ApplyAceFrame(widget) end
+	if RQE.UI and RQE.UI.ApplyConfigFrame then RQE.UI:ApplyConfigFrame(widget) end
 
 	if widget.titlebg then
 		widget.titlebg:ClearAllPoints()
