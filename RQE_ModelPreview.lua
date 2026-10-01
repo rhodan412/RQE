@@ -23,8 +23,6 @@ local MODEL_INSET = 14
 local MODEL_TOP = -48
 local LOAD_TIMEOUT = 2
 local OBJECT_IMAGE_ROOT = "Interface\\AddOns\\RQE\\Media\\ObjectPreviews\\"
-local NPC_VIEW_X = 40
-local NPC_VIEW_Y = 32
 local MIN_NPC_ZOOM = 0.35
 local MAX_NPC_ZOOM = 3
 local MIN_OBJECT_ZOOM = 1
@@ -96,8 +94,8 @@ end
 local function GetModelViewOptions(model)
 	local options = type(model.RQEPreviewOptions) == "table" and model.RQEPreviewOptions or {}
 	model.RQEPreviewOptions = options
-	options.viewX = tonumber(options.viewX) or NPC_VIEW_X
-	options.viewY = tonumber(options.viewY) or NPC_VIEW_Y
+	options.viewX = tonumber(options.viewX) or 0
+	options.viewY = tonumber(options.viewY) or 0
 	options.scale = Clamp(tonumber(options.scale) or 1, MIN_NPC_ZOOM, MAX_NPC_ZOOM)
 	return options
 end
@@ -406,9 +404,6 @@ local function CreatePreviewFrame()
 			-- Blizzard can replace camera transforms while SetCreature finishes;
 			-- apply the compact-window centering only after the model is ready.
 			RQE.API.ConfigureCreaturePreviewModel(model, model.RQEPreviewOptions)
-			if type(model.RefreshCamera) == "function" then
-				pcall(model.RefreshCamera, model)
-			end
 			frame.Status:Hide()
 			model:SetAlpha(1)
 		end)
