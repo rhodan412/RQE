@@ -3101,7 +3101,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					DEFAULT_CHAT_FRAME:AddMessage("PEW 10 Debug: In a scenario, showing ScenarioChildFrame.", 0.93, 0.51, 0.93)	-- Violet
 				end
 			else
-				RQE.ScenarioChildFrame:Hide()
+				if not (RQE.IsScenarioCardTestEnabled and RQE:IsScenarioCardTestEnabled()) then
+					RQE.ScenarioChildFrame:Hide()
+				end
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 					DEFAULT_CHAT_FRAME:AddMessage("PEW 11 Debug: Not in a scenario, hiding ScenarioChildFrame.", 0.93, 0.51, 0.93)	-- Violet
 				end
@@ -5207,6 +5209,10 @@ local function StepUsesAuraCheck(step)
 			RQE.deferredScenarioCriteriaUpdate = true
 			return
 		end
+		if RQE.IsScenarioCardTestEnabled and RQE:IsScenarioCardTestEnabled() then
+			RQE.UpdateScenarioFrame()
+			return
+		end
 
 		-- Check to see if player in scenario, if not it will end
 		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
@@ -5274,6 +5280,14 @@ local function StepUsesAuraCheck(step)
 	-- Function that handles the Scenario UI Updates
 	function RQE.updateScenarioUI()
 		local mythicMode = RQE.db.profile.mythicScenarioMode
+		if RQE.IsScenarioCardTestEnabled and RQE:IsScenarioCardTestEnabled() then
+			if RQE.API.Client.InCombatLockdown() then return end
+			RQE.UpdateScenarioFrame()
+			UpdateRQEQuestFrame()
+			RQE.UpdateCampaignFrameAnchor()
+			RQE:UpdateRQEQuestFrameVisibility()
+			return
+		end
 
 		if not mythicMode then
 			-- If we're in combat, defer the update
