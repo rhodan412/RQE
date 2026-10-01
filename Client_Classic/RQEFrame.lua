@@ -118,11 +118,11 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdownRQEFrame(self, questID)
-		if not (MenuUtil and MenuUtil.CreateContextMenu) then
+		if not RQE.ShowStyledContextMenu then
 			return
 		end
 
-		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			local isPlayerInGroup = IsInGroup()
 			-- local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 			local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
@@ -132,15 +132,15 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				if RQE_SandboxEditor then
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
-				rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+				rootDescription:CreateContributionButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-				rootDescription:CreateButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
+				rootDescription:CreateContributionButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
 				if questLabel ~= "<Nothing Tracked>" then
-					rootDescription:CreateButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
+					rootDescription:CreateContributionButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
 				end
-				rootDescription:CreateButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
+				rootDescription:CreateContributionButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-				rootDescription:CreateButton("Debug Player Coordinates/TomTom Hotspots", function() RQE:Debug_PlayerCoordinates() end)
+				rootDescription:CreateContributionButton("Debug Player Coordinates/TomTom Hotspots", function() RQE:Debug_PlayerCoordinates() end)
 			end
 
 			rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
@@ -152,17 +152,17 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE.db.profile.enableStepControls then
-					rootDescription:CreateButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
-					rootDescription:CreateButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
+					rootDescription:CreateContributionButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
+					rootDescription:CreateContributionButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
 				else
-					rootDescription:CreateButton("|cffff0000Enable StepIndex Manual + Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Red color
-					rootDescription:CreateButton("|cffffff00Enable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Yellow color
+					rootDescription:CreateContributionButton("|cffff0000Enable StepIndex Manual + Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Red color
+					rootDescription:CreateContributionButton("|cffffff00Enable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Yellow color
 				end
 
 				if RQE.db.profile.autoClickWaypointButton then
-					rootDescription:CreateButton("|cffffff00Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)	-- Yellow color
+					rootDescription:CreateContributionButton("|cffffff00Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)	-- Yellow color
 				else
-					rootDescription:CreateButton("|cff00ff00Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)		-- Green color
+					rootDescription:CreateContributionButton("|cff00ff00Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)		-- Green color
 				end
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			end
@@ -186,6 +186,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 			rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
 			rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+			rootDescription:AppendQuestContextActions(questID)
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
 				RQE.ToggleFrameLock()
@@ -205,11 +206,11 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowDropdownRQEFrame(self)
-		if not (MenuUtil and MenuUtil.CreateContextMenu) then
+		if not RQE.ShowStyledContextMenu then
 			return
 		end
 
-		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID() or RQE.CurrentDisplayedQuestID
 			local questLabel = questID and tostring(questID) or "<Nothing Tracked>"
 
@@ -217,38 +218,38 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				if RQE_SandboxEditor then
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
-				rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+				rootDescription:CreateContributionButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-				rootDescription:CreateButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
+				rootDescription:CreateContributionButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
 				if questLabel ~= "<Nothing Tracked>" then
-					rootDescription:CreateButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
+					rootDescription:CreateContributionButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
 				end
-				rootDescription:CreateButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
+				rootDescription:CreateContributionButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 				if RQE.db.profile.enableStepControls then
-					rootDescription:CreateButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
-					rootDescription:CreateButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
+					rootDescription:CreateContributionButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
+					rootDescription:CreateContributionButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
 				else
-					rootDescription:CreateButton("|cffff0000Enable StepIndex Manual + Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Red color
-					rootDescription:CreateButton("|cffffff00Enable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Yellow color
+					rootDescription:CreateContributionButton("|cffff0000Enable StepIndex Manual + Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Red color
+					rootDescription:CreateContributionButton("|cffffff00Enable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Yellow color
 				end
 
 				if RQE.db.profile.autoClickWaypointButton then
-					rootDescription:CreateButton("|cffffff00Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)	-- Yellow color
+					rootDescription:CreateContributionButton("|cffffff00Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)	-- Yellow color
 				else
-					rootDescription:CreateButton("|cff00ff00Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)		-- Green color
+					rootDescription:CreateContributionButton("|cff00ff00Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)		-- Green color
 				end
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-				rootDescription:CreateButton("Debug Player Coordinates/TomTom Hotspots", function() RQE:Debug_PlayerCoordinates() end)
+				rootDescription:CreateContributionButton("Debug Player Coordinates/TomTom Hotspots", function() RQE:Debug_PlayerCoordinates() end)
 			end
 
 			rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
 
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
-				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
-				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
+				rootDescription:CreateContributionButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+				rootDescription:CreateContributionButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+				rootDescription:CreateContributionButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
 			end
 
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
@@ -1433,12 +1434,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		end
 		-- GameTooltip:SetText(questTitle)
 		GameTooltip:SetText(RQE:GetQuestTooltipTitle(questID, questTitle))
+		RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 
-		if RQE.DatabaseSuperX and not RQE.API.IsOnQuest(questID) and not isWorldQuest then
-			-- Add code for line break if this is a searched quest
-		else
-			GameTooltip:AddLine(" ")  -- Add line break
-		end
+		GameTooltip:AddLine(" ")
 
 		-- Add description
 		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
@@ -1446,48 +1444,23 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			local questDescription = RQE.API.GetQuestLogDescription(questLogIndex)
 			local descriptionText = questDescription and questDescription ~= "" and questDescription or "No description available."
 			GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
-			GameTooltip:AddLine(" ")
 		else
 			-- Searched quest (not in log): use DB fallback if available
 			if questData and questData.descriptionQuestText and questData.descriptionQuestText[1] then
-				if RQE.searchedQuestID then
-					GameTooltip:AddLine("Status: Quest not in player's log", 1, 0, 1) -- Purple color for not yet picked up
-				end
 				-- If you store multiple lines, print them all
+				local isFirstDescriptionLine = true
 				for _, line in ipairs(questData.descriptionQuestText) do
 					if line and line ~= "" then
-						GameTooltip:AddLine(" ")
+						if not isFirstDescriptionLine then GameTooltip:AddLine(" ") end
 						GameTooltip:AddLine(line, 1, 1, 1, true)
+						isFirstDescriptionLine = false
 					end
 				end
 			else
 				GameTooltip:AddLine("No description available.", 1, 1, 1, true)
-				GameTooltip:AddLine(" ")
 			end
 		end
-
-		if questID then
-			-- Check if the quest is ready to be turned in
-			if C_QuestLog.ReadyForTurnIn(questID) then
-				GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
-			-- Check if the quest is completed
-			elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
-				GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
-			else
-				if RQE.searchedQuestID then
-					GameTooltip:AddLine(" ")
-				end
-				GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-				if RQE.API.GameVersion and RQE.API.GameVersion.supportsWarband then
-					if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-						GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0)
-					else
-						GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0)
-					end
-				end
-			end
-			GameTooltip:AddLine(" ")
-		end
+		GameTooltip:AddLine(" ")
 
 		-- Add objectives
 		local objectivesInfo = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
@@ -1513,6 +1486,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 						GameTooltip:AddLine(obj, 1, 1, 1, true)
 					end
 				end
+				GameTooltip:AddLine(" ")
 			end
 		end
 
@@ -1520,7 +1494,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			-- Add code for the Rewards tooltip if this is a searched quest
 		else
 			-- Add Rewards
-			RQE:QuestRewardsTooltip(GameTooltip, questID)
+			RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 		end
 
 		if RQE.API.IsOnQuest(questID) then
@@ -1541,8 +1515,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			end
 
 			-- Party Members' Quest Progress
-			if IsInGroup() then
-				if IsInRaid() then return end
+			if IsInGroup() and not IsInRaid() then
 				-- GetQuestPartyProgress is a Retail tooltip API and is not present in
 				-- Classic Era.  Leave party-progress details out when it is unavailable.
 				local tooltipData = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress and C_TooltipInfo.GetQuestPartyProgress(questID)
@@ -1582,7 +1555,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		end
 
 		GameTooltip:AddLine(" ")
-		GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
+		GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 		GameTooltip:Show()
 	end
 
@@ -1743,12 +1716,11 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 	-- Function to create the search frame
 	function CreateSearchFrame(showFrame)
 		if not showFrame then
-			if RQEFrame.SearchFrame then
-				--RQEFrame.SearchFrame:Hide()  -- COMMENTING OUT DUE TO API ERROR
-				RQEFrame.SearchFrame = nil
-			end
+			if RQEFrame.SearchFrame then RQEFrame.SearchFrame.frame:Hide() end
+			RQE.isSearchFrameShown = false
 			return
 		end
+		if RQEFrame.SearchFrame then return end
 
 		local SearchFrame = AceGUI:Create("Frame")
 		if not SearchFrame then
@@ -1761,13 +1733,23 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		SearchFrame:SetHeight(200)
 		SearchFrame:SetLayout("Flow")
 		SearchFrame:SetStatusText("Enter your search query")
-		SearchFrame:SetCallback("OnClose", function(widget)
-			AceGUI:Release(widget)
-			RQEFrame.SearchFrame = nil
-		end)
-
 		-- Assuming editBox and examineButton are created correctly
 		local searchBox, examineButton = RQE.SearchModule:CreateSearchBox()
+		local editBox = searchBox.editbox
+		local originalEscape = editBox:GetScript("OnEscapePressed")
+		editBox:SetScript("OnEscapePressed", function(box)
+			if originalEscape then originalEscape(box) end
+			SearchFrame.frame:Hide()
+		end)
+		SearchFrame:SetCallback("OnClose", function(widget)
+			-- AceGUI pools its unnamed frames and edit boxes. Remove the Escape
+			-- alias and restore the edit-box script before returning them to the pool.
+			if _G.RQESearchFrameForEscape == widget.frame then _G.RQESearchFrameForEscape = nil end
+			editBox:SetScript("OnEscapePressed", originalEscape)
+			if RQEFrame.SearchFrame == widget then RQEFrame.SearchFrame = nil end
+			RQE.isSearchFrameShown = false
+			AceGUI:Release(widget)
+		end)
 		SearchFrame:AddChild(searchBox)
 		SearchFrame:AddChild(examineButton)
 		if RQE.UI then RQE.UI:StyleAceFrame(SearchFrame) end
@@ -1778,6 +1760,17 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 		-- Save reference to SearchFrame
 		RQEFrame.SearchFrame = SearchFrame
+		RQE.isSearchFrameShown = true
+		-- CloseSpecialWindows resolves UISpecialFrames through _G, so a live
+		-- alias lets Escape hide this unnamed AceGUI frame when input lacks focus.
+		_G.RQESearchFrameForEscape = SearchFrame.frame
+		if type(UISpecialFrames) == "table" then
+			local registered = false
+			for _, name in ipairs(UISpecialFrames) do
+				if name == "RQESearchFrameForEscape" then registered = true; break end
+			end
+			if not registered then table.insert(UISpecialFrames, "RQESearchFrameForEscape") end
+		end
 	end
 
 
@@ -3270,7 +3263,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 			-- Update the step text dynamically to include the step index
 			local stepDescription = (stepData and stepData.description and stepData.description ~= "")
-				and stepData.description or "No step description available."
+				and RQE.FormatStepDescription(questID, stepData) or "No step description available."
 
 			if RQE.db.profile.debugLevel == "INFO+" and stepData and stepData.description then
 				local s = stepData.description
