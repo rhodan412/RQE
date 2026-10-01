@@ -1373,6 +1373,33 @@ RQE.API.GetQuestObjectives = function(questID)
 	return {}
 end
 
+-- Read the normalized Blizzard objective counts through the client adapter.
+-- A missing or protected count is unavailable, not a one-objective fallback.
+function RQE.API.GetQuestObjectiveCounts(questID, objectiveIndex)
+	local ok, fulfilled, required = pcall(function()
+		local objective = (RQE.API.GetQuestObjectives(questID) or {})[tonumber(objectiveIndex) or 1]
+		return objective and tonumber(objective.numFulfilled), objective and tonumber(objective.numRequired)
+	end)
+	if ok then return fulfilled, required end
+	return nil, nil
+end
+
+-- Replace only the opt-in count token at display time; keep DB text intact.
+function RQE.FormatStepDescription(questID, stepData)
+	local description = stepData and stepData.description
+	if type(description) ~= "string" or not description:find("{objectiveRemaining}", 1, true) then
+		return description
+	end
+
+	local fulfilled, required = RQE.API.GetQuestObjectiveCounts(questID, stepData.objectiveIndex)
+	if not required or not fulfilled then
+		return description
+	end
+
+	local formatted = description:gsub("{objectiveRemaining}", tostring(math.max(0, required - fulfilled)))
+	return formatted
+end
+
 
 -- local numShownEntries, numQuests = RQE.API.GetNumQuestLogEntries()
 RQE.API.GetNumQuestLogEntries = function()
@@ -4554,6 +4581,54 @@ function RQE.API.ShowTrackedAchievementTooltip(owner, achievementID, name, descr
 	GameTooltip:Show()
 end
 
+-- Shared only by quest hovers in the helper/tracker; chat-link tooltips keep
+-- their separate character-status presentation.
+function RQE.API.AddFrameQuestTooltipWarbandStatus(tooltip, questID)
+	if not questID or not RQE.API.GameVersion.supportsWarband then return end
+	local isCompletedOnAccount = RQE.API.ResolveClientAPI("C_QuestLog.IsQuestFlaggedCompletedOnAccount")
+	if not isCompletedOnAccount then return end
+
+	if isCompletedOnAccount(questID) then
+		tooltip:AddLine("Completed on Warband", 1, 1, 0, true)
+	else
+		tooltip:AddLine("Not Completed on Warband or repeatable", 1, 0, 0, true)
+	end
+end
+
+-- The reward builder selects the hovered quest before reading its choices.
+-- Reputation granted through currency choices is separate from major-faction
+-- rewards; use Blizzard's currency-to-faction mapping rather than quest IDs.
+function RQE.API.GetQuestReputationChoiceRewards(questID, choiceCount)
+	local rewards = {}
+	questID = tonumber(questID)
+	if not questID or questID <= 0 or RQE.API.GameVersion.usesLegacyQuestLogSelection then return rewards end
+	local getCurrency = RQE.API.ResolveClientAPI("C_QuestLog.GetQuestRewardCurrencyInfo")
+	local getFaction = RQE.API.ResolveClientAPI("C_CurrencyInfo.GetFactionGrantedByCurrency")
+	local getLootType = RQE.API.ResolveClientAPI("GetQuestLogChoiceInfoLootType")
+	if not getCurrency or not getFaction or not getLootType then return rewards end
+
+	choiceCount = tonumber(choiceCount) or RQE.API.Client.GetNumQuestLogChoices(questID, true)
+	for index = 1, choiceCount do
+		if getLootType(index) == 1 then
+			local currency = getCurrency(questID, index, true)
+			local factionID = currency and currency.currencyID and getFaction(currency.currencyID)
+			local amount = currency and tonumber(currency.totalRewardAmount)
+			if factionID and factionID > 0 and currency.name and currency.name ~= "" and amount then
+				rewards[#rewards + 1] = {
+					name = currency.name,
+					texture = currency.texture,
+					quality = currency.quality,
+					amount = amount,
+					factionID = factionID,
+					currencyID = currency.currencyID,
+					questRewardContextFlags = currency.questRewardContextFlags,
+				}
+			end
+		end
+	end
+	return rewards
+end
+
 function RQE.API.HideTrackedTooltip()
 	GameTooltip:Hide()
 end
@@ -4737,6 +4812,11 @@ function RQE.API.ConfigureCreaturePreviewModel(model, options)
 	if not model then return end
 	options = type(options) == "table" and options or {}
 
+	-- Refresh before applying NPC framing; doing this last can replace the
+	-- position/translation that was just installed for the loaded creature.
+	if type(model.RefreshCamera) == "function" then
+		pcall(model.RefreshCamera, model)
+	end
 	if type(model.UseModelCenterToTransform) == "function" then
 		pcall(model.UseModelCenterToTransform, model, true)
 	end
@@ -4752,19 +4832,35 @@ function RQE.API.ConfigureCreaturePreviewModel(model, options)
 			tonumber(options.positionY) or 0,
 			tonumber(options.positionZ) or 0)
 	end
-	if type(model.SetViewTranslation) == "function" then
-		-- SetCreature's full-body camera sits low and left in this compact
-		-- viewport. Screen-space translation keeps differently sized NPCs
-		-- centered without changing their model-space scale.
-		pcall(model.SetViewTranslation, model,
-			tonumber(options.viewX) or 40,
-			tonumber(options.viewY) or 32)
-	end
 	if options.camera ~= nil and type(model.SetCamera) == "function" then
 		pcall(model.SetCamera, model, tonumber(options.camera) or 0)
 	end
 	if type(model.SetCamDistanceScale) == "function" then
 		pcall(model.SetCamDistanceScale, model, tonumber(options.scale) or 1)
+	end
+	-- CinematicModel's creature view starts at the lower-left of the viewport;
+	-- PlayerModel already supplies a centered full-body camera. Translate the
+	-- cinematic view to the actual viewport midpoint on both axes. Keep any
+	-- manual pan relative to that center if layout settles after model loading.
+	local centerX, centerY = 0, 0
+	if model.RQEModelFrameType == "CinematicModel" then
+		local width = type(model.GetWidth) == "function" and tonumber(model:GetWidth()) or 0
+		local height = type(model.GetHeight) == "function" and tonumber(model:GetHeight()) or 0
+		centerX, centerY = math.max(0, width or 0) * 0.5, math.max(0, height or 0) * 0.5
+	end
+	local viewX, viewY = tonumber(options.viewX), tonumber(options.viewY)
+	if viewX == nil or options.centerViewX ~= nil then
+		options.viewX = centerX + (viewX or 0) - (tonumber(options.centerViewX) or 0)
+		options.centerViewX = centerX
+	end
+	if viewY == nil or options.centerViewY ~= nil then
+		options.viewY = centerY + (viewY or 0) - (tonumber(options.centerViewY) or 0)
+		options.centerViewY = centerY
+	end
+	-- Apply translation last, after every setter that can rebuild the camera.
+	-- The existing NPC drag handler reads this resolved view as its starting point.
+	if type(model.SetViewTranslation) == "function" then
+		pcall(model.SetViewTranslation, model, tonumber(options.viewX) or 0, options.viewY)
 	end
 end
 
@@ -4781,16 +4877,17 @@ function RQE.API.SetCreaturePreviewModel(model, creatureID, options)
 	options = type(options) == "table" and options or {}
 
 	RQE.API.ClearCreaturePreviewModel(model)
+	-- Cached creatures can invoke OnModelLoaded inside SetCreature. Make the
+	-- new NPC's options available before that callback applies its framing.
+	model.RQEPreviewOptions = options
 	local ok, err = pcall(model.SetCreature, model, creatureID)
 	if not ok then
 		return false, tostring(err)
 	end
-	model.RQEPreviewOptions = options
 	-- SetCreature may replace the model's camera transform, so apply RQE's
 	-- centering/facing after the creature has been assigned. The preview's
 	-- OnModelLoaded callback reapplies it once Blizzard finishes loading.
 	RQE.API.ConfigureCreaturePreviewModel(model, options)
-	if type(model.RefreshCamera) == "function" then pcall(model.RefreshCamera, model) end
 	return true
 end
 
@@ -5267,6 +5364,7 @@ do
 		["C_Container.GetItemCooldown"] = "cooldown",
 		["C_ContentTracking.GetTrackedIDs"] = "list",
 		["C_CurrencyInfo.GetCoinTextureString"] = "none",
+		["C_CurrencyInfo.GetFactionGrantedByCurrency"] = "none",
 		["C_DateAndTime.GetCurrentCalendarTime"] = "none",
 		["C_Garrison.GetGarrisonInfo"] = "none",
 		["C_Garrison.IsFollowerCollected"] = "boolean",
