@@ -701,6 +701,10 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		self.optionsFrame.frame, self.optionsCategoryIDs.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", optionsCategory)
 		RQE.ConfigUI:RegisterOptionsPanel(self.optionsFrame.frame, "Frame Settings")
 
+		AC:RegisterOptionsTable("RQE_Themes", RQE.options.args.themes)
+		self.optionsFrame.themes, self.optionsCategoryIDs.themes = ACD:AddToBlizOptions("RQE_Themes", "Themes", optionsCategory)
+		RQE.ConfigUI:RegisterOptionsPanel(self.optionsFrame.themes, "Themes")
+
 		AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
 		self.optionsFrame.font, self.optionsCategoryIDs.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", optionsCategory)
 		RQE.ConfigUI:RegisterOptionsPanel(self.optionsFrame.font, "Font Settings")
@@ -781,10 +785,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if RQE.UI and RQE.UI.RefreshLocationInfoBar then RQE.UI:RefreshLocationInfoBar() end
 
 		-- Ensure that frame opacity is set to default values
-		local MainOpacity = RQE.db.profile.MainFrameOpacity
-		local QuestOpacity = RQE.db.profile.QuestFrameOpacity
-		RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
-		RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
+		self:UpdateFrameOpacity()
 	end
 
 
@@ -3948,20 +3949,37 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		end
 
 		C_Timer.After(0.5, function()
+			-- Missing quests use RQE virtual watches instead of Blizzard's limited
+			-- Classic quest-watch list.
+			RQE.ShowAllQuestLogQuests = false
+			RQE.ZoneQuestFilterMapID = nil
+			RQE.ShowOnlyAllCompleteVirtualQuests = false
+			RQE.HiddenQuestLogQuests = {}
+			RQE.QuestTrackerSearchResults = nil
+			RQE.QuestTrackerSearchRestoreState = nil
+			if RQE.UpdateQuestTrackerSearchRestoreButton then
+				RQE:UpdateQuestTrackerSearchRestoreButton()
+			end
+			RQE.ClassicVirtualQuestWatches = {}
+			RQE.ClassicManualVirtualQuestWatches = {}
 			for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
-				if info and not info.isHeader then
+				if info and not info.isHeader and info.questID then
 					local questID = info.questID
 					local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
 					local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
 					local questData = RQE.getQuestData(questID)
 
 					if not questData then
-						C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						RQE:AddClassicVirtualQuestWatch(questID)
 						DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
 					end
 				end
 			end
+			RQE:ClearRQEQuestFrame()
+			UpdateRQEQuestFrame()
+			SortQuestsByProximity()
+			RQE:SaveTrackedQuestsToCharacter()
 		end)
 	end
 
@@ -4861,8 +4879,8 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			else
 				if a.text ~= b.text then return true end
 				if a.finished ~= b.finished then return true end
-				if a.numFulfilled ~= b.numFulfilled then return true end
-				if a.numRequired ~= b.numRequired then return true end
+				if a.fulfilled ~= b.fulfilled then return true end
+				if a.required ~= b.required then return true end
 			end
 		end
 
@@ -6838,6 +6856,10 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 	-- Function to Update the Opacity of Main Frame and Quest Tracker
 	function RQE:UpdateFrameOpacity()
+		if self.UI and self.UI.UpdatePanelOpacity then
+			self.UI:UpdatePanelOpacity()
+			return
+		end
 		if RQEFrame then
 			RQEFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
 		end
@@ -9086,7 +9108,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
 		for i, step in ipairs(questInfo) do
-			local desc = step and step.description or ""
+			local desc = RQE.FormatStepDescription(questID, step) or ""
 			StepsText[i] = desc
 
 			-- choose display coords from hotspots (preferred) or legacy single
@@ -9313,212 +9335,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	end
 
 
-	-- Function to generate frame on menu choice that will display the wowhead link for a given quest
-	function RQE:ShowWowheadLink(questID)
-		local wowheadURL = "https://www.wowhead.com/quest=" .. questID
-
-		-- Create and configure the frame
-		local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "BackdropTemplate")
-		linkFrame:SetSize(350, 120)  -- Increased height
-		linkFrame:SetPoint("CENTER")
-		linkFrame:SetFrameStrata("HIGH")
-		RQE.linkFrame = linkFrame
-
-		-- Create and configure the EditBox
-		local wowHeadeditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
-		wowHeadeditBox:SetSize(325, 20)
-		wowHeadeditBox:SetPoint("TOP", 0, -20)  -- Adjusted position
-		wowHeadeditBox:SetAutoFocus(false)
-		wowHeadeditBox:SetText(wowheadURL)
-		wowHeadeditBox:SetCursorPosition(0)
-		wowHeadeditBox:HighlightText()
-		wowHeadeditBox:SetHyperlinksEnabled(false)
-		RQE.wowHeadeditBox = wowHeadeditBox
-
-		-- Function to copy text to clipboard
-		local function CopyTextToClipboard()
-			if wowHeadeditBox:IsVisible() then
-				wowHeadeditBox:SetFocus()
-				wowHeadeditBox:HighlightText()
-				-- Copy the text
-				if not InCombatLockdown() then
-					C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
-				else
-					print("Cannot copy while in combat.")
-				end
-			end
-		end
-
-		-- Function to highlight text for copying
-		local function HighlightTextForCopy()
-			wowHeadeditBox:SetFocus()
-			wowHeadeditBox:HighlightText()
-			-- Inform the user to press Ctrl+C to copy
-			print("Press Ctrl+C to copy the link.")
-		end
-
-		-- Configure the Copy button
-		local copyButton = CreateFrame("Button", nil, linkFrame, "UIPanelButtonTemplate")
-		copyButton:SetSize(100, 20)
-		copyButton:ClearAllPoints()
-		copyButton:SetPoint("TOP", wowHeadeditBox, "BOTTOM", 0, -10)  -- Adjust the Y-offset as needed
-		copyButton:SetText("Highlight Text")
-		copyButton:SetScript("OnClick", HighlightTextForCopy)
-
-		-- Create and configure the Close button
-		local wowHeadcloseButton = CreateFrame("Button", nil, linkFrame, "UIPanelCloseButton")
-		wowHeadeditBox:ClearAllPoints()
-		wowHeadeditBox:SetPoint("TOP", 0, -30)
-		wowHeadcloseButton:SetScript("OnClick", function() linkFrame:Hide() end)
-		RQE.wowHeadcloseButton = wowHeadcloseButton
-
-		-- Make the frame movable
-		linkFrame:SetMovable(true)
-		linkFrame:EnableMouse(true)
-		linkFrame:RegisterForDrag("LeftButton")
-		linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
-		linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
-
-		-- Configure the EditBox font
-		wowHeadeditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
-
-		-- Resize and reposition the close button
-		wowHeadcloseButton:SetSize(20, 20)
-		wowHeadcloseButton:ClearAllPoints()
-		wowHeadcloseButton:SetPoint("TOPRIGHT", linkFrame, "TOPRIGHT", -5, -5)
-
-		-- Apply the font to the copy button text
-		copyButton:GetFontString():SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
-
-		local borderBackdrop = {
-			bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
-			edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
-			tile = true,
-			tileSize = 32,
-			edgeSize = 12, -- this controls the thickness of the border
-			insets = { left = 11, right = 11, top = 12, bottom = 11 },
-		}
-		linkFrame:SetBackdrop(borderBackdrop)
-
-		-- Show the frame
-		linkFrame:Show()
-	end
-
-
-	local f = CreateFrame("Frame")
-	f:RegisterEvent("CHAT_MSG_ADDON")
-	f:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
-		if event == "CHAT_MSG_ADDON" and prefix == "RQE" and message == "CopyRequest" and sender == UnitName("player") then
-			-- Attempt to use the hidden chat frame method to copy text
-			local editBox = ChatFrame1EditBox or ChatEdit_ChooseBoxForSend() -- Fallback to an existing chat edit box
-			editBox:Show()
-			editBox:SetText(RQE.wowHeadeditBox:GetText())
-			editBox:HighlightText()
-			editBox:SetFocus()
-			editBox:CopyChatFrame(editBox)
-			editBox:Hide()
-		end
-	end)
-
-
-	-- Function to generate frame on menu choice that will display the wowhead link for a given quest
-	function RQE:ShowWowWikiLink(questID)
-		local questTitle = RQE.API.GetTitleForQuestID(questID)
-		if not questTitle then
-			print("Quest title not available for Quest ID: " .. questID)
-			return
-		end
-		-- Replace spaces with '+' for URL encoding
-		local searchTitle = questTitle:gsub(" ", "+")
-		local wowWikiURL = "https://warcraft.wiki.gg/index.php?search=" .. searchTitle .. "&title=Special%3ASearch&profile=default&fulltext=1"
-
-		-- Create and configure the frame
-		local linkFrame = CreateFrame("Frame", "WowWikiLinkFrame", UIParent, "BackdropTemplate")
-		linkFrame:SetSize(350, 120)  -- Increased height
-		linkFrame:SetPoint("CENTER")
-		linkFrame:SetFrameStrata("HIGH")
-		RQE.wowWikiLinkFrame = linkFrame
-
-		-- Create and configure the EditBox
-		local wowWikieditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
-		wowWikieditBox:SetSize(325, 20)
-		wowWikieditBox:SetPoint("TOP", 0, -30)  -- Adjusted position
-		wowWikieditBox:SetAutoFocus(false)
-		wowWikieditBox:SetText(wowWikiURL)
-		wowWikieditBox:SetCursorPosition(0)
-		wowWikieditBox:HighlightText()
-		wowWikieditBox:SetHyperlinksEnabled(false)
-		RQE.wowWikieditBox = wowWikieditBox
-
-		-- Function to copy text to clipboard
-		local function CopyTextToClipboard()
-			if wowWikieditBox:IsVisible() then
-				wowWikieditBox:SetFocus()
-				wowWikieditBox:HighlightText()
-				-- Copy the text
-				if not InCombatLockdown() then
-					C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
-				else
-					print("Cannot copy while in combat.")
-				end
-			end
-		end
-
-		-- Function to highlight text for copying
-		local function HighlightTextForCopy()
-			wowWikieditBox:SetFocus()
-			wowWikieditBox:HighlightText()
-			-- Inform the user to press Ctrl+C to copy
-			print("Press Ctrl+C to copy the link.")
-		end
-
-		-- Configure the Copy button
-		local copyButton = CreateFrame("Button", nil, linkFrame, "UIPanelButtonTemplate")
-		copyButton:SetSize(100, 20)
-		copyButton:ClearAllPoints()
-		copyButton:SetPoint("TOP", wowWikieditBox, "BOTTOM", 0, -15)  -- Adjust the Y-offset as needed
-		copyButton:SetText("Highlight Text")
-		copyButton:SetScript("OnClick", HighlightTextForCopy)
-
-		-- Create and configure the Close button
-		local wowWikicloseButton = CreateFrame("Button", nil, linkFrame, "UIPanelCloseButton")
-		wowWikicloseButton:ClearAllPoints()
-		wowWikicloseButton:SetPoint("TOP", 0, -30)
-		wowWikicloseButton:SetScript("OnClick", function() linkFrame:Hide() end)
-		RQE.wowWikicloseButton = wowWikicloseButton
-
-		-- Make the frame movable
-		linkFrame:SetMovable(true)
-		linkFrame:EnableMouse(true)
-		linkFrame:RegisterForDrag("LeftButton")
-		linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
-		linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
-
-		-- Configure the EditBox font
-		wowWikieditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
-
-		-- Resize and reposition the close button
-		wowWikicloseButton:SetSize(20, 20)
-		wowWikicloseButton:ClearAllPoints()
-		wowWikicloseButton:SetPoint("TOPRIGHT", linkFrame, "TOPRIGHT", -5, -5)
-
-		-- Apply the font to the copy button text
-		copyButton:GetFontString():SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
-
-		local borderBackdrop = {
-			bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
-			edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
-			tile = true,
-			tileSize = 32,
-			edgeSize = 12, -- this controls the thickness of the border
-			insets = { left = 11, right = 11, top = 12, bottom = 11 },
-		}
-		linkFrame:SetBackdrop(borderBackdrop)
-
-		-- Show the frame
-		linkFrame:Show()
-	end
-
+	-- Movable, focused quest-reference dialogs are shared in QuestTools.lua.
 
 	-- Variables to track the last known states
 	RQE.lastKnownQuestID = nil
