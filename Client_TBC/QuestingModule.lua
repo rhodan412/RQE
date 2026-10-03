@@ -4752,6 +4752,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 						GameTooltip:Show()
+						RQE.UI:ApplyTooltipBackground("questName")
 					end)
 
 					QuestObjectivesOrDescription:SetScript("OnEnter", function(self)
@@ -4845,6 +4846,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 						GameTooltip:Show()
+						RQE.UI:ApplyTooltipBackground("questName")
 					end)
 
 					-- Moved this block of code after the creation of QuestLevelAndName and QuestObjectivesOrDescription
@@ -5382,6 +5384,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 					GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)  -- Aquamarine color
 
 					GameTooltip:Show()
+					RQE.UI:ApplyTooltipBackground("questName")
 				end)
 
 				-- Party Members' Quest Progress
