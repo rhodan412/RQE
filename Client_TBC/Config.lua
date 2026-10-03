@@ -807,15 +807,14 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 							MainFrameOpacity = {
 								type = 'range',
 								name = 'Quest Helper Opacity',
-								desc = 'Adjust the opacity of the main helper frame.',
+								desc = 'Adjust the Quest Helper frame background. Each theme saves its own opacity.',
 								min = 0,
 								max = 1,
 								step = 0.01,
 								isPercent = true,
-								get = function(info) return RQE.db.profile.MainFrameOpacity end,
+								get = function(info) return RQE.UI:GetFrameBackgroundOpacity("main") end,
 								set = function(info, value)
-									RQE.db.profile.MainFrameOpacity = value
-									RQE:UpdateFrameOpacity()
+									RQE.UI:SetFrameBackgroundOpacity("main", value)
 								end,
 								order = 4,
 							},
@@ -931,15 +930,14 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 							QuestFrameOpacity = {
 								type = 'range',
 								name = 'Quest Tracker Opacity',
-								desc = 'Adjust the opacity of the quest tracking frame.',
+								desc = 'Adjust the Quest Tracker frame background. Each theme saves its own opacity.',
 								min = 0,
 								max = 1,
 								step = 0.01,
 								isPercent = true,
-								get = function(info) return RQE.db.profile.QuestFrameOpacity end,
+								get = function(info) return RQE.UI:GetFrameBackgroundOpacity("tracker") end,
 								set = function(info, value)
-									RQE.db.profile.QuestFrameOpacity = value
-									RQE:UpdateFrameOpacity()
+									RQE.UI:SetFrameBackgroundOpacity("tracker", value)
 								end,
 								order = 4,
 							},
@@ -2284,11 +2282,10 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		frameOpacitySlider:SetLabel("Quest Helper Opacity")
 		frameOpacitySlider:SetSliderValues(0, 1, 0.01)
 		frameOpacitySlider:SetIsPercent(true)
-		frameOpacitySlider:SetValue(RQE.db.profile.MainFrameOpacity)
+		frameOpacitySlider:SetValue(RQE.UI:GetFrameBackgroundOpacity("main"))
 		frameOpacitySlider:SetFullWidth(true)
 		frameOpacitySlider:SetCallback("OnValueChanged", function(widget, event, value)
-			RQE.db.profile.MainFrameOpacity = value
-			RQE:UpdateFrameOpacity()
+			RQE.UI:SetFrameBackgroundOpacity("main", value)
 		end)
 
 		-- Add a tooltip description for frameOpacitySlider (RQE.db.profile.MainFrameOpacity)
@@ -2423,11 +2420,10 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		questFrameOpacitySlider:SetLabel("Quest Tracker Opacity")
 		questFrameOpacitySlider:SetSliderValues(0, 1, 0.01)
 		questFrameOpacitySlider:SetIsPercent(true)
-		questFrameOpacitySlider:SetValue(RQE.db.profile.QuestFrameOpacity)
+		questFrameOpacitySlider:SetValue(RQE.UI:GetFrameBackgroundOpacity("tracker"))
 		questFrameOpacitySlider:SetFullWidth(true)
 		questFrameOpacitySlider:SetCallback("OnValueChanged", function(widget, event, value)
-			RQE.db.profile.QuestFrameOpacity = value
-			RQE:UpdateFrameOpacity()
+			RQE.UI:SetFrameBackgroundOpacity("tracker", value)
 		end)
 
 		-- Add a tooltip description for questFrameOpacitySlider (RQE.db.profile.QuestFrameOpacity)
