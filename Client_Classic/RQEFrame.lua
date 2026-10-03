@@ -395,7 +395,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 	slider:SetWidth(10)
 	slider:SetThumbTexture("Interface\\Buttons\\WHITE8X8")
 	local thumb = slider:GetThumbTexture()
-	thumb:SetColorTexture(255 / 255, 215 / 255, 0 / 255, 1) -- #FFD700
+	local accent = RQE.UI and RQE.UI:IsEnabled() and RQE.UI.Colors.gold
+	local r, g, b = unpack(accent or { 1, 215 / 255, 0 })
+	thumb:SetColorTexture(r, g, b, 1)
 	thumb:SetSize(4, 54)
 	slider:Hide()
 
@@ -437,7 +439,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			math.floor(trackHeight * viewportHeight / totalHeight + 0.5)))
 		local sliderThumb = RQE.slider:GetThumbTexture()
 		if sliderThumb then
-			sliderThumb:SetColorTexture(255 / 255, 215 / 255, 0 / 255, 1) -- #FFD700
+			local accent = RQE.UI and RQE.UI:IsEnabled() and RQE.UI.Colors.gold
+			local r, g, b = unpack(accent or { 1, 215 / 255, 0 })
+			sliderThumb:SetColorTexture(r, g, b, 1)
 			sliderThumb:SetSize(4, thumbHeight)
 			sliderThumb:Show()
 		end
@@ -1401,7 +1405,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 	-------------------------------------------------------
 
 	-- Function to create tooltip for QuestID and QuestName
-	local function CreateQuestTooltip(frame, questID)
+	local function CreateQuestTooltip(frame, questID, tooltipKind)
 		local effectiveQuestID = tonumber(RQE.searchedQuestID) or tonumber(questID)
 		GameTooltip:SetOwner(frame, "ANCHOR_LEFT", -50, -40)
 		GameTooltip:SetMinimumWidth(350)
@@ -1557,6 +1561,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 		GameTooltip:Show()
+		RQE.UI:ApplyTooltipBackground(tooltipKind)
 	end
 
 
@@ -1585,7 +1590,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 	RQE.QuestIDText:SetScript("OnEnter", function(self)
 		local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 		if questID then
-			CreateQuestTooltip(self, questID)
+			CreateQuestTooltip(self, questID, "questID")
 		end
 	end)
 	RQE.QuestIDText:SetScript("OnLeave", function(self)
@@ -1608,7 +1613,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		RQE.QuestNameText:SetScript("OnEnter", function(self)
 			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			if questID then
-				CreateQuestTooltip(self, questID)
+				CreateQuestTooltip(self, questID, "questName")
 			end
 		end)
 		RQE.QuestNameText:SetScript("OnLeave", function(self)
@@ -1811,6 +1816,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		self.WaypointButtonHover = false
 		-- Initialize an array to store the heights
 		local stepTextHeights = {}
+		local stepStyle = RQE.UI:GetStepTextSettings()
 		RQE.CurrentQuestSteps = {}
 		local yOffset = -20  -- Vertical distance to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 		local baseYOffset = -20
@@ -1858,9 +1864,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				StepText:SetWidth(RQEFrame:GetWidth() - 80)
 
 				-- Apply color to all HTML text types (paragraph and headings)
-				StepText:SetTextColor("p", 1, 1, 0.8)
-				StepText:SetTextColor("h1", 1, 1, 0.8)
-				StepText:SetTextColor("h2", 1, 1, 0.8)
+				RQE.UI:StyleStepText(StepText)
 
 				-- Format the coords cleanly for display
 				local html = raw:gsub("{coords:([^}]+)}", function(data)
@@ -2001,20 +2005,20 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				-- 🧾 Normal text (as before)
 				StepText = RQE.API.AcquireRenderObject(content, "steps", "FontString", nil, "step:" .. i)
 				table.insert(RQE.StepsText, StepText)
-				StepText:SetFont("Fonts\\FRIZQT__.TTF", 12)
+				
 				StepText:SetJustifyH("LEFT")
-				StepText:SetTextColor(1, 1, 0.8)
+				RQE.UI:StyleStepText(StepText)
 				StepText:SetSize(RQEFrame:GetWidth() - 80, 0)
 				StepText:SetWordWrap(true)
 				StepText:SetText("")
-				RQE.RenderTextWithItemsSteps(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.StepsHoverContainer)
+				RQE.RenderTextWithItemsSteps(StepText, raw, stepStyle.font, stepStyle.size, stepStyle.color, RQE.StepsHoverContainer)
 				if hasCoordblock then
 					-- A zero-height FontString centers multi-line coordblocks across
 					-- earlier step rows.  Reserve the rendered height before anchoring.
 					local visualText = StepText:GetText() or ""
 					local lineBreaks = select(2, visualText:gsub("\n", ""))
 					local measuredHeight = StepText:GetStringHeight() or 0
-					StepText:SetHeight(math.max(20, measuredHeight + 4, (lineBreaks + 1) * 14))
+					StepText:SetHeight(math.max(20, measuredHeight + 4, (lineBreaks + 1) * (stepStyle.size + 2)))
 					StepText:SetJustifyV("TOP")
 				end
 			end
@@ -3044,7 +3048,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			focusSlider:EnableMouse(true)
 			focusSlider:SetThumbTexture("Interface\\Buttons\\WHITE8X8")
 			local focusThumb = focusSlider:GetThumbTexture()
-			focusThumb:SetColorTexture(0 / 255, 87 / 255, 184 / 255, 1) -- Azure #0057B8
+			local accent = RQE.UI and RQE.UI:IsEnabled() and RQE.UI.Colors.azure
+			local r, g, b = unpack(accent or { 0, 87 / 255, 184 / 255 })
+			focusThumb:SetColorTexture(r, g, b, 1)
 			focusThumb:SetSize(4, 42)
 			focusSlider:SetFrameLevel(RQE.SeparateFocusFrame:GetFrameLevel() + 5)
 			focusSlider:SetScript("OnValueChanged", function(_, value)
@@ -3108,6 +3114,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			local focusTextInset = (RQE.UI and RQE.UI:IsEnabled()) and 66 or 52
 			local focusTextWidth = math.max(1, RQE.SeparateContentFrame:GetWidth() - focusTextInset - 15)
 			local focusTextNarrowWidth = math.max(1, RQE.SeparateContentFrame:GetWidth() - focusTextInset - 25)
+			local stepStyle = RQE.UI:GetStepTextSettings()
 
 			-- Coordblock selection belongs only to the current Blizzard supertrack.
 			-- Clear it even when the newly selected quest has no coordblocks to render.
@@ -3218,7 +3225,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				-- Quest not in DB at all
 				RQE.SeparateStepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "FontString", "GameFontNormal")
 				RQE.SeparateStepText:SetJustifyH("LEFT")
-				RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
+				RQE.UI:StyleStepText(RQE.SeparateStepText)
 				RQE.SeparateStepText:SetWidth(focusTextWidth)
 				RQE.SeparateStepText:SetHeight(0)
 				RQE.SeparateStepText:SetWordWrap(true)
@@ -3226,7 +3233,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 				local fallbackText = "No step description available"
 				RQE.SeparateStepText:SetText("")
-				RQE.RenderTextWithItems(RQE.SeparateStepText, fallbackText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
+				RQE.RenderTextWithItems(RQE.SeparateStepText, fallbackText, stepStyle.font, stepStyle.size, stepStyle.color)
 				RQE.SeparateStepText:Show()
 				finishUpdate()
 				return
@@ -3236,7 +3243,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 					-- Quest in DB, but no steps — display "1/0"
 					RQE.SeparateStepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "FontString", "GameFontNormal")
 					RQE.SeparateStepText:SetJustifyH("LEFT")
-					RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
+					RQE.UI:StyleStepText(RQE.SeparateStepText)
 					RQE.SeparateStepText:SetWidth(focusTextWidth)
 					RQE.SeparateStepText:SetHeight(0)
 					RQE.SeparateStepText:SetWordWrap(true)
@@ -3244,7 +3251,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 					local formattedText = string.format("1/0: Quest in DB w/o any available steps.")
 					RQE.SeparateStepText:SetText("")
-					RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
+					RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, stepStyle.font, stepStyle.size, stepStyle.color)
 					RQE.SeparateStepText:Show()
 					finishUpdate()
 					return
@@ -3321,9 +3328,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				StepText:SetJustifyH("p", "LEFT")
 				StepText:SetHyperlinksEnabled(true)
 				StepText:SetWidth(focusTextWidth)
-				StepText:SetTextColor("p", 1, 1, 0.8)
-				StepText:SetTextColor("h1", 1, 1, 0.8)
-				StepText:SetTextColor("h2", 1, 1, 0.8)
+				RQE.UI:StyleStepText(StepText)
 				StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, -7)
 
 				local html = paragraphs[1]
@@ -3550,12 +3555,12 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 							fs:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, yOffset)
 							fs:SetWidth(focusTextNarrowWidth)
 							fs:SetJustifyH("LEFT")
-							fs:SetTextColor(1, 1, 0.8)
+							RQE.UI:StyleStepText(fs)
 							fs:SetWordWrap(true)
 							fs:SetText(line)
 
 							-- Render hover-capable markup (items/spells, etc.)
-							RQE.RenderTextWithItemsSteps(fs, line, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.SeparateContentFrame)
+							RQE.RenderTextWithItemsSteps(fs, line, stepStyle.font, stepStyle.size, stepStyle.color, RQE.SeparateContentFrame)
 							if line:find("{coordblock:", 1, true) then
 								table.insert(RQE.SeparateCoordblockFonts, fs)
 							end
@@ -3601,14 +3606,14 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 						RQE.SeparateStepText = StepText
 					end
 					StepText:SetJustifyH("LEFT")
-					StepText:SetTextColor(1, 1, 0.8)
+					RQE.UI:StyleStepText(StepText)
 					StepText:SetWidth(focusTextWidth)
 					StepText:SetWordWrap(true)
 					StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, yOffset)
 					StepText:SetText(line)
 
 					-- Handle hover-capable markup for item/spell tags even when no coords exist
-					RQE.RenderTextWithItemsSteps(StepText, line, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.SeparateContentFrame)
+					RQE.RenderTextWithItemsSteps(StepText, line, stepStyle.font, stepStyle.size, stepStyle.color, RQE.SeparateContentFrame)
 
 					-- Measure line height and step down
 					local h = StepText.GetStringHeight and StepText:GetStringHeight() or 16
@@ -3677,7 +3682,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				math.floor(trackHeight * viewportHeight / totalHeight + 0.5)))
 			local focusThumb = RQE.SeparateFocusSlider:GetThumbTexture()
 			if focusThumb then
-				focusThumb:SetColorTexture(0 / 255, 87 / 255, 184 / 255, 1) -- Azure #0057B8
+				local accent = RQE.UI and RQE.UI:IsEnabled() and RQE.UI.Colors.azure
+				local r, g, b = unpack(accent or { 0, 87 / 255, 184 / 255 })
+				focusThumb:SetColorTexture(r, g, b, 1)
 				focusThumb:SetSize(4, thumbHeight)
 				focusThumb:Show()
 			end
@@ -3763,10 +3770,6 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			number:SetFont("Fonts\\FRIZQT__.TTF", 22, "OUTLINE")
 			number:SetText("*")
 			number:SetTextColor(1, 1, 0)
-			if RQE.UI then
-				RQE.UI:StyleLegacyActionButton(RQE.SeparateWaypointButton, bg, number,
-					"Waypoint", { size = 40, iconInset = 3, focusInset = true })
-			end
 
 			-- Add the click event for the Waypoint Button
 			RQE.SeparateWaypointButton:SetScript("OnClick", function()
@@ -3827,6 +3830,11 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			RQE.SeparateWaypointButton:SetScript("OnLeave", function(self)
 				GameTooltip:Hide()
 			end)
+			-- Install themed hover hooks after the tooltip's mouse scripts.
+			if RQE.UI then
+				RQE.UI:StyleLegacyActionButton(RQE.SeparateWaypointButton, bg, number,
+					"Waypoint", { size = 40, iconInset = 3, focusInset = true })
+			end
 		end
 
 		RQE.SeparateWaypointButton:Show()
