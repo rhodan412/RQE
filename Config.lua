@@ -100,18 +100,20 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 	-------------------------------------------------------
 
 	-- Named colors available throughout both Font Settings interfaces. The
-	-- original five choices retain their existing RGB values; the additional
-	-- choices reuse colors already established elsewhere in RQE.
+	-- original five choices retain their existing RGB values. The menu follows
+	-- a red-to-violet spectrum, then places pale and neutral colors at the end.
 	RQE.FontColorOptions = {
 		Yellow = { label = "Yellow", hex = "ffff00" },
 		Green = { label = "Green", hex = "00ff00" },
 		Cyan = { label = "Cyan", hex = "00ff99" },
 		Canary = { label = "Canary", hex = "ffffd9" },
 		["Cream Can"] = { label = "Cream Can", hex = "edbf59" },
+		["Parchment Ivory"] = { label = "Parchment Ivory", hex = "f4e6c5" },
 		White = { label = "White", hex = "ffffff" },
 		Silver = { label = "Silver", hex = "c0c0c0" },
 		["Dark Orange"] = { label = "Dark Orange", hex = "ff7f00" },
 		Crimson = { label = "Crimson", hex = "dc143c" },
+		["Scarlet Red"] = { label = "Scarlet Red", hex = "c42b35" },
 		["Hot Pink"] = { label = "Hot Pink", hex = "ff69b4" },
 		Fuchsia = { label = "Fuchsia", hex = "ff00ff" },
 		Lavender = { label = "Lavender", hex = "c9a0ff" },
@@ -119,13 +121,14 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		["Medium Purple"] = { label = "Medium Purple", hex = "b266ff" },
 		["Maya Blue"] = { label = "Maya Blue", hex = "66ccff" },
 		Cobalt = { label = "Cobalt", hex = "0057b8" },
+		["Astral Ice"] = { label = "Astral Ice", hex = "dee2f7" },
 		["Golden Yellow"] = { label = "Golden Yellow", hex = "ffd700" },
 	}
 
 	RQE.FontColorOrder = {
-		"Crimson", "Dark Orange", "Cream Can", "Golden Yellow", "Yellow", "Canary",
+		"Crimson", "Scarlet Red", "Dark Orange", "Cream Can", "Parchment Ivory", "Golden Yellow", "Yellow", "Canary",
 		"Green", "Cyan", "Maya Blue", "Cobalt", "Medium Purple", "Lavender",
-		"Fuchsia", "Hot Pink", "Carnation Pink", "Silver", "White",
+		"Fuchsia", "Hot Pink", "Carnation Pink", "Astral Ice", "Silver", "White",
 	}
 	RQE.FontColorLabels = {}
 	RQE.FontColorLabelsByHex = {}
@@ -842,15 +845,14 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 							MainFrameOpacity = {
 								type = 'range',
 								name = 'Quest Helper Opacity',
-								desc = 'Adjust the opacity of the main helper frame.',
+								desc = 'Adjust the Quest Helper frame background. Each theme saves its own opacity.',
 								min = 0,
 								max = 1,
 								step = 0.01,
 								isPercent = true,
-								get = function(info) return RQE.db.profile.MainFrameOpacity end,
+								get = function(info) return RQE.UI:GetFrameBackgroundOpacity("main") end,
 								set = function(info, value)
-									RQE.db.profile.MainFrameOpacity = value
-									RQE:UpdateFrameOpacity()
+									RQE.UI:SetFrameBackgroundOpacity("main", value)
 								end,
 								order = 4,
 							},
@@ -966,15 +968,14 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 							QuestFrameOpacity = {
 								type = 'range',
 								name = 'Quest Tracker Opacity',
-								desc = 'Adjust the opacity of the quest tracking frame.',
+								desc = 'Adjust the Quest Tracker frame background. Each theme saves its own opacity.',
 								min = 0,
 								max = 1,
 								step = 0.01,
 								isPercent = true,
-								get = function(info) return RQE.db.profile.QuestFrameOpacity end,
+								get = function(info) return RQE.UI:GetFrameBackgroundOpacity("tracker") end,
 								set = function(info, value)
-									RQE.db.profile.QuestFrameOpacity = value
-									RQE:UpdateFrameOpacity()
+									RQE.UI:SetFrameBackgroundOpacity("tracker", value)
 								end,
 								order = 4,
 							},
@@ -2354,11 +2355,10 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		frameOpacitySlider:SetLabel("Quest Helper Opacity")
 		frameOpacitySlider:SetSliderValues(0, 1, 0.01)
 		frameOpacitySlider:SetIsPercent(true)
-		frameOpacitySlider:SetValue(RQE.db.profile.MainFrameOpacity)
+		frameOpacitySlider:SetValue(RQE.UI:GetFrameBackgroundOpacity("main"))
 		frameOpacitySlider:SetFullWidth(true)
 		frameOpacitySlider:SetCallback("OnValueChanged", function(widget, event, value)
-			RQE.db.profile.MainFrameOpacity = value
-			RQE:UpdateFrameOpacity()
+			RQE.UI:SetFrameBackgroundOpacity("main", value)
 		end)
 
 		-- Add a tooltip description for frameOpacitySlider (RQE.db.profile.MainFrameOpacity)
@@ -2493,11 +2493,10 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		questFrameOpacitySlider:SetLabel("Quest Tracker Opacity")
 		questFrameOpacitySlider:SetSliderValues(0, 1, 0.01)
 		questFrameOpacitySlider:SetIsPercent(true)
-		questFrameOpacitySlider:SetValue(RQE.db.profile.QuestFrameOpacity)
+		questFrameOpacitySlider:SetValue(RQE.UI:GetFrameBackgroundOpacity("tracker"))
 		questFrameOpacitySlider:SetFullWidth(true)
 		questFrameOpacitySlider:SetCallback("OnValueChanged", function(widget, event, value)
-			RQE.db.profile.QuestFrameOpacity = value
-			RQE:UpdateFrameOpacity()
+			RQE.UI:SetFrameBackgroundOpacity("tracker", value)
 		end)
 
 		-- Add a tooltip description for questFrameOpacitySlider (RQE.db.profile.QuestFrameOpacity)
