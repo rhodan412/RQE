@@ -1,3 +1,220 @@
+12.1.0.14 (2026.10.03)
+
+	**HIGHLIGHTS**
+		- Quest Helper and Quest Tracker header hints, including the Contribution waypoint button and filter flyouts, now share the Contribution tooltip colors.
+		- Magic Button action labels and displayed macro commands now use Azure and Golden Yellow, including Shift-hover macro text.
+		- Magic Button action labels now use a lighter blue for better readability against the tooltip background, while macro commands stay Golden Yellow.
+		- Magic Button macro tooltips now use brighter flag-inspired blue and yellow text that stands out against their dark background.
+		- Added Knights of the Round Table and Astral Cartographer looks for the Quest Helper and Tracker, with matching icons, controls, and Themes tab previews.
+		- Switching among the available themes updates frame accents and scenario cards live; each profile retains separate card choices for each theme.
+		- Quest objective progress bars now adopt the selected theme's colors as soon as the theme changes.
+		- Astral Cartographer's Quest Helper waypoint icons now sit more centrally within their button borders.
+		- Fine-tuned the Astral Cartographer Quest Helper waypoint icons after in-game review.
+		- Astral Cartographer's Quest Tracker shortcut and Filter icons are easier to recognize in the header.
+		- Astral Cartographer's Quest Tracker header icons now have a dark margin between their artwork and button borders.
+		- Astral Cartographer's Quest Tracker shortcuts now emphasize their action symbols instead of tiny decorative details.
+		- Astral Cartographer's Show All and Campaign quest icons now sit more centrally within their borders.
+		- Astral Cartographer now uses icy window and quest-section titles; all themes keep separate, profile-saved font choices that update without reloading.
+		- Retail World Quest titles now share the purple used by other tracked quest titles.
+		- Fixed a Font Settings syntax error that prevented RQE's configuration and dependent startup features from loading.
+		- Fixed a login font-settings error after reloading with a theme selected; saved font choices now remain available across profiles and reloads.
+		- Non-Basic themes now have a profile-saved icon button border opacity slider; marked surrounds can fade without dimming their action icons.
+		- Font color choices and the Themes list are alphabetized, with Basic first and Azure & Gold remaining the default theme.
+		- NPC and object preview windows now adopt the Astral Cartographer or Knights of the Round Table header palette as themes change.
+		- Astral Cartographer now defaults Quest IDs and Quest Names to Astral Ice while retaining other saved player colors.
+		- Steps and Separate Focus now share profile-saved font settings per theme; authored objective counts and linked names keep their own colors.
+		- Astral Cartographer now starts with 20% icon button border opacity; supertracked quest badges and hovered buttons keep a full-strength glow.
+		- At 0% border opacity, Quest Helper and Tracker header shortcuts show only their icons until hovered; their square surrounds return to the saved level when the pointer leaves.
+		- Changing the Steps & Separate Focus font size now reflows visible Quest Helper steps immediately.
+		- Astral Cartographer uses the selected icy scenario card defaults and updated Quest Helper and Quest Tracker screenshots in the Themes tab.
+		- Knights of the Round Table button icons sit more centrally in the Helper, Tracker, and Campaign quest row without changing button borders.
+		- Knights of the Round Table now defaults its window titles, step text, and quest descriptions to Dark Orange, Canary, and Cream Can while retaining player-selected colors.
+		- Knights of the Round Table now has its own preferred timed, dungeon, Delve, and Torghast card artwork.
+		- Knights of the Round Table now defaults Quest IDs and Quest Names to Carnation Pink while keeping player-selected colors.
+		- Knights of the Round Table now starts with 45% icon button border opacity while keeping profile-saved slider choices.
+		- The Knights Themes tab previews now show the chosen Quest Helper and Quest Tracker screenshots.
+		- Knights of the Round Table Quest IDs and Quest Names now default to Cream Can, while other selected colors remain saved.
+		- The Separate Focus waypoint button now shows the themed border glow on mouseover and returns to its saved opacity afterward.
+		- Scarlet Crusade is available as a profile-saved Quest Helper and Tracker theme with scarlet-and-steel borders, matching previews, aligned heraldic icons, and its own scenario-card choices.
+		- Font Settings now offer Parchment Ivory and Scarlet Red in the restored spectrum-style color order.
+		- Steps and Separate Focus default to Canary in Basic, Azure & Gold, Knights of the Round Table, and Scarlet Crusade; Astral Cartographer keeps Astral Ice.
+		- Scarlet Crusade now carries gold trim, scarlet enamel, and white metal highlights through its frames and controls.
+		- Scarlet Crusade keeps its deeper scarlet base while brighter red enamel, yellow gold, and pure-white metal glints give the borders more contrast.
+		- Scarlet Crusade now starts with the selected gold, cream, parchment, and canary font colors and 5% icon button border opacity.
+		- Scarlet Crusade now defaults to the selected six scenario card styles and shows the supplied Quest Helper and Tracker screenshots in Themes.
+		- Four themed looks now offer three selectable Quest Helper and Tracker background pictures each, with separate picture opacity controls for both frames and profile-saved choices.
+		- Every new background picture can be tried with any non-Basic theme, while each theme remembers its own selection.
+		- Astral Cartographer and Azure & Gold now start with their chosen pictures and separate Helper and Tracker picture and frame background opacities.
+		- Knights of the Round Table now starts with Stone Hall and its chosen frame opacities; the Themes picture picker uses readable names, a compact preview, and visible full selection text.
+		- Picture opacity controls now sit with the picture selector in Themes, while each theme saves its own frame background opacity in Frame Settings.
+		- Scarlet Crusade now starts with Cathedral Glass, 15% and 30% picture opacity, and 65% and 60% frame background opacity for the Helper and Tracker.
+		- Each non-Basic theme now has a default-on background picture checkbox; turning it off removes the picture and picture controls, and its picker shows only that theme's three images.
+		- Fine-tuned the default Helper and Tracker picture strengths for Azure & Gold, Astral Cartographer, and Knights of the Round Table.
+		- The Themes tab now shows the latest Quest Helper and Tracker screenshots for Scarlet Crusade, Knights of the Round Table, Azure & Gold, and Astral Cartographer without stretching them.
+		- Hovering a Tracker theme choice now explains its look; Themes also names that theme's default background picture, and Azure & Gold starts with 55% icon button border opacity.
+		- Quest ID, quest name, and literal Magic Button macro tooltips now use the selected theme picture with separate dark-background and picture opacity sliders; other tooltip types keep their existing appearance.
+		- Tooltip picture opacity now starts at the chosen strength for each theme and tooltip type; its three sliders share one row above the preview pictures, while the ineffective dark-background controls are gone.
+		- The three tooltip picture sliders now have readable labels and wider spacing, while their hover explanations retain the full wording.
+		- Hovering any of the six Themes opacity sliders now shows the selected theme's default percentage beneath its existing explanation.
+		- Themes slider tooltips now separate the default percentage from the explanation with a blank line and pale blue text.
+		- The three tooltip picture sliders now match the blue-and-gold slider styling used by the other Themes controls in the configuration window.
+
+	Buttons.lua
+		- Styled only marked header-button and filter-row GameTooltip hints with the existing Contribution charcoal, blue border, and cyan text, restoring prior tooltip colors on hide; kept the Step Editor launcher under Contribution's existing tooltip styling and marked its companion waypoint button for the shared treatment. (2026.10.01.1807)
+
+	Client_Classic/Config.lua
+		- Routed both Classic/SoD Frame Settings background opacity sliders, including the standalone controls, through per-theme saved values so theme defaults apply without losing player choices. (2026.10.02.1755)
+
+	Client_Classic/Core.lua
+		- Applied the selected Quest Name tooltip artwork after building custom quest hover details, including quests outside the tracked list, on Classic/SoD. (2026.10.02.2145)
+
+	Client_Classic/QuestingModule.lua
+		- Applied Quest Name tooltip artwork to tracked quest title, objective, and world-quest detail hovers on Classic/SoD. (2026.10.02.2145)
+
+	Client_Classic/RQEFrame.lua
+		- Tinted Quest Helper and Separate Focus scrollbar thumbs from the selected theme palette during creation and range updates, so Classic clients repaint them on live theme changes. (2026.10.02.1158)
+		- Styled rendered step descriptions, fallback text, coordinate paragraphs, and Separate Focus rows with the selected Steps & Separate Focus font role, keeping authored inline colors and rich links intact on Classic/SoD. (2026.10.02.1443)
+		- Installed the Separate Focus waypoint button's themed hover hooks after its tooltip scripts so the button glows on mouseover while retaining the opacity slider at rest on Classic/SoD. (2026.10.02.1610)
+		- Distinguished Quest ID and Quest Name hover origins when applying their separate themed tooltip backgrounds in the Classic/SoD Helper. (2026.10.02.2145)
+
+	Client_TBC/Config.lua
+		- Routed both TBC Frame Settings background opacity sliders, including the standalone controls, through per-theme saved values so theme defaults apply without losing player choices. (2026.10.02.1755)
+
+	Client_TBC/Core.lua
+		- Applied the selected Quest Name tooltip artwork after building custom quest hover details, including untracked quests, on TBC Anniversary. (2026.10.02.2145)
+
+	Client_TBC/QuestingModule.lua
+		- Applied Quest Name tooltip artwork to tracked quest title, objective, and world-quest detail hovers on TBC Anniversary. (2026.10.02.2145)
+
+	Client_TBC/RQEFrame.lua
+		- Tinted Quest Helper and Separate Focus scrollbar thumbs from the selected theme palette during creation and range updates, so TBC clients repaint them on live theme changes. (2026.10.02.1158)
+		- Styled rendered step descriptions, fallback text, coordinate paragraphs, and Separate Focus rows with the selected Steps & Separate Focus font role, keeping authored inline colors and rich links intact on TBC. (2026.10.02.1443)
+		- Installed the Separate Focus waypoint button's themed hover hooks after its tooltip scripts so the button glows on mouseover while retaining the opacity slider at rest on TBC. (2026.10.02.1610)
+		- Distinguished Quest ID and Quest Name hover origins when applying their separate themed tooltip backgrounds in the TBC Helper. (2026.10.02.2145)
+
+	Config.lua
+		- Registered Parchment Ivory, Scarlet Red, and Astral Ice in the shared font-color lookup tables and restored a red-through-violet selection order with pale and neutral colors at the end. (2026.10.02.1635)
+		- Added theme-picture opacity sliders to both Frame Settings layout groups, letting players fade Quest Helper and Tracker artwork separately from their frame background opacity. (2026.10.02.1742)
+		- Routed Retail Frame Settings and standalone background opacity controls through per-theme saved values and removed the frame-page picture sliders after moving them to Themes. (2026.10.02.1755)
+
+	ConfigTheme.lua
+		- Reorganized the shared configuration presentation into numbered sections for custom AceGUI controls, widget skinning, option composition, standalone settings lifecycle, and Blizzard Settings integration, then documented each previously uncommented named helper and constructor without changing executable behavior or order. (2026.10.02.1039)
+		- Resolved settings section icons and the standalone window header through the Azure & Gold theme's named texture paths so its fixed configuration styling continues to load after the theme assets are renamed. (2026.10.02.1107)
+		- Added Astral Ice to the shared color registry and a Quest Section Headers font group; the existing Window Headers group now describes theme-specific defaults, and every visible font role reflects and saves the selected theme's size, typeface, and color in both settings surfaces. (2026.10.02.1331)
+		- Corrected the Quest Section Headers option-table delimiters so ConfigTheme.lua parses and the configuration UI and dependent addon startup paths load again. (2026.10.02.1340)
+		- Sorted shared font color choices by their visible labels, including Astral Ice, and rebuilt their matching hex order so both settings interfaces show an alphabetical color menu. (2026.10.02.1417)
+		- Added a 0–100% icon button border opacity slider to the Themes page, disabled for Basic and saving the selected non-Basic theme's value to the active profile. (2026.10.02.1417)
+		- Added a shared Steps & Separate Focus size, typeface, and color group to Font Settings with theme-specific defaults and live focus reflow for each player selection. (2026.10.02.1443)
+		- Removed the late Astral color registration and alphabetical re-sort so both Font Settings menus retain the shared spectrum-style order, including the two new Scarlet colors. (2026.10.02.1635)
+		- Added a theme-specific background-picture selector and live artwork preview to Themes, and placed the separate picture opacity controls beside each frame's existing background opacity slider. (2026.10.02.1742)
+		- Expanded the Themes picture selector to list all twelve labeled artwork choices under any non-Basic theme, supporting cross-theme comparison without replacing another theme's saved selection. (2026.10.02.1742)
+		- Moved Helper and Tracker picture opacity sliders beside the Themes picture selector, reduced the artwork preview to a thumbnail, and displayed the full selected picture name and shorter dropdown labels to prevent truncation. (2026.10.02.1755)
+		- Added a default-on background-picture checkbox to Themes and hid the selector, both picture opacity sliders, thumbnail, and selected-name line when unchecked so the Helper/Tracker previews move up automatically; the dropdown now lists only three pictures for the selected theme. (2026.10.02.1808)
+		- Added gold-name and white-description tooltips to individual Tracker theme dropdown choices in both configuration views, anchored beside the open menu so players can inspect themes before selecting them. (2026.10.02.1840)
+		- Replaced the selected-picture caption with the active theme's fixed default picture name and sized Helper/Tracker preview images from their screenshot aspect ratios so the updated tall Tracker captures are not stretched. (2026.10.02.1840)
+		- Added separate dark-background and picture-opacity sliders for Quest ID, Quest Name, and literal Magic Button macro tooltips to the shared Themes page, including Blizzard AddOn Settings. (2026.10.02.2145)
+		- Removed the ineffective dark-background sliders, relabeled the three remaining controls as tooltip picture opacity, and placed them in one row between the background-picture picker and its default caption in both Themes views. (2026.10.02.2200)
+		- Added a shared tooltip-picture heading and wider gaps for the three slider controls; a small slider widget shows shorter on-page labels while AceConfig keeps each full option name and existing description in the hover tooltip. (2026.10.02.2216)
+		- Appended the active theme's default percentage to the existing Icon Border, Helper picture, Tracker picture, Quest ID, Quest Name, and Magic Button slider hover descriptions using the theme default tables. (2026.10.02.2220)
+		- Spaced the six opacity-slider default hints below their existing explanations, colored the hints pale blue, and shortened their wording to "Default: N%" while retaining the active theme's default value. (2026.10.02.2228)
+		- Identified the custom short-label tooltip picture controls as Slider widgets for shared standalone and AddOn Settings skinning, matching the other Themes sliders without changing their labels, tooltips, or values. (2026.10.02.2230)
+
+	Core.lua
+		- Applied the selected Quest Name tooltip artwork to custom Retail quest details, including untracked quest names shown through chat links. (2026.10.02.2145)
+
+	ProfileManager.lua
+		- Reorganized profile application and frame-geometry safeguards beneath descriptive headers and documented the remaining internal geometry-restoration helper, preserving the guarded profile lifecycle and executable order. (2026.10.02.1039)
+
+	QuestingModule.lua
+		- Applied the active theme's accent colors to the Quest Tracker scrollbar, Delve tier flag, Torghast currency inset, and test scenario flag, and enabled the Torghast inset for every non-Basic theme so live theme changes keep scenario widgets coordinated. (2026.10.02.1158)
+		- Recolored existing Quest Helper and Tracker objective progress bars through a weak frame registry when themes change, while retaining Basic's original colors. (2026.10.02.1201)
+		- Updated the test scenario timer fill and Torghast currency field from the active palette during theme switches so preview cards match their live themed counterparts. (2026.10.02.1202)
+		- Matched Retail World Quest row-title markup to the Medium Purple used by ordinary tracked quest titles, replacing its fixed gold without changing Classic or TBC difficulty coloring. (2026.10.02.1331)
+		- Applied Quest Name tooltip artwork to Retail bonus, tracked, objective, and world-quest detail hovers while leaving unrelated tooltips native. (2026.10.02.2145)
+
+	QuestTools.lua
+		- Marked reusable filter and flyout rows for the shared hint styling so their hover descriptions match the tracker header controls without changing menu layout or selection behavior. (2026.10.01.1807)
+		- Reorganized shared quest selection, filter menus, context menus, and reference links beneath descriptive headers, then documented every previously uncommented named helper and method while preserving tracking behavior and executable order. (2026.10.02.1039)
+
+	RQE.toc
+		- Updated version#. (2026.10.03.1807)
+
+	RQEDatabase.lua
+		- Updated a few quests in Midnight (2026.10.03.0233)
+
+	RQEFrame.lua
+		- Tinted Quest Helper and Separate Focus scrollbar thumbs from the selected theme palette during creation and range updates, so Retail clients repaint them on live theme changes. (2026.10.02.1158)
+		- Styled Retail step descriptions, fallback text, coordinate paragraphs, and Separate Focus rows from the shared theme font role, retaining explicit objective-count and entity-link colors and adapting coordblock height to chosen text size. (2026.10.02.1443)
+		- Installed the Separate Focus waypoint button's themed hover hooks after its tooltip scripts so the button glows on mouseover while retaining the opacity slider at rest on Retail. (2026.10.02.1610)
+		- Passed separate Quest ID and Quest Name categories into Retail Helper rich tooltip styling so each hover uses its own opacity settings. (2026.10.02.2145)
+
+	RQEMacro.lua
+		- Colored displayed macro-action titles Azure (#0057B8) and macro command lines Golden Yellow (#FFD700), routing Shift/debug and unresolved-macro bodies through the same wrapped renderer; Shift-hover now exposes a spell-backed macro array's body while normal item and spell tooltips retain their native detail. (2026.10.01.1807)
+		- Lightened Magic Button macro-action titles and Cancel Aura labels to blue #2D8BD4 so they read clearly on the dark tooltip, while retaining Golden Yellow #FFD700 for macro command lines. (2026.10.01.1819)
+		- Brightened macro-action titles and Cancel Aura labels to blue #3399FF and displayed macro commands to yellow #FFE600. (2026.10.01.1821)
+		- Applied the selected Macro Body tooltip artwork only to RQE's wrapped literal macro text, including Shift-hover text, while item and spell details retain Blizzard's tooltip. (2026.10.02.2145)
+
+	RQE_ModelPreview.lua
+		- Reorganized model and object preview state, viewport interaction, quest-context checks, frame construction, loading, and public entry points beneath descriptive headers, then documented every previously uncommented named function without changing preview behavior or executable order. (2026.10.02.1039)
+		- Applied the selected theme's background, border, header accent, and title colors to the shared NPC/object preview at creation, on show, and on live theme changes, while retaining the established Azure & Gold appearance for Basic and Azure & Gold. (2026.10.02.1417)
+
+	TrackerOrder.lua
+		- Reorganized profile-specific tracker ordering, collapsed presentation, managed reflow, and renderer hooks beneath descriptive headers, then documented every previously uncommented named helper and method without changing layout behavior or executable order. (2026.10.02.1039)
+		- Applied the selected theme's Quest Section Headers font before measuring each child-frame label, so size, typeface, and color choices remain visible and centered after tracker redraws. (2026.10.02.1331)
+		- Marked tracker section collapse controls as eligible for the theme-specific button-border opacity setting while keeping their icon and click behavior intact. (2026.10.02.1417)
+
+	UITheme.lua
+		- Reorganized tracker theme definitions, native-state restoration, themed controls, layout, and lifecycle handling beneath descriptive headers, then documented every previously uncommented named helper and method while preserving theme behavior and executable order. (2026.10.02.1039)
+		- Pointed Azure & Gold button and panel textures at their theme-prefixed files, and added theme-aware icon path resolution for controls, quest badges, and Magic Button actions so future non-Basic themes can supply their own icon prefix without changing semantic icon names. (2026.10.02.1107)
+		- Registered Knights of the Round Table and Astral Cartographer with their own palettes, named panel/button/icon textures, and Themes tab previews; added separate profile card-style groups that currently inherit Azure & Gold defaults and choices. (2026.10.02.1158)
+		- Reapplied panel-border textures and palette-driven button, search-field, and location colors on theme selection so existing controls change appearance without a reload or geometry reset. (2026.10.02.1158)
+		- Triggered immediate recoloring of existing objective progress bars during saved-theme application so helper and tracker content keeps pace with the selected palette. (2026.10.02.1201)
+		- Added Astral Cartographer-specific optical offsets that move the header waypoint target icon right and the Separate Focus compass left and down, preserving the button borders and other themes' alignment. (2026.10.02.1212)
+		- Moved the Astral Cartographer header waypoint target one pixel left and the Separate Focus compass one pixel right and one pixel down after in-game alignment review. (2026.10.02.1216)
+		- Enlarged the Astral Cartographer Show All, Completed, Hide Completed, Zone, and Filter header glyphs and applied additive blending at tracker-button size, preserving the existing Minimize and Close treatment and resetting the blend on other themes. (2026.10.02.1222)
+		- Reduced those five Astral Cartographer tracker glyphs to a consistent inner inset after in-game review, restoring dark separation from each button rim while retaining additive visibility and unchanged button dimensions. (2026.10.02.1229)
+		- Cropped only the rendered Astral Cartographer Show All, Completed, Hide Completed, Zone, and Filter header icons toward their action symbols, keeping their existing source artwork, 19-pixel inset, and button dimensions while restoring full texture coordinates for other themes. (2026.10.02.1236)
+		- Shifted only Astral Cartographer's Show All tracker glyph two pixels left and Campaign quest badge two pixels down, leaving button frames, other badges, and other themes' icon positions intact. (2026.10.02.1246)
+		- Added per-profile, per-theme font banks with defaults for each font role, preserving prior global choices during migration while assigning Astral Ice to Astral Cartographer's window and quest-section headers; live theme and profile changes now update both frame titles and existing section labels without altering frame settings or alignment. (2026.10.02.1331)
+		- Kept active textSettings separate from the theme font bank so AceDB's profile-default cleanup cannot erase saved role tables; rebuilt omitted font fields from the selected theme's defaults before the existing configuration refresh, preventing nil header settings on login and profile changes. (2026.10.02.1347)
+		- Made the saved theme bank authoritative on fresh login/profile activation and synchronized the working textSettings copy only during the active session, preserving per-theme choices even when AceDB fills or removes values equal to its global defaults. (2026.10.02.1351)
+		- Treated a newly recreated theme bank as a fresh activation even when a profile resets in place, retaining Astral Cartographer's icy default headers after profile reset. (2026.10.02.1352)
+		- Ordered the theme picker as Basic, Astral Cartographer, Azure & Gold, and Knights of the Round Table, preserving Azure & Gold as the fallback for new profiles. (2026.10.02.1417)
+		- Added per-profile, per-theme button-surround opacity with 100% defaults for non-Basic themes, applying it to marked Helper, Tracker, quest badge, and section controls without dimming their icon artwork or affecting Basic and excluded text/Magic buttons; refreshes live and after combat. (2026.10.02.1417)
+		- Refreshed the shared NPC/object viewer palette during theme and profile changes so an open preview updates without a reload. (2026.10.02.1417)
+		- Set Astral Ice as the Astral Cartographer default for Quest IDs and Quest Names in new theme font banks while preserving existing profile color choices. (2026.10.02.1417)
+		- Added a profile-saved Steps & Separate Focus font role with existing cream text defaults for Basic, Azure & Gold, and Knights and Astral Ice for Astral Cartographer; live font refresh styles existing text and rich-link hit regions. (2026.10.02.1443)
+		- Changed Astral Cartographer's button surround default to 20%, kept supertracked quest badge surrounds and glows at 100%, and made hover/pressed borders glow fully before returning to the slider value; normal blending reduces the baked rim brightness in the first two Astral tracker icons. (2026.10.02.1443)
+		- Drove marked icon buttons' hover and pressed texture alpha from actual pointer state, hiding both state layers at rest so a 0% slider value fully removes their square surround while hover still shows the full border. (2026.10.02.1458)
+		- Remeasured and resized visible Quest Helper step lines during font-role refresh so size changes update wrapping and spacing before the scroll extent is recalculated. (2026.10.02.1500)
+		- Set Astral Cartographer's default cards to Frostwind Rush, Waystone, Crystal Seam, Soulglass, Moonlit Passage, and Azure Waygate for their respective scenario types, preserving each profile's explicit card selections. (2026.10.02.1520)
+		- Shifted only Knights of the Round Table's Remove Waypoints, Contribution editor, Close, W, Separate Focus waypoint, Tracker filter, and Campaign badge glyphs within their existing button borders; both header Close buttons share the same adjustment. (2026.10.02.1552)
+		- Assigned Dark Orange window headers, Canary step/focus text, and Cream Can quest descriptions as Knights of the Round Table font defaults; migrated matching old default colors in existing theme banks while preserving distinct player selections. (2026.10.02.1552)
+		- Set Knights of the Round Table's six card defaults to Dawn Run, Champion's Forge, Battleworn Aegis, Companion's Banner, Ember Sprint, and Mawbound Chains without changing other themes or saved profile selections. (2026.10.02.1552)
+		- Added Carnation Pink defaults for Knights of the Round Table Quest IDs and Quest Names, including a separate migration that updates only old yellow defaults in existing theme banks and preserves custom colors. (2026.10.02.1554)
+		- Set Knights of the Round Table's button surround default to 45% without replacing per-profile opacity choices. (2026.10.02.1603)
+		- Replaced the Knights Quest Helper and Tracker preview textures with the selected screenshots and updated their visible crop dimensions so both display at their original proportions in Themes. (2026.10.02.1603)
+		- Changed Knights Quest ID and Quest Name defaults from Carnation Pink to Cream Can; migrated only the prior default colors in saved theme banks, leaving distinct player selections unchanged. (2026.10.02.1603)
+		- Registered Scarlet Crusade with its own palette, panel and button textures, Themes previews, aligned heraldic glyphs, and profile-specific scenario card defaults; placed it alphabetically after Knights while keeping Basic first and Azure & Gold as the fallback. (2026.10.02.1643)
+		- Set Scarlet's parchment font defaults and Canary step text, changed Basic and Azure & Gold step defaults to Canary, and migrated only their old default step colors in saved theme banks while preserving custom selections and Astral's icy default. (2026.10.02.1643)
+		- Shifted Scarlet's live accent from parchment to gold and brightened its light control tint so frames, location lines, search controls, and progress borders read as scarlet, gold, and white together. (2026.10.02.1643)
+		- Kept Scarlet Red as the primary live accent while brightening its highlight red and yellow-gold palette values; the revised Scarlet border and button textures preserve dark enamel with brighter red details and pure-white metal catches. (2026.10.02.1655)
+		- Set Scarlet Crusade font defaults to Golden Yellow window headers and quest names, Cream Can section headers and descriptions, Parchment Ivory quest IDs and directions, and Canary step/focus text; migrated only matching prior default colors in existing Scarlet font banks. (2026.10.02.1706)
+		- Changed Scarlet Crusade's default icon button border opacity from 100% to 5% while retaining each profile's explicitly saved slider choice. (2026.10.02.1706)
+		- Set Scarlet Crusade's timed, heroic, normal, follower, Delve, and Torghast card defaults to Astral Clock, Azure Waygate, Battleworn Aegis, Battleworn Aegis, Gilded Slate, and Runic Relay while preserving explicit profile selections. (2026.10.02.1710)
+		- Updated Scarlet Crusade's Quest Helper and Tracker preview crop dimensions to match the supplied screenshots, replacing the initial generated concepts in Themes without stretching them. (2026.10.02.1710)
+		- Registered three background pictures for each non-Basic theme, saved each theme's selected picture and independent Helper/Tracker picture opacity per profile, and placed aspect-preserving artwork behind frame content while restoring Basic's native background. (2026.10.02.1742)
+		- Allowed saved picture IDs to resolve from the full twelve-image catalog while retaining each theme's own first picture as its fallback default. (2026.10.02.1742)
+		- Added theme-specific frame background opacity values with migration of an existing custom active-theme value, retained Basic's legacy opacity, and set the requested starting pictures and Helper/Tracker picture and background opacity defaults for Astral Cartographer, Azure & Gold, Knights of the Round Table, and Scarlet Crusade. (2026.10.02.1755)
+		- Saved each theme's background-picture enabled state per profile with an enabled default, hid its live picture immediately when unchecked, and restricted selected picture IDs to the active theme's three choices while retaining the saved selection and opacity for later re-enabling. (2026.10.02.1808)
+		- Migrated only legacy Helper or Tracker background opacity values that differ from the old 55% default, allowing the other frame to receive its new theme default independently. (2026.10.02.1811)
+		- Updated default Helper/Tracker picture opacity to 20%/30% for Azure & Gold, 20%/35% for Astral Cartographer, and 15%/15% for Knights of the Round Table, preserving saved profile values and Scarlet Crusade's existing defaults. (2026.10.02.1820)
+		- Updated the eight non-Basic Helper/Tracker preview crop dimensions to match the supplied replacement screenshots, including the newer Azure & Gold pair, for correct Themes display in both settings views. (2026.10.02.1840)
+		- Changed Azure & Gold's default icon button border opacity to 55% while retaining any explicit profile-saved slider value. (2026.10.02.1840)
+		- Added per-profile, per-theme Quest ID, Quest Name, and Macro Body tooltip opacity banks with 90% dark-background and 70% picture defaults, rendering the current theme picture over either NineSlice or legacy tooltip fills with aspect-preserving crop and restoring GameTooltip when cleared or hidden. (2026.10.02.2145)
+		- Set picture-opacity defaults to 60%/60%/15% for Scarlet, 80%/80%/45% for Knights, 35%/35%/45% for Azure & Gold, and 45%/45%/55% for Astral across Quest ID, Quest Name, and Macro Body tooltips; retained saved picture strengths and stopped altering the native dark tooltip fill. (2026.10.02.2200)
+
+
 12.1.0.13 (2026.10.01)
 
 	**HIGHLIGHTS**
@@ -247,6 +464,9 @@
 		- Updated version# (2026.09.29.0115)
 		- Loaded QuestTools.lua after Buttons.lua for Retail so the compact filter menu and focused copy dialog are available before tracker frames are created. (2026.09.29.2233)
 
+	RQEDatabase.lua
+		- Added additional end-game quests to Midnight DB (2026.10.01.0130)
+
 	RQEFrame.lua
 		- Resolved the remaining objective count in the Retail/Forever focus step so its colored description follows live progress. (2026.09.28.1627)
 		- Registered the unnamed Retail/Forever Search Frame through a live UISpecialFrames alias and closed it from the focused input's Escape handler; restored the original AceGUI edit-box script and removed the alias before release, synchronized the search-button state, and hid/released the live widget on toggle-off to avoid orphaned pooled frames. (2026.09.29.2347)
@@ -266,9 +486,6 @@
 
 	RQE_ModelPreview.lua
 		- Removed the old fixed NPC drag-start fallback and the camera refresh that followed OnModelLoaded framing; NPC dragging now reads the resolved view supplied by the shared API, while object loading, image layout, pan/zoom, and shared window handlers remain unchanged. (2026.09.29.2347)
-
-	RQEDatabase.lua
-		- Added additional end-game quests to Midnight DB (2026.10.01.0130)
 
 	TrackerOrder.lua
 		- Kept Azure & Gold border slices hidden whenever Basic is selected during section refreshes, and read the live tracked achievement count so its themed section border stays visible after quest-list rebuilds. (2026.09.28.2326)
@@ -350,13 +567,13 @@
 	RQE.toc
 		- Updated version# (2026.09.28.1612)
 
-	RQE_API.lua
-		- Exposed Blizzard's world timer enumeration and challenge-mode keystone, affix, and death APIs through the client adapter so the Retail scenario panel can read live run data with unavailable-API fallbacks. (2026.09.28.1133)
-		- Added client-adapter access to scenario widget sets and their timer, currency, Delve, and status-bar visualization data so RQE can identify a native countdown without assuming every scenario widget is a timer. (2026.09.28.1149)
-
 	RQEDatabase.lua
 		- Updated some Northrend Horde quests in DB (2026.09.28.1612)
 
+
+	RQE_API.lua
+		- Exposed Blizzard's world timer enumeration and challenge-mode keystone, affix, and death APIs through the client adapter so the Retail scenario panel can read live run data with unavailable-API fallbacks. (2026.09.28.1133)
+		- Added client-adapter access to scenario widget sets and their timer, currency, Delve, and status-bar visualization data so RQE can identify a native countdown without assuming every scenario widget is a timer. (2026.09.28.1149)
 
 12.1.0.11 (2026.09.28)
 
@@ -385,6 +602,13 @@
 	RQE.toc
 		- Updated version# (2026.09.25.0038)
 
+	RQEDatabase.lua
+		- Updated some Northrend Horde quests in DB (2026.09.25.0038)
+
+	RQEFrame.lua
+		- Created the Contribution waypoint capture control in the Retail/Forever quest helper header, leaving the SoD and TBC frame construction unchanged. (2026.09.27.1225)
+
+
 	RQE_API.lua
 		- Added GetSpellPresentation to resolve a contribution author's spell ID to its name and icon through the client-aware spell-info adapter on Retail, Forever, SoD, and TBC. (2026.09.27.1013)
 		- Added GetSupertrackedContributionWaypoint to read Blizzard's next waypoint for the supertracked quest on Retail/Forever, reject unavailable or protected values, and convert normalized map coordinates to authoring percentages. (2026.09.27.1225)
@@ -393,13 +617,6 @@
 		- Replaced the quest UI map fallback with independent GetNextWaypoint and GetNextWaypointForMap lookups on the player's current continent, reporting missing, protected, failed, and valid results without treating W tooltip cache or POI coordinates as Blizzard waypoints. (2026.09.27.1257)
 		- Added a quest-ID-matched GetQuestsOnMap fallback for the player's map and continent when their respective waypoint APIs return no usable coordinates; rounded and labeled each POI result separately while keeping Retail/Forever lookup and Blizzard API calls in this adapter. (2026.09.27.1315)
 		- Removed the contribution-specific coordinate selection workflow from RQE_API.lua so Contribution can use the W button's existing quest-coordinate function; corrected the client-aware GetNextWaypoint and GetNextWaypointForMap wrappers to return every Blizzard coordinate value. (2026.09.27.1327)
-
-	RQEDatabase.lua
-		- Updated some Northrend Horde quests in DB (2026.09.25.0038)
-
-	RQEFrame.lua
-		- Created the Contribution waypoint capture control in the Retail/Forever quest helper header, leaving the SoD and TBC frame construction unchanged. (2026.09.27.1225)
-
 
 12.1.0.10 (2026.09.26)
 
@@ -600,17 +817,6 @@
 		- Loaded RQE_API.lua before the root Core.lua and ProfileManager.lua so Retail metadata reads and hook registration can use the unified API during file loading; interface and version metadata are unchanged. (2026.09.25.0856)
 		- Loaded the shared tracker-order module after Retail's tracker frames, retaining the existing TOC version metadata. (2026.09.26.1207)
 
-	RQE_API.lua
-		- Added the RQE.API.Client surface for all 298 audited game API names, including those still called directly in the untouched Classic/TBC files; native dispatch preserves multiple returns, nils, booleans, callback arguments, and timer handles, while ResolveClientAPI distinguishes real/native-or-adapted support from unsupported defaults. (2026.09.25.0856)
-		- Separated the real game version from API-generation routing: Forever 1.60 selects the Midnight API generation, while Classic/SoD and Anniversary retain legacy quest-log adapters. Captured native namespaces before existing compatibility shims and kept all new dispatch inside RQE without replacing native Blizzard methods. (2026.09.25.0856)
-		- Added explicit bidirectional item/container/spell/merchant conversions, spell-bank conversion, legacy aura/gossip and scenario adapters, quest-ID/log-index and watch helpers, and selected-quest reward lookups that restore selection after success or error. Unsupported APIs use explicit nil/false/count/list contracts without pretending unsupported transactions succeeded. (2026.09.25.0856)
-		- Filled modern flat map/waypoint/watch/scenario helper gaps, unified quest-description access, retained Forever quest-ID validation, and reconciled both merchant helper contracts with the native MerchantItemInfo table. (2026.09.25.0856)
-		- Added tracker-facing profession data and action helpers plus tooltip and achievement-untracking helpers, keeping their game API calls in the shared Retail/Forever API layer. (2026.09.26.0934)
-		- Count each distinct reagent item across carried inventory, personal bank, reagent bank, and account bank, and combine the eligible quality variants for a recipe slot without double-counting IDs. (2026.09.26.1007)
-
-	RQE_ModelPreview.lua
-		- Routed preview-load timers and cursor-position queries through the shared API with original-call comments; model widget calls and preview layout remain unchanged. (2026.09.25.0856)
-
 	RQEDatabase.lua
 		- Set quest 11999 and 12000 step 2 to complete on the Plans objective and added an inventory failure target of step 1, so consuming an empty Personal Effects bag restores the collect instruction and macro. (2026.09.24.2157)
 		- Updated dynamic Auction House macros in the database to omit the quantity variable, using RQE:SearchPreparePurchaseConfirmAH(itemID) so nil selects the remaining-objective calculation without global-variable collisions. Kept explicit numeric quantities for inventory-based purchases, including quest 29517 Shiny Bauble (10), Coarse Thread (5), and Blue Dye (5) macros. (2026.09.25.0939)
@@ -625,6 +831,17 @@
 
 	RQEMinimap.lua
 		- Routed launcher addon checks, waypoint clearing, timers, cursor/screen queries, and combat/modifier state through the unified API, retaining original-call comments and leaving minimap widget behavior intact. (2026.09.25.0856)
+
+	RQE_API.lua
+		- Added the RQE.API.Client surface for all 298 audited game API names, including those still called directly in the untouched Classic/TBC files; native dispatch preserves multiple returns, nils, booleans, callback arguments, and timer handles, while ResolveClientAPI distinguishes real/native-or-adapted support from unsupported defaults. (2026.09.25.0856)
+		- Separated the real game version from API-generation routing: Forever 1.60 selects the Midnight API generation, while Classic/SoD and Anniversary retain legacy quest-log adapters. Captured native namespaces before existing compatibility shims and kept all new dispatch inside RQE without replacing native Blizzard methods. (2026.09.25.0856)
+		- Added explicit bidirectional item/container/spell/merchant conversions, spell-bank conversion, legacy aura/gossip and scenario adapters, quest-ID/log-index and watch helpers, and selected-quest reward lookups that restore selection after success or error. Unsupported APIs use explicit nil/false/count/list contracts without pretending unsupported transactions succeeded. (2026.09.25.0856)
+		- Filled modern flat map/waypoint/watch/scenario helper gaps, unified quest-description access, retained Forever quest-ID validation, and reconciled both merchant helper contracts with the native MerchantItemInfo table. (2026.09.25.0856)
+		- Added tracker-facing profession data and action helpers plus tooltip and achievement-untracking helpers, keeping their game API calls in the shared Retail/Forever API layer. (2026.09.26.0934)
+		- Count each distinct reagent item across carried inventory, personal bank, reagent bank, and account bank, and combine the eligible quality variants for a recipe slot without double-counting IDs. (2026.09.26.1007)
+
+	RQE_ModelPreview.lua
+		- Routed preview-load timers and cursor-position queries through the shared API with original-call comments; model widget calls and preview layout remain unchanged. (2026.09.25.0856)
 
 	TrackerOrder.lua
 		- Normalized and saved section keys per AceDB profile, preserved each client's existing order as its default, and provided immediate move/reset operations without changing the default anchoring path. (2026.09.26.1207)
@@ -714,15 +931,6 @@
 	RQE.toc
 		- Updated version# (2026.09.22.1407)
 
-	RQE_API.lua
-		- Added shared render pools keyed by content owner, rendering group, widget type, and optional stable slot; recycling clears transient scripts, tooltip ownership, anchors, and quest references while retaining reusable UI objects and a single hidden text-measurement region per owner. (2026.09.23.1647)
-		- Gave pooled FontStrings a default GameFontNormal font and guarded text clearing for legacy fontless regions; stopped cleanup from touching unconfigured Button text, preventing the reported FontString:SetText(): Font not set error on unused coordinate labels. (2026.09.23.1647)
-		- Added a cancellable 50 ms Separate Focus refresh queue that combines event bursts without delaying direct step-selection refreshes. (2026.09.23.1647)
-
-	RQE_ModelPreview.lua
-		- Kept the singleton NPC/object viewer while deduplicating repeated hovers for the same ready/loading subject and quest context, preserving pan/zoom; failed loads remain retryable and changed explicit image paths still replace the preview. (2026.09.23.1647)
-		- Replaced anonymous load timeouts with cancellable timers, cancels them on model readiness/replacement/hide, and disables context/drag updates while closed; hiding clears model options, the live model, and the image texture, while stale timeout/model callbacks cannot restore a closed preview. (2026.09.23.1647)
-
 	RQEDatabase.lua
 		- Added additional Horde quests to the DB for Borean Tundra and some in Dragonflight. (2026.09.24.0055)
 
@@ -736,6 +944,15 @@
 
 	RQEMinimap.lua
 		- Anchored the main launcher menu beneath the actual clicked data-broker display instead of relying on a specific broker-frame name and detached fallback offset, while preserving the minimap button's placement behavior. (2026.09.22.1348)
+
+	RQE_API.lua
+		- Added shared render pools keyed by content owner, rendering group, widget type, and optional stable slot; recycling clears transient scripts, tooltip ownership, anchors, and quest references while retaining reusable UI objects and a single hidden text-measurement region per owner. (2026.09.23.1647)
+		- Gave pooled FontStrings a default GameFontNormal font and guarded text clearing for legacy fontless regions; stopped cleanup from touching unconfigured Button text, preventing the reported FontString:SetText(): Font not set error on unused coordinate labels. (2026.09.23.1647)
+		- Added a cancellable 50 ms Separate Focus refresh queue that combines event bursts without delaying direct step-selection refreshes. (2026.09.23.1647)
+
+	RQE_ModelPreview.lua
+		- Kept the singleton NPC/object viewer while deduplicating repeated hovers for the same ready/loading subject and quest context, preserving pan/zoom; failed loads remain retryable and changed explicit image paths still replace the preview. (2026.09.23.1647)
+		- Replaced anonymous load timeouts with cancellable timers, cancels them on model readiness/replacement/hide, and disables context/drag updates while closed; hiding clears model options, the live model, and the image texture, while stale timeout/model callbacks cannot restore a closed preview. (2026.09.23.1647)
 
 	WPUtil.lua
 		- Reused Separate Focus ordered-route buttons and their label regions by row, replacing current quest/step/point data and scripts on each rebuild and releasing obsolete route rows and tooltip updates on clear. (2026.09.23.1647)
@@ -849,6 +1066,18 @@
 		- Loaded the shared creature/object model-preview module immediately after the centralized API layer for Retail. (2026.09.21.1828)
 		- Loaded the shared object-image catalog before the Retail preview viewer, enabling ID-based image lookup and filename-derived titles without changing the addon version. (2026.09.22.1049)
 
+	RQEDatabase.lua
+		- Updated several quests (Alliance/Horde) in Borean Tundra within DB (2026.09.22.1407)
+
+	RQEFrame.lua
+		- Recognized NPC and alphanumeric object image tags in Retail/Forever step descriptions, including SeparateFocusFrame hyperlink rendering and persistent preview activation. (2026.09.21.2016)
+		- Made the Retail/Forever Quest Helper scroll its complete measured document, including wrapped quest text, progress objectives, the Separate Focus panel as one unit, and every database step; added a theme-only proportional Golden Yellow thumb that supports direct dragging and mouse-wheel movement without a trough or arrow buttons. (2026.09.21.2315)
+		- Added an independent proportional Azure #0057B8 thumb for overflowing Separate Focus content, with direct drag, targeted mouse-wheel movement, minimum thumb sizing, synchronized top resets, and hidden legacy/non-overflow states. (2026.09.21.2315)
+		- Required a positive tracked/displayed quest or visible quest heading before showing the Retail/Forever Quest Helper thumb, eliminating its empty-frame indicator even when stale geometry still reports overflow. (2026.09.21.2327)
+		- Added a profile-backed right-click Lock/Unlock Quest Helper Position & Size action for Retail/Forever, hiding its resize grip and disabling movement while locked; hyperlink-triggered previews now participate in quest-empty cleanup. (2026.09.21.2344)
+		- Notified the shared Frame Settings page after Retail/Forever Quest Helper lock changes so right-click and configuration controls remain synchronized. (2026.09.22.0001)
+		- Applied explicit downward-positive dragging to the Retail/Forever Quest Helper and Separate Focus scrollbars, widened their invisible grab areas, and capped proportional thumbs at their track heights without changing wheel behavior or theme visibility. (2026.09.22.1022)
+
 	RQE_API.lua
 		- Added client-aware creation, clearing, positioning, creature-ID loading, and model-file loading wrappers for reusable preview widgets; Retail prefers CinematicModel while re-release clients prefer PlayerModel, with guarded fallback in both directions. (2026.09.21.1828)
 		- Kept GameObject entry IDs distinct from model file IDs because Blizzard exposes direct SetCreature loading but no equivalent SetGameObject model lookup, preventing unrelated assets from being rendered accidentally. (2026.09.21.1828)
@@ -869,18 +1098,6 @@
 		- Distinguished quest-linked previews from direct `/run` testing previews, periodically closes only the former when no searched, supertracked, or visibly displayed Quest Helper content remains, and omits letter-prefixed custom object keys from popup titles while retaining numeric official object IDs. (2026.09.21.2344)
 		- Stopped a stale internal displayed-quest ID from keeping a quest-linked preview open after the Quest Helper safety clear; an active search, supertrack, numeric visible quest heading, or visible quest name is now required. (2026.09.22.0005)
 		- Resolved object texture paths and preview names from the shared key-indexed image catalog before legacy label/key-only fallbacks; kept hyperlink wording independent, retained explicit texture overrides and NPC behavior, and displayed official numeric IDs on a second title line while hiding letter-prefixed custom keys. (2026.09.22.1049)
-
-	RQEDatabase.lua
-		- Updated several quests (Alliance/Horde) in Borean Tundra within DB (2026.09.22.1407)
-
-	RQEFrame.lua
-		- Recognized NPC and alphanumeric object image tags in Retail/Forever step descriptions, including SeparateFocusFrame hyperlink rendering and persistent preview activation. (2026.09.21.2016)
-		- Made the Retail/Forever Quest Helper scroll its complete measured document, including wrapped quest text, progress objectives, the Separate Focus panel as one unit, and every database step; added a theme-only proportional Golden Yellow thumb that supports direct dragging and mouse-wheel movement without a trough or arrow buttons. (2026.09.21.2315)
-		- Added an independent proportional Azure #0057B8 thumb for overflowing Separate Focus content, with direct drag, targeted mouse-wheel movement, minimum thumb sizing, synchronized top resets, and hidden legacy/non-overflow states. (2026.09.21.2315)
-		- Required a positive tracked/displayed quest or visible quest heading before showing the Retail/Forever Quest Helper thumb, eliminating its empty-frame indicator even when stale geometry still reports overflow. (2026.09.21.2327)
-		- Added a profile-backed right-click Lock/Unlock Quest Helper Position & Size action for Retail/Forever, hiding its resize grip and disabling movement while locked; hyperlink-triggered previews now participate in quest-empty cleanup. (2026.09.21.2344)
-		- Notified the shared Frame Settings page after Retail/Forever Quest Helper lock changes so right-click and configuration controls remain synchronized. (2026.09.22.0001)
-		- Applied explicit downward-positive dragging to the Retail/Forever Quest Helper and Separate Focus scrollbars, widened their invisible grab areas, and capped proportional thumbs at their track heights without changing wheel behavior or theme visibility. (2026.09.22.1022)
 
 	UITheme.lua
 		- Reanchored and refreshed the Quest Helper and Separate Focus slider controllers whenever Azure & Gold reapplies responsive frame geometry, keeping each proportional thumb aligned with the current themed viewport and content range. (2026.09.21.2315)
@@ -1213,9 +1430,6 @@
 		- Updated version# (2026.09.20.0646)
 		- Loads the permanent shared configuration presentation before Retail/Forever configuration construction. (2026.09.20.1055)
 
-	RQE_API.lua
-		- Replaced unconditional compatibility namespace and method reassignments with missing-only guards for C_QuestLog, C_Map, C_TaskQuest, C_CampaignInfo, and C_Scenario. Existing Blizzard tables/functions are now left unwritten: Forever nameplate level coloring reads C_QuestLog.GetTrivialRange before restricted anchor measurements and health updates, so tainting that shared namespace contaminated the nameplate setup and could prevent its aura unit from being initialized. Missing legacy fallbacks are retained. (2026.09.20.0646)
-
 	RQEDatabase.lua
 		- Updated some Horde quests in DB for Borean Tundra (2026.09.20.1507)
 
@@ -1230,6 +1444,9 @@
 	RQEMinimap.lua
 		- Replaced display-name-based AddOn Settings navigation with the exact registered RQE category ID, so the LDB/minimap menu opens RQE's General Settings page instead of Blizzard's generic Controls page. (2026.09.20.1123)
 		- Anchored LDB menus to the actual display instance, closes them immediately after an action, and added pointer-aware dismissal that monitors both the originating broker/minimap button and the complete child-button menu region, preventing the dropdown from lingering after the cursor moves to configuration controls. (2026.09.20.1140)
+
+	RQE_API.lua
+		- Replaced unconditional compatibility namespace and method reassignments with missing-only guards for C_QuestLog, C_Map, C_TaskQuest, C_CampaignInfo, and C_Scenario. Existing Blizzard tables/functions are now left unwritten: Forever nameplate level coloring reads C_QuestLog.GetTrivialRange before restricted anchor measurements and health updates, so tainting that shared namespace contaminated the nameplate setup and could prevent its aura unit from being initialized. Missing legacy fallbacks are retained. (2026.09.20.0646)
 
 	UITheme.lua
 		- Increased the themed Magic Button surround's charcoal opacity from 0.28 to 0.68 so transparent action artwork such as the crossed swords remains distinct against bright world backgrounds while retaining visible translucency. (2026.09.20.0755)
@@ -1474,12 +1691,6 @@
 		- Updated version# (2026.09.19.1310)
 		- Loaded the presentation-only UITheme module for Retail after the compatibility API and before frame construction. (2026.09.19.2101)
 
-	RQE_API.lua
-		- Added normalized failed-state, time-remaining visibility, and seconds-remaining wrappers using Retail's C_QuestLog IsFailed/GetTimeAllowed APIs, task-quest time as a fallback, and preserved-selection legacy GetQuestLogTimeLeft/IsCurrentQuestFailed support; captured optional timer results before numeric conversion so non-timed quests safely return nil instead of raising an argument error. (2026.09.19.0931)
-		- Treated an available legacy quest-log entry's completion value as authoritative for failure detection, avoiding selected-quest fallback calls for ordinary incomplete quests while retaining IsCurrentQuestFailed when no log entry state is available. (2026.09.19.0934)
-		- Compared legacy completion state directly against numeric or string -1 instead of coercing it, allowing clients that expose a boolean isComplete field to remain safely classified as not failed. (2026.09.19.0935)
-		- Treated valid countdown data as authoritative when Blizzard's ShouldDisplayTimeRemaining predicate returns false, normalizing timed watched quests that still expose their remaining duration through GetTimeAllowed. (2026.09.19.0956)
-
 	RQEDatabase.lua
 		- Updated some Horde Borean Tundra quests in the DB (2026.09.20.0335)
 
@@ -1504,6 +1715,12 @@
 
 	RQEMacro.lua
 		- Added a presentation-only exception-item icon overlay for the Magic Button while preserving the secure macro, Blizzard icon fallback for every other action, cooldown/count layers, and all existing tooltip content. (2026.09.19.2203)
+
+	RQE_API.lua
+		- Added normalized failed-state, time-remaining visibility, and seconds-remaining wrappers using Retail's C_QuestLog IsFailed/GetTimeAllowed APIs, task-quest time as a fallback, and preserved-selection legacy GetQuestLogTimeLeft/IsCurrentQuestFailed support; captured optional timer results before numeric conversion so non-timed quests safely return nil instead of raising an argument error. (2026.09.19.0931)
+		- Treated an available legacy quest-log entry's completion value as authoritative for failure detection, avoiding selected-quest fallback calls for ordinary incomplete quests while retaining IsCurrentQuestFailed when no log entry state is available. (2026.09.19.0934)
+		- Compared legacy completion state directly against numeric or string -1 instead of coercing it, allowing clients that expose a boolean isComplete field to remain safely classified as not failed. (2026.09.19.0935)
+		- Treated valid countdown data as authoritative when Blizzard's ShouldDisplayTimeRemaining predicate returns false, normalizing timed watched quests that still expose their remaining duration through GetTimeAllowed. (2026.09.19.0956)
 
 	UITheme.lua
 		- Added the shared presentation layer for Azure and Golden Yellow panels, three-slice headers, scalable text buttons, pictorial controls, search fields, disabled states, and the optional classic-style fallback. (2026.09.19.2101)
@@ -1611,10 +1828,6 @@
 	RQE.toc
 		- Updated version# (2026.09.15.1905)
 
-	RQE_API.lua
-		- Identified the 1.60.x Forever client separately from Season of Discovery and supplied its missing SetDesaturation helper through the texture method, allowing bundled AceGUI checkboxes to update without changing other clients. (2026.09.17.1442)
-		- Validated Forever quest IDs before calling the native GetTitleForQuestID method, returning no title for out-of-range sentinel values instead of raising an API argument error. (2026.09.17.1442)
-
 	RQEDatabase.lua
 		- Updated some Midnight quests in the DB (2026.09.15.1905)
 		- Updated Horde Hellfire Peninsula and Zangarmarsh quests in the DB (2026.09.17.0200)
@@ -1633,6 +1846,10 @@
 	RQEMacro.lua
 		- Recognized #showtooltip item:67097 on Retail and item:54068 on legacy clients as cancel-aura macro markers, displaying a Cancel Aura heading with the complete macro body on the Magic Button; let these marked macros bypass macroArray spell-tooltip overrides so their /cancelaura command remains visible on every supported client. (2026.09.17.1855)
 		- Gave macroArray entries with spellIDTooltip their spell tooltip even when their macro uses the cancel-aura item marker; detected /cancelaura in the active macro and prefixed the native spell details with "Cancel Aura:", using AddSpellByID where available and a first-line legacy fallback, while plain marked macros retain the full macro-text tooltip. (2026.09.17.1913)
+
+	RQE_API.lua
+		- Identified the 1.60.x Forever client separately from Season of Discovery and supplied its missing SetDesaturation helper through the texture method, allowing bundled AceGUI checkboxes to update without changing other clients. (2026.09.17.1442)
+		- Validated Forever quest IDs before calling the native GetTitleForQuestID method, returning no title for out-of-range sentinel values instead of raising an API argument error. (2026.09.17.1442)
 
 	WPUtil.lua
 		- Resolved the shared current-step waypoint helper's stepIndex from the active or displayed numbered step before its legacy fallback, keeping the Separate Focus * button's click and tooltip on the same database or Sandbox step across Retail and legacy clients. (2026.09.15.1556)
@@ -1894,6 +2111,22 @@
 	RQE.toc
 		- Updated version# (2026.09.07.2359)
 
+	RQEDatabase.lua
+		- Added additional Midnight quests to DB for Season 2. (2026.09.07.2359)
+		- Added additional quests to Classic Season of Discovery. (2026.09.09.0320)
+		- Added quests to Burning Crusade and temporarily removed quests from DB for TBC Anniversary until Retail Outland is closer to completion (2026.09.10.1153)
+		- Added more quests to Burning Crusade (2026.09.15.0352)
+
+	RQEFrame.lua
+		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
+		- Kept Open Sandbox available from Retail frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+		- Identified compact first-paragraph waypoint hyperlinks separately from full coordinate links and displayed [Active] for the selected coordblock after focus-panel rebuilds in Retail. (2026.09.14.2324)
+		- Cleared a prior [Active] coordblock whenever the focus panel observes a different or removed supertracked quest, including quests with no coordblock links, in Retail. (2026.09.14.2327)
+		- Removed stale StepsText and Separate Focus FontString regions before redraw and measured multiline coordblock descriptions within their own step row, preventing old labels from overlapping newer steps or focus links. (2026.09.15.0004)
+		- Recreated the first-paragraph compact waypoint on an [Active] re-click and anchored only coordblock tooltips outside the Quest Helper; full-coordinate, item, and spell tooltip positioning remains unchanged. (2026.09.15.0004)
+		- Followed up the frame-edge compact tooltip placement by using the shared cursor-offset helper for first-paragraph coordblocks, keeping nearby links readable while leaving full-coordinate, item, and spell tooltips unchanged. (2026.09.15.0009)
+		- Added hover-only pointer-follow updates for the first-paragraph SimpleHTML coordblock tooltip and removed that update when its hyperlink is left or another link type is entered, preventing the tooltip from remaining at an old mouse-entry position. (2026.09.15.0038)
+
 	RQE_API.lua
 		- Added cross-client quest-link and quest-level helpers that prefer Blizzard's quest-ID APIs, fall back to normalized quest-log metadata, and extract a cached level from a quest link when necessary, allowing dependent addons to report consistent quest metadata in Retail, Classic/Season of Discovery, and TBC Anniversary. (2026.09.10.1744)
 		- Hardened legacy quest-link lookup by validating the quest ID embedded in every returned hyperlink and retrying with the normalized quest-log index only on Classic/Season of Discovery and TBC Anniversary, preventing older index-style behavior from linking the wrong quest. (2026.09.10.1746)
@@ -1913,22 +2146,6 @@
 		- Reset the selected Sandbox tab to Legacy Runtime whenever the editor opens, making right-click Open Sandbox and the slash command start in the raw-Lua testing view while preserving manual tab switching during the session. (2026.09.11.0858)
 		- Preserved coordOrder point coordinates, arrival radii, optional wayText, and explicit entryNo values in Contribution Sandbox chat exports while leaving Legacy Runtime's direct Lua parsing untouched, so either mode can test and retain authored ordered routes. (2026.09.15.0142)
 		- Corrected standalone active coordOrder { field lines to coordOrder = { before either Sandbox mode evaluates pasted Lua, while retaining commented Legacy lines and correcting promoted Contribution lines; reported the correction and included the underlying runtime error in future parsing failures so typo-driven nil-call errors no longer produce only a generic failure. (2026.09.15.0202)
-
-	RQEDatabase.lua
-		- Added additional Midnight quests to DB for Season 2. (2026.09.07.2359)
-		- Added additional quests to Classic Season of Discovery. (2026.09.09.0320)
-		- Added quests to Burning Crusade and temporarily removed quests from DB for TBC Anniversary until Retail Outland is closer to completion (2026.09.10.1153)
-		- Added more quests to Burning Crusade (2026.09.15.0352)
-
-	RQEFrame.lua
-		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
-		- Kept Open Sandbox available from Retail frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
-		- Identified compact first-paragraph waypoint hyperlinks separately from full coordinate links and displayed [Active] for the selected coordblock after focus-panel rebuilds in Retail. (2026.09.14.2324)
-		- Cleared a prior [Active] coordblock whenever the focus panel observes a different or removed supertracked quest, including quests with no coordblock links, in Retail. (2026.09.14.2327)
-		- Removed stale StepsText and Separate Focus FontString regions before redraw and measured multiline coordblock descriptions within their own step row, preventing old labels from overlapping newer steps or focus links. (2026.09.15.0004)
-		- Recreated the first-paragraph compact waypoint on an [Active] re-click and anchored only coordblock tooltips outside the Quest Helper; full-coordinate, item, and spell tooltip positioning remains unchanged. (2026.09.15.0004)
-		- Followed up the frame-edge compact tooltip placement by using the shared cursor-offset helper for first-paragraph coordblocks, keeping nearby links readable while leaving full-coordinate, item, and spell tooltips unchanged. (2026.09.15.0009)
-		- Added hover-only pointer-follow updates for the first-paragraph SimpleHTML coordblock tooltip and removed that update when its hyperlink is left or another link type is entered, preventing the tooltip from remaining at an old mouse-entry position. (2026.09.15.0038)
 
 	WaypointManager.lua
 		- Guarded automatic database-hotspot, Blizzard next-waypoint, and delayed waypoint creation while an explicit [Active] coordblock or flight-master destination owns the current map waypoint, so periodic refreshes cannot replace that manual selection. (2026.09.15.0004)
@@ -2050,13 +2267,6 @@
 		- Updated interface/version# (2026.08.27.2204)
 		- Created new TOC files for TBC Anniversary and Classic editions (2026.09.04.2227)
 
-	RQE_API.lua
-		- Fixed issue where questID was being printed in place of questName when printing questline (2026.09.01.1544)
-		- Updated addon's API file to work between Retail, TBC Anniversary and Classic editions of the game (2026.09.04.2227)
-
-	RQE_Sandbox.lua
-		- Added functionality to search Sandbox quests by questID [author-mode ONLY] (2026.08.27.2204)
-
 	RQEDatabase.lua
 		- Added many Classic WoW quests in the DB (2026.08.27.2204)
 		- Added many Burning Crusade Anniversary WoW quests in the DB (2026.08.30.0049)
@@ -2070,6 +2280,13 @@
 		- Fixed a number of mouseover errors (2026.08.27.2204)
 		- Addon re-write to allow handling of Retail, Classic and TBC Anniversary versions of game (2026.09.04.2227)
 
+
+	RQE_API.lua
+		- Fixed issue where questID was being printed in place of questName when printing questline (2026.09.01.1544)
+		- Updated addon's API file to work between Retail, TBC Anniversary and Classic editions of the game (2026.09.04.2227)
+
+	RQE_Sandbox.lua
+		- Added functionality to search Sandbox quests by questID [author-mode ONLY] (2026.08.27.2204)
 
 12.1.0.0 (2026.08.11)
 
@@ -2148,12 +2365,6 @@
 	RQE.toc
 		- Updated version# (2026.08.01.1707)
 
-	RQE_API.lua
-		- Updated RQE.API.GetNumQuestLogEntries(), RQE.API.GetQuestObjectives(questID), RQE.API.IsSuperTrackingQuest(), RQE.API.GetQuestObjectives(questID), RQE.API.GetNumQuestLogEntries(), RQE.API.GetSuperTrackedQuestID(), RQE.API.GetTitleForQuestID(questID), RQE.API.GetQuestLogInfo(questLogIndex), RQE.API.IsWorldQuest(questID), RQE.API.IsOnQuest(questID) (2026.08.01.1707)
-
-	RQE_Sandbox.lua
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
-
 	RQEDatabase.lua
 		- Updated many daily and weekly quests in the DB (2026.08.01.1707)
 
@@ -2173,6 +2384,12 @@
 		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1707)
 
 	RQEMinimap.lua
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+
+	RQE_API.lua
+		- Updated RQE.API.GetNumQuestLogEntries(), RQE.API.GetQuestObjectives(questID), RQE.API.IsSuperTrackingQuest(), RQE.API.GetQuestObjectives(questID), RQE.API.GetNumQuestLogEntries(), RQE.API.GetSuperTrackedQuestID(), RQE.API.GetTitleForQuestID(questID), RQE.API.GetQuestLogInfo(questLogIndex), RQE.API.IsWorldQuest(questID), RQE.API.IsOnQuest(questID) (2026.08.01.1707)
+
+	RQE_Sandbox.lua
 		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
 
 	WaypointManager.lua
@@ -2658,11 +2875,6 @@
 		- Updated version# (2026.02.15.0558)
 		- Updated interface# (2026.03.07.0223)
 
-	RQE_Sandbox.lua
-		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2026.02.13.1806)
-		- Added button to clear all entries from the sandbox UI (2026.02.14.0457)
-		- Updated saveBtn:SetScript to call RQE:CheckCoordHotspotsInSteps() function when button pressed (2026.02.17.0436)
-
 	RQEDatabase.lua
 		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
 		- Updated many Blade's Edge Mountains alliance quests in the DB (2026.02.01.2334)
@@ -2706,6 +2918,11 @@
 		- Removed some unneeded comments in the code (2026.02.01.2334)
 		- Changed debugMode from INFO to INFO+ when stating the CD is N/A for spell, within the RQE Macro Button, during combat (2026.02.03.0437)
 		- Added tooltip for Set CVAR (2026.02.15.0558)
+
+	RQE_Sandbox.lua
+		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2026.02.13.1806)
+		- Added button to clear all entries from the sandbox UI (2026.02.14.0457)
+		- Updated saveBtn:SetScript to call RQE:CheckCoordHotspotsInSteps() function when button pressed (2026.02.17.0436)
 
 	WaypointManager.lua
 		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed (2026.03.07.0223)
@@ -3080,9 +3297,6 @@
 	RQE.toc
 		- Updated Interface# (2025.11.08.2054)
 
-	RQE_Sandbox.lua
-		- Updated so that when Sandbox is saved or cleared it will call the RQE:UpdateSeparateFocusFrame() function (2025.11.11.0631)
-
 	RQEDatabase.lua
 		- Added additional Suramar side quests to the DB (2025.11.10.0058)
 		- Added remaining campaign and side quest storylines for Suramar to the quest DB except several chapters of 'Insurrection' (2025.11.10.0637)
@@ -3121,6 +3335,9 @@
 	RQEMinimap.lua
 		- Removed potential taint issue with the conversion of RQE.MinimapButton from Button to Frame type (2025.11.13.2156)
 		- Adjusted spacing with using tabs vs spaces for a clear handling when updating code (2025.11.17.0033)
+
+	RQE_Sandbox.lua
+		- Updated so that when Sandbox is saved or cleared it will call the RQE:UpdateSeparateFocusFrame() function (2025.11.11.0631)
 
 	WPUtil.lua
 		- Added some commented out information in the event that RQE.UnknownQuestButtonCalcNTrack = function() is causing taint (2025.11.13.2156)
@@ -3163,11 +3380,6 @@
 		- Updated Interface# (2025.10.24.0030)
 		- Updated Saved Variables to include RQE_SandboxDB (2025.10.25.1924)
 
-	RQE_Sandbox.lua
-		- New file added for the purpose of inputting an entry to take the place of a DB entry from the RQEDatabase file [author-mode ONLY] (2025.10.25.1924)
-		- Updated function that when 'Save the Sandbox' is pressed it will set the stepIndex to 1, UpdateFrame() and RQE:StartPeriodicChecks() (2025.10.26.2233)
-		- Updated function that when 'Clear Sandbox' is pressed it will set the stepIndex to 1, UpdateFrame() and RQE:StartPeriodicChecks() (2025.10.28.2059)
-
 	RQEDatabase.lua
 		- Added additional campaign quests for Hunter order hall to the quest DB (2025.10.24.0030)
 		- Updated crafting profession quests for Dragonflight to better handle when player has some of the items in their inventory (2025.10.25.0026)
@@ -3194,6 +3406,11 @@
 
 	RQEMacro.lua
 		- Fixed icon/item information for 'weaken' tooltip (2025.11.01.0214)
+
+	RQE_Sandbox.lua
+		- New file added for the purpose of inputting an entry to take the place of a DB entry from the RQEDatabase file [author-mode ONLY] (2025.10.25.1924)
+		- Updated function that when 'Save the Sandbox' is pressed it will set the stepIndex to 1, UpdateFrame() and RQE:StartPeriodicChecks() (2025.10.26.2233)
+		- Updated function that when 'Clear Sandbox' is pressed it will set the stepIndex to 1, UpdateFrame() and RQE:StartPeriodicChecks() (2025.10.28.2059)
 
 	WaypointManager.lua
 		- Updates to some debugMode requirements for printing information on location (2025.10.25.0026)
@@ -3467,10 +3684,6 @@
 		- Updated version# (2025.09.19)
 		- Added RQE_API.lua to the TOC call (2025.09.26)
 
-	RQE_API.lua
-		- Added new file to maintain what the API is with the current Blizzard system to future-proof and add for eventual functionality across other game versions (2025.09.26)
-		- Added and updated API calls and saving them to a table (2025.09.27)
-
 	RQEDatabase.lua
 		- Added some additional description and objective text within the DB (2025.09.22)
 		- Added additional quests including questID 72396 that has multi-map visited bands support (2025.09.23)
@@ -3489,6 +3702,10 @@
 
 	RQEMacro.lua
 		- Updated RQE:GenerateNpcMacroIfNeeded(questID) to replace legacy /script SetRaidTarget("target",3) line with /run RQE:SetMarkerIfNeeded('target', 8). This change standardizes marker assignment through RQE’s internal handler, ensuring consistent icon logic and compatibility with NPC marker validation routines. (2025.10.04.1513)
+
+	RQE_API.lua
+		- Added new file to maintain what the API is with the current Blizzard system to future-proof and add for eventual functionality across other game versions (2025.09.26)
+		- Added and updated API calls and saving them to a table (2025.09.27)
 
 	WaypointManager.lua
 		- Extended RQE:CreateWaypoint() to support hotspot-specific wayText. If the current step uses coordinateHotspots and the active hotspot includes wayText, that string overrides the default waypoint title. (2025.09.25)
