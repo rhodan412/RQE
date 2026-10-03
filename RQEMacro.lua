@@ -594,6 +594,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Helper to show long macro text in a tooltip without truncating lines.
 	local function RQEShowWrappedMacroTooltip(owner, title, macroBody)
+		local titleBlueR, titleBlueG, titleBlueB = 51 / 255, 153 / 255, 1
+		local yellowR, yellowG, yellowB = 1, 230 / 255, 0
 		GameTooltip:SetOwner(owner, "ANCHOR_BOTTOMLEFT")
 		-- GameTooltip:SetWidth(420)
 		GameTooltip:SetMinimumWidth(420)
@@ -602,7 +604,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		GameTooltip:ClearLines()
 
 		if title and title ~= "" then
-			GameTooltip:AddLine(title, 1, 0.82, 0, true)
+			GameTooltip:AddLine(title, titleBlueR, titleBlueG, titleBlueB, true)
 			GameTooltip:AddLine(" ", 1, 1, 1, true)
 		end
 
@@ -610,11 +612,12 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			if line == "" then
 				GameTooltip:AddLine(" ", 1, 1, 1, true)
 			else
-				GameTooltip:AddLine(line, 1, 0.82, 0, true)
+				GameTooltip:AddLine(line, yellowR, yellowG, yellowB, true)
 			end
 		end
 
 		GameTooltip:Show()
+		RQE.UI:ApplyTooltipBackground("macroBody")
 	end
 
 	-------------------------------------------------------
@@ -629,7 +632,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		-- AddSpellByID appends the native spell tooltip after our first line when
 		-- the client provides it, preserving range, channeling, and spell text.
 		if type(GameTooltip.AddSpellByID) == "function" then
-			GameTooltip:SetText("Cancel Aura:", 1, 0.82, 0)
+			GameTooltip:SetText("Cancel Aura:", 51 / 255, 153 / 255, 1)
 			GameTooltip:AddSpellByID(spellID)
 			if GameTooltip:NumLines() > 1 then
 				GameTooltip:Show()
@@ -645,7 +648,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		local titleLine = tooltipName and _G[tooltipName .. "TextLeft1"]
 		local spellTitle = titleLine and titleLine:GetText()
 		if spellTitle and spellTitle ~= "" then
-			titleLine:SetText("|cffffd200Cancel Aura:|r\n" .. spellTitle)
+			titleLine:SetText("|cff3399ffCancel Aura:|r\n" .. spellTitle)
 			GameTooltip:Show()
 			return
 		end
@@ -708,7 +711,10 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 							local _, _, body = RQE.API.Client.GetMacroInfo(hoverMacroIndex)
 							hoverMacroBody = body
 						end
-						if HasCancelAuraCommand(hoverMacroBody) then
+						if hoverMacroBody and (RQE.db.profile.debugLevel == "INFO+"
+							or RQE.API.Client.IsShiftKeyDown()) then
+							RQEShowWrappedMacroTooltip(self, "Macro:", hoverMacroBody)
+						elseif HasCancelAuraCommand(hoverMacroBody) then
 							RQEShowCancelAuraSpellTooltip(self, spellID, hoverMacroBody)
 						else
 							GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
@@ -781,8 +787,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			-- Debug mode: Show raw macro text
 			-- Previous Blizzard call changed 2026.09.25: if RQE.db.profile.debugLevel == "INFO+" or IsShiftKeyDown() then
 			if RQE.db.profile.debugLevel == "INFO+" or RQE.API.Client.IsShiftKeyDown() then
-				GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
-				GameTooltip:Show()
+				RQEShowWrappedMacroTooltip(self, "Macro:", macroBody)
 				return
 			end
 
@@ -825,9 +830,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 					elseif (isRetail and itemID == 153541) or (not isRetail and itemID == 1165) then
 						RQEShowWrappedMacroTooltip(self, "Pickup the quest", macroBody)
 					else
-						GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
+						RQEShowWrappedMacroTooltip(self, "Macro:", macroBody)
 					end
-					GameTooltip:Show()
 					return
 				else
 					-- Display the item tooltip if not an exception
@@ -875,8 +879,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			end
 
 			-- Fallback: Show raw macro body if no item or spell is resolved
-			GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
-			GameTooltip:Show()
+			RQEShowWrappedMacroTooltip(self, "Macro:", macroBody)
 		end)
 
 		-------------------------------------------------------
