@@ -4,7 +4,7 @@ RQE is a quest helper and tracker for World of Warcraft. It brings the next obje
 
 [Download on CurseForge](https://www.curseforge.com/wow/addons/rqe-rhodans-quest-explorer) · [Wiki / player guide](https://github.com/rhodan412/RQE/wiki) · [Watch the overview](https://www.youtube.com/watch?v=JKvJi32zfag) · [Report an issue](https://github.com/rhodan412/RQE/issues)
 
-![RQE's Quest Helper, NPC and object previews, and Quest Tracker](https://github.com/user-attachments/assets/9f52c4aa-10c9-4441-8726-9548e6ecbeaa)
+![RQE's Quest Helper, NPC and object previews, and Quest Tracker](https://raw.githubusercontent.com/rhodan412/RQE/main/.github/images/questing-at-a-glance.png)
 
 *Hover a highlighted NPC or object name in a quest step to see what you are looking for. The Quest Helper and Quest Tracker keep the route and objectives in view.*
 
