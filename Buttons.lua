@@ -43,6 +43,48 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	-- #2a. Tooltip & Border Primitives
 	-------------------------------------------------------
 
+	-- Keep the short header and filter hints consistent with Contribution's
+	-- blue-edged tooltip, without changing quest, item, or spell tooltips.
+	GameTooltip:HookScript("OnShow", function(tooltip)
+		local owner = tooltip:GetOwner()
+		if not owner or not owner.RQEControlTooltip then return end
+		if tooltip.GetBackdropColor and tooltip.SetBackdropColor
+			and tooltip.GetBackdropBorderColor and tooltip.SetBackdropBorderColor then
+			local br, bg, bb, ba = tooltip:GetBackdropColor()
+			local er, eg, eb, ea = tooltip:GetBackdropBorderColor()
+			if br and er then
+				tooltip.RQEControlOldBackground = { br, bg, bb, ba }
+				tooltip.RQEControlOldBorder = { er, eg, eb, ea }
+				tooltip:SetBackdropColor(9 / 255, 14 / 255, 23 / 255, 0.98)
+				tooltip:SetBackdropBorderColor(35 / 255, 145 / 255, 1, 1)
+			end
+		end
+		local oldColors = {}
+		for index = 1, tooltip:NumLines() do
+			local line = _G[tooltip:GetName() .. "TextLeft" .. index]
+			if line then
+				oldColors[index] = { line:GetTextColor() }
+				line:SetTextColor(0.35, 0.91, 1)
+			end
+		end
+		tooltip.RQEControlOldLineColors = oldColors
+	end)
+	GameTooltip:HookScript("OnHide", function(tooltip)
+		for index, color in pairs(tooltip.RQEControlOldLineColors or {}) do
+			local line = _G[tooltip:GetName() .. "TextLeft" .. index]
+			if line then line:SetTextColor(unpack(color)) end
+		end
+		tooltip.RQEControlOldLineColors = nil
+		if tooltip.RQEControlOldBackground then
+			tooltip:SetBackdropColor(unpack(tooltip.RQEControlOldBackground))
+			tooltip.RQEControlOldBackground = nil
+		end
+		if tooltip.RQEControlOldBorder then
+			tooltip:SetBackdropBorderColor(unpack(tooltip.RQEControlOldBorder))
+			tooltip.RQEControlOldBorder = nil
+		end
+	end)
+
 	-- Function to show tooltips
 	local function ShowTooltip(self, text)
 		GameTooltip:SetOwner(self, "ANCHOR_NONE")
@@ -60,6 +102,9 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Local function to create tooltip using ShowTooltip and HideTooltip
 	local function CreateTooltip(button, text)
+		-- Contribution already styles its own launcher; its companion capture
+		-- button keeps this marker when Contribution replaces the hover script.
+		button.RQEControlTooltip = button ~= RQE.RQEContributionButton
 		button:SetScript("OnEnter", function(self) ShowTooltip(self, text) end)
 		button:SetScript("OnLeave", HideTooltip)
 	end
