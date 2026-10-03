@@ -377,7 +377,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	QMQTslider:SetObeyStepOnDrag(false)
 	QMQTslider:SetThumbTexture("Interface\\Buttons\\WHITE8X8")
 	local QMQTthumb = QMQTslider:GetThumbTexture()
-	QMQTthumb:SetColorTexture(255 / 255, 215 / 255, 0 / 255, 1) -- #FFD700
+	local trackerAccent = RQE.UI and RQE.UI:IsEnabled() and RQE.UI.Colors.gold
+	local trackerR, trackerG, trackerB = unpack(trackerAccent or { 1, 215 / 255, 0 })
+	QMQTthumb:SetColorTexture(trackerR, trackerG, trackerB, 1)
 	QMQTthumb:SetSize(4, 54)
 	QMQTslider.scrollStep = 1
 	QMQTslider:Hide()
@@ -410,7 +412,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			math.floor(trackHeight * viewportHeight / totalHeight + 0.5)))
 		local thumb = RQE.QMQTslider:GetThumbTexture()
 		if thumb then
-			thumb:SetColorTexture(255 / 255, 215 / 255, 0 / 255, 1) -- #FFD700
+			local accent = RQE.UI and RQE.UI:IsEnabled() and RQE.UI.Colors.gold
+			local r, g, b = unpack(accent or { 1, 215 / 255, 0 })
+			thumb:SetColorTexture(r, g, b, 1)
 			thumb:SetSize(4, thumbHeight)
 			thumb:Show()
 		end
@@ -2972,6 +2976,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			or not RQE.UI:IsEnabled() or not widget.TierFrame or not widget.TierFrame.Flag then return end
 
 		local flag = widget.TierFrame.Flag
+		local colors = RQE.UI.Colors
 		local atlas = flag:GetAtlas()
 		if not atlas then return end
 		if not widget.RQEThemeNativeFlagColor then
@@ -2988,7 +2993,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 		local blueInset = widget.TierFrame.RQEThemeFlagBlueInset
 		if not blueInset then
-			-- Leave Blizzard's gold perimeter visible beneath a smaller blue copy.
+			-- Leave the themed perimeter visible beneath a smaller accent copy.
 			-- Both are textures on the native tooltip frame, not new hit regions.
 			blueInset = widget.TierFrame:CreateTexture(nil, "ARTWORK", nil, 2)
 			blueInset.ignoreInLayout = true
@@ -3003,19 +3008,19 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			topEdge:SetPoint("TOPLEFT", flag, "TOPLEFT", 4, -2)
 			topEdge:SetPoint("TOPRIGHT", flag, "TOPRIGHT", -4, -2)
 			topEdge:SetHeight(2)
-			topEdge:SetColorTexture(1, 0.84, 0.08, 0.8)
 			widget.TierFrame.RQEThemeFlagTopEdge = topEdge
 		end
+		topEdge:SetColorTexture(colors.gold[1], colors.gold[2], colors.gold[3], 0.8)
 		flag:SetDesaturated(true)
-		flag:SetVertexColor(1, 0.9, 0.04)
+		flag:SetVertexColor(colors.gold[1], colors.gold[2], colors.gold[3])
 		goldGlow:SetAtlas(atlas)
 		goldGlow:SetDesaturated(true)
-		goldGlow:SetVertexColor(1, 0.94, 0.04)
+		goldGlow:SetVertexColor(colors.gold[1], colors.gold[2], colors.gold[3])
 		goldGlow:SetAlpha(0.7)
 		goldGlow:SetShown(flag:IsShown())
 		blueInset:SetAtlas(atlas)
 		blueInset:SetDesaturated(true)
-		blueInset:SetVertexColor(0.18, 0.43, 1)
+		blueInset:SetVertexColor(colors.azureBright[1], colors.azureBright[2], colors.azureBright[3])
 		blueInset:SetShown(flag:IsShown())
 		topEdge:SetShown(flag:IsShown())
 	end
@@ -3066,6 +3071,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			highlight:SetPoint("TOPLEFT", fill, "TOPLEFT", 0, 0)
 			highlight:SetPoint("TOPRIGHT", fill, "TOPRIGHT", 0, 0)
 			widget.RQETorghastCurrencyHighlight = highlight
+		end
+		local colors = RQE.UI and RQE.UI.Colors
+		if colors then
+			border:SetColorTexture(colors.charcoal[1], colors.charcoal[2], colors.charcoal[3], 0.98)
+			fill:SetColorTexture(colors.charcoalRaised[1], colors.charcoalRaised[2], colors.charcoalRaised[3], 0.96)
+			highlight:SetColorTexture(colors.gold[1], colors.gold[2], colors.gold[3], 0.6)
 		end
 		border:ClearAllPoints()
 		border:SetPoint("TOPLEFT", rightmostCurrency, "TOPLEFT", -7, 5)
@@ -3251,7 +3262,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			widget.Frame:SetPoint("TOPLEFT", widget, "TOPLEFT", -(targetWidth - nativeWidth) / 2, 0)
 			if widget.Frame:GetWidth() ~= targetWidth then widget.Frame:SetWidth(targetWidth) end
 		end
-		ApplyTorghastCurrencyField(widget, inTorghast and RQE.UI.ActiveTheme == "AzureGold")
+		ApplyTorghastCurrencyField(widget, inTorghast and RQE.UI:IsEnabled())
 		if inTorghast and widget.DecorationBottomLeft then
 			-- The skull is Blizzard's bottom-left decoration. Keep it inside the
 			-- new rim without moving the widget or its interactive children.
@@ -3306,8 +3317,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					local textureKit = widgetInfo and widgetInfo.frameTextureKit or ""
 					local inTorghast = textureKit:find("jailerstower", 1, true) ~= nil
 						or RQE.API.Client.IsInJailersTower()
-					ApplyTorghastCurrencyField(widget, inTorghast and RQE.UI and RQE.UI:IsEnabled()
-						and RQE.UI.ActiveTheme == "AzureGold")
+					ApplyTorghastCurrencyField(widget, inTorghast and RQE.UI and RQE.UI:IsEnabled())
 				end
 			end)
 			torghastCurrencyArtHooked = true
@@ -3914,12 +3924,26 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			preview.delveHeading:SetShown(kind == "delve")
 			preview.heading:SetShown(kind ~= "delve")
 			preview.story:SetShown(kind == "delve")
-			local azure = RQE.UI and RQE.UI:IsEnabled()
-			preview.tier.flag:SetDesaturated(not not azure)
-			preview.tier.flag:SetVertexColor(1, azure and 0.9 or 1, azure and 0.04 or 1)
-			preview.tier.goldGlow:SetShown(not not azure)
-			preview.tier.inset:SetShown(not not azure)
-			preview.tier.topEdge:SetShown(not not azure)
+			local themed = RQE.UI and RQE.UI:IsEnabled()
+			local colors = themed and RQE.UI.Colors
+			preview.tier.flag:SetDesaturated(not not themed)
+			if colors then
+				preview.bar:SetVertexColor(colors.gold[1], colors.gold[2], colors.gold[3])
+				preview.currencyField:SetColorTexture(colors.charcoal[1], colors.charcoal[2], colors.charcoal[3], 0.98)
+				preview.currencyFill:SetColorTexture(colors.charcoalRaised[1], colors.charcoalRaised[2], colors.charcoalRaised[3], 0.96)
+				preview.tier.flag:SetVertexColor(colors.gold[1], colors.gold[2], colors.gold[3])
+				preview.tier.goldGlow:SetVertexColor(colors.gold[1], colors.gold[2], colors.gold[3])
+				preview.tier.inset:SetVertexColor(colors.azureBright[1], colors.azureBright[2], colors.azureBright[3])
+				preview.tier.topEdge:SetColorTexture(colors.gold[1], colors.gold[2], colors.gold[3], 0.8)
+			else
+				preview.bar:SetVertexColor(1, 0.74, 0.03)
+				preview.currencyField:SetColorTexture(0.025, 0.07, 0.10, 0.98)
+				preview.currencyFill:SetColorTexture(0.13, 0.21, 0.26, 0.96)
+				preview.tier.flag:SetVertexColor(1, 1, 1)
+			end
+			preview.tier.goldGlow:SetShown(not not themed)
+			preview.tier.inset:SetShown(not not themed)
+			preview.tier.topEdge:SetShown(not not themed)
 			if kind == "delve" then
 				local storySize = RQE.ScenarioCardTestDelveStorySize or 28
 				preview.story:SetSize(storySize, storySize)
@@ -4407,6 +4431,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			GameTooltip:AddLine(" ")
 			GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)
 			GameTooltip:Show()
+			RQE.UI:ApplyTooltipBackground("questName")
 		end)
 
 		bonusQuestLabel:SetScript("OnLeave", function()
@@ -5081,6 +5106,30 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Applies the shared objective presentation to Campaign/Meta, Normal, World,
 	-- Bonus, and Task rows.  The returned region is the true bottom-most element
 	-- and is therefore safe to use for the following row and child-frame anchors.
+	RQE.ObjectiveProgressBars = RQE.ObjectiveProgressBars or setmetatable({}, { __mode = "k" })
+
+	-- Recolors existing helper and tracker objective bars when the frame theme changes.
+	local function ApplyObjectiveProgressPalette(progressBar)
+		local colors = RQE.UI and RQE.UI:IsEnabled() and RQE.UI.Colors
+		if colors then
+			progressBar.RQEFill:SetStatusBarColor(colors.azure[1], colors.azure[2], colors.azure[3], 1)
+			progressBar.RQEFillBackground:SetColorTexture(colors.charcoal[1], colors.charcoal[2], colors.charcoal[3], 1)
+			progressBar:SetBackdropColor(colors.charcoal[1], colors.charcoal[2], colors.charcoal[3], 0.98)
+			progressBar:SetBackdropBorderColor(colors.gold[1], colors.gold[2], colors.gold[3], 1)
+		else
+			progressBar.RQEFill:SetStatusBarColor(0, 87 / 255, 184 / 255, 1)
+			progressBar.RQEFillBackground:SetColorTexture(5 / 255, 10 / 255, 22 / 255, 1)
+			progressBar:SetBackdropColor(0.03, 0.03, 0.06, 0.95)
+			progressBar:SetBackdropBorderColor(0.55, 0.55, 0.62, 1)
+		end
+	end
+
+	function RQE.RefreshObjectiveProgressBarColors()
+		for progressBar in pairs(RQE.ObjectiveProgressBars) do
+			ApplyObjectiveProgressPalette(progressBar)
+		end
+	end
+
 	function RQE.ApplyTrackerObjectiveDisplay(owner, questID, objectiveText, parentFrame, fallbackText)
 		if not owner or not objectiveText or not parentFrame then return objectiveText end
 
@@ -5124,6 +5173,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			progressBar.RQEPercentText:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			progressBar.RQEPercentText:SetTextColor(1, 1, 1)
 			owner.RQEProgressBar = progressBar
+			RQE.ObjectiveProgressBars[progressBar] = true
 		end
 
 		progressBar:SetParent(parentFrame)
@@ -5132,14 +5182,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.LayoutObjectiveProgressBar(progressBar)
 		progressBar:SetFrameLevel(parentFrame:GetFrameLevel() + 2)
 		progressBar.RQEFill:SetFrameLevel(progressBar:GetFrameLevel())
-		progressBar.RQEFill:SetStatusBarColor(0 / 255, 87 / 255, 184 / 255, 1)
-		if RQE.UI and RQE.UI:IsEnabled() then
-			progressBar:SetBackdropColor(9 / 255, 14 / 255, 23 / 255, 0.98)
-			progressBar:SetBackdropBorderColor(1, 215 / 255, 0, 1)
-		else
-			progressBar:SetBackdropColor(0.03, 0.03, 0.06, 0.95)
-			progressBar:SetBackdropBorderColor(0.55, 0.55, 0.62, 1)
-		end
+		ApplyObjectiveProgressPalette(progressBar)
 		progressBar.RQEFill:SetValue(progressInfo.percentage)
 		progressBar.RQEPercentText:SetText(string.format("%d%%",
 			math.floor(progressInfo.percentage + 0.5)))
@@ -6276,6 +6319,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 						GameTooltip:Show()
+						RQE.UI:ApplyTooltipBackground("questName")
 					end)
 
 					QuestObjectivesOrDescription:SetScript("OnEnter", function(self)
@@ -6370,6 +6414,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 						GameTooltip:Show()
+						RQE.UI:ApplyTooltipBackground("questName")
 					end)
 
 					-- Moved this block of code after the creation of QuestLevelAndName and QuestObjectivesOrDescription
@@ -6691,7 +6736,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
 
 				if RQE.API.IsWorldQuest(questID) then
-					WQuestLevelAndName:SetText("|cFFFFD700[WQ] " .. questTitle .. "|r") -- Gold color for World Quests
+					WQuestLevelAndName:SetText("|cFF895FDD[WQ] " .. questTitle .. "|r") -- Match the tracked quest title's Medium Purple.
 				else
 					WQuestLevelAndName:SetText("|cFFFFA500[UQ] Unknown Quest|r") -- Orange or any other color for Unknown Quests
 				end
@@ -6898,6 +6943,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)  -- Aquamarine color
 
 					GameTooltip:Show()
+					RQE.UI:ApplyTooltipBackground("questName")
 				end)
 
 				-- Party Members' Quest Progress
