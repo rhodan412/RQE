@@ -69,7 +69,7 @@ Click a section-header chevron to collapse or expand that section independently 
 
 | Set your section order | Fold the sections you do not need |
 | --- | --- |
-| [![Tracker Section Order controls in Frame Settings](https://github.com/user-attachments/assets/de5a23fb-22de-49dd-b6a5-9f78a87f2543)](https://github.com/user-attachments/assets/de5a23fb-22de-49dd-b6a5-9f78a87f2543) | [![Quest Tracker sections collapsed and selectively expanded](https://github.com/user-attachments/assets/02b1487b-f7f7-497c-a761-9ebef1998374)](https://github.com/user-attachments/assets/02b1487b-f7f7-497c-a761-9ebef1998374) |
+| [![Tracker Section Order controls in Frame Settings](https://github.com/user-attachments/assets/de5a23fb-22de-49dd-b6a5-9f78a87f2543)](https://github.com/user-attachments/assets/de5a23fb-22de-49dd-b6a5-9f78a87f2543) | [![Quest Tracker sections collapsed and selectively expanded](https://github.com/user-attachments/assets/be383715-4699-49bf-960c-d6991f1d4e9b)](https://github.com/user-attachments/assets/be383715-4699-49bf-960c-d6991f1d4e9b) |
 
 See the [Tracker section order settings](https://github.com/rhodan412/RQE/wiki/Settings-and-Controls#tracker-section-order) and [collapse guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#collapse-tracker-sections) for details.
 
@@ -110,7 +110,7 @@ These examples show group search, quest lookup beyond your log, and live dungeon
 
 | Quest context and guided steps | Search, filters, and references |
 | --- | --- |
-| ![Quest Helper and Tracker context](https://github.com/user-attachments/assets/f33a2a80-4a93-4899-b87f-e249385b6d51) | ![Quest search, filters, and reference links](https://github.com/user-attachments/assets/724f5e10-c713-48fb-8f85-d0474501921d) |
+| ![Quest Helper and Tracker context](https://github.com/user-attachments/assets/82d1af4a-d075-4b2f-a67d-d61a340f05e9) | ![Quest search, filters, and reference links](https://github.com/user-attachments/assets/f9faa7fc-4b6e-4a00-b5a6-ad1a5500245a) |
 
 ![RQE frame, font, and profile settings](https://github.com/user-attachments/assets/c581fe08-874f-4eae-8009-19be32341c67)
 
