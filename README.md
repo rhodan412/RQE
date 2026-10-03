@@ -91,7 +91,7 @@ Click a panel to view it at full size. The [player guide](https://github.com/rho
 
 | Interactive quest-step links | Quest-aware actions |
 | --- | --- |
-| [![Item and spell tooltips in RQE steps](https://github.com/user-attachments/assets/f011e2db-743d-48ae-9eca-1edbd8d85522)](https://github.com/user-attachments/assets/f011e2db-743d-48ae-9eca-1edbd8d85522) | [![RQE action button and quest macro](https://github.com/user-attachments/assets/3888da5b-bb78-47b0-945a-05cb60ac7fe8)](https://github.com/user-attachments/assets/3888da5b-bb78-47b0-945a-05cb60ac7fe8) |
+| [![Item and spell tooltips in RQE steps](https://github.com/user-attachments/assets/102bad63-210d-42a5-820e-1a9cd0135ef0)](https://github.com/user-attachments/assets/102bad63-210d-42a5-820e-1a9cd0135ef0) | [![RQE action button and quest macro](https://github.com/user-attachments/assets/9f147805-2748-4f1f-9f6d-7fbf9abe7a25)](https://github.com/user-attachments/assets/9f147805-2748-4f1f-9f6d-7fbf9abe7a25) |
 
 ### More quest tools in action
 
@@ -121,7 +121,7 @@ These examples show group search, quest lookup beyond your log, and live dungeon
 
 The optional Azure & Gold theme gives RQE's frames, sections, and controls a consistent look. Switch between Basic and Azure & Gold in **Themes**, and choose separate card artwork for each supported activity. See [Themes and card styles](https://github.com/rhodan412/RQE/wiki/Settings-and-Controls#themes-and-card-styles) for the controls and defaults.
 
-[![RQE Basic and Azure & Gold theme comparison](https://github.com/user-attachments/assets/0c6e9d43-cab9-4af3-acdb-e240cc3edbee)](https://github.com/user-attachments/assets/0c6e9d43-cab9-4af3-acdb-e240cc3edbee)
+[![RQE Basic and Azure & Gold theme comparison](https://github.com/user-attachments/assets/9ba5b5eb-ee3e-4dfa-ae27-bb54fac7b7bb)](https://github.com/user-attachments/assets/9ba5b5eb-ee3e-4dfa-ae27-bb54fac7b7bb)
 
 ### A quest item when time matters
 
