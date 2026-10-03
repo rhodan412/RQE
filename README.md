@@ -91,7 +91,7 @@ Click a panel to view it at full size. The [player guide](https://github.com/rho
 
 | Interactive quest-step links | Quest-aware actions |
 | --- | --- |
-| [![Item and spell tooltips in RQE steps](https://github.com/user-attachments/assets/5892a54b-3f6e-475e-8088-737b34e58be6)](https://github.com/user-attachments/assets/5892a54b-3f6e-475e-8088-737b34e58be6) | [![RQE action button and quest macro](https://github.com/user-attachments/assets/9f147805-2748-4f1f-9f6d-7fbf9abe7a25)](https://github.com/user-attachments/assets/9f147805-2748-4f1f-9f6d-7fbf9abe7a25) |
+| [![Item and spell tooltips in RQE steps](https://github.com/user-attachments/assets/5892a54b-3f6e-475e-8088-737b34e58be6)](https://github.com/user-attachments/assets/5892a54b-3f6e-475e-8088-737b34e58be6) | [![RQE action button and quest macro](https://raw.githubusercontent.com/rhodan412/RQE/main/.github/images/quest-aware-actions.png)](https://raw.githubusercontent.com/rhodan412/RQE/main/.github/images/quest-aware-actions.png) |
 
 ### More quest tools in action
 
@@ -110,7 +110,7 @@ These examples show group search, quest lookup beyond your log, and live dungeon
 
 | Quest context and guided steps | Search, filters, and references |
 | --- | --- |
-| ![Quest Helper and Tracker context](https://github.com/user-attachments/assets/82d1af4a-d075-4b2f-a67d-d61a340f05e9) | ![Quest search, filters, and reference links](https://github.com/user-attachments/assets/f9faa7fc-4b6e-4a00-b5a6-ad1a5500245a) |
+| ![Quest Helper and Tracker context](https://raw.githubusercontent.com/rhodan412/RQE/main/.github/images/quest-context-and-guided-steps.png) | ![Quest search, filters, and reference links](https://github.com/user-attachments/assets/f9faa7fc-4b6e-4a00-b5a6-ad1a5500245a) |
 
 ![RQE frame, font, and profile settings](https://github.com/user-attachments/assets/c581fe08-874f-4eae-8009-19be32341c67)
 
