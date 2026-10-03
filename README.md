@@ -93,6 +93,18 @@ Click a panel to view it at full size. The [player guide](https://github.com/rho
 | --- | --- |
 | [![Item and spell tooltips in RQE steps](https://github.com/user-attachments/assets/f011e2db-743d-48ae-9eca-1edbd8d85522)](https://github.com/user-attachments/assets/f011e2db-743d-48ae-9eca-1edbd8d85522) | [![RQE action button and quest macro](https://github.com/user-attachments/assets/3888da5b-bb78-47b0-945a-05cb60ac7fe8)](https://github.com/user-attachments/assets/3888da5b-bb78-47b0-945a-05cb60ac7fe8) |
 
+### More quest tools in action
+
+These examples show group search, quest lookup beyond your log, and live dungeon objectives. Click an image to view it at full size.
+
+| Find a group for a world quest | Look up a quest beyond your log |
+| --- | --- |
+| [![RQE group control and matching Premade Group listings for a world quest](https://github.com/user-attachments/assets/780e8ed6-11df-48c3-af64-78d7483f0ad3)](https://github.com/user-attachments/assets/780e8ed6-11df-48c3-af64-78d7483f0ad3) | [![RQE searching for a quest beyond the character's quest log](https://github.com/user-attachments/assets/c9ac9ae5-7b61-41a0-a16f-7e4d524832b8)](https://github.com/user-attachments/assets/c9ac9ae5-7b61-41a0-a16f-7e4d524832b8) |
+
+**Dungeon objectives in play**
+
+[![RQE tracking live Windrunner Spire dungeon boss objectives](https://github.com/user-attachments/assets/cec1a32b-bb63-47e2-8167-b7845d257bc4)](https://github.com/user-attachments/assets/cec1a32b-bb63-47e2-8167-b7845d257bc4)
+
 <details>
 <summary>More illustrated features: quest context, search, and settings</summary>
 
