@@ -4372,6 +4372,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		GameTooltip:AddLine(" ", 1, 1, 1, false)
 		GameTooltip:AddLine("QuestID: " .. questID, 1, 1, 0.6, true)
 		GameTooltip:Show()
+		RQE.UI:ApplyTooltipBackground("questName")
 	end
 
 	-------------------------------------------------------
