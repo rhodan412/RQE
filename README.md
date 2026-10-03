@@ -91,7 +91,7 @@ Click a panel to view it at full size. The [player guide](https://github.com/rho
 
 | Interactive quest-step links | Quest-aware actions |
 | --- | --- |
-| [![Item and spell tooltips in RQE steps](https://github.com/user-attachments/assets/102bad63-210d-42a5-820e-1a9cd0135ef0)](https://github.com/user-attachments/assets/102bad63-210d-42a5-820e-1a9cd0135ef0) | [![RQE action button and quest macro](https://github.com/user-attachments/assets/9f147805-2748-4f1f-9f6d-7fbf9abe7a25)](https://github.com/user-attachments/assets/9f147805-2748-4f1f-9f6d-7fbf9abe7a25) |
+| [![Item and spell tooltips in RQE steps](https://github.com/user-attachments/assets/5892a54b-3f6e-475e-8088-737b34e58be6)](https://github.com/user-attachments/assets/5892a54b-3f6e-475e-8088-737b34e58be6) | [![RQE action button and quest macro](https://github.com/user-attachments/assets/9f147805-2748-4f1f-9f6d-7fbf9abe7a25)](https://github.com/user-attachments/assets/9f147805-2748-4f1f-9f6d-7fbf9abe7a25) |
 
 ### More quest tools in action
 
