@@ -190,6 +190,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			end)
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 
+			rootDescription:CreateButton("Restore frame settings from login", function() RQE:RestoreLoginFrameSettings() end)
+
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
 			end
@@ -247,6 +249,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				RQE.ToggleFrameLock()
 			end)
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
+
+			rootDescription:CreateButton("Restore frame settings from login", function() RQE:RestoreLoginFrameSettings() end)
 
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
@@ -728,6 +732,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	local oldSetDirectionText = RQE.DirectionTextFrame.SetText
 	-- Wrap direction updates so every new value also refreshes the shared Quest Helper layout.
 	function RQE.DirectionTextFrame:SetText(text)
+		if not self._rqeRenderingPickup then
+			RQE.API.ReleaseRichTextHovers(self)
+			self._rqeRichText = nil
+		end
 		local result = oldSetDirectionText(self, text)
 		if RQE.RefreshQuestHelperTextLayout then
 			RQE:RefreshQuestHelperTextLayout()
@@ -871,7 +879,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	-- Shorten long quest descriptions before passing them to the compact Quest Helper display.
 	function RQE.QuestDescription:SetText(text)
 		local displayText = text
-		if type(text) == "string" and text ~= "" then
+		local isSearchedPreview = RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.DisplayedQuestID)
+		if not isSearchedPreview and type(text) == "string" and text ~= "" then
 			-- Step 1: Isolate only the first paragraph
 			local firstPara, rest = text:match("^(.-)\r?\n\r?\n(.*)")
 			if not firstPara then
@@ -1043,7 +1053,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			or (RQE.API.GetSuperTrackedQuestID
 				and tonumber(RQE.API.GetSuperTrackedQuestID()))
 		local hasObjectiveText = type(text) == "string" and text:find("%S") ~= nil
-		if hasObjectiveText and questID and RQE.ApplyTrackerObjectiveDisplay then
+		local isSearchedPreview = RQE:CanNavigateSearchedQuestSteps(questID)
+		if not isSearchedPreview and hasObjectiveText and questID and RQE.ApplyTrackerObjectiveDisplay then
 			RQE.ApplyTrackerObjectiveDisplay(
 				RQEFrame, questID, self, RQE.content, text)
 		elseif RQEFrame.RQEProgressBar then
@@ -1636,6 +1647,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
 		RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
 		RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
+		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+			RQE:RenderSearchedQuestPickupDirection(RQE.searchedQuestID)
+		end
 		if RQEFrame.RQEProgressBar and RQE.LayoutObjectiveProgressBar then
 			RQE.LayoutObjectiveProgressBar(RQEFrame.RQEProgressBar)
 		end
@@ -2101,6 +2115,14 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 			-- Add the click event for WaypointButtons
 			WaypointButton:SetScript("OnClick", function()
+				-- Search previews have their own selection; never feed these clicks
+				-- into automatic quest-log progression or its coordinate fallback.
+				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+					if not RQE._autoClickingWaypointButton then
+						RQE:SetDisplayedStepFromStepsList(i)
+					end
+					return
+				end
 				-- if RQE.WaypointButtonHover then
 					-- RQE:ClickWaypointButtonForIndex(i)
 				-- end
@@ -3110,25 +3132,19 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				if RQE.UpdateSeparateContentHeight then RQE.UpdateSeparateContentHeight() end
 			end
 
-			-- Decide which quest SeparateFocus should display
-			-- Only update for REAL quests (quest log or active world quest).
-			-- If the RQEFrame is showing a searched quest that's not in the log/WQ, do NOT update SeparateFocus.
+			-- A Search -> Track preview owns both helper panels until accepted or cleared.
 			local displayedQuestID
-
-			-- If we're in "searched quest mode" and it's not a real quest, bail out early (freeze SeparateFocus)
-			local searchedID = RQE.searchedQuestID
-			if searchedID and not RQE.API.IsOnQuest(searchedID) and not RQE.API.IsWorldQuest(searchedID) then
-				finishUpdate()
-				return
+			local searchedID = tonumber(RQE.searchedQuestID)
+			local isSearchedPreview = RQE:CanNavigateSearchedQuestSteps(searchedID)
+			if isSearchedPreview then
+				displayedQuestID = searchedID
+			else
+				if not RQE.API.IsSuperTrackingQuest() then
+					finishUpdate()
+					return
+				end
+				displayedQuestID = RQE.API.GetSuperTrackedQuestID()
 			end
-
-			-- Otherwise, follow Blizzard supertrack, but only if it's valid
-			if not RQE.API.IsSuperTrackingQuest() then
-				finishUpdate()
-				return
-			end
-
-			displayedQuestID = RQE.API.GetSuperTrackedQuestID()
 			if not displayedQuestID or displayedQuestID <= 0 then
 				finishUpdate()
 				return
@@ -3157,6 +3173,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 			-- ✅ Improved quest data handling (for DB-less quests)
 			local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
+			if isSearchedPreview then
+				stepIndex = RQE.ManualPreviewQuestID == searchedID
+					and tonumber(RQE.ManualPreviewStepIndex) or 0
+			end
 			local questID = displayedQuestID
 			-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			local questData = RQE.getQuestData(questID)
@@ -3165,7 +3185,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			local stepData = nil
 
 			-- ✅ Quest handling logic
-			if not questData then
+			if isSearchedPreview and stepIndex == 0 then
+				totalSteps = #questData
+				stepData = { description = RQE:GetSearchedQuestPickupText(questID) }
+				RQE.CurrentDisplayedStepIndex = 0
+				RQE.CurrentDisplayedQuestID = questID
+			elseif not questData then
 				-- Quest not in DB at all
 				RQE.SeparateStepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "FontString", "GameFontNormal")
 				RQE.SeparateStepText:SetJustifyH("LEFT")
@@ -3227,7 +3252,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				print(("DBG: has |c=%s, has ||c=%s, text=%s"):format(tostring(hasSingle), tostring(hasDouble), visible))
 			end
 
-			local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription)
+			local formattedText = isSearchedPreview and stepIndex == 0
+				and ("|cff80e5ffPickup Quest:|r " .. stepDescription)
+				or string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription)
 			formattedText = formattedText:gsub("||c", "|c"):gsub("||r", "|r"):gsub("||H", "|H"):gsub("||h", "|h")
 			-- Generate route links only for this supertracked Focus step. StepsText
 			-- continues to show exactly the authored description.
@@ -3728,6 +3755,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 			-- Add the click event for the Waypoint Button
 			RQE.SeparateWaypointButton:SetScript("OnClick", function()
+				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+					RQE:CreateSearchedQuestStepWaypoint(RQE.searchedQuestID,
+						tonumber(RQE.ManualPreviewStepIndex) or 0)
+					return
+				end
 				local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
 				local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
 				local questData = questID and RQE.getQuestData(questID)
@@ -3847,6 +3879,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	function RQE.GetTooltipDataForCButton()
 		local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex) or 1
 		local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
+		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+			questID = tonumber(RQE.searchedQuestID)
+			stepIndex = tonumber(RQE.ManualPreviewStepIndex) or 0
+			if stepIndex == 0 then return "Set waypoint to the quest pickup location." end
+		end
 		local questData = questID and RQE.getQuestData(questID)
 
 		if questData and questData[stepIndex] then
