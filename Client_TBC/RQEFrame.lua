@@ -193,6 +193,8 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			end)
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 
+			rootDescription:CreateButton("Restore frame settings from login", function() RQE:RestoreLoginFrameSettings() end)
+
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
 			end
@@ -257,6 +259,8 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				RQE.ToggleFrameLock()
 			end)
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
+
+			rootDescription:CreateButton("Restore frame settings from login", function() RQE:RestoreLoginFrameSettings() end)
 
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
@@ -3182,11 +3186,13 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				and not RQE.API.IsWorldQuest(searchedID)
 				and RQE.ManualStepPreview
 				and RQE.ManualPreviewQuestID == searchedID
-				and tonumber(RQE.ManualPreviewStepIndex) and RQE.ManualPreviewStepIndex > 0
+				and tonumber(RQE.ManualPreviewStepIndex)
+				and (RQE.ManualPreviewStepIndex > 0
+					or (RQE.ManualPreviewStepIndex == 0 and RQE:GetSearchedQuestPickupItem(searchedID)))
 
 			if searchedID and not RQE.API.IsOnQuest(searchedID) and not RQE.API.IsWorldQuest(searchedID) and not isSearchedStepPreview then
 			--if searchedID and not C_QuestLog.IsOnQuest(searchedID) and not C_QuestLog.IsWorldQuest(searchedID) then
-				-- Virtual pickup step 0 intentionally has no SeparateFocus content.
+				-- Non-item pickup step 0 retains its existing empty Separate Focus.
 				if RQE.ManualPreviewQuestID == searchedID and tonumber(RQE.ManualPreviewStepIndex) == 0 then
 					RQE:ClearSeparateFocusFrame()
 				end
@@ -3251,7 +3257,15 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			local stepData = nil
 
 			-- ✅ Quest handling logic
-			if not questData then
+			local isItemPickupPreview = questData and stepIndex == 0
+				and RQE:CanNavigateSearchedQuestSteps(questID)
+				and RQE:GetSearchedQuestPickupItem(questID)
+			if isItemPickupPreview then
+				totalSteps = #questData
+				stepData = { description = RQE:GetSearchedQuestItemPickupText(questID) }
+				RQE.CurrentDisplayedStepIndex = 0
+				RQE.CurrentDisplayedQuestID = questID
+			elseif not questData then
 				-- Quest not in DB at all
 				RQE.SeparateStepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "FontString", "GameFontNormal")
 				RQE.SeparateStepText:SetJustifyH("LEFT")
@@ -3313,7 +3327,9 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				print(("DBG: has |c=%s, has ||c=%s, text=%s"):format(tostring(hasSingle), tostring(hasDouble), visible))
 			end
 
-			local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription)
+			local formattedText = isItemPickupPreview
+				and ("|cff80e5ffPickup Quest:|r " .. stepDescription)
+				or string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription)
 			formattedText = formattedText:gsub("||c", "|c"):gsub("||r", "|r"):gsub("||H", "|H"):gsub("||h", "|h")
 			-- Generate route links only for this supertracked Focus step. StepsText
 			-- continues to show exactly the authored description.
