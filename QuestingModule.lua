@@ -2713,6 +2713,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return instanceType == "party", difficultyID
 	end
 
+	local function GetDungeonCardType(difficultyID)
+		return difficultyID == 205 and "follower"
+			or difficultyID == 1 and "normal"
+			or difficultyID == 2 and "heroic"
+	end
+
 	local function GetThemedDungeonCardTexture(difficultyID, timerID)
 		if timerID or difficultyID == 23 or difficultyID == 8
 			or not RQE.UI or not RQE.UI:IsEnabled() then return end
@@ -2722,10 +2728,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if type(isChallengeActive) == "function" and isChallengeActive() then return end
 		local getChallengeMap = C_ChallengeMode and C_ChallengeMode.GetActiveChallengeMapID
 		if type(getChallengeMap) == "function" and getChallengeMap() then return end
-		local cardType = difficultyID == 205 and "follower"
-			or difficultyID == 1 and "normal"
-			or difficultyID == 2 and "heroic"
-		return cardType and RQE.UI:GetCardTexture(cardType)
+		local cardType = GetDungeonCardType(difficultyID)
+		if cardType then return RQE.UI:GetCardTexture(cardType), cardType end
 	end
 
 	local function GetActiveChallengeRun()
@@ -3187,6 +3191,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local frame = RQE.ScenarioChildFrame
 		if not frame or widgetContainer ~= frame.stageWidgets or not widgetInfo
 			or widget.WaitTimer or not widget.Frame or not RQE.UI then return end
+		local textureKit = widgetInfo.frameTextureKit or ""
+		local inTorghast = textureKit:find("jailerstower", 1, true) ~= nil
+			or RQE.API.Client.IsInJailersTower()
+		local hasTimer = widgetInfo.hasTimer or (type(widgetInfo.timerMax) == "number" and widgetInfo.timerMax > 0)
+			or widget.Timer ~= nil or (not fromSetup and widget.RQEThemeHasTimer)
+		local isDelve = widget.TierFrame or (C_DelvesUI and C_DelvesUI.HasActiveDelve
+			and C_DelvesUI.HasActiveDelve())
+		local cardType = inTorghast and "torghast" or isDelve and "delve" or hasTimer and "timed"
 		if not RQE.UI:IsEnabled() then
 			-- Blizzard has just rebuilt this widget. Keep its newly selected
 			-- texture kit instead of replaying a previous scenario's snapshot.
@@ -3200,22 +3212,15 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				widget.RQEThemeAppliedArt = nil
 			end
 			RestoreScenarioNativeArt(widget)
+			widget.Frame:SetAlpha(not IsPartyDungeon() and cardType
+				and RQE.UI:GetCardPictureOpacity(cardType) or 1)
 			return
 		end
 		if IsPartyDungeon() then return end
 
 		local textures = RQE.UI.Textures
-		local textureKit = widgetInfo.frameTextureKit or ""
-		local inTorghast = textureKit:find("jailerstower", 1, true) ~= nil
-			or RQE.API.Client.IsInJailersTower()
-		local hasTimer = widgetInfo.hasTimer or (type(widgetInfo.timerMax) == "number" and widgetInfo.timerMax > 0)
-			or widget.Timer ~= nil or (not fromSetup and widget.RQEThemeHasTimer)
 		if fromSetup then widget.RQEThemeHasTimer = not not hasTimer end
-		local isDelve = widget.TierFrame or (C_DelvesUI and C_DelvesUI.HasActiveDelve
-			and C_DelvesUI.HasActiveDelve())
-		local artwork = inTorghast and RQE.UI:GetCardTexture("torghast")
-			or (isDelve and RQE.UI:GetCardTexture("delve"))
-			or (hasTimer and RQE.UI:GetCardTexture("timed") or textures.scenarioUntimed)
+		local artwork = cardType and RQE.UI:GetCardTexture(cardType) or textures.scenarioUntimed
 		if not artwork then return end
 
 		-- Capture Blizzard's art on Setup, or on the first visit to a widget that
@@ -3228,7 +3233,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Replace only its frame artwork after Blizzard has applied the texture kit.
 		widget.Frame:SetTexture(artwork)
 		widget.Frame:SetTexCoord(0, 1, 0, 1)
-		widget.Frame:SetVertexColor(1, 1, 1, 1)
+		widget.Frame:SetAlpha(1)
+		widget.Frame:SetVertexColor(1, 1, 1,
+			cardType and RQE.UI:GetCardPictureOpacity(cardType) or 1)
 		widget.Frame:ClearAllPoints()
 		widget.Frame:SetPoint("TOPLEFT", widget, "TOPLEFT", 0, isDelve and 4 or 0)
 		if inTorghast and widget.RQENativeStageWidth then
@@ -3883,6 +3890,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			else
 				card.background:SetAtlas("evergreen-scenario-trackerheader", false)
 			end
+			card.background:SetAlpha(kind ~= "mythic" and RQE.UI
+				and RQE.UI:GetCardPictureOpacity(kind) or 1)
 			local difficulty = kind == "follower" and 205 or kind == "normal" and 1
 				or kind == "heroic" and 2 or 23
 			UpdateDungeonDifficultyBadge(card, difficulty, kind ~= "mythic")
@@ -3911,6 +3920,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				if not C_Texture.GetAtlasInfo(atlas) then atlas = "evergreen-scenario-trackerheader" end
 				preview.art:SetAtlas(atlas, false)
 			end
+			preview.art:SetAlpha(RQE.UI and RQE.UI:GetCardPictureOpacity(kind) or 1)
 			preview.clock:SetShown(kind == "timed")
 			preview.bar:SetShown(kind == "timed")
 			preview.skull:SetShown(kind == "torghast")
@@ -4086,7 +4096,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			local showDungeonCard = isPartyDungeon and not showNativeStage
 			if showDungeonCard then
 				local card = EnsureDungeonStageCard(frame)
-				local themedTexture = GetThemedDungeonCardTexture(dungeonDifficultyID, timerID)
+				local themedTexture, themedCardType = GetThemedDungeonCardTexture(dungeonDifficultyID, timerID)
 				if themedTexture then
 					card.background:SetTexture(themedTexture)
 					card.background:SetTexCoord(0, 1, 0, 1)
@@ -4097,6 +4107,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					end
 					card.background:SetAtlas(atlas, false)
 				end
+				local cardType = themedCardType or GetDungeonCardType(dungeonDifficultyID)
+				card.background:SetAlpha(cardType and RQE.UI
+					and RQE.UI:GetCardPictureOpacity(cardType) or 1)
 				UpdateDungeonDifficultyBadge(card, dungeonDifficultyID, themedTexture ~= nil)
 				card.name:SetText(scenarioName)
 				card:Show()
