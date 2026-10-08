@@ -332,6 +332,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	-- Reports whether the filter launcher or any open menu in its flyout tree is under the cursor.
 	local function TreeHovered()
 		if MouseOver(RQE.QTQuestFilterButton) then return true end
+		if MouseOver(RQE.TargetNPCButton) then return true end
 		for _, menu in pairs(menus) do if MouseOver(menu) then return true end end
 		return false
 	end
@@ -763,6 +764,27 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		ShowMenu(menu, self.QTQuestFilterButton)
 	end
 
+	-- Opens Contribution tools with the same compact, themed rows and flyouts as the filter menu.
+	function RQE:ShowTargetNPCMenu()
+		if not ContributionLoaded() or not self.TargetNPCButton then return end
+		local menu = GetMenu("TargetNPC")
+		if menu:IsShown() then self:CloseQuestFilterMenus(); return end
+		self:CloseQuestFilterMenus()
+		menu.rootAtCursor = nil
+		BuildMenu(menu, {
+			{ text = "Contribution", kind = "heading" },
+			{ text = "Copy target NPC reference", action = function()
+				self:ShowTargetNPCCopy()
+			end },
+			{ text = "Macros", submenu = "TargetNPCMacros", build = function()
+				return { { text = "Speak to NPC", action = function()
+					self:ShowSpeakToNPCMacroCopy()
+				end } }
+			end },
+		})
+		ShowMenu(menu, self.TargetNPCButton)
+	end
+
 
 
 --------------------------------------------------
@@ -991,12 +1013,10 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	-- #7b. Copyable Reference Dialog
 	-------------------------------------------------------
 
-	-- Creates or updates the movable copy dialog and selects the supplied quest URL.
-	function RQE:ShowCopyableQuestURL(header, questID, url, title)
-		questID = tonumber(questID)
-		if not questID or type(header) ~= "string" or header == ""
-			or type(url) ~= "string" or url == "" then return end
-		title = title or ReferenceTitle(questID)
+	-- Creates or updates the movable copy dialog and selects the supplied text.
+	function RQE:ShowCopyableReferenceText(header, title, value)
+		if type(header) ~= "string" or header == ""
+			or type(value) ~= "string" or value == "" then return end
 		self:CloseQuestFilterMenus()
 		local frame = self.QuestReferenceLinkFrame
 		if not frame then
@@ -1031,8 +1051,8 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.editBox:SetScript("OnEscapePressed", function() frame:Hide() end)
 			frame.editBox:SetScript("OnEnterPressed", function() frame:Hide() end)
 			frame.editBox:SetScript("OnTextChanged", function(box, userInput)
-				if userInput and box:GetText() ~= frame.url then
-					box:SetText(frame.url)
+				if userInput and box:GetText() ~= frame.copyValue then
+					box:SetText(frame.copyValue)
 					QueueReferenceSelection(frame)
 				end
 			end)
@@ -1060,14 +1080,66 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		end
 		frame:SetWidth(math.min(540, UIParent:GetWidth() - 40))
 		frame.provider:SetText(header)
-		frame.questTitle:SetText(title or ("Quest " .. questID))
+		frame.questTitle:SetText(title or "")
 		frame.questTitle:SetHeight(frame.questTitle:GetStringHeight())
 		frame:SetHeight(106 + frame.questTitle:GetStringHeight())
-		frame.url = url
-		frame.editBox:SetText(url)
+		frame.copyValue = value
+		frame.editBox:SetText(value)
 		frame:Show()
 		SelectReferenceText(frame)
 		QueueReferenceSelection(frame)
+	end
+
+	-- Keeps existing quest-link callers on the shared copy dialog.
+	function RQE:ShowCopyableQuestURL(header, questID, url, title)
+		questID = tonumber(questID)
+		if not questID then return end
+		return self:ShowCopyableReferenceText(header, title or ReferenceTitle(questID)
+			or ("Quest " .. questID), url)
+	end
+
+	-- Shares one validated Creature/Vehicle target between both authoring templates.
+	local function TargetNPC()
+		local name = ClientCall("UnitName", "target")
+		local guid = ClientCall("UnitGUID", "target")
+		if (issecretvalue and (issecretvalue(name) or issecretvalue(guid)))
+			or type(name) ~= "string" or name == "" or type(guid) ~= "string" then
+			return
+		end
+		local unitType, idText = guid:match("^([^-]+)%-[^-]*%-[^-]*%-[^-]*%-[^-]*%-(%d+)")
+		local npcID = tonumber(idText)
+		if (unitType ~= "Creature" and unitType ~= "Vehicle") or not npcID or npcID <= 0 then
+			return
+		end
+		return name, npcID
+	end
+
+	-- Escapes both the NPC name and the outer database macro string without losing quotes.
+	local function EscapeLuaString(value)
+		local escaped = value:gsub("\\", "\\\\"):gsub('"', '\\"')
+		return (escaped:gsub("\r", "\\r"):gsub("\n", "\\n"))
+	end
+
+	-- Formats a readable target as a paste-ready NPC reference.
+	function RQE:ShowTargetNPCCopy()
+		if not ContributionLoaded() then return end
+		local name, npcID = TargetNPC()
+		if not name then print("RQE: Target an NPC to copy its ID and name."); return end
+		local escapedName = EscapeLuaString(name)
+		self:ShowCopyableReferenceText("Target NPC reference", name,
+			string.format("{npc:%d:%s}", npcID, escapedName))
+	end
+
+	-- Produces an authored Lua macro entry while preserving the name inside /tar and /run.
+	function RQE:ShowSpeakToNPCMacroCopy()
+		if not ContributionLoaded() then return end
+		local name = TargetNPC()
+		if not name then print("RQE: Target an NPC to copy its macro."); return end
+		local macro = "#showtooltip item:5830\n/tar " .. name
+			.. "\n/run RQE.SelectMultipleGossipOptions(\"" .. EscapeLuaString(name)
+			.. "\", 0)\n/tm 0\n/tm ~2"
+		self:ShowCopyableReferenceText("Speak to NPC macro", name,
+			'macro = { "' .. EscapeLuaString(macro) .. '" },')
 	end
 
 	-------------------------------------------------------
