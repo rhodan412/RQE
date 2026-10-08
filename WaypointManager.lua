@@ -227,6 +227,10 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 	-- Main function to determine which method to use based on waypoint text
 	function RQE:CreateUnknownQuestWaypoint(questID, mapID)
+		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
+			return self:CreateSearchedQuestWaypoint(self.searchedQuestID, mapID)
+		end
 		if self:IsCoordblockWaypointProtected() then return end
 		if not RQEFrame:IsShown() then return end
 
@@ -260,6 +264,10 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
 		RQE.API.Client.C_Timer.After(0.5, function()
+			if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+				if questID and tonumber(questID) ~= tonumber(RQE.searchedQuestID) then return end
+				return RQE:CreateSearchedQuestWaypoint(RQE.searchedQuestID, mapID)
+			end
 			if RQE:IsCoordblockWaypointProtected() then return end
 			if not questID then
 				if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -305,8 +313,97 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 	-- #4b. Searched Quest Location Waypoints
 	-------------------------------------------------------
 
+	-- Clear only RQE's previous route when a preview step has no usable location.
+	-- Placeholder coordinates are valid display-only steps, not chat errors.
+	function RQE:ClearSearchedQuestStepWaypoint()
+		if self._currentTomTomUID and TomTom then
+			if TomTom.RemoveWaypoint then
+				TomTom:RemoveWaypoint(self._currentTomTomUID)
+			elseif TomTom.ClearWaypoint then
+				TomTom:ClearWaypoint(nil, self._currentTomTomUID)
+			end
+		end
+		self._currentTomTomUID = nil
+		local previous = self._lastWP
+		local pin = previous and self.API.Client.C_Map.GetUserWaypoint()
+		if pin and pin.uiMapID == previous.mapID and pin.position then
+			local px, py = pin.position:GetXY()
+			if px and py and math.abs(px - previous.x) < 0.0001
+				and math.abs(py - previous.y) < 0.0001 then
+				self.API.Client.C_Map.ClearUserWaypoint()
+			end
+		end
+		self._lastWP = nil
+		self._searchedStepWaypoint = nil
+		self._currentHotspotIdx = nil
+		self.WPxPos, self.WPyPos, self.WPmapID = nil, nil, nil
+		self.DatabaseSuperX, self.DatabaseSuperY, self.DatabaseSuperMapID = nil, nil, nil
+		self.superX, self.superY, self.superMapID = nil, nil, nil
+		self.x, self.y, self.MapID = nil, nil, nil
+		if self.UpdateStepDistance then self:UpdateStepDistance() end
+	end
+
+	-- Resolve the selected searched quest directly instead of consulting the
+	-- unrelated Blizzard-supertracked quest. Step 0 uses quest-giver locations.
+	function RQE:CreateSearchedQuestStepWaypoint(questID, stepIndex, targetMapID)
+		questID, stepIndex = tonumber(questID), tonumber(stepIndex)
+		if not self:CanNavigateSearchedQuestSteps(questID) then return false end
+		if not RQEFrame:IsShown() then return false end
+		if self:IsCoordblockWaypointProtected(questID, stepIndex)
+			or self:IsManualFlightMasterWaypointProtected() then return false end
+		local questData = self.getQuestData(questID)
+		if not questData or not stepIndex then return false end
+
+		local mapID, x, y
+		if stepIndex == 0 then
+			local continentID
+			x, y, mapID, continentID = self.GetPrimaryLocation(questData,
+				targetMapID or self.API.Client.C_Map.GetBestMapForUnit("player"))
+			mapID = mapID or continentID
+		else
+			local stepData = questData[stepIndex]
+			if not stepData then return false end
+			if self.WPUtil and self.WPUtil.SelectBestHotspot then
+				mapID, x, y = self.WPUtil.SelectBestHotspot(questID, stepIndex, stepData)
+			end
+			if not self:IsValidWaypointCoord(x, y, mapID) and type(stepData.coordinates) == "table" then
+				local coords = stepData.coordinates
+				x, y, mapID = coords.x, coords.y, coords.mapID or coords.continentID
+			end
+		end
+
+		if not self:IsValidWaypointCoord(x, y, mapID) then
+			self:ClearSearchedQuestStepWaypoint()
+			return false
+		end
+		x, y, mapID = tonumber(x), tonumber(y), tonumber(mapID)
+		if x > 1 then x = x / 100 end
+		if y > 1 then y = y / 100 end
+		local stepData = questData[stepIndex]
+		local label = stepData and self.FormatStepDescription(questID, stepData)
+			or ("Waypoint for " .. (questData.title or tostring(questID)))
+		-- Reuse the existing TomTom/Carbonite dispatcher without resetting an
+		-- entire provider profile. Remove only the previous RQE-owned waypoint.
+		self:ClearSearchedQuestStepWaypoint()
+		local wasForced = self.isForcedWaypoint
+		self.isForcedWaypoint = true
+		local waypoint = self:CreateWaypoint(x, y, mapID, label)
+		self.isForcedWaypoint = wasForced
+		if TomTom and TomTom.AddWaypoint then self._currentTomTomUID = waypoint end
+		self._lastWP = { mapID = mapID, x = x, y = y, title = label }
+		self._searchedStepWaypoint = { questID = questID, stepIndex = stepIndex, mapID = mapID, x = x, y = y }
+		self.WPxPos, self.WPyPos, self.WPmapID = x, y, mapID
+		self.DatabaseSuperX, self.DatabaseSuperY, self.DatabaseSuperMapID = x, y, mapID
+		if self.UpdateStepDistance then self:UpdateStepDistance() end
+		return true
+	end
+
 	-- Create a Waypoint when searching for a quest based on the location coordinates in the DB file
 	function RQE:CreateSearchedQuestWaypoint(questID, mapID)
+		if self:CanNavigateSearchedQuestSteps(questID) then
+			local stepIndex = self.ManualPreviewQuestID == tonumber(questID) and self.ManualPreviewStepIndex or 0
+			return self:CreateSearchedQuestStepWaypoint(questID, stepIndex, mapID)
+		end
 
 		if not RQEFrame:IsShown() then return end
 
@@ -1069,6 +1166,9 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 	-- Create a Waypoint for a specific quest step using questID and stepIndex
 	function RQE:CreateWaypointForStep(questID, stepIndex)
+		if self:CanNavigateSearchedQuestSteps(questID) then
+			return self:CreateSearchedQuestStepWaypoint(questID, stepIndex)
+		end
 		if self:IsCoordblockWaypointProtected(questID, stepIndex) then return end
 		if RQE.db.profile.enableTravelSuggestions then
 			if RQE.NearestFlightMasterSet then return end
