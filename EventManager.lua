@@ -246,7 +246,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Apply a deferred super-tracked quest once the World Map no longer makes the update unsafe.
 	FlushPendingMapSafeSuperTrack = function()
 		local questID = RQE.PendingMapSafeSuperTrackQuestID
+		local isNearestSelection = RQE.PendingMapSafeSuperTrackIsNearestSelection
 		if not questID then
+			RQE.PendingMapSafeSuperTrackIsNearestSelection = nil
+			RQE.MapSafeSuperTrackRetryQueued = false
+			return
+		end
+		if isNearestSelection and RQE.API.IsAutomaticQuestSelectionBlocked() then
+			RQE.PendingMapSafeSuperTrackQuestID = nil
+			RQE.PendingMapSafeSuperTrackIsNearestSelection = nil
 			RQE.MapSafeSuperTrackRetryQueued = false
 			return
 		end
@@ -260,6 +268,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		RQE.PendingMapSafeSuperTrackQuestID = nil
+		RQE.PendingMapSafeSuperTrackIsNearestSelection = nil
 		RQE.MapSafeSuperTrackRetryQueued = false
 
 		-- A hardware-driven manual selection made while the map was open wins over
@@ -271,17 +280,21 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			return
 		end
 
-		RQE:AutoSetSuperTrackedQuestID(questID)
+		RQE:AutoSetSuperTrackedQuestID(questID, isNearestSelection)
 	end
 
 	-- Set or defer automatic super-tracking so World Map interaction cannot immediately overwrite the choice.
-	function RQE:AutoSetSuperTrackedQuestID(questID)
+	function RQE:AutoSetSuperTrackedQuestID(questID, isNearestSelection)
 		if not questID then
 			return false
 		end
+		-- Nearest selection can be queued outdoors and replayed after zoning.
+		-- Saved/manual focus restoration uses this helper too and remains allowed.
+		if isNearestSelection and RQE.API.IsAutomaticQuestSelectionBlocked() then return false end
 
 		if IsWorldMapShown() then
 			RQE.PendingMapSafeSuperTrackQuestID = questID
+			RQE.PendingMapSafeSuperTrackIsNearestSelection = isNearestSelection
 			if not RQE.MapSafeSuperTrackRetryQueued then
 				RQE.MapSafeSuperTrackRetryQueued = true
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
@@ -293,6 +306,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
 		if RQE.API.Client.InCombatLockdown() then
 			RQE.PendingCombatSuperTrackQuestID = questID
+			RQE.PendingCombatSuperTrackIsNearestSelection = isNearestSelection
 			return false
 		end
 
@@ -1124,10 +1138,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- this deferred request out of an open World Map refresh.
 		if RQE.PendingCombatSuperTrackQuestID then
 			local questID = RQE.PendingCombatSuperTrackQuestID
+			local isNearestSelection = RQE.PendingCombatSuperTrackIsNearestSelection
 			RQE.PendingCombatSuperTrackQuestID = nil
+			RQE.PendingCombatSuperTrackIsNearestSelection = nil
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
 			RQE.API.Client.C_Timer.After(0.5, function()
-				RQE:AutoSetSuperTrackedQuestID(questID)
+				RQE:AutoSetSuperTrackedQuestID(questID, isNearestSelection)
 			end)
 		end
 
@@ -1145,6 +1161,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					RQE.isCheckingMacroContents = false
 				end)
 			end)
+		end
+
+		-- Combat prevents secure macro edits. Rebuild the currently selected
+		-- search preview now, rather than replaying an older pickup/step macro.
+		if RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)
+			and RQEMacro and RQEMacro.CreateMacroForCurrentStep then
+			RQEMacro:CreateMacroForCurrentStep()
+			RQE:UpdateSeparateFocusFrame()
 		end
 
 		-- Updates RQEWorldQuestFrame after combat ends
@@ -2998,13 +3023,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
 		RQE.API.Client.C_Timer.After(3, function()
+			if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not RQE.isSuperTracking or not isSuperTracking then
 				if not RQEFrame:IsShown() then return end
 				if not isSuperTracking then
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 					if closestQuestID then
-						RQE:AutoSetSuperTrackedQuestID(closestQuestID)
+						RQE:AutoSetSuperTrackedQuestID(closestQuestID, true)
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 							DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
 						end
@@ -3250,6 +3276,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handling SUPER_TRACKING_CHANGED Event
 	-- Fired when the actively tracked location is changed
 	function RQE.handleSuperTracking()
+		-- Search -> Track owns the helper until it is cleared, accepted, or a
+		-- tracker row deliberately selects a quest and clears searchedQuestID.
+		-- Blizzard can still change the old log quest or temporarily report 0;
+		-- neither event may reset this independent search preview or its step.
+		if RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+			return
+		end
 		local newQID = RQE.API.GetSuperTrackedQuestID()
 		RQE.LastSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local oldQID = RQE.previousSuperTrackedQuestID
@@ -3495,14 +3529,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- If player is no longer super tracking, they will instead super-track the nearest quest. If there continues to be no quest super tracked it will clear the Separate Focus Frame
 		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 
-		if RQE.db.profile.enableNearestSuperTrack then
+		if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() then
 			if not RQE.ClearButtonPressed then
 				if not isSuperTracking then
 					if not RQE.isSuperTracking or not isSuperTracking then
 						if not RQEFrame:IsShown() then return end
 						local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 						if closestQuestID then
-							RQE:AutoSetSuperTrackedQuestID(closestQuestID)
+							RQE:AutoSetSuperTrackedQuestID(closestQuestID, true)
 							RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when SUPER_TRACKING_CHANGED event fires
 							if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 								DEFAULT_CHAT_FRAME:AddMessage("SUPER_TRACKING_CHANGED Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
@@ -3711,6 +3745,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- second ID for compatibility with variants that also provide a log index.
 		local questID = secondQuestPayload or firstQuestPayload
 		local focusedQuestAtAcceptance = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0
+		RQE:AuditQuestPickupNPCID(questID, "accepted")
 
 		if questID and RQE.ClearQuestDependencyCompletions then
 			RQE:ClearQuestDependencyCompletions(questID)
@@ -6138,9 +6173,9 @@ local function StepUsesAuraCheck(step)
 					end
 				end
 			end
-		elseif RQE.db.profile.enableNearestSuperTrack and not isSuperTracking
+		elseif RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() and not isSuperTracking
 			and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
-			RQE:AutoSetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
+			RQE:AutoSetSuperTrackedQuestID(questID, true) -- Supertracks quest with progress if nothing is being supertracked
 			RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_UPDATE event fires
 			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_UPDATE event fires
 
@@ -6466,12 +6501,12 @@ local function StepUsesAuraCheck(step)
 			end
 
 			-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-			if RQE.db.profile.enableNearestSuperTrack then
+			if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() then
 				if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 					if not RQEFrame:IsShown() then return end
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 					if closestQuestID then
-						RQE:AutoSetSuperTrackedQuestID(closestQuestID)
+						RQE:AutoSetSuperTrackedQuestID(closestQuestID, true)
 						RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 							DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
@@ -6492,11 +6527,11 @@ local function StepUsesAuraCheck(step)
 			end
 
 			-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
-			if RQE.db.profile.enableNearestSuperTrack and RQE.QuestAddedForWatchListChanged
+			if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() and RQE.QuestAddedForWatchListChanged
 				and not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 				local isWorldQuest = RQE.API.IsWorldQuest(questID)
 				if not isWorldQuest then
-					RQE:AutoSetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
+					RQE:AutoSetSuperTrackedQuestID(questID, true)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 					UpdateFrame()
 				end
@@ -6700,7 +6735,8 @@ local function StepUsesAuraCheck(step)
 		end
 
 		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-			local questData = RQE.getQuestData(questID)
+			local questData = RQE.getQuestData(questID, true)
+			RQE:AuditQuestPickupNPCID(questID, "detail", questData)
 
 			-- Return whether a diagnostic text array contains at least one printable entry.
 			local function HasNonEmptyTextArray(value)
@@ -6747,19 +6783,21 @@ local function StepUsesAuraCheck(step)
 				local objectivesOK = HasNonEmptyTextArray(questData.objectivesQuestText)
 				local descriptionOK = HasNonEmptyTextArray(questData.descriptionQuestText)
 				local npcOK = HasNonEmptyTextArray(questData.npc)
+				for _, source in ipairs(type(questData.npcs) == "table" and questData.npcs or {}) do
+					if type(source) == "table" then
+						local name = source.npc or source.object or source.name
+						if type(name) == "string" and name:match("%S") then npcOK = true; break end
+					end
+				end
 
 				DEFAULT_CHAT_FRAME:AddMessage("  objectivesQuestText: " .. (objectivesOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 				DEFAULT_CHAT_FRAME:AddMessage("  descriptionQuestText: " .. (descriptionOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
-				DEFAULT_CHAT_FRAME:AddMessage("  npc: "	.. (npcOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
-				if not npcOK then
-					-- Previous Blizzard call changed 2026.09.25: local npcName = UnitName("target")
-					local npcName = RQE.API.Client.UnitName("target")
-					if type(npcName) == "string" and npcName:match("%S") then
-						print(string.format("			npc = { \"%s\" },", npcName))
-					else
-						-- Automatically offered quests may have no NPC or target associated with QUEST_DETAIL.
-						print("			npc = { \"\" },")
-					end
+				DEFAULT_CHAT_FRAME:AddMessage("  npc/npcs: "	.. (npcOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
+				if RQE_Contribution and RQE_Contribution.GetQuestPickupSuggestion then
+					local giver = RQE_Contribution.ResolveQuestPickupNPC(questID, RQE_Contribution.ReadQuestPickupNPC(), true)
+					local sources, improved = RQE_Contribution.GetQuestPickupSuggestion(questID, questData, giver)
+					-- print("giver:", tostring(giver.npc), tostring(giver.id), "sources:", tostring(#sources), "improved:", tostring(improved))
+					if improved then RQE_Contribution.PrintPickupSources({ npcs = sources }) end
 				end
 			end
 		end
@@ -6770,13 +6808,13 @@ local function StepUsesAuraCheck(step)
 	-- Fired whenever the quest frame changes (from Detail to Progress to Reward, etc.) or is closed
 	function RQE.handleQuestFinished()
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-		if RQE.db.profile.enableNearestSuperTrack then
+		if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() then
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 				if not RQEFrame:IsShown() then return end
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
-					RQE:AutoSetSuperTrackedQuestID(closestQuestID)
+					RQE:AutoSetSuperTrackedQuestID(closestQuestID, true)
 					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_FINISHED event fires
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_FINISHED event fires
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
