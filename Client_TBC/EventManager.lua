@@ -2486,12 +2486,14 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		-- "Auto Track on Movement" deliberately replaces an existing supertrack.
 		-- Its target comes from RQE's ordered tracker (including RQE-only watches),
 		-- not just from Blizzard's objective tracker watch list.
-		if RQE.db.profile.enableAutoSuperTrackSwap and not InCombatLockdown() and not UnitOnTaxi("player") then
+		if RQE.db.profile.enableAutoSuperTrackSwap and not RQE.API.IsAutomaticQuestSelectionBlocked()
+			and not InCombatLockdown() and not UnitOnTaxi("player") then
 			C_Timer.After(0.15, function()
 				-- RQE:AutoSuperTrackClosestQuest()
 				-- A player can enter combat during the timer delay. Do not permit this
 				-- movement-only auto-supertrack mode to start in that case.
-				if not InCombatLockdown() and not UnitOnTaxi("player") then
+				if not RQE.API.IsAutomaticQuestSelectionBlocked()
+					and not InCombatLockdown() and not UnitOnTaxi("player") then
 					RQE:AutoSuperTrackClosestQuest()
 				end
 			end)
@@ -2629,7 +2631,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				-- Stopping movement is also a movement decision point. After the final
 				-- sort has established the actual top tracker entry, update the active
 				-- supertrack only when this option is enabled and combat is still clear.
-				if RQE.db.profile.enableAutoSuperTrackSwap and not UnitOnTaxi("player") then
+				if RQE.db.profile.enableAutoSuperTrackSwap and not RQE.API.IsAutomaticQuestSelectionBlocked()
+					and not UnitOnTaxi("player") then
 					RQE:AutoSuperTrackClosestQuest(renderStoppedMovementTracker)
 				else
 					renderStoppedMovementTracker()
@@ -3074,7 +3077,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 		C_Timer.After(3, function()
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-			if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
+			if (not RQE.isSuperTracking or not isSuperTracking)
+				and not RQE.API.IsAutomaticQuestSelectionBlocked() then
 				if not RQEFrame:IsShown() then return end
 				if not isSuperTracking then
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
@@ -3095,6 +3099,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				end
 
 				C_Timer.After(1, function()
+					if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 					UpdateFrame()
 				end)
 
@@ -3600,7 +3605,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 
 		if RQE.db.profile.enableNearestSuperTrack then
-			if not RQE.ClearButtonPressed then
+			if not RQE.ClearButtonPressed and not RQE.API.IsAutomaticQuestSelectionBlocked() then
 				if not isSuperTracking then
 					if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
 						if not RQEFrame:IsShown() then return end
@@ -3860,6 +3865,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			questID = questInfo and tonumber(questInfo.questID) or nil
 		end
 		local focusedQuestAtAcceptance = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0
+		RQE:AuditQuestPickupNPCID(questID, "accepted")
 
 		if questID and RQE.ClearQuestDependencyCompletions then
 			RQE:ClearQuestDependencyCompletions(questID)
@@ -3893,8 +3899,18 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			end
 		end)
 
+		-- Bind the delayed diagnostic to this acceptance and the current log session.
+		local debugLogCaptureGeneration
+		if questID
+			and (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+")
+			and RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			and RQE.PrepareDebugLogQuestCapture then
+			debugLogCaptureGeneration = RQE:PrepareDebugLogQuestCapture(questID)
+		elseif RQE.GetDebugLogCaptureGeneration then
+			debugLogCaptureGeneration = RQE:GetDebugLogCaptureGeneration()
+		end
 		C_Timer.After(2.5, function()
-			RQE.GetMissingQuestData()	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
+			RQE.GetMissingQuestData(questID, debugLogCaptureGeneration)
 		end)
 
 		-- Refresh the RQE-only Zone Quests list after Classic has finished adding
@@ -6877,7 +6893,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 					end
 				end
 			end
-		elseif RQE.db.profile.enableNearestSuperTrack and not isSuperTracking
+		elseif RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked()
+			and not isSuperTracking
 			and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 			-- print("~~~ SetSuperTrack: 4783~~~")
 			-- C_SuperTrack.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
@@ -7275,7 +7292,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			end
 
 			-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-			if RQE.db.profile.enableNearestSuperTrack then
+			if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() then
 				if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 					if not RQEFrame:IsShown() then return end
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
@@ -7303,7 +7320,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			end
 
 			-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
-			if RQE.db.profile.enableNearestSuperTrack and RQE.QuestAddedForWatchListChanged
+			if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked()
+				and RQE.QuestAddedForWatchListChanged
 				and not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 				if not isWorldQuest then
@@ -7621,7 +7639,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		end
 
 		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-			local questData = RQE.getQuestData(questID)
+			local questData = RQE.getQuestData(questID, true)
+			RQE:AuditQuestPickupNPCID(questID, "detail", questData)
 
 			-- Return whether a diagnostic text array contains at least one printable entry.
 			local function HasNonEmptyTextArray(value)
@@ -7668,18 +7687,20 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				local objectivesOK = HasNonEmptyTextArray(questData.objectivesQuestText)
 				local descriptionOK = HasNonEmptyTextArray(questData.descriptionQuestText)
 				local npcOK = HasNonEmptyTextArray(questData.npc)
+				for _, source in ipairs(type(questData.npcs) == "table" and questData.npcs or {}) do
+					if type(source) == "table" then
+						local name = source.npc or source.object or source.name
+						if type(name) == "string" and name:match("%S") then npcOK = true; break end
+					end
+				end
 
 				DEFAULT_CHAT_FRAME:AddMessage("  objectivesQuestText: " .. (objectivesOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 				DEFAULT_CHAT_FRAME:AddMessage("  descriptionQuestText: " .. (descriptionOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
-				DEFAULT_CHAT_FRAME:AddMessage("  npc: "	.. (npcOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
-				if not npcOK then
-					local npcName = UnitName("target")
-					if type(npcName) == "string" and npcName:match("%S") then
-						print(string.format("			npc = { \"%s\" },", npcName))
-					else
-						-- Automatically offered quests may have no NPC or target associated with QUEST_DETAIL.
-						print("			npc = { \"\" },")
-					end
+				DEFAULT_CHAT_FRAME:AddMessage("  npc/npcs: "	.. (npcOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
+				if RQE_Contribution and RQE_Contribution.GetQuestPickupSuggestion then
+					local giver = RQE_Contribution.ResolveQuestPickupNPC(questID, RQE_Contribution.ReadQuestPickupNPC(), true)
+					local sources, improved = RQE_Contribution.GetQuestPickupSuggestion(questID, questData, giver)
+					if improved then RQE_Contribution.PrintPickupSources({ npcs = sources }) end
 				end
 			end
 		end
@@ -7696,7 +7717,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		-- end
 
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-		if RQE.db.profile.enableNearestSuperTrack then
+		if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() then
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 			if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 				if not RQEFrame:IsShown() then return end
