@@ -49,6 +49,105 @@ Shared profile application, frame geometry restoration, and persistence safeguar
 
 
 --------------------------------------------------
+-- #2b. Login Frame Settings Restore Point
+--------------------------------------------------
+
+	-- Restore Frame Settings layout controls while retaining the current locks.
+	-- Themes/fonts, quest state, automation, key bindings, diagnostics, and
+	-- profile assignments are outside this restore point.
+	local loginFrameSettingKeys = {
+		"framePosition", "QuestFramePosition",
+		"enableFrame", "enableQuestFrame", "hideRQEFrameWhenEmpty", "hideRQEQuestFrameWhenEmpty",
+		"enableCreatureObjectPreview", "creatureObjectPreviewPosition",
+	}
+
+	-- Copy values without AceDB metatables or references to mutable live settings.
+	local function CopyLoginFrameValue(value)
+		if type(value) ~= "table" then return value end
+		local copy = {}
+		for key, child in pairs(value) do copy[key] = CopyLoginFrameValue(child) end
+		return copy
+	end
+
+	-- PLAYER_ENTERING_WORLD distinguishes a character login from /reload. Retain
+	-- a separate character-saved copy across reloads; replace it only on login.
+	function RQE:InitializeLoginFrameSettings(isInitialLogin, isReloadingUi)
+		if self.LoginFrameSettings then return true end
+		if not self.db or not self.db.profile then return false end
+		RQECharacterDB = RQECharacterDB or {}
+		local saved = RQECharacterDB.loginFrameSettings
+		if not isInitialLogin and isReloadingUi and type(saved) == "table"
+			and saved.version == 1 and type(saved.settings) == "table" then
+			self.LoginFrameSettings = CopyLoginFrameValue(saved)
+			return true
+		end
+
+		local settings = {}
+		for _, key in ipairs(loginFrameSettingKeys) do
+			settings[key] = CopyLoginFrameValue(self.db.profile[key])
+		end
+		-- The Frame Settings opacity sliders are stored per theme. Capture their
+		-- effective values, then restore them for whichever theme is selected later.
+		-- The getter's legacy migration is data-only, including during combat.
+		if self.UI and self.UI.GetFrameBackgroundOpacity then
+			settings.MainFrameOpacity = self.UI:GetFrameBackgroundOpacity("main")
+			settings.QuestFrameOpacity = self.UI:GetFrameBackgroundOpacity("tracker")
+		else
+			settings.MainFrameOpacity = self.db.profile.MainFrameOpacity
+			settings.QuestFrameOpacity = self.db.profile.QuestFrameOpacity
+		end
+		-- Freeze resolved defaults as well as explicit settings, rather than
+		-- sampling provisional frame geometry during the loading screen.
+		for frameName, key in pairs({ RQEFrame = "framePosition", RQEQuestFrame = "QuestFramePosition" }) do
+			local anchor, x, y, width, height = self:GetFrameGeometry(frameName)
+			settings[key] = settings[key] or {}
+			settings[key].anchorPoint = validAnchors[anchor] and anchor or self.FrameGeometryDefaults[frameName].anchorPoint
+			settings[key].xPos, settings[key].yPos = x, y
+			settings[key].frameWidth, settings[key].frameHeight = width, height
+		end
+		self.LoginFrameSettings = { version = 1, settings = settings }
+		RQECharacterDB.loginFrameSettings = CopyLoginFrameValue(self.LoginFrameSettings)
+		return true
+	end
+
+	-- Restore into the active account-wide AceDB profile. A fresh copy on every
+	-- use keeps this restore point unchanged by later moves, sliders, or themes.
+	function RQE:RestoreLoginFrameSettings()
+		local snapshot = self.LoginFrameSettings
+		if not snapshot or not self.db or not self.db.profile then
+			print("RQE: Frame settings from login are not available yet.")
+			return false
+		end
+		for _, key in ipairs(loginFrameSettingKeys) do
+			-- Also remove overrides that did not exist at login.
+			self.db.profile[key] = CopyLoginFrameValue(snapshot.settings[key])
+		end
+		local theme = self.UI and self.UI.GetSelectedTheme and self.UI:GetSelectedTheme() or "Basic"
+		if theme == "Basic" then
+			self.db.profile.MainFrameOpacity = snapshot.settings.MainFrameOpacity
+			self.db.profile.QuestFrameOpacity = snapshot.settings.QuestFrameOpacity
+		else
+			-- Update only the selected theme's frame backgrounds. Theme selection,
+			-- fonts, artwork, and the opacity settings for other themes stay intact.
+			if self.UI.InitializeFrameBackgroundOpacityBank then self.UI:InitializeFrameBackgroundOpacityBank() end
+			local profile = self.db.profile
+			profile.themeFrameBackgroundOpacity = profile.themeFrameBackgroundOpacity or {}
+			profile.themeFrameBackgroundOpacity[theme] = profile.themeFrameBackgroundOpacity[theme] or {}
+			local opacity = profile.themeFrameBackgroundOpacity[theme]
+			opacity.main, opacity.tracker = snapshot.settings.MainFrameOpacity, snapshot.settings.QuestFrameOpacity
+		end
+		self.ProfileSettingsChanged = true
+		self:RequestProfileApply()
+		if RQE.API.Client.InCombatLockdown() then
+			print("RQE: Frame settings from login restored; frames will update after combat.")
+		else
+			print("RQE: Restored frame settings from login.")
+		end
+		return true
+	end
+
+
+--------------------------------------------------
 -- #3. 🎛️ Guarded Profile Application
 --------------------------------------------------
 
@@ -189,8 +288,9 @@ Shared profile application, frame geometry restoration, and persistence safeguar
 	-- #4b. Deferred Profile & Character-State Restoration
 	-------------------------------------------------------
 
-	profileEvents:SetScript("OnEvent", function(_, event)
+	profileEvents:SetScript("OnEvent", function(_, event, isInitialLogin, isReloadingUi)
 		if event == "PLAYER_ENTERING_WORLD" then
+			RQE:InitializeLoginFrameSettings(isInitialLogin, isReloadingUi)
 			RQE.ProfileWorldReady = true
 			RQE.ProfileApplyPending = true
 			if not RQE.CharacterStateRestoreScheduled then
