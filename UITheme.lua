@@ -71,6 +71,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		},
 		RoundTable = {
 			name = "Knights of the Round Table",
+			focusWaypointOffsetX = 2,
 			description = "Engraved steel, burgundy heraldry, and parchment accents for the Quest Helper and Tracker.",
 			previews = {
 				helper = { texture = ROOT .. "Previews\\RoundTableHelper.tga", width = 771, height = 649 },
@@ -139,6 +140,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		},
 		ScarletCrusade = {
 			name = "Scarlet Crusade",
+			focusWaypointOffsetX = 2,
 			description = "Vivid scarlet, bright gold, white steel, and parchment for the Quest Helper and Tracker.",
 			previews = {
 				helper = { texture = ROOT .. "Previews\\ScarletCrusadeHelper.tga", width = 769, height = 660 },
@@ -314,7 +316,6 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		delve = "gildedSlate",
 		torghast = "runicRelay",
 	})
-
 	-------------------------------------------------------
 	-- #1c. Card Style Lookup, Selection & Refresh
 	-------------------------------------------------------
@@ -345,6 +346,43 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 	function UI:GetCardTexture(slot, themeKey)
 		local style = self:GetCardStyleRecord(slot, themeKey)
 		return style and style.texture
+	end
+
+	-- Card picture opacity is independent for each content type and theme.
+	-- Each slot currently starts at full strength; only a player's explicit
+	-- profile choice takes precedence over a future theme default adjustment.
+	UI.ThemeCardPictureOpacityDefaults = {
+		Basic = { timed = 1, heroic = 1, normal = 1, follower = 1, delve = 1, torghast = 1 },
+		AzureGold = { timed = 1, heroic = 1, normal = 1, follower = 1, delve = 1, torghast = 1 },
+		AstralCartographer = { timed = 1, heroic = 1, normal = 1, follower = 1, delve = 1, torghast = 1 },
+		RoundTable = { timed = 1, heroic = 1, normal = 1, follower = 1, delve = 1, torghast = 1 },
+		ScarletCrusade = { timed = 1, heroic = 1, normal = 1, follower = 1, delve = 1, torghast = 1 },
+	}
+
+	function UI:GetCardPictureOpacity(slot, themeKey)
+		themeKey = themeKey or self:GetSelectedTheme()
+		local profile = RQE.db and RQE.db.profile
+		local saved = profile and profile.cardPictureOpacity
+		local themeSaved = type(saved) == "table" and saved[themeKey]
+		local defaults = self.ThemeCardPictureOpacityDefaults[themeKey]
+		local value = type(themeSaved) == "table" and themeSaved[slot]
+			or defaults and defaults[slot]
+		return math.max(0, math.min(1, tonumber(value) or 1))
+	end
+
+	function UI:SetCardPictureOpacity(slot, value, themeKey)
+		themeKey = themeKey or self:GetSelectedTheme()
+		local validSlot
+		for _, cardType in ipairs(self.CardStyleOrder) do
+			if cardType == slot then validSlot = true; break end
+		end
+		if not validSlot or not self.Themes[themeKey] or not (RQE.db and RQE.db.profile) then return false end
+		local profile = RQE.db.profile
+		profile.cardPictureOpacity = profile.cardPictureOpacity or {}
+		profile.cardPictureOpacity[themeKey] = profile.cardPictureOpacity[themeKey] or {}
+		profile.cardPictureOpacity[themeKey][slot] = math.max(0, math.min(1, tonumber(value) or 1))
+		self:RefreshCardStyles()
+		return true
 	end
 
 	-- Refreshes live scenario artwork immediately or defers it until combat ends.
@@ -419,6 +457,9 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 	UI.ThemeButtonBorderOpacityDefaults = {
 		AzureGold = 0.55, RoundTable = 0.45, AstralCartographer = 0.2, ScarletCrusade = 0.05,
 	}
+	UI.ThemeFrameBorderOpacityDefaults = {
+		Basic = 1, AzureGold = 1, RoundTable = 1, AstralCartographer = 1, ScarletCrusade = 1,
+	}
 	UI.ThemeFrameBackgroundOpacityDefaults = {
 		AzureGold = { main = 0.65, tracker = 0.60 },
 		AstralCartographer = { main = 0.65, tracker = 0.60 },
@@ -464,6 +505,31 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return true
 	end
 
+	-- Frame and header borders have their own per-theme profile setting; icon
+	-- button surrounds continue to use ThemeButtonBorderOpacityDefaults.
+	function UI:GetFrameBorderOpacity(themeKey)
+		themeKey = themeKey or self:GetSelectedTheme()
+		local profile = RQE.db and RQE.db.profile
+		local saved = profile and profile.themeFrameBorderOpacity
+		local value = type(saved) == "table" and saved[themeKey]
+			or self.ThemeFrameBorderOpacityDefaults[themeKey]
+		return math.max(0, math.min(1, tonumber(value) or 1))
+	end
+
+	function UI:SetFrameBorderOpacity(value, themeKey)
+		themeKey = themeKey or self:GetSelectedTheme()
+		if not self.Themes[themeKey] or not profileReady() then return false end
+		local profile = RQE.db.profile
+		profile.themeFrameBorderOpacity = profile.themeFrameBorderOpacity or {}
+		profile.themeFrameBorderOpacity[themeKey] = math.max(0, math.min(1, tonumber(value) or 1))
+		if RQE.API and RQE.API.Client and RQE.API.Client.InCombatLockdown() then
+			self.pendingFrameBorderOpacity = true
+		else
+			self:RefreshFrameBorderOpacity()
+		end
+		return true
+	end
+
 	-- Picture selection and the two picture opacities are saved per theme and
 	-- profile. They never change the existing backdrop alpha settings.
 	function UI:GetBackgroundPictureChoices(themeKey)
@@ -473,6 +539,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			choices[#choices + 1] = {
 				id = choice.id, name = choice.name, texture = choice.texture,
 				themeName = self.Themes[themeKey].name,
+				shortThemeName = self.Themes[themeKey].shortName,
 			}
 		end
 		return choices
@@ -916,6 +983,8 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		migrateCanaryStepDefaults(bank)
 		migrateRoundTableFontColors(bank)
 		migrateScarletFontDefaults(bank)
+		local migrateFontSettings = self.Themes[themeKey] and self.Themes[themeKey].migrateFontSettings
+		if migrateFontSettings then migrateFontSettings(bank, sameFontColor) end
 		profile.textSettings = copyFontSettings(bank[themeKey], themeKey)
 		profile.activeTextSettingsTheme = themeKey
 		self._fontActiveProfile = profile
@@ -946,7 +1015,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		local settings = self:GetStepTextSettings()
 		if region.GetObjectType and region:GetObjectType() == "SimpleHTML" then
 			for _, tag in ipairs({ "p", "h1", "h2" }) do
-				region:SetFont(tag, settings.font, settings.size)
+				region:SetFont(tag, settings.font, settings.size, "")
 				region:SetTextColor(tag, unpack(settings.color))
 			end
 		else
@@ -1184,7 +1253,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			"RQEThemeBorderTL", "RQEThemeBorderTR", "RQEThemeBorderBL", "RQEThemeBorderBR",
 			"RQEThemeBorderTop", "RQEThemeBorderBottom", "RQEThemeBorderLeft", "RQEThemeBorderRight",
 			"RQEThemeAzureTop", "RQEThemeAzureBottom", "RQEThemeAzureLeft", "RQEThemeAzureRight",
-			"RQEThemeGoldTop", "RQEThemeHeaderLeft", "RQEThemeHeaderMiddle", "RQEThemeHeaderRight",
+			"RQEThemeGoldTop", "RQEThemeHeaderBackground", "RQEThemeHeaderLeft", "RQEThemeHeaderMiddle", "RQEThemeHeaderRight",
 			"RQEThemeHeaderAccent", "RQEThemeLocationAzure", "RQEThemeLocationGold",
 			"RQEThemeIcon", "RQEThemeSearchBackground", "RQEThemeSearchTL", "RQEThemeSearchTR",
 			"RQEThemeSearchBL", "RQEThemeSearchBR", "RQEThemeSearchEdgeTop", "RQEThemeSearchEdgeBottom",
@@ -1282,6 +1351,31 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return frame[key]
 	end
 
+	local FRAME_BORDER_PIECES = {
+		"RQEThemeBorderTL", "RQEThemeBorderTR", "RQEThemeBorderBL", "RQEThemeBorderBR",
+		"RQEThemeBorderTop", "RQEThemeBorderBottom", "RQEThemeBorderLeft", "RQEThemeBorderRight",
+		"RQEThemeAzureTop", "RQEThemeAzureBottom", "RQEThemeAzureLeft", "RQEThemeAzureRight", "RQEThemeGoldTop",
+	}
+	local HEADER_BORDER_PIECES = {
+		"RQEThemeHeaderLeft", "RQEThemeHeaderMiddle", "RQEThemeHeaderRight", "RQEThemeHeaderAccent",
+	}
+	local function isFrameBorderRole(role)
+		return role == "main" or role == "tracker" or role == "section" or role == "focus"
+	end
+	local function setBorderPieceOpacity(owner, keys, opacity)
+		for _, key in ipairs(keys) do
+			local piece = owner[key]
+			if piece then piece:SetAlpha(opacity) end
+		end
+	end
+	local function setNativeBorderOpacity(owner, opacity)
+		local native = UI.Native[owner]
+		local color = native and native.borderColor
+		if color and owner.SetBackdropBorderColor then
+			owner:SetBackdropBorderColor(color[1], color[2], color[3], (color[4] or 1) * opacity)
+		end
+	end
+
 	-------------------------------------------------------
 	-- #3b. Panel Styling & Opacity
 	-------------------------------------------------------
@@ -1332,7 +1426,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 	end
 
 	-- Eight independent slices keep every edge visible on resized/scrolling frames.
-	function UI:_ApplyPanel(frame, opacity, role)
+	function UI:_ApplyPanel(frame, opacity, role, frameBorder)
 		if not frame or not frame.SetBackdrop then return end
 		stripNineSlice(frame)
 		local c = self.Colors
@@ -1378,6 +1472,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		azRight:ClearAllPoints(); azRight:SetPoint("TOPRIGHT", -1, -4); azRight:SetPoint("BOTTOMRIGHT", -1, 4); azRight:SetWidth(1)
 		local gold = ensureColorLine(frame, "RQEThemeGoldTop", { c.gold[1], c.gold[2], c.gold[3], 0.88 })
 		gold:ClearAllPoints(); gold:SetPoint("TOPLEFT", corner, -3); gold:SetPoint("TOPRIGHT", -corner, -3); gold:SetHeight(1)
+		if frameBorder then setBorderPieceOpacity(frame, FRAME_BORDER_PIECES, self:GetFrameBorderOpacity()) end
 		frame.RQEThemeRole = role or "panel"
 	end
 
@@ -1388,7 +1483,36 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		if role == "main" or role == "tracker" then
 			opacity = self:GetFrameBackgroundOpacity(role)
 		end
-		if self:IsEnabled() then self:_ApplyPanel(frame, opacity, role) end
+		if self:IsEnabled() then
+			self:_ApplyPanel(frame, opacity, role, isFrameBorderRole(role))
+		elseif isFrameBorderRole(role) then
+			setNativeBorderOpacity(frame, self:GetFrameBorderOpacity())
+		end
+	end
+
+	-- Repaint only frame and header border artwork; the frame fill, theme
+	-- pictures, title text, action icons, and icon-button surrounds stay intact.
+	function UI:RefreshFrameBorderOpacity()
+		local opacity = self:GetFrameBorderOpacity()
+		for _, entry in ipairs(self.Registry.panels) do
+			if isFrameBorderRole(entry.data.role) then
+				if self:IsEnabled() then
+					setBorderPieceOpacity(entry.target, FRAME_BORDER_PIECES, opacity)
+				else
+					setNativeBorderOpacity(entry.target, opacity)
+				end
+			end
+		end
+		for _, entry in ipairs(self.Registry.headers) do
+			if self:IsEnabled() then
+				setBorderPieceOpacity(entry.target, HEADER_BORDER_PIECES, opacity)
+				if entry.target.RQEThemeHeaderBackground then
+					entry.target.RQEThemeHeaderBackground:SetShown(opacity < 1)
+				end
+			else
+				setNativeBorderOpacity(entry.target, opacity)
+			end
+		end
 	end
 
 	-- Updates a registered panel's saved opacity and reapplies it when the theme is enabled.
@@ -1429,6 +1553,15 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		stripNineSlice(header)
 		if header.SetBackdrop then header:SetBackdrop(nil) end
 		if not child and header.SetHeight and header:GetHeight() < 48 then header:SetHeight(48) end
+		-- Header textures contain both the trim and a dark fill. Keep an opaque
+		-- fill below them as the border artwork is faded.
+		if not header.RQEThemeHeaderBackground then
+			header.RQEThemeHeaderBackground = header:CreateTexture(nil, "BACKGROUND")
+			header.RQEThemeHeaderBackground:SetAllPoints(header)
+		end
+		header.RQEThemeHeaderBackground:SetColorTexture(
+			self.Colors.charcoalRaised[1], self.Colors.charcoalRaised[2], self.Colors.charcoalRaised[3], 0.9)
+		header.RQEThemeHeaderBackground:SetShown(self:GetFrameBorderOpacity() < 1)
 		-- Rounded main-frame headers; point-ended child/section headers.
 		local path = child and self.Textures.header or self.Textures.sectionHeader
 		local left = ensureHeaderSlice(header, "RQEThemeHeaderLeft", path, 0, 0.14)
@@ -1446,13 +1579,18 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			self.Colors.gold[1], self.Colors.gold[2], self.Colors.gold[3], 0.92,
 		})
 		accent:ClearAllPoints(); accent:SetPoint("BOTTOMLEFT", sideWidth, 1); accent:SetPoint("BOTTOMRIGHT", -sideWidth, 1); accent:SetHeight(1)
+		setBorderPieceOpacity(header, HEADER_BORDER_PIECES, self:GetFrameBorderOpacity())
 	end
 
 	-- Captures and registers a header before applying the active theme.
 	function UI:StyleHeader(header, child)
 		captureNative(header)
 		remember(self.Registry.headers, header, { child = child })
-		if self:IsEnabled() then self:_ApplyHeader(header, child) end
+		if self:IsEnabled() then
+			self:_ApplyHeader(header, child)
+		else
+			setNativeBorderOpacity(header, self:GetFrameBorderOpacity())
+		end
 	end
 
 	-------------------------------------------------------
@@ -1731,15 +1869,16 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		local trackerInset = self.ActiveTheme == "AstralCartographer"
 			and ASTRAL_TRACKER_ICON_INSET[iconName]
 		if trackerInset then iconSize = math.max(1, size - (trackerInset * 2)) end
-		local themeOffsets = THEME_ICON_OPTICAL_OFFSETS[self.ActiveTheme]
+		local themeOffsets = (self.Themes[self.ActiveTheme] and self.Themes[self.ActiveTheme].iconOffsets)
+			or THEME_ICON_OPTICAL_OFFSETS[self.ActiveTheme]
 		local opticalOffset = (themeOffsets and themeOffsets[iconName]) or ICON_OPTICAL_OFFSETS[iconName]
 		local offsetX = opticalOffset and opticalOffset[1] or 0
 		local offsetY = opticalOffset and opticalOffset[2] or 0
 		-- The W control shares WaypointTarget art with the header shortcut, but
 		-- only its glyph needs a rightward correction with the heraldic icons.
-		if (self.ActiveTheme == "RoundTable" or self.ActiveTheme == "ScarletCrusade")
-			and button == RQE.UnknownQuestButton then
-			offsetX = offsetX + 2
+		if button == RQE.UnknownQuestButton then
+			local theme = self.Themes[self.ActiveTheme]
+			offsetX = offsetX + (theme and theme.focusWaypointOffsetX or 0)
 		end
 		button:SetSize(size, size)
 		if options.focusInset and button.GetParent then
@@ -1984,7 +2123,8 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 				button.RQEThemeQuestBadge = button:CreateTexture(nil, "ARTWORK", nil, 6)
 			end
 			local badgeSize = QUEST_BADGE_SIZE[questKind] or QUEST_BADGE_SIZE.World
-			local themeBadgeOffsets = QUEST_BADGE_VERTICAL_OFFSETS[self.ActiveTheme]
+			local themeBadgeOffsets = (self.Themes[self.ActiveTheme] and self.Themes[self.ActiveTheme].questBadgeOffsets)
+				or QUEST_BADGE_VERTICAL_OFFSETS[self.ActiveTheme]
 			local badgeOffsetY = themeBadgeOffsets and themeBadgeOffsets[questKind] or 0
 			button.RQEThemeQuestBadge:ClearAllPoints()
 			button.RQEThemeQuestBadge:SetPoint("CENTER", button, "CENTER", 0, badgeOffsetY)
@@ -2289,6 +2429,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			-- theme. Refresh its live card even on this otherwise no-op path.
 			self:RefreshCardStyles()
 			self:RefreshButtonBorderOpacity()
+			self:RefreshFrameBorderOpacity()
 			self:RefreshBackgroundPictures()
 			self:RefreshTooltipBackground()
 			self:UpdatePanelOpacity()
@@ -2335,7 +2476,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 				if e.data.role == "main" or e.data.role == "tracker" then
 					opacity = self:GetFrameBackgroundOpacity(e.data.role)
 				end
-				self:_ApplyPanel(e.target, opacity, e.data.role)
+				self:_ApplyPanel(e.target, opacity, e.data.role, isFrameBorderRole(e.data.role))
 			end
 			for _, e in ipairs(self.Registry.headers) do self:_ApplyHeader(e.target, e.data.child) end
 			for _, e in ipairs(self.Registry.iconButtons) do self:_ApplyIconButton(e.target, e.data.iconName, e.data.options) end
@@ -2350,6 +2491,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		end
 		self.appliedTheme = selected
 		self:RefreshButtonBorderOpacity()
+		self:RefreshFrameBorderOpacity()
 		self:RefreshTooltipBackground()
 		if RQE.RefreshCreatureObjectPreviewTheme then RQE.RefreshCreatureObjectPreviewTheme() end
 		RQE:ConfigurationChanged()
@@ -2378,6 +2520,105 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return true
 	end
 
+	-- Companion addons register complete theme definitions after RQE has loaded.
+	-- Existing profile tables remain the sole store for player selections.
+	function UI:RegisterTheme(key, theme)
+		if type(key) ~= "string" or key == "" or type(theme) ~= "table"
+			or self.Themes[key] or type(theme.name) ~= "string"
+			or type(theme.colors) ~= "table" or type(theme.textures) ~= "table" then
+			return false, "Invalid or duplicate theme"
+		end
+		local cardDefaults = theme.cardDefaults
+		local cardStyles = theme.cardStyles
+		if type(cardDefaults) ~= "table" or type(cardStyles) ~= "table" then
+			return false, "Theme card defaults and styles are required"
+		end
+		registerThemeCardDefaults(key, cardDefaults)
+		for slot, styles in pairs(cardStyles) do
+			local group = self.CardStyles[key][slot]
+			if not group or type(styles) ~= "table" then
+				self.CardStyles[key] = nil
+				return false, "Invalid card style slot"
+			end
+			for _, style in ipairs(styles) do group.styles[#group.styles + 1] = style end
+		end
+		for slot, group in pairs(self.CardStyles[key]) do
+			local found = false
+			for _, style in ipairs(group.styles) do
+				if style.id == group.default then found = true; break end
+			end
+			if not found then
+				self.CardStyles[key] = nil
+				return false, "Unknown default card style for " .. slot
+			end
+		end
+		if theme.defaultBackgroundPicture then
+			local found = false
+			for _, picture in ipairs(theme.backgroundPictures or {}) do
+				if picture.id == theme.defaultBackgroundPicture then found = true; break end
+			end
+			if not found then
+				self.CardStyles[key] = nil
+				return false, "Unknown default background picture"
+			end
+		end
+		local defaults = theme.defaults or {}
+		self.Themes[key] = theme
+		self.BackgroundPictures[key] = theme.backgroundPictures
+		self.BackgroundPictureDefaults[key] = theme.defaultBackgroundPicture
+		self.ThemeButtonBorderOpacityDefaults[key] = defaults.buttonBorderOpacity or 1
+		self.ThemeFrameBorderOpacityDefaults[key] = defaults.frameBorderOpacity or 1
+		self.ThemeFrameBackgroundOpacityDefaults[key] = defaults.frameBackgroundOpacity or { main = 0.65, tracker = 0.60 }
+		self.ThemeBackgroundPictureOpacityDefaults[key] = defaults.backgroundPictureOpacity or { main = 0.20, tracker = 0.30 }
+		self.ThemeTooltipPictureOpacityDefaults[key] = defaults.tooltipPictureOpacity or { questID = 1, questName = 1, macroBody = 1 }
+		self.ThemeCardPictureOpacityDefaults[key] = defaults.cardPictureOpacity or { timed = 1, heroic = 1, normal = 1, follower = 1, delve = 1, torghast = 1 }
+		self.ThemeFontDefaults[key] = theme.fontDefaults or {}
+		table.insert(self.ThemeOrder, key)
+		table.sort(self.ThemeOrder, function(left, right)
+			if left == "Basic" then return true end
+			if right == "Basic" then return false end
+			return (self.Themes[left].name or left) < (self.Themes[right].name or right)
+		end)
+		if profileReady() and RQE.db.profile.trackerTheme == key then self:ApplySavedTheme() end
+		local configRegistry = LibStub and LibStub("AceConfigRegistry-3.0", true)
+		if configRegistry then configRegistry:NotifyChange("RQE_Themes") end
+		return true
+	end
+
+	-- Artwork registered here is selectable in every themed card list. New
+	-- themes inherit it because their lists are cloned from Azure & Gold.
+	function UI:RegisterSharedCardStyle(slot, style)
+		if not self.CardStyles.AzureGold[slot] or type(style) ~= "table"
+			or type(style.id) ~= "string" or style.id == ""
+			or type(style.name) ~= "string" or type(style.texture) ~= "string" then
+			return false, "Invalid shared card style"
+		end
+		for _, groups in pairs(self.CardStyles) do
+			local group = groups[slot]
+			if group then
+				for _, existing in ipairs(group.styles) do
+					if existing.id == style.id and existing.texture ~= style.texture then
+						return false, "Card style ID already uses different artwork"
+					end
+				end
+			end
+		end
+		for _, groups in pairs(self.CardStyles) do
+			local group = groups[slot]
+			if group then
+				local found = false
+				for _, existing in ipairs(group.styles) do
+					if existing.id == style.id then found = true; break end
+				end
+				if not found then group.styles[#group.styles + 1] = { id = style.id, name = style.name, texture = style.texture } end
+			end
+		end
+		if profileReady() then self:RefreshCardStyles() end
+		local configRegistry = LibStub and LibStub("AceConfigRegistry-3.0", true)
+		if configRegistry then configRegistry:NotifyChange("RQE_Themes") end
+		return true
+	end
+
 	-------------------------------------------------------
 	-- #6c. Login, Addon & Combat Recovery Watcher
 	-------------------------------------------------------
@@ -2392,6 +2633,10 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			if UI.pendingButtonBorderOpacity then
 				UI.pendingButtonBorderOpacity = nil
 				UI:RefreshButtonBorderOpacity()
+			end
+			if UI.pendingFrameBorderOpacity then
+				UI.pendingFrameBorderOpacity = nil
+				UI:RefreshFrameBorderOpacity()
 			end
 			if UI.pendingCardStyleRefresh then UI:RefreshCardStyles() end
 		end
