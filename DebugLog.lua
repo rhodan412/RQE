@@ -40,6 +40,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 	local capturedNPCQuestIDs = {}
 	local capturePhase
 	local currentQuestBlockAllowed
+	local pickupSourceBlockOpen
 	local captureGeneration = 0
 
 
@@ -55,6 +56,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 		capturedNPCQuestIDs = {}
 		capturePhase = nil
 		currentQuestBlockAllowed = nil
+		pickupSourceBlockOpen = nil
 	end
 
 
@@ -71,15 +73,40 @@ Debug message capture, filtering, display, export, and legacy print integration
 	end
 
 
+	-- Accept only the formatter's source rows inside an allowed quest's npcs block.
+	-- Quoted names stay opaque so escaped quotes and braces cannot alter capture state.
+	local function IsPickupSourcePayload(message)
+		if currentQuestBlockAllowed ~= true then return false end
+		local payload = tostring(message):gsub("^|c%x%x%x%x%x%x%x%x", ""):gsub("|r$", "")
+		if payload:match("^%s*npc%s*=") then
+			pickupSourceBlockOpen = nil
+			return true
+		end
+		if payload:match("^%s*npcs%s*=%s*{%s*$") then
+			pickupSourceBlockOpen = true
+			return true
+		end
+		if not pickupSourceBlockOpen then return false end
+		if payload:match("^%s*}%s*,%s*$") then
+			pickupSourceBlockOpen = nil
+			return true
+		end
+		local sourceKind = payload:match('^%s*{%s*(%a+)%s*=%s*"')
+		return (sourceKind == "npc" or sourceKind == "object")
+			and payload:match('"%s*,%s*id%s*=%s*.-}%s*,%s*$') ~= nil
+	end
+
+
 	-- Function to identify objectives, description, or NPC text contribution lines
 	local function IsTextQuestPayload(message)
-		-- The contribution addon colourises these lines, but preserve the block if
-		-- its presentation colour changes.  The field names are the stable part of
-		-- the contribution output format.
+		-- Field names remain stable even when the producer changes its display colour.
 		local payload = tostring(message):gsub("^|c%x%x%x%x%x%x%x%x", "")
-		return payload:match("^%s*objectivesQuestText%s*=")
-			or payload:match("^%s*descriptionQuestText%s*=")
-			or payload:match("^%s*npc%s*=")
+		if payload:match("^%s*objectivesQuestText%s*=")
+			or payload:match("^%s*descriptionQuestText%s*=") then
+			pickupSourceBlockOpen = nil
+			return true
+		end
+		return IsPickupSourcePayload(message)
 	end
 
 
@@ -93,7 +120,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 
 	-- Function to identify NPC contribution lines within the active capture block
 	local function IsNPCQuestPayload(message)
-		return tostring(message):match("^%s*npc%s*=")
+		return IsPickupSourcePayload(message)
 	end
 
 
@@ -126,6 +153,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 		if capturePhase == "text" then
 			local questID = GetTextQuestIDFromLogMessage(message)
 			if questID then
+				pickupSourceBlockOpen = nil
 				currentQuestBlockAllowed = captureQuestIDs[questID] and not capturedTextQuestIDs[questID]
 				if currentQuestBlockAllowed then
 					capturedTextQuestIDs[questID] = true
@@ -140,6 +168,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 		elseif capturePhase == "npc" then
 			local questID = GetNPCQuestIDFromLogMessage(message)
 			if questID then
+				pickupSourceBlockOpen = nil
 				currentQuestBlockAllowed = captureQuestIDs[questID] and not capturedNPCQuestIDs[questID]
 				if currentQuestBlockAllowed then
 					capturedNPCQuestIDs[questID] = true
@@ -617,6 +646,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 		RegisterDebugLogQuestCapture(questID)
 		capturePhase = "text"
 		currentQuestBlockAllowed = nil
+		pickupSourceBlockOpen = nil
 		return true
 	end
 
@@ -630,6 +660,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 
 		capturePhase = "npc"
 		currentQuestBlockAllowed = nil
+		pickupSourceBlockOpen = nil
 		return true
 	end
 
@@ -638,6 +669,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 	function RQE:EndDebugLogQuestCapture()
 		capturePhase = nil
 		currentQuestBlockAllowed = nil
+		pickupSourceBlockOpen = nil
 	end
 
 
@@ -695,4 +727,73 @@ Debug message capture, filtering, display, export, and legacy print integration
 		end
 
 		return result
+	end
+
+
+--------------------------------------------------
+-- #9. 🔎 Quest Pickup NPC ID Audit
+--------------------------------------------------
+
+	local lastDetailNPCIDWarning
+
+	local function EscapeNPCNameForLua(name)
+		local escaped = name:gsub("\\", "\\\\"):gsub('"', '\\"')
+		return escaped:gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t")
+	end
+
+	-- Check only the current target's named pickup entry. A different selected
+	-- creature, an object, or an unknown saved ID cannot establish a mismatch.
+	function RQE:AuditQuestPickupNPCID(questID, phase, questData)
+		local previousWarning
+		if phase == "detail" then
+			lastDetailNPCIDWarning = nil
+		elseif phase == "accepted" then
+			previousWarning = lastDetailNPCIDWarning
+			lastDetailNPCIDWarning = nil
+		end
+
+		local level = self.db and self.db.profile and self.db.profile.debugLevel
+		if level ~= "INFO" and level ~= "INFO+" then return end
+		if type(questID) ~= "number" or questID <= 0 then return end
+		-- QUEST_DETAIL already looked up the active entry for its normal status
+		-- lines; do not repeat that lookup when no database entry exists.
+		if phase == "detail" and questData == nil then return end
+		questData = questData or (self.getQuestData and self.getQuestData(questID))
+		if type(questData) ~= "table" or type(questData.npcs) ~= "table" then return end
+
+		local targetName = self.API.Client.UnitName("target")
+		local targetGUID = self.API.Client.UnitGUID("target")
+		if (issecretvalue and (issecretvalue(targetName) or issecretvalue(targetGUID)))
+			or type(targetName) ~= "string" or targetName == "" or type(targetGUID) ~= "string" then return end
+		local unitType, idText = targetGUID:match("^([^-]+)%-[^-]*%-[^-]*%-[^-]*%-[^-]*%-(%d+)")
+		if unitType ~= "Creature" and unitType ~= "Vehicle" then return end
+		local targetID = tonumber(idText)
+		if not targetID or targetID <= 0 then return end
+
+		local wrongSource
+		for _, source in ipairs(questData.npcs) do
+			if type(source) == "table" and source.npc == targetName then
+				local savedID = tonumber(source.id)
+				-- A placeholder, unavailable ID, or another valid entry for this
+				-- same name gives us no definite error to report.
+				if not savedID or savedID <= 0 or savedID % 1 ~= 0 or savedID == targetID then return end
+				wrongSource = wrongSource or source
+			end
+		end
+		if not wrongSource then return end
+
+		local warning = { questID = questID, name = targetName, id = targetID, savedID = tonumber(wrongSource.id) }
+		if previousWarning and previousWarning.questID == warning.questID
+			and previousWarning.name == warning.name and previousWarning.id == warning.id
+			and previousWarning.savedID == warning.savedID then return end
+		if phase == "detail" then lastDetailNPCIDWarning = warning end
+
+		-- This is a chat diagnostic; it does not start a contribution capture or
+		-- request that the RQE Debug Log frame be shown.
+		RQE.API.Client.PlaySound(8290)
+		DEFAULT_CHAT_FRAME:AddMessage("Wrong npcID detected! Use:", 1, 0.35, 0.35)
+		DEFAULT_CHAT_FRAME:AddMessage("\t\t\tnpcs = {", 1, 0.8, 0.45)
+		DEFAULT_CHAT_FRAME:AddMessage(string.format('\t\t\t\t{ npc = "%s", id = %d%s },',
+			EscapeNPCNameForLua(targetName), targetID, wrongSource.hostile == true and ", hostile = true" or ""), 1, 0.8, 0.45)
+		DEFAULT_CHAT_FRAME:AddMessage("\t\t\t},", 1, 0.8, 0.45)
 	end
