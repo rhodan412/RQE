@@ -178,15 +178,17 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				self.frame:SetWidth(260)
 				self.frame.width = 260
 				self.image:SetTexture(nil)
+				self.image:SetAlpha(1)
 				updateLayout(self)
 			end,
 			OnRelease = function(self) self.image:SetTexture(nil) end,
 			OnWidthSet = function(self) updateLayout(self) end,
 			SetText = function() end,
 			SetFontObject = function() end,
-			SetImage = function(self, path)
+			SetImage = function(self, path, left, right, top, bottom, alpha)
 				self.image:SetTexture(path)
-				self.image:SetTexCoord(0, 1, 0, 1)
+				self.image:SetTexCoord(left or 0, right or 1, top or 0, bottom or 1)
+				self.image:SetAlpha(alpha or 1)
 			end,
 			SetImageSize = function(self, width, height)
 				self.previewWidth, self.previewHeight = width, height
@@ -1477,7 +1479,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		end
 		-- Keeps picture names short enough for the selector and its default caption.
 		local function backgroundPictureLabel(picture)
-			local prefix = picture.themeName
+			local prefix = picture.shortThemeName or picture.themeName
 			if prefix == "Astral Cartographer" then prefix = "Astral"
 			elseif prefix == "Knights of the Round Table" then prefix = "Knights"
 			elseif prefix == "Scarlet Crusade" then prefix = "Scarlet" end
@@ -1517,6 +1519,15 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					disabled = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
 					get = function() return RQE.UI:GetButtonBorderOpacity() end,
 					set = function(_, value) RQE.UI:SetButtonBorderOpacity(value) end,
+				},
+				frameBorderOpacity = {
+					type = "range", name = "Frame border opacity", order = 3.1,
+					desc = function()
+						return sliderDescriptionWithDefault("Fade the borders around the Quest Helper, Quest Tracker, their child frames, and their headers. Frame backgrounds and icon button borders stay unchanged.", RQE.UI.ThemeFrameBorderOpacityDefaults)
+					end,
+					min = 0, max = 1, step = 0.01, isPercent = true, width = 1.5,
+					get = function() return RQE.UI:GetFrameBorderOpacity() end,
+					set = function(_, value) RQE.UI:SetFrameBorderOpacity(value) end,
 				},
 				useBackgroundPicture = {
 					type = "toggle", name = "Use background picture", order = 3.2, width = 1.2,
@@ -1712,10 +1723,10 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			end
 			options.args.themes.args["cardStyle" .. index] = {
 				type = "group", name = group.name, inline = true, order = 6 + index,
-				hidden = function() return not selectedCardTheme() end,
 				args = {
 					choice = {
 						type = "select", name = "Card style", order = 1, width = 1.1,
+						hidden = function() return not selectedCardTheme() end,
 						values = styleValues, sorting = styleOrder,
 						get = function()
 							local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
@@ -1729,14 +1740,19 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					preview = {
 						type = "description", dialogControl = "RQECardStylePreview",
 						name = "", order = 2, width = 1.4,
+						hidden = function() return not selectedCardTheme() end,
 						image = function()
 							local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
 							return style and style.texture
+						end,
+						imageCoords = function()
+							return { 0, 1, 0, 1, RQE.UI:GetCardPictureOpacity(cardType, selectedCardTheme()) }
 						end,
 						imageWidth = 256, imageHeight = group.height == 256 and 64 or 128,
 					},
 					reset = {
 						type = "execute", name = "Reset", order = 3, width = 0.5,
+						hidden = function() return not selectedCardTheme() end,
 						disabled = function()
 							local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
 							return not style or style.id == activeGroup().default
@@ -1746,8 +1762,18 @@ Shared configuration presentation, custom controls, option composition, and Sett
 							LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
 						end,
 					},
+					pictureOpacity = {
+						type = "range", name = "Card picture opacity", order = 3.5, width = 1.5,
+						desc = function()
+							return sliderDescriptionWithDefault("Fade only the " .. group.name .. " card artwork. Names, timers, difficulty badges, Delve flags, and Torghast details stay visible.", RQE.UI.ThemeCardPictureOpacityDefaults, cardType)
+						end,
+						min = 0, max = 1, step = 0.01, isPercent = true,
+						get = function() return RQE.UI:GetCardPictureOpacity(cardType, selectedCardTheme()) end,
+						set = function(_, value) RQE.UI:SetCardPictureOpacity(cardType, value, selectedCardTheme()) end,
+					},
 					default = {
 						type = "description", order = 4, width = "full",
+						hidden = function() return not selectedCardTheme() end,
 						name = function()
 							for _, style in ipairs(activeGroup().styles) do
 								if style.id == activeGroup().default then return "Default: " .. style.name end
