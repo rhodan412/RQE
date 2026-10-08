@@ -1267,7 +1267,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Returns the currently displayed stepIndex, preferring manual preview over automatic progress.
 	function RQE:GetDisplayedStepIndex()
-		if isRetail then
+		if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 			if not RQE.db.profile.enableStepControls then return end
 		else
 			local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
@@ -1280,10 +1280,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	end
 
 	-- Returns whether the manual step controls have a valid adjacent step in each
-	-- direction. Searched Classic/TBC quests retain their synthetic pickup step 0.
+	-- direction. Searched quests include the synthetic pickup step 0.
 	local function GetStepNavigationAvailability()
 		local questID
-		if isRetail then
+		if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 			questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 		else
 			questID = RQE.searchedQuestID or RQE.DisplayedQuestID
@@ -1295,7 +1295,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		if not questData or not currentStep then return false, false end
 
 		local firstStep = 1
-		if not isRetail and RQE.CanNavigateSearchedQuestSteps
+		if RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(questID) then
 			firstStep = 0
 		end
@@ -1310,6 +1310,44 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	-------------------------------------------------------
 	-- #3g. Quest Helper Close Button
 	-------------------------------------------------------
+
+	-- The target-reference launcher shares the filter menu's themed flyout and
+	-- stays absent unless the optional authoring addon is actually loaded.
+	function RQE.Buttons.RefreshTargetNPCButton()
+		local button = RQE.TargetNPCButton
+		if not button then return end
+		button:SetShown(IsContributionAddonLoaded() and true or false)
+		if RQE.Buttons.UpdateHeaderNavigation then RQE.Buttons.UpdateHeaderNavigation() end
+	end
+
+	function RQE.Buttons.CreateTargetNPCButton(RQEFrame)
+		if RQE.TargetNPCButton then return RQE.TargetNPCButton end
+		local button = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
+		button:SetSize(18, 18)
+		local interactIcon = "Interface\\AddOns\\RQE\\Media\\UI\\Icons\\AzureGold_Interact.tga"
+		button:SetText("")
+		button:SetNormalTexture(interactIcon)
+		button:SetHighlightTexture(interactIcon, "ADD")
+		button:SetFrameStrata("MEDIUM")
+		button:SetFrameLevel(3)
+		button:SetPoint("TOPRIGHT", RQE.CloseButton, "TOPLEFT", -3, 0)
+		button.RQEThemeBorderOpacityTarget = true
+		button:Hide()
+		RQE.TargetNPCButton = button
+		button:SetScript("OnClick", function() RQE:ShowTargetNPCMenu() end)
+		button:SetScript("OnEvent", function(self, _, addonName)
+			if addonName == "RQE_Contribution" then
+				self:UnregisterEvent("ADDON_LOADED")
+				RQE.Buttons.RefreshTargetNPCButton()
+			end
+		end)
+		button:RegisterEvent("ADDON_LOADED")
+		CreateTooltip(button, "Contribution")
+		CreateBorder(button)
+		if RQE.UI then RQE.UI:StyleIconButton(button, "Interact") end
+		RQE.Buttons.RefreshTargetNPCButton()
+		return button
+	end
 
 	-- Parent function to create CloseButton
 	function RQE.Buttons.CreateCloseButton(RQEFrame)
@@ -1331,6 +1369,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		CreateTooltip(CloseButton, "Close/Hide Frame")
 		CreateBorder(CloseButton)
 		if RQE.UI then RQE.UI:StyleIconButton(CloseButton, "Close") end
+		RQE.Buttons.CreateTargetNPCButton(RQEFrame)
 
 		return CloseButton
 	end
@@ -1351,14 +1390,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		PrevStepButton:SetPoint("TOPRIGHT", RQE.NextStepButton, "TOPLEFT", -3, 0)
 
 		PrevStepButton:SetScript("OnEnter", function(self)
-			if isRetail then
+			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if RQE.db.profile.enableStepControls then
 					local curStep = RQE:GetDisplayedStepIndex()
 					local targetStep = curStep - 1
 
 					if targetStep >= 1 then
 						GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-						GameTooltip:SetText("Go back to step " .. targetStep)
+						GameTooltip:SetText(targetStep == 0 and "Return to quest pickup" or ("Go back to step " .. targetStep))
 						GameTooltip:Show()
 					end
 				end
@@ -1370,7 +1409,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 					if targetStep >= 0 and (targetStep >= 1 or RQE:CanNavigateSearchedQuestSteps(questID)) then
 						GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-						GameTooltip:SetText("Go back to step " .. targetStep)
+						GameTooltip:SetText(targetStep == 0 and "Return to quest pickup" or ("Go back to step " .. targetStep))
 						GameTooltip:Show()
 					end
 				end
@@ -1382,7 +1421,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 
 		PrevStepButton:SetScript("OnClick", function()
-			if isRetail then
+			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if RQE.db.profile.enableStepControls then
 					local curStep = RQE:GetDisplayedStepIndex()
 					local targetStep = curStep - 1
@@ -1407,6 +1446,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 					if targetStep >= 0 and (targetStep >= 1 or RQE:CanNavigateSearchedQuestSteps(questID)) then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
+						-- Retail searched previews install their waypoint during the display change.
+						if isRetail and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
 						RQE.API.Client.C_Timer.After(0.2, function()
@@ -1438,10 +1479,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		NextStepButton:SetFrameStrata("MEDIUM")
 		NextStepButton:SetFrameLevel(3)
-		NextStepButton:SetPoint("TOPRIGHT", RQE.CloseButton, "TOPLEFT", -3, 0)
+		NextStepButton:SetPoint("TOPRIGHT", RQE.TargetNPCButton:IsShown() and RQE.TargetNPCButton or RQE.CloseButton, "TOPLEFT", -3, 0)
 
 		NextStepButton:SetScript("OnEnter", function(self)
-			if isRetail then
+			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if RQE.db.profile.enableStepControls then
 					local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 					local questData = questID and RQE.getQuestData(questID)
@@ -1479,7 +1520,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 
 		NextStepButton:SetScript("OnClick", function()
-			if isRetail then
+			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if RQE.db.profile.enableStepControls then
 					local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 					local questData = questID and RQE.getQuestData(questID)
@@ -1507,6 +1548,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 					if questData and questData[targetStep] then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
+						-- Retail searched previews install their waypoint during the display change.
+						if isRetail and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
 						RQE.API.Client.C_Timer.After(0.2, function()
@@ -1614,15 +1657,19 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	-- groups. Waypoint controls close the gap left by hidden step controls.
 	function RQE.Buttons.UpdateHeaderNavigation()
 		local closeButton = RQE.CloseButton
+		local targetButton = RQE.TargetNPCButton
+		local navigationAnchor = targetButton and targetButton:IsShown() and targetButton or closeButton
 		local prevButton = RQE.PrevStepButton
 		local nextButton = RQE.NextStepButton
 		if not closeButton or not prevButton or not nextButton then return end
 
 		local stepControlsVisible = RQE.db and RQE.db.profile
-			and RQE.db.profile.enableStepControls == true
+			and (RQE.db.profile.enableStepControls == true
+				 or (isRetail and RQE.CanNavigateSearchedQuestSteps
+					 and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)))
 		if stepControlsVisible then
 			nextButton:ClearAllPoints()
-			nextButton:SetPoint("TOPRIGHT", closeButton, "TOPLEFT", -3, 0)
+			nextButton:SetPoint("TOPRIGHT", navigationAnchor, "TOPLEFT", -3, 0)
 			prevButton:ClearAllPoints()
 			prevButton:SetPoint("TOPRIGHT", nextButton, "TOPLEFT", -3, 0)
 			nextButton:Show()
@@ -1647,7 +1694,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			and RQE:GetCurrentHeaderWaypointSelection()
 		local showWaypoints = selection and selection.total and selection.total > 0
 		if showWaypoints then
-			local rightAnchor = stepControlsVisible and prevButton or closeButton
+			local rightAnchor = stepControlsVisible and prevButton or navigationAnchor
 			ForwardButton:ClearAllPoints()
 			ForwardButton:SetPoint("TOPRIGHT", rightAnchor, "TOPLEFT", -3, 0)
 			Status:ClearAllPoints()
@@ -1683,7 +1730,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			elseif stepControlsVisible then
 				rightAnchor = prevButton
 			else
-				rightAnchor = closeButton
+				rightAnchor = navigationAnchor
 			end
 
 			RQE.headerText:ClearAllPoints()
