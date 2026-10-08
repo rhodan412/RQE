@@ -1392,6 +1392,16 @@ function RQE.FormatStepDescription(questID, stepData)
 	end
 
 	local fulfilled, required = RQE.API.GetQuestObjectiveCounts(questID, stepData.objectiveIndex)
+	-- A tracked search can expose steps before Blizzard has objective progress.
+	-- Use the authored requirement for this preview instead of displaying 0/0.
+	if RQE.CanNavigateSearchedQuestSteps and RQE:CanNavigateSearchedQuestSteps(questID)
+		and (not required or required <= 0 or not fulfilled) then
+		local neededAmt = stepData.neededAmt
+		if type(neededAmt) == "table" then neededAmt = neededAmt[1] end
+		required = tonumber(neededAmt)
+		if not required or required <= 0 then return description end
+		fulfilled = 0
+	end
 	if not required or not fulfilled then
 		return description
 	end
@@ -5655,6 +5665,13 @@ do
 	function API.ResolveClientAPI(path)
 		if wrappers[path] and implementation(path) then return wrappers[path] end
 		return nil
+	end
+
+	-- Read live instance state on every attempt, including delayed selections.
+	-- The client bridge supplies false when a legacy client has no scenario API.
+	-- Keep this policy separate from the quest setters used by manual selection.
+	function API.IsAutomaticQuestSelectionBlocked()
+		return Client.IsInInstance() or Client.C_Scenario.IsInScenario() or false
 	end
 
 	-- Contribution authoring needs the same spell name and icon on every client.
