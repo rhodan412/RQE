@@ -484,6 +484,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 
 	-- Ensures the arrow points at the *current* chosen hotspot; switches only if the chosen index changed
 	function RQE:EnsureWaypointForSupertracked()
+		-- The displayed search owns navigation while the old log quest remains supertracked.
+		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return true end
 		if self:IsCoordblockWaypointProtected() then return end
 		if not RQEFrame:IsShown() then return end
 
@@ -1483,6 +1486,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- coordOrder remains limited to the player's current map, matching its Focus
 	-- links; authored coordblocks retain their description order on every map.
 	function RQE:GetCurrentHeaderWaypointSelection()
+		-- The displayed search owns navigation while the old log quest remains supertracked.
+		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return nil end
 		local questID = self.API and self.API.GetSuperTrackedQuestID
 			and tonumber(self.API.GetSuperTrackedQuestID())
 		local stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
@@ -1843,6 +1849,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- selected again. A map transition suspends points on other maps but keeps the
 	-- completed prefix for this quest/step.
 	function RQE:SyncCoordOrderWaypoint()
+		-- The displayed search owns navigation while the old log quest remains supertracked.
+		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return false end
 		if self._settingCoordOrderWaypoint or self._settingManualFlightMasterWaypoint
 			or not (RQEFrame and RQEFrame:IsShown()) then return false end
 		if not (self.API and self.API.GetSuperTrackedQuestID) then return false end
@@ -2050,6 +2059,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		if RQEFrame then RQEFrame.DirectionText = text end
 	end
 	coordOrderPoll:SetScript("OnUpdate", function(self, elapsed)
+		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 		self.elapsed = self.elapsed + elapsed
 		if self.elapsed < 0.35 then return end
 		self.elapsed = 0
@@ -2115,7 +2126,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 
 	-- Function to update distance to waypoint display
 	function RQE:UpdateStepDistance()
-		if not RQE.StepDistanceOverride then
+		local isSearchedPreview = RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)
+		if not RQE.StepDistanceOverride and not isSearchedPreview then
 			-- Previous Blizzard call changed 2026.09.25: if not IsPlayerMoving() then return end
 			if not RQE.API.Client.IsPlayerMoving() then return end
 		end
@@ -2127,16 +2140,25 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			return
 		end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()
+		local questID = isSearchedPreview and tonumber(RQE.searchedQuestID)
+			or RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			RQEFrame.StepDistanceText:SetText("—")
 			return
 		end
 
-		local stepIndex = RQE.AddonSetStepIndex --or 1
-
-		-- ✅ DB-only coords (stable)
-		local x, y, mapID = RQE:GetDBStepCoordinates(questID, stepIndex)
+		local stepIndex = RQE.AddonSetStepIndex
+		local x, y, mapID
+		if isSearchedPreview then
+			-- This location was resolved for the selected search step, including
+			-- pickup. Never measure the previous Blizzard-supertracked quest.
+			local point = RQE._searchedStepWaypoint
+			if point and point.questID == questID and point.stepIndex == tonumber(stepIndex) then
+				x, y, mapID = point.x, point.y, point.mapID
+			end
+		else
+			x, y, mapID = RQE:GetDBStepCoordinates(questID, stepIndex)
+		end
 		if not (x and y and mapID) then
 			RQEFrame.StepDistanceText:SetText("—")
 			return
