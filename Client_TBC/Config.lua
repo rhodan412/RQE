@@ -111,6 +111,8 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		White = { label = "White", hex = "ffffff" },
 		Silver = { label = "Silver", hex = "c0c0c0" },
 		["Dark Orange"] = { label = "Dark Orange", hex = "ff7f00" },
+		["Infernal Orange"] = { label = "Infernal Orange", hex = "ff8c2b" },
+		["Fel Green"] = { label = "Fel Green", hex = "99e22d" },
 		Crimson = { label = "Crimson", hex = "dc143c" },
 		["Hot Pink"] = { label = "Hot Pink", hex = "ff69b4" },
 		Fuchsia = { label = "Fuchsia", hex = "ff00ff" },
@@ -123,8 +125,8 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 	}
 
 	RQE.FontColorOrder = {
-		"Crimson", "Dark Orange", "Cream Can", "Golden Yellow", "Yellow", "Canary",
-		"Green", "Cyan", "Maya Blue", "Cobalt", "Medium Purple", "Lavender",
+		"Crimson", "Dark Orange", "Infernal Orange", "Cream Can", "Golden Yellow", "Yellow", "Canary",
+		"Green", "Fel Green", "Cyan", "Maya Blue", "Cobalt", "Medium Purple", "Lavender",
 		"Fuchsia", "Hot Pink", "Carnation Pink", "Silver", "White",
 	}
 	RQE.FontColorLabels = {}
@@ -564,7 +566,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 						-- desc = "Enable the super tracking to change to the nearest watched non-world quest\n\n" ..
 						-- 		"|cFFFF3333EXPERIMENTAL feature designed to auto update nearest supertracked quest based on proximity when the player moves|r",
 						desc = "Auto supertrack nearest watched quest on player movement.\n\n" ..
-								"|cFFFF3333EXPERIMENTAL: Auto supertrack updates even when a quest is already supertracked, and provides detailed step-by-step guidance for the selected quest.|r",
+								"|cFFFF3333EXPERIMENTAL: Auto supertrack updates even when a quest is already supertracked, and provides detailed step-by-step guidance for the selected quest.|r\n\nAutomatically pauses inside instances and resumes after leaving.",
 						order = 17,
 						get = function() return RQE.db.profile.enableAutoSuperTrackSwap end,
 						set = function(_, newValue)
@@ -576,7 +578,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 						type = "toggle",
 						name = "Enable SuperTrack Nearest when not Tracking",
 						desc = "Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking\n\n" ..
-								"|cFFFF3333This setting will prioritize regular quests within the player's current zone that are being watched unless one of the two below 'Enable SuperTrack Nearest Campaign...' have been selected.|r",
+								"|cFFFF3333This setting will prioritize regular quests within the player's current zone that are being watched unless one of the two below 'Enable SuperTrack Nearest Campaign...' have been selected.|r\n\nAutomatically pauses inside instances and resumes after leaving.",
 						order = 18,
 						get = function() return RQE.db.profile.enableNearestSuperTrack end,
 						set = function(_, newValue)
@@ -589,7 +591,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 						name = function() 
 							return "Enable SuperTrack Nearest Campaign Quest [Max Level: " .. GetMaxPlayerLevel() .. "]"
 						end,
-						desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking",
+						desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking\n\nAutomatically pauses inside instances and resumes after leaving.",
 						order = 19,
 						get = function() return RQE.db.profile.enableNearestSuperTrackCampaign end,
 						set = function(_, newValue)
@@ -603,7 +605,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 						name = function() 
 							return "Enable SuperTrack Nearest Campaign Quest [Leveling Only: " .. UnitLevel("player") .. "/" .. GetMaxPlayerLevel() .. "]"
 						end,
-						desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking, but only while leveling",
+						desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking, but only while leveling\n\nAutomatically pauses inside instances and resumes after leaving.",
 						order = 20,
 						get = function() return RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly end,
 						set = function(_, newValue)
@@ -1873,7 +1875,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		enableAutoSuperTrackSwap:SetCallback("OnEnter", function(widget, event)
 			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
 			-- GameTooltip:SetText("Enable the super tracking to change to the nearest watched non-world quest\n\n|cFFFF3333EXPERIMENTAL feature designed to auto update nearest supertracked quest based on proximity when the player moves.|r", nil, nil, nil, nil, true)
-			GameTooltip:SetText("Auto supertrack nearest watched quest on player movement.\n\n|cFFFF3333EXPERIMENTAL: Auto supertrack updates even when a quest is already supertracked, and provides detailed step-by-step guidance for the selected quest.|r", nil, nil, nil, nil, true)
+			GameTooltip:SetText("Auto supertrack nearest watched quest on player movement.\n\n|cFFFF3333EXPERIMENTAL: Auto supertrack updates even when a quest is already supertracked, and provides detailed step-by-step guidance for the selected quest.|r\n\nAutomatically pauses inside instances and resumes after leaving.", nil, nil, nil, nil, true)
 			GameTooltip:Show()
 		end)
 		enableAutoSuperTrackSwap:SetCallback("OnLeave", function(widget, event)
@@ -1896,7 +1898,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		-- Add a tooltip description for enableNearestSuperTrack (RQE.db.profile.enableNearestSuperTrack)
 		enableNearestSuperTrack:SetCallback("OnEnter", function(widget, event)
 			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-			GameTooltip:SetText("Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking\n\n|cFFFF3333This setting will prioritize regular quests within the player's current zone that are being watched unless one of the two below 'Enable SuperTrack Nearest Campaign...' have been selected.|r", nil, nil, nil, nil, true)
+			GameTooltip:SetText("Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking\n\n|cFFFF3333This setting will prioritize regular quests within the player's current zone that are being watched unless one of the two below 'Enable SuperTrack Nearest Campaign...' have been selected.|r\n\nAutomatically pauses inside instances and resumes after leaving.", nil, nil, nil, nil, true)
 			GameTooltip:Show()
 		end)
 		enableNearestSuperTrack:SetCallback("OnLeave", function(widget, event)
@@ -1920,7 +1922,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		-- Add a tooltip description for enableNearestSuperTrackCampaign (RQE.db.profile.enableNearestSuperTrackCampaign)
 		enableNearestSuperTrackCampaign:SetCallback("OnEnter", function(widget, event)
 			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-			GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking", nil, nil, nil, nil, true)
+			GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking\n\nAutomatically pauses inside instances and resumes after leaving.", nil, nil, nil, nil, true)
 			GameTooltip:Show()
 		end)
 		enableNearestSuperTrackCampaign:SetCallback("OnLeave", function(widget, event)
@@ -1945,7 +1947,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		-- Add a tooltip description for enableNearestSuperTrackCampaignLevelingOnly (RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly)
 		enableNearestSuperTrackCampaignLevelingOnly:SetCallback("OnEnter", function(widget, event)
 			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-			GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking, but only while leveling", nil, nil, nil, nil, true)
+			GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking, but only while leveling\n\nAutomatically pauses inside instances and resumes after leaving.", nil, nil, nil, nil, true)
 			GameTooltip:Show()
 		end)
 		enableNearestSuperTrackCampaignLevelingOnly:SetCallback("OnLeave", function(widget, event)
