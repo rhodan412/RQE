@@ -86,6 +86,11 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Function to check if the current RQE Macro matches the expected contents based on the current super-tracked quest step
 	function RQE.CheckCurrentMacroContents()
+		-- Search previews own their macro until pickup or an explicit step change.
+		-- Do not compare them to the unrelated Blizzard super-tracked quest.
+		if isRetail and RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return true end
+
 		-- Prevent re-entry if the function is already in progress
 		if RQE.isCheckingMacroContents then
 			return false
@@ -235,6 +240,13 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Function to create or update a macro for a quest step
 	function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
+		-- Timer callbacks captured before Search > Track can still arrive here.
+		-- Only the active searched quest and selected preview step may replace it.
+		if isRetail and RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+			local selectedStep = tonumber(RQE.ManualPreviewStepIndex or RQE.AddonSetStepIndex) or 0
+			if tonumber(questID) ~= tonumber(RQE.searchedQuestID) or tonumber(stepIndex) ~= selectedStep then return end
+		end
 		local macroName = "RQE Macro"
 		local iconFileID = "INV_MISC_QUESTIONMARK"
 		local macroBody = ""
@@ -298,12 +310,74 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 
 	-------------------------------------------------------
-	-- #3b. Classic/TBC Searched Quest Pickup Macro
+	-- #3b. Searched Quest Pickup Macro
 	-------------------------------------------------------
 
-	-- Classic/TBC searched quests use virtual step 0 while the quest pickup is
-	-- pending, so their pickup macro must remain distinct from Retail step 1.
+	-- Pickup is virtual step 0; actual DB steps retain their own macros.
 	function RQE:SetSearchedQuestPickupMacro(questID)
+		if isRetail then
+			if not self.CanNavigateSearchedQuestSteps or not self:CanNavigateSearchedQuestSteps(questID) then
+				return false
+			end
+			local npcs = self:GetQuestPickupNPCs(questID)
+			if #npcs == 0 then
+				for _, source in ipairs(self:GetQuestPickupSources(questID)) do
+					if source.kind == "item" then
+						local macroLines = {
+							source.id and ("#showtooltip item:" .. source.id) or "#showtooltip item:153541",
+							"/use " .. source.name,
+						}
+						RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
+						self.API.Client.C_Timer.After(0.35, function()
+							RQE.Buttons.UpdateMagicButtonVisibility()
+						end)
+						return true
+					end
+				end
+				return false
+			end
+			local macroLines = { "#showtooltip item:153541" }
+			local hasAlternatives = #npcs > 1
+			local hasHostile, hasFriendly = false, false
+			for _, entry in ipairs(npcs) do
+				if entry.hostile then hasHostile = true else hasFriendly = true end
+			end
+			if hasAlternatives and hasFriendly then
+				-- Friendly pickup alternatives start fresh; hostile-only alternatives keep a living target.
+				macroLines[#macroLines + 1] = "/cleartarget"
+			end
+			for _, entry in ipairs(npcs) do
+				local targetCommand = hasAlternatives and "/tar [noexists][dead] " or "/tar "
+				macroLines[#macroLines + 1] = targetCommand .. entry.name
+			end
+			if hasHostile then
+				macroLines[#macroLines + 1] = "/cleartarget [dead]"
+				-- Mixed lists choose the marker for the selected unit; hostile-only lists
+				-- use the authored skull convention without replacing an existing marker.
+				macroLines[#macroLines + 1] = hasFriendly and "/tm [harm] ~8; 3" or "/tm ~8"
+			else
+				macroLines[#macroLines + 1] = "/tm 3"
+			end
+			RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
+			self.API.Client.C_Timer.After(0.35, function()
+				RQE.Buttons.UpdateMagicButtonVisibility()
+			end)
+			return true
+		end
+
+		local pickupItem = RQE.GetSearchedQuestPickupItem and RQE:GetSearchedQuestPickupItem(questID)
+		if pickupItem then
+			local macroLines = {
+				pickupItem.id and ("#showtooltip item:" .. pickupItem.id) or "#showtooltip item:1165",
+				"/use " .. pickupItem.name,
+			}
+			RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
+			RQE.API.Client.C_Timer.After(0.35, function()
+				RQE.Buttons.UpdateMagicButtonVisibility()
+			end)
+			return true
+		end
+
 		local questData = RQE.getQuestData(questID)
 		if not questData or not questData.npc or #questData.npc == 0 or questData.npc[1] == "" then
 			return false
@@ -347,30 +421,12 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			return RQE:SetSearchedQuestPickupMacro(questID)
 		end
 
-		local questData = RQE.getQuestData(questID)
-		if not questData or not questData.npc or #questData.npc == 0 or questData.npc[1] == "" then
-			return -- No NPC data to create a macro
-		end
-
-		local npcName = questData.npc[1]
-		if not npcName or npcName == "" then return end
-
-		-- Generate the macro text
-		local macroLines = {
-			"#showtooltip item:153541",
-			"/tar " .. npcName,
-			"/tm 3"		-- modified as 12.0 patch broke the function that checks raid icon presence and accuracy before re-marking
-		}
-
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Creating macro for searched NPC:", npcName)
-		end
-		RQEMacro:SetQuestStepMacro(questID, 1, macroLines, true)
-
-		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
-		RQE.API.Client.C_Timer.After(0.35, function()
-			RQE.Buttons.UpdateMagicButtonVisibility()
-		end)
+		-- Delayed search/event refreshes must not replace a manually selected
+		-- preview step's macro with the pickup targets.
+		if not self.CanNavigateSearchedQuestSteps or not self:CanNavigateSearchedQuestSteps(questID) then return end
+		local stepIndex = tonumber(self.ManualPreviewStepIndex or self.AddonSetStepIndex) or 0
+		if stepIndex ~= 0 then return end
+		return self:SetSearchedQuestPickupMacro(questID)
 	end
 
 
@@ -687,6 +743,10 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 		-- >>> NEW: check if current macroArray step defines a spell tooltip
 		local questID = RQE.API.GetSuperTrackedQuestID()
+		if isRetail and RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+			questID = tonumber(RQE.searchedQuestID)
+		end
 		if questID and RQE and RQE.getQuestData then
 			local questData = RQE.getQuestData(questID)
 			local stepIndex = RQE.AddonSetStepIndex
@@ -784,10 +844,46 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				return
 			end
 
+			-- Item-started searched quests use the item itself instead of the
+			-- generic pickup macro tooltip. Match the current macro so a stale
+			-- quest or an authored step cannot borrow the item tooltip.
+			local pickupItem
+			local pickupQuestID = tonumber(RQE.searchedQuestID)
+			local previewStep = tonumber(RQE.ManualPreviewStepIndex or RQE.AddonSetStepIndex) or 0
+			if RQE.CanNavigateSearchedQuestSteps
+				and RQE:CanNavigateSearchedQuestSteps(pickupQuestID) and previewStep == 0 then
+				if isRetail and #RQE:GetQuestPickupNPCs(pickupQuestID) == 0 then
+					for _, source in ipairs(RQE:GetQuestPickupSources(pickupQuestID)) do
+						if source.kind == "item" then
+							local expected = (source.id and ("#showtooltip item:" .. source.id)
+								or "#showtooltip item:153541") .. "\n/use " .. source.name
+							if macroBody == expected then pickupItem = source end
+							break
+					end
+					end
+				elseif not isRetail and RQE.GetSearchedQuestPickupItem then
+					local source = RQE:GetSearchedQuestPickupItem(pickupQuestID)
+					if source then
+						local expected = (source.id and ("#showtooltip item:" .. source.id)
+								or "#showtooltip item:1165") .. "\n/use " .. source.name
+						if macroBody == expected then pickupItem = source end
+					end
+				end
+			end
+
 			-- Debug mode: Show raw macro text
 			-- Previous Blizzard call changed 2026.09.25: if RQE.db.profile.debugLevel == "INFO+" or IsShiftKeyDown() then
 			if RQE.db.profile.debugLevel == "INFO+" or RQE.API.Client.IsShiftKeyDown() then
-				RQEShowWrappedMacroTooltip(self, "Macro:", macroBody)
+				RQEShowWrappedMacroTooltip(self, pickupItem and "Use Item:" or "Macro:", macroBody)
+				return
+			end
+			if pickupItem and pickupItem.id then
+				GameTooltip:SetItemByID(pickupItem.id)
+				GameTooltip:Show()
+				return
+			end
+			if pickupItem then
+				RQEShowWrappedMacroTooltip(self, "Use Item:", macroBody)
 				return
 			end
 
@@ -828,7 +924,20 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 					elseif (isRetail and itemID == 143680) or (not isRetail and itemID == 3081) then
 						RQEShowWrappedMacroTooltip(self, "Weaken", macroBody)
 					elseif (isRetail and itemID == 153541) or (not isRetail and itemID == 1165) then
-						RQEShowWrappedMacroTooltip(self, "Pickup the quest", macroBody)
+						local heading = "Pickup the quest"
+						local pickupQuestID = tonumber(RQE.searchedQuestID)
+						local previewStep = tonumber(RQE.ManualPreviewStepIndex or RQE.AddonSetStepIndex) or 0
+						-- Resolve pickup state on hover so switching quests or steps cannot retain a hostile label.
+						if isRetail and RQE.CanNavigateSearchedQuestSteps
+							and RQE:CanNavigateSearchedQuestSteps(pickupQuestID) and previewStep == 0 then
+							for _, entry in ipairs(RQE:GetQuestPickupNPCs(pickupQuestID)) do
+								if entry.hostile then
+									heading = "Kill + Pickup the quest"
+									break
+								end
+							end
+						end
+						RQEShowWrappedMacroTooltip(self, heading, macroBody)
 					else
 						RQEShowWrappedMacroTooltip(self, "Macro:", macroBody)
 					end
