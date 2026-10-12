@@ -2,6 +2,8 @@
 !/.github/
 !/.github/**
 AGENTS.md
+Duplicates.txt
+find_duplicate_quests.py
 /.pkgmeta
 .vscode/
 /Tests/
