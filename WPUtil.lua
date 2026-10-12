@@ -1261,28 +1261,45 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			local trueContinentID = topMostContinent and topMostContinent.mapID
 			local parentContinentID = mapInfo and mapInfo.parentMapID
 
-			local bestMap, bestContinent, firstValid
+			local bestSameMap, bestSameMapDistance, bestTarget, bestMap, bestContinent, firstContinent, firstValid
 
 			for _, loc in ipairs(dbEntry.locations) do
 				local x, y, mapID, continentID = extract(loc)
 				if x and y then
-					-- 1) If player is physically in this map, it wins outright
+					-- Prefer the nearest pickup on the player's map; keep the first
+					-- matching point when player position is unavailable.
 					if mapID and playerMapID == mapID then
-						return x, y, mapID, nil
+						local distance
+						if RQE.WPUtil and RQE.WPUtil.PlayerDistanceTo then
+							local xNorm = tonumber(x)
+							local yNorm = tonumber(y)
+							if xNorm and yNorm then
+								distance = RQE.WPUtil.PlayerDistanceTo(mapID,
+									xNorm > 1 and xNorm / 100 or xNorm,
+									yNorm > 1 and yNorm / 100 or yNorm)
+							end
+						end
+						if not bestSameMap or (distance and (not bestSameMapDistance or distance < bestSameMapDistance)) then
+							bestSameMap = { x, y, mapID }
+							bestSameMapDistance = distance
+						end
 					end
 
-					-- 2) Honor explicit target (from "W" button) ONLY if we're not already in that map
-					if targetMapID and (mapID ~= playerMapID) and (mapID == targetMapID or continentID == targetMapID) then
-						return x, y, mapID, continentID
+					-- Honor an explicit target only when the player's map has no pickup.
+					if not bestTarget and targetMapID and (mapID == targetMapID or continentID == targetMapID) then
+						bestTarget = { x, y, mapID, continentID }
 					end
 
-					-- 3) Store fallbacks
+					-- Store continent, map, and first-valid fallbacks.
 					if mapID and not bestMap then
 						bestMap = { x, y, mapID }
 					end
 
 					if continentID and (continentID == parentContinentID or continentID == trueContinentID) then
 						bestContinent = { x, y, continentID }
+					end
+					if continentID and not firstContinent then
+						firstContinent = { x, y, continentID }
 					end
 
 					if not firstValid then
@@ -1291,9 +1308,21 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				end
 			end
 
-			-- Prefer continent if available
+			if bestSameMap then
+				return bestSameMap[1], bestSameMap[2], bestSameMap[3], nil
+			end
+
+			if bestTarget then
+				return bestTarget[1], bestTarget[2], bestTarget[3], bestTarget[4]
+			end
+
+			-- Prefer the player's continent, then a listed continent if the
+			-- player is in neither pickup map.
 			if bestContinent then
 				return bestContinent[1], bestContinent[2], nil, bestContinent[3]
+			end
+			if firstContinent then
+				return firstContinent[1], firstContinent[2], nil, firstContinent[3]
 			end
 
 			-- Otherwise use map fallback
