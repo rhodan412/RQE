@@ -2130,6 +2130,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			-- Both tracker mode and focus have now been restored, so normal event
 			-- saves may resume without overwriting the saved startup state.
 			RQE.PendingTrackerStateRestore = false
+			if RQE.ResumeTrackerSync then RQE:ResumeTrackerSync() end
 
 			C_Timer.After(0.1, function()
 				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): restore ~~")
