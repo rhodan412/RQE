@@ -1,3 +1,55 @@
+12.1.5.0 (2026.10.12)
+
+	**HIGHLIGHTS**
+		- Fixed unnecessary tracker rebuilds while standing still with the tracker or map open; quest-list recovery now respects filters, collapsed sections, and delayed quest data.
+		- Quest pickup waypoints now choose the closest listed location in your current zone, then use listed continent coordinates when no pickup zone matches.
+
+	Client_Classic/Core.lua
+		- Resumed pending synchronization after saved tracking restoration completes so recovery does not require enabling the legacy periodic checker. (2026.10.08.1110)
+
+	Client_Classic/QuestingModule.lua
+		- Integrated shared completed-row records using existing filtered/sorted membership, clear invalidation, and explicit empty/aborted world-render handling; retained the legacy ticker gate and existing sorting, virtual watches, bonus objectives, and task rendering. (2026.10.08.1110)
+		- Normalized reused world rows' identities and parents and tracked ownership before display, ensuring partial rows are cleaned without losing reusable frames or revisiting inactive historical rows. (2026.10.08.1110)
+
+	Client_TBC/Core.lua
+		- Resumed pending synchronization after saved tracking restoration completes so recovery does not require enabling the legacy periodic checker. (2026.10.08.1110)
+
+	Client_TBC/QuestingModule.lua
+		- Integrated shared completed-row records using existing filtered/sorted membership, clear invalidation, and explicit empty/aborted world-render handling; retained the legacy ticker gate and existing sorting, virtual watches, bonus objectives, and task rendering. (2026.10.08.1110)
+		- Normalized reused world rows' identities and parents and tracked ownership before display, ensuring partial rows are cleaned without losing reusable frames or revisiting inactive historical rows. (2026.10.08.1110)
+
+	Core.lua
+		- Resumed pending synchronization after saved character tracking restoration completes, allowing deferred recovery without acting on partially restored watches. (2026.10.08.1110)
+
+	QuestingModule.lua
+		- Integrated intended and completed Retail quest-row records and clear invalidation, committed empty world lists, and replaced the obsolete local checker with shared synchronization while preserving the existing ticker and independent distance refresh. (2026.10.08.1110)
+		- Normalized reused world buttons' quest IDs and parents, registered ownership before showing rows, and cleared activated rows before reuse so an interrupted raid render cannot leave orphaned rows or a repeated repair loop. (2026.10.08.1110)
+
+	RQE-Classic.toc
+		- Updated version#. (2026.10.08.1110)
+		- Loaded the shared TrackerSync.lua before Classic tracker construction, preserving client-specific modules and version metadata. (2026.10.08.1110)
+
+	RQE-Tbc.toc
+		- Updated version#. (2026.10.08.1110)
+		- Loaded the shared TrackerSync.lua before TBC tracker construction, preserving client-specific modules and version metadata. (2026.10.08.1110)
+
+	RQE.toc
+		- Loaded TrackerSync.lua before tracker frame construction without changing version metadata. (2026.10.08.1110)
+		- Updated version# in preparation for 12.1.5. (2026.10.12.1835) 
+
+	RQEDatabase.lua
+		- Updated questDB with several expansions including adding in additional npcIDs (2026.10.12.1835) 
+
+	TrackerSync.lua
+		- Added shared source snapshots and completed normal/world row records to replace the unpopulated QuestBlocks comparison, including legacy search/menu/zone/virtual membership and readiness without suppressing objective or distance updates. (2026.10.08.1110)
+		- Coalesced genuine mismatch recovery into one revalidated main render, including removals and empty lists; resumed pending combat, restoration, hidden-frame and data deferrals through events and OnShow while distinguishing aborted world renders from completed records. (2026.10.08.1110)
+		- Tracked active world-row ownership independently of completed records and consumed it during cleanup, preserving reusable frame caches without revisiting every historical quest; added a coalesced next-frame guard to recover abandoned render scopes without swallowing Lua errors or starting a retry loop. (2026.10.08.1110)
+		- Added session-only check, repair, and completed-render counters for controlled in-game diagnosis; used the established filename/purpose header and numbered section layout. (2026.10.08.1110)
+
+	WPUtil.lua
+		- Compared all quest pickup locations on the player's current map by the shared player-distance helper instead of returning the first match; retained the first matching point when position is unavailable, then preferred a matching or listed continent coordinate before a different-map fallback across clients. (2026.10.08.1250)
+
+
 12.1.0.15 (2026.10.08)
 
 	**HIGHLIGHTS**
