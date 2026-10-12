@@ -50915,7 +50915,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Professor Dabiri at the Protectorate Watch Post in Netherstorm wants you to recover 8 Fragments of Dimensius." },
 			descriptionQuestText = { "Atop Manaforge Ultris lies the tear in the nether that the void lord, Dimensius, came through. That tear provides Dimensius with a link to the void, rendering him immune to physical harm. If we can get a lock on the conduit that Dimensius is using to keep himself phased out of this plane of existence, we can destroy it and then destroy Dimensius. To do this, we're going to first need you to collect fragments of Dimensius from the void creatures that he sends out to do his dirty work." },
 			npcs = {
-				{ npc = "Professor Dabiri", id = "x99" },
+				{ npc = "Professor Dabiri", id = 20907 },
 			},
 			[1] = {
 				description = "Kill Unstable Voidwraiths and Voidshrieker, and collect 4 {item:29822:Fragments of Dimensius}, from their bodies, around the outside of Manaforge Ultris, Netherstorm.",
@@ -50934,7 +50934,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Professor Dabiri at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20907:Professor Dabiri} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 60.11, y = 31.73, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.20, y = 13.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -94463,7 +94463,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 6 Stinging Residue from Acidic Salvage in The Vatworks." },
 			descriptionQuestText = { "Boxenkle is my boss--and my mentor. Best slimediver there ever was! Until now... It's not him--slimediving isn't what it used to be! The slimes have gotten more toxic over time. I think it's gotten so bad that we all should be wearin' eye protection--not just me. But ol' Enkle's a traditionalist. It'll take more than a few red eyes to convince him. That's where you come in. If you can get residue samples from the really nasty slimes, maybe I can make a compelling case for ol' Enkle!" },
 			npcs = {
-				{ npc = "Slimediver Kazzandra", id = "x99" },
+				{ npc = "Slimediver Kazzandra", id = 225481 },
 			},
 			-- [1] = {
 				-- description = "! Kill Acidic Salvage and loot Stinging Residue: 1/6 from its body at The Vatworks, Undermine.",
@@ -94520,7 +94520,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Talk to 5 Slimedivers in The Vatworks." },
 			descriptionQuestText = { "My mentor Enkle may be the loudest voice around here, but he's not the only one who needs help. Our whole crew only listens to him! Which means no one's wearing proper protective equipment. Take these goggles and convince everyone to take 'em on a trial run. Maybe if they all start changing their minds, Enkle will listen." },
 			npcs = {
-				{ npc = "Slimediver Kazzandra", id = "x99" },
+				{ npc = "Slimediver Kazzandra", id = 225481 },
 			},
 			-- [1] = {
 				-- description = "! Goggles distributed: 1/5 in The Vatworks, Undermine.",
@@ -94601,7 +94601,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Defeat Causticaria in The Vatworks." },
 			descriptionQuestText = { "Causticaria? Is he crazy? No one has ever been able to process that monster! We have to stop Enkle before he gets himself hurt! Causticaria lurks down this canal. Grab your goggles and follow me!" },
 			npcs = {
-				{ npc = "Slimediver Kazzandra", id = "x99" },
+				{ npc = "Slimediver Kazzandra", id = 225481 },
 			},
 			-- [1] = {
 				-- description = "! Causticaria slain: 1/1 in The Vatworks, Undermine.",
@@ -100182,10 +100182,12 @@ RQEDatabase = {
 		},
 		[83442] = {
 			title = "Tossed and Torqued", -- Objectives: Search Snap Vellumgrease's apartment for the schematic in Undermine.
-			location = { x = 32.31, y = 30.85, mapID = 2346 },
+			location = { x = 32.23, y = 31.00, mapID = 2346 },
 			objectivesQuestText = { "Search Snap Vellumgrease's apartment for the schematic in Undermine." },
 			descriptionQuestText = { "All my notes. My plans! <Snap is shaking with anger.> I just know it was Mite Sparkcog who tossed my apartment. He's my work rival and probably wanted my newest invention for himself--the Smellersweller 5000! It's an attachment for the grills we design. I'd just finished the schematic for our boss when I stepped out for some grub. By the time I got back... Maybe he didn't find it. Help me look first, then we can deal with Mite." },
-			npc = { "" },
+			npcs = {
+				{ npc = "Snap Vellumgrease", id = 226569 },
+			},
 			-- [1] = {
 				-- description = "! Tossed Papers cleared: 1/5 in Hovel Hill, Undermine.",
 				-- coordinates = { x = 31.42, y = 30.58, mapID = 2346 },
@@ -100271,13 +100273,13 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [8] = {
-				-- description = "Turn in the quest to Snap Vellumgrease at Hovel Hill, Undermine.",
-				-- coordinates = { x = 32.23, y = 30.98, mapID = 2346 },
+				-- description = "Turn in the quest to {npc:226569:Snap Vellumgrease} at Hovel Hill, Undermine.",
+				-- coordinates = { x = 32.23, y = 31.00, mapID = 2346 },
 				-- check = { "83442" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
 				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
+					-- { name = "Snap Vellumgrease", marker = 6, mustBeAlive = true },
 				-- },
 				-- macro = { "#showtooltip item:2554\n/tar Snap Vellumgrease\n/tm 6" },
 				-- objectiveIndex = 99,
@@ -100285,10 +100287,12 @@ RQEDatabase = {
 		},
 		[83445] = {
 			title = "Something Smells", -- Objectives: Speak with Snap Vellumgrease at Cheap Grillz in Hovel Hill.
-			location = { x = 32.24, y = 30.99, mapID = 2346 },
+			location = { x = 32.23, y = 31.00, mapID = 2346 },
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
-			npc = { "" },
+			npcs = {
+				{ npc = "Snap Vellumgrease", id = 226569 },
+			},
 			-- [1] = {
 				-- description = "! Speak with Snap Vellumgrease: 1/1 in Hovel Hill, Undermine.",
 				-- coordinates = { x = 27.21, y = 35.43, mapID = 2346 },
@@ -100314,13 +100318,13 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [3] = {
-				-- description = "Turn in the quest to Snap Vellumgrease at Hovel Hill, Undermine.",
-				-- coordinates = { x = 27.21, y = 35.43, mapID = 2346 },
+				-- description = "Turn in the quest to {npc:226569:Snap Vellumgrease} at Hovel Hill, Undermine.",
+				-- coordinates = { x = 32.23, y = 31.00, mapID = 2346 },
 				-- check = { "83445" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
 				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
+					-- { name = "Snap Vellumgrease", marker = 6, mustBeAlive = true },
 				-- },
 				-- macro = { "#showtooltip item:2554\n/tar Snap Vellumgrease\n/tm 6" },
 				-- objectiveIndex = 99,
@@ -100410,6 +100414,56 @@ RQEDatabase = {
 				macro = { "#showtooltip item:2554\n/tar Biergoth\n/tm 6" },
 				objectiveIndex = 99,
 			},
+		},
+		[83484] = {
+			title = "Oh, Rats!", -- Objectives: Find Alice Grillspark.
+			locations = {
+				{ x = 38.19, y = 88.47, mapID = 2346 },
+				{ x = 0.00, y = 0.00, continentID = 2274 },
+			},
+			objectivesQuestText = { "Find Alice Grillspark." },
+			descriptionQuestText = { "Okay, scout's honor this ain't a joke. I need help because... I turned my best friend into a rat. My friend Allie is the cook here. She tries her best but she's... no good. She's got a bum sniffer. So, I bought her a potion that would make her smell better! ...I mean, improve her sense of smell. But it turned her into a rat! Then she ran off! Ya gotta find her for me. Dealer had another potion to understand rats. I'm too afraid to drink it though. Can you use it an' find her?" },
+			npcs = {
+				{ npc = "Humphrey Shortswig", id = 226728 },
+			},
+			-- [1] = {
+				-- description = "! Alice's Location Discovered: 1/1 in The Vatworks, Undermine.",
+				-- coordinates = { x = 35.25, y = 87.09, mapID = 2346 },
+				-- check = { "83484" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+				-- 	{ name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "#showtooltip\n/tar Alley Rat\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/use Comprehend Rat Language Potion" },
+				-- objectiveIndex = 1,
+			-- },
+			-- [2] = {
+				-- description = "! Interact with {npc:226710:Alley Rat}: Alice Grillspark Found: 1/1 in Undermine.",
+				-- coordinates = { x = 33.11, y = 84.32, mapID = 2346 },		-- coordinates = { x = 34.58, y = 85.55, mapID = 2346 }, -- W quest map coordinates (RQE.GetQuestCoordinates)
+				-- check = { "83484" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+				-- 	{ name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "#showtooltip item:5830\n/tar Alley Rat\n/run RQE.SelectMultipleGossipOptions(\"Alley Rat\", 0, 0)\n/tm 0\n/tm ~2" },
+				-- objectiveIndex = 2,
+			-- },
+			-- [3] = {
+				-- description = "Turn in the quest to {npc:226710:Alice Grillspark} at Undermine.",
+				-- coordinateHotspots = {		-- coordinates = { x = 33.07, y = 84.30, mapID = 2346 }, -- W quest map coordinates (RQE.GetQuestCoordinates)
+					-- { x = 33.11, y = 84.32, mapID = 2346, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "83484" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBComplete",
+				-- npcTargets = {
+					-- { name = "Alice Grillspark", marker = 6, mustBeAlive = true },
+				-- },
+				-- macro = { "#showtooltip item:2554\n/tar Alice Grillspark\n/tm 6" },
+				-- objectiveIndex = 99,
+			-- },
 		},
 		[83489] = {
 			title = "Gathering All Gladiators!",
@@ -103232,7 +103286,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Gather the crew." },
 			descriptionQuestText = { "You are hired! Okay, this heist I got planned is gonna make us a lot of money, but requires a crew and a bunch of planning. I'll take care of the planning, you get the crew. We need Goldmine. Outside of Venture Co., he's one of the fastest drivers out there. Because he's outside of Venture Co., he can't be traced back to me. We also need a face that no bruiser can say no to. We need Handsome Crog. Oh, and I need my cousin Ripsnoodle. He's not the best mage, but he's family... and my boss." },
 			npcs = {
-				{ npc = "Skedgit Cinderbangs", id = "x99" },
+				{ npc = "Skedgit Cinderbangs", id = 228286 },
 			},
 			-- [1] = {
 				-- description = "! Getaway Driver recruited: 1/1 in The Vatworks, Undermine.",
@@ -103289,7 +103343,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Steal an Airship Supply Balloon." },
 			descriptionQuestText = { "I'm gonna go over the details of the plan. However, here is the too-long-didn't-listen version: We meet in front of the Airship Station in Bilgewater's district. Handsome Crog helps get us past the guards to the airship supply balloon there. We steal that balloon and use it to board the airship over the arena where the safe with all that loot is. Ready?" },
 			npcs = {
-				{ npc = "Skedgit Cinderbangs", id = "x99" },
+				{ npc = "Skedgit Cinderbangs", id = 228286 },
 			},
 			-- [1] = {
 				-- description = "! Listen to the plan: 1/1 in Entrepreneur Inc., Undermine.",
@@ -103954,6 +104008,46 @@ RQEDatabase = {
 				-- objectiveIndex = 99,
 			-- },
 		},
+		[84281] = {
+			title = "Crafting Orders: Tailoring", -- Objectives: Find Kotag in the Forgegrounds and use their tailoring table.
+			locations = {
+				{ x = 59.15, y = 55.86, mapID = 2339 },
+				{ x = 73.27, y = 21.54, continentID = 2274 },
+			},
+			objectivesQuestText = { "Find Kotag in the Forgegrounds and use their tailoring table." },
+			descriptionQuestText = { "So you are a tailor? You should have mentioned that earlier! Let me send you to Kotag, a tailor of great renown, who has their shop on the eastern side of the Forgegrounds. I will mark it on your map. Kotag has their very own tailoring table where you can review, craft, and deliver work orders from public lists and personal contacts like friends and guilds. If you are lucky, you might come across an order from a renowned person that offers some extra rewards--or so I hear." },
+			npc = { "" },
+			-- [1] = {
+				-- description = "! Use the tailor's work table: 1/1 in The Forgegrounds, Dornogal.",
+				-- coordinateHotspots = {		-- coordinates = { x = 54.51, y = 63.50, mapID = 2339 }, -- W quest map coordinates (RQE.GetQuestCoordinates)
+					-- { x = 54.51, y = 63.52, mapID = 2339, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					-- { x = 72.75, y = 22.38, continentID = 2274, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "84281" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+				-- 	{ name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "#showtooltip\n/tar Kotag\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/use Battered Wrench" },
+				-- objectiveIndex = 1,
+			-- },
+			-- [2] = {
+				-- description = "Turn in the quest to {npc:219094:Kotag} at The Forgegrounds, Dornogal.",
+				-- coordinateHotspots = {		-- coordinates = { x = 54.70, y = 63.71, mapID = 2339 }, -- W quest map coordinates (RQE.GetQuestCoordinates)
+					-- { x = 54.70, y = 63.69, mapID = 2339, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					-- { x = 72.78, y = 22.39, continentID = 2274, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "84281" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBComplete",
+				-- npcTargets = {
+					-- { name = "Kotag", marker = 6, mustBeAlive = true },
+				-- },
+				-- macro = { "#showtooltip item:2554\n/tar Kotag\n/tm 6" },
+				-- objectiveIndex = 99,
+			-- },
+		},
 		[84285] = {
 			title = "Crafting Orders: Engineering", -- Objectives: Find Arhdas in the Forgegrounds and use his engineering table.
 			locations = {
@@ -104078,22 +104172,6 @@ RQEDatabase = {
 				-- objectiveIndex = 99,
 			-- },
 		},
-		[84315] = {
-			title = "Bar Tab Barrel",
-			location = { x = 77.80, y = 62.73, mapID = 2255 },
-			objectivesQuestText = { "" },	-- WQ
-			descriptionQuestText = { "" },	-- WQ
-			npc = { "" },	-- WQ
-			-- [1] = {
-				-- description = "Turn in the quest (done so automatically)",
-				-- coordinates = { x = 77.80, y = 62.73, mapID = 2255 },
-				-- check = { "84315" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- macro = { "" },
-				-- objectiveIndex = 99,
-			-- },
-		},
 		[84308] = {
 			title = "Bar Tab Barrel",
 			location = { x = 59.19, y = 78.81, mapID = 2214 },
@@ -104144,6 +104222,22 @@ RQEDatabase = {
 				macro = { "#showtooltip item:2554\n/tar Alleria Windrunner\n/tm 6" },
 				objectiveIndex = 99,
 			},
+		},
+		[84315] = {
+			title = "Bar Tab Barrel",
+			location = { x = 77.80, y = 62.73, mapID = 2255 },
+			objectivesQuestText = { "" },	-- WQ
+			descriptionQuestText = { "" },	-- WQ
+			npc = { "" },	-- WQ
+			-- [1] = {
+				-- description = "Turn in the quest (done so automatically)",
+				-- coordinates = { x = 77.80, y = 62.73, mapID = 2255 },
+				-- check = { "84315" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBComplete",
+				-- macro = { "" },
+				-- objectiveIndex = 99,
+			-- },
 		},
 		[84316] = {
 			title = "Bar Tab Barrel",
@@ -104374,7 +104468,9 @@ RQEDatabase = {
 			location = { x = 41.84, y = 65.86, mapID = 2346 },
 			objectivesQuestText = { "Visit Barrelbottom Apartments and inquire about a room to rent." },
 			descriptionQuestText = { "<You come across a wanted poster that has been nailed on top of a for rent sign.> WANTED: Seeking able-bodied adventurer to work as security for local apartment complex. Must be capable of not dying. REWARD: Free room and board in exchange for services rendered. Interested parties should inquire upstairs at the nearby Barrelbottom Apartments for further details." },
-			npc = { "" },
+			npcs = {
+				{ object = "For Rent Sign", id = "x99" },
+			},
 			-- [1] = {
 				-- description = "! Loot the Visit nearby apartments: 1/1 from Emboldened Bully at Barrelbottom Apartments.",
 				-- coordinates = { x = 40.13, y = 67.59, mapID = 2346 },
@@ -106323,7 +106419,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Tour the Vatworks with the G.O.L.E.M. and solve problems for Gart Pocketz, \"Cranky\" Nan, and the children of Undermine." },
 			descriptionQuestText = { "The citizens of Undermine cry out for help! They need protection! They need joy! They need to get by! As an inventor, I've spent my life building somethin' that'll solve our people's problems, and it's just about ready for a test run. I'm calling it my Goblin Optimal Livability Enhancement Machine, or G.O.L.E.M. for short! Find some problems and take it out for a spin- and take my son with you! Pitz doesn't have an inventor's bone in his body, but certainly he can yak it up with the neighbors." },
 			npcs = {
-				{ npc = "Old Man Lowe", id = "x99" },
+				{ npc = "Old Man Lowe", id = 230554 },
 			},
 			-- [1] = {
 				-- description = "! Loot the Crates moved for "Cranky" Nan: 1/7 from Litter Nibbler at The Vatworks, Undermine.",
@@ -106416,7 +106512,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 12 pieces of litter and use the G.O.L.E.M.'s incinerator function to dispose of them." },
 			descriptionQuestText = { "My old man's got all these crazy ideas about helping the world... I dunno. It's all a bit over my head, but I guess that's why I was never the inventor he wanted me to be. Still, I've got some thoughts on how to solve problems around here. Like those dang rodents getting litter all over the streets! It might not revitalize the spirit of the community or whatever, but I bet people would be happier if we cleaned up the streets." },
 			npcs = {
-				{ npc = "Pitz Lowe", id = "x99" },
+				{ npc = "Pitz Lowe", id = 230555 },
 			},
 			-- [1] = {
 				-- description = "! Loot the Garbage disposed: 1/12 from Littler Litter Nibbler at The Vatworks, Undermine.",
@@ -109434,10 +109530,16 @@ RQEDatabase = {
 		},
 		[84885] = {
 			title = "Working for G.E.T.A.", -- Objectives: Inquire at the local G.E.T.A. office in the Vatworks
-			location = { x = 38.99, y = 30.37, mapID = 2346 },
+			locations = {
+				{ x = 42.78, y = 52.84, mapID = 2346 },
+				{ x = 25.37, y = 56.40, mapID = 2346 },
+			},
 			objectivesQuestText = { "Inquire at the local G.E.T.A. office in the Vatworks" },
 			descriptionQuestText = { "Attention: Protect the Citizens of Undermine AND get paid! Profit-seeking bounty hunters encouraged to check in at the local G.E.T.A. office for more information." },
-			npc = { "" },
+			npcs = {
+				{ object = "Gig Sheets", id = 456747 },
+				{ object = "G.E.T.A. Needs You!", id = 467447 },
+			},
 			[1] = {
 				description = "Report to the G.E.T.A. Office in G.E.T.A. Headquarters by speaking with Bruxie Slyhook and selecting \"I heard you have work for me.\"",
 				coordinates = { x = 32.95, y = 52.08, mapID = 2346 },
@@ -354637,11 +354739,11 @@ RQEDatabase = {
 		},
 		[51443] = {
 			title = "Battle for Azeroth: Mission Statement",
-			location = { x = 40.85, y = 80.11, mapID = 85 },
+			location = { x = 40.85, y = 80.11, mapID = 85 },	-- { x = 58.62, y = 28.17, mapID = 125 }, in dalaran
 			objectivesQuestText = { "Receive your mission from Warchief Sylvanas Windrunner within Orgrimmar." },
 			descriptionQuestText = { "PLAYER! The Warchief has summoned you to undertake a mission of the utmost secrecy. The very future of the Horde is at stake." },
 			npcs = {
-				{ npc = "Warchief's Herald", id = "x99" },
+				{ npc = "Warchief's Herald", id = 49750 },
 			},
 			[1] = {
 				description = "Enter Grommash Hold, Orgrimmar and watch the cinematic.",
@@ -399431,109 +399533,8 @@ RQEDatabase = {
 		},
 	},
 
--- Legion Expansion**
+-- Legion Expansion
 	Legion = {
-		[45839] = {
-			title = "Assault on Stormheim", -- Objectives: Repel the Burning Legion forces throughout Stormheim.
-			locations = {
-				{ x = 56.38, y = 86.88, mapID = 634 },
-				{ x = 33.33, y = 47.32, mapID = 634 },
-				{ x = 53.09, y = 31.18, continentID = 619 },
-			},
-			objectivesQuestText = { "Repel the Burning Legion forces throughout Stormheim." },
-			descriptionQuestText = { "The eternal foe of our world, the Burning Legion, dare to attack the land of Stormheim! Champion, now is your call to valor! Find the forces of the Legion and eradicate them!" },
-			npc = { "" },
-			-- [1] = {
-				-- description = "! Legion Points repelled: 1/4 in Morheim, Stormheim.",
-				-- coordinateHotspots = {
-					-- { x = 80.84, y = 62.50, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 67.72, y = 35.85, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "45839" },
-				-- neededAmt = { "4" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-				-- 	{ name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "! Legion Points repelled: 2/4 in Stormheim.",
-				-- coordinateHotspots = {
-					-- { x = 76.44, y = 57.48, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 66.36, y = 34.30, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "45839" },
-				-- neededAmt = { "4" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-				-- 	{ name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [3] = {
-				-- description = "! Legion Points repelled: 3/4 in Hafr Fjall, Stormheim.",
-				-- coordinateHotspots = {
-					-- { x = 53.23, y = 86.16, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 59.21, y = 43.14, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "45839" },
-				-- neededAmt = { "4" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-				-- 	{ name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [4] = {
-				-- description = "! Kill Arkuthaz and loot 4 Legion Points repelled: 4/4, from their bodies, at Stony Highlands, Stormheim.",
-				-- coordinateHotspots = {
-					-- { x = 39.33, y = 53.22, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 54.93, y = 32.99, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "45839" },
-				-- neededAmt = { "4" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-				-- 	{ name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Arkuthaz\n/cleartarget [dead]\n/run RQE:SetMarkerIfNeeded('target', 8)" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [5] = {
-				-- description = "! Kill Arkuthaz and loot 1 Meet with Vethir: 1/1, from its body, at Shield's Rest, Stormheim.",
-				-- coordinateHotspots = {
-					-- { x = 89.95, y = 11.32, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 70.52, y = 20.09, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "45839" },
-				-- neededAmt = { "4" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-				-- 	{ name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Arkuthaz\n/cleartarget [dead]\n/run RQE:SetMarkerIfNeeded('target', 8)" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [6] = {
-				-- description = "Turn in the quest to Vethir at Shield's Rest, Stormheim.",
-				-- coordinateHotspots = {
-					-- { x = 90.00, y = 11.23, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 70.54, y = 20.06, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "45839" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "Vethir", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:2554\n/tar Vethir\n/run RQE:SetMarkerIfNeeded('target', 6)" },
-				-- objectiveIndex = 99,
-			-- },
-		},
 		[12103] = {
 			title = "Before the Storm", -- Objectives: Assist Grand Master Hight at the Peak of Serenity.
 			locations = {
@@ -399581,7 +399582,7 @@ RQEDatabase = {
 			[4] = {
 				description = "Complete the \"Serenity's End\" Scenario at the Peak of Serenity, Kun-Lai Summit.",
 				coordinateHotspots = {
-					{ x = 0.00, y = 0.00, mapID = 0, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 44.60, y = 26.47, mapID = 424, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 				},
 				-- coordinates = { x = 44.60, y = 26.47, mapID = 424 },
 				check = { "12103" },
@@ -424985,11 +424986,14 @@ RQEDatabase = {
 		},
 		[40519] = {
 			title = "Legion: The Legion Returns",
-			location = { x = 62.91, y = 71.58, mapID = 84 },
+			locations = {
+				{ x = 62.92, y = 71.51, mapID = 84 },
+				{ x = 44.02, y = 76.41, continentID = 13 },
+			},
 			objectivesQuestText = { "Check in with Recruiter Lee at Stormwind Harbor." },
 			descriptionQuestText = { "Heroes of the Alliance, I write to you in Azeroth's darkest hour. From the maw of hell, the burning armies of the Legion have returned. Our fleets depart for the Broken Isles at once. As a grand lance, we will pierce the Legion's lines and drive them back to the nether that spawned them. Your ship awaits in the Stormwind Harbor, make haste." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Recruiter Lee at Stormwind Harbor",
@@ -512741,6 +512745,107 @@ RQEDatabase = {
 				-- objectiveIndex = 99,
 			-- },
 		},
+		[45839] = {
+			title = "Assault on Stormheim", -- Objectives: Repel the Burning Legion forces throughout Stormheim.
+			locations = {
+				{ x = 56.38, y = 86.88, mapID = 634 },
+				{ x = 33.33, y = 47.32, mapID = 634 },
+				{ x = 53.09, y = 31.18, continentID = 619 },
+			},
+			objectivesQuestText = { "Repel the Burning Legion forces throughout Stormheim." },
+			descriptionQuestText = { "The eternal foe of our world, the Burning Legion, dare to attack the land of Stormheim! Champion, now is your call to valor! Find the forces of the Legion and eradicate them!" },
+			npc = { "" },
+			-- [1] = {
+				-- description = "! Legion Points repelled: 1/4 in Morheim, Stormheim.",
+				-- coordinateHotspots = {
+					-- { x = 80.84, y = 62.50, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					-- { x = 67.72, y = 35.85, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "45839" },
+				-- neededAmt = { "4" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+				-- 	{ name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "" },
+				-- objectiveIndex = 1,
+			-- },
+			-- [2] = {
+				-- description = "! Legion Points repelled: 2/4 in Stormheim.",
+				-- coordinateHotspots = {
+					-- { x = 76.44, y = 57.48, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					-- { x = 66.36, y = 34.30, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "45839" },
+				-- neededAmt = { "4" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+				-- 	{ name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "" },
+				-- objectiveIndex = 1,
+			-- },
+			-- [3] = {
+				-- description = "! Legion Points repelled: 3/4 in Hafr Fjall, Stormheim.",
+				-- coordinateHotspots = {
+					-- { x = 53.23, y = 86.16, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					-- { x = 59.21, y = 43.14, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "45839" },
+				-- neededAmt = { "4" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+				-- 	{ name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "" },
+				-- objectiveIndex = 1,
+			-- },
+			-- [4] = {
+				-- description = "! Kill Arkuthaz and loot 4 Legion Points repelled: 4/4, from their bodies, at Stony Highlands, Stormheim.",
+				-- coordinateHotspots = {
+					-- { x = 39.33, y = 53.22, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					-- { x = 54.93, y = 32.99, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "45839" },
+				-- neededAmt = { "4" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+				-- 	{ name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "#showtooltip item:4588\n/tar Arkuthaz\n/cleartarget [dead]\n/run RQE:SetMarkerIfNeeded('target', 8)" },
+				-- objectiveIndex = 1,
+			-- },
+			-- [5] = {
+				-- description = "! Kill Arkuthaz and loot 1 Meet with Vethir: 1/1, from its body, at Shield's Rest, Stormheim.",
+				-- coordinateHotspots = {
+					-- { x = 89.95, y = 11.32, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					-- { x = 70.52, y = 20.09, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "45839" },
+				-- neededAmt = { "4" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+				-- 	{ name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "#showtooltip item:4588\n/tar Arkuthaz\n/cleartarget [dead]\n/run RQE:SetMarkerIfNeeded('target', 8)" },
+				-- objectiveIndex = 1,
+			-- },
+			-- [6] = {
+				-- description = "Turn in the quest to Vethir at Shield's Rest, Stormheim.",
+				-- coordinateHotspots = {
+					-- { x = 90.00, y = 11.23, mapID = 634, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					-- { x = 70.54, y = 20.06, continentID = 619, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				-- },
+				-- check = { "45839" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBComplete",
+				-- npcTargets = {
+					-- { name = "Vethir", marker = 6, mustBeAlive = true },
+				-- },
+				-- macro = { "#showtooltip item:2554\n/tar Vethir\n/run RQE:SetMarkerIfNeeded('target', 6)" },
+				-- objectiveIndex = 99,
+			-- },
+		},
 		[45840] = {
 			title = "Assault on Highmountain", -- Objectives: Repel the Burning Legion forces throughout Highmountain.
 			location = { x = 57.57, y = 62.41, mapID = 650 },
@@ -552084,7 +552189,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Archmage Khadgar at the foot of the Dark Portal in Blasted Lands." },
 			descriptionQuestText = { "ATTENTION HEROES ADVENTURERS DEFENDERS OF AZEROTH Archmage Khadgar, hero of the Second War, is assembling a coalition of Azeroth's strongest to bravely step through the Dark Portal and stop the Iron Horde's invasion of Azeroth. Champions who are interested in glory can meet Khadgar at the base of the Dark Portal in Blasted Lands. Safety not guaranteed." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 				{ object = "Warchief's Command Board", id = "x99" },
 			},
 			[1] = {
@@ -581278,6 +581383,72 @@ RQEDatabase = {
 				-- macro = { "#showtooltip item:2554\n/tar Lio the Lioness\n/tm 6" },
 				-- objectiveIndex = 99,
 			-- },
+		},
+		[38934] = {
+			title = "Silas' Secret Stash", -- Objectives: Find Silas' Secret Stash.
+			location = { x = 52.49, y = 88.40, mapID = 407 },
+			objectivesQuestText = { "Find Silas' Secret Stash." },
+			descriptionQuestText = { "A great Darkmoon prize do you now seek, but be ye warned, it is not for the meek. Your very first clue to send you on this caper, you will find printed on the back of this paper." },
+			npcs = {
+				{ npc = "Galissa Sundew", id = 55103 },
+			},
+			[1] = {
+				description = "Collect the {item:127144:Damp Note} (first clue) from the {object:242518:Barnacle-Covered Bag}, in a tent, near the Darkmoon Boardwalk, Darkmoon Island.",
+				coordinates = { x = 41.96, y = 91.13, mapID = 407 },
+				check = { "38934" },
+				neededAmt = { "1" },
+				funct = "CheckDBObjectiveStatus",
+				macro = { "" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Collect the {item:127145:Faded Note} (second clue) from the {object:242519:Suspicious Mound}, in the sandbox, at The Darkmoon Faire, Darkmoon Island.",
+				coordinates = { x = 53.25, y = 60.64, mapID = 407 },
+				check = { "38934" },
+				neededAmt = { "1" },
+				funct = "CheckDBObjectiveStatus",
+				macro = { "" },
+				objectiveIndex = 2,
+			},
+			[3] = {
+				description = "Collect the {item:127146:Dirty Note} (third clue) from the {object:242520:Crystallized Note}, near the {npc:55596:Careless Carnie}, at The Darkmoon Faire, Darkmoon Island.",
+				coordinates = { x = 52.57, y = 84.83, mapID = 407 },
+				check = { "38934" },
+				neededAmt = { "1" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Careless Carnie", marker = 7, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:28372\n/tar Careless Carnie\n/tm 0\n/tm ~7" },
+				objectiveIndex = 3,
+			},
+			[4] = {
+				description = "Collect the {item:127147:Moonlit Note} (fourth clue) from the {object:242521:Disturbed Dirt}, near a sign just west of the path, at The Darkmoon Faire, Darkmoon Island.",
+				coordinates = { x = 52.03, y = 30.38, mapID = 407 },
+				check = { "38934" },
+				neededAmt = { "1" },
+				funct = "CheckDBObjectiveStatus",
+				macro = { "" },
+				objectiveIndex = 4,
+			},
+			[5] = {
+				description = "Collect {item:127148:Silas' Secret Stash} from the {object:242522:the underwater box}, near a ship, in The Great Sea, Darkmoon Island.",
+				coordinates = { x = 21.52, y = 29.08, mapID = 407 },
+				check = { "38934" },
+				neededAmt = { "1" },
+				funct = "CheckDBObjectiveStatus",
+				macro = { "" },
+				objectiveIndex = 5,
+			},
+			[6] = {
+				description = "Turn in the quest to the {object:242522:Silas' Secret Stash}, underwater near a ship, in The Great Sea, Darkmoon Island.",
+				coordinates = { x = 21.52, y = 29.08, mapID = 407 },
+				check = { "38934" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				macro = { "" },
+				objectiveIndex = 99,
+			},
 		},
 		[40168] = {
 			title = "The Swirling Vial", -- Objectives: Bring the Swirling Timewarped Vial to the central dome in Shattrath.
@@ -635966,7 +636137,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Grand Admiral Jes-Tereth in Stormwind Keep." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Stormwind Keep in Stormwind. Grand Admiral Jes-Tereth is assembling a team for a high priority mission. Head to Stormwind Keep immediately to be briefed. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Enter Stormwind Keep, Stormwind City.",
@@ -636005,7 +636176,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Chen Stormstout in the Valley of the Four Winds." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Chen Stormstout in the Valley of the Four Winds. The adventuring spirit of the Stormstouts is something that the Alliance can learn from. Travel with the Stormstouts and discover what secrets Pandaria holds. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Chen Stormstout east of Pang's Stead, Valley of the Four Winds.",
@@ -636029,7 +636200,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Ken-Ken in Krasarang Wilds." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Zhu's Watch in Krasarang Wilds. There have been rumors that the pandaren living in Krasarang Wilds are not their usual self. Speak with Ken-Ken at Zhu's Watch. Perhaps he has a better idea of what has happened to cause the pandaren to become lethargic." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Ken-Ken at Zhu's Watch, Krasarang Wilds.",
@@ -636056,7 +636227,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak to the Messenger Grummle in Valley of the Four Winds." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to assist Lorewalker Cho in Kun-Lai Summit. Speak with a messenger grummle in Valley of the Four Winds. They will show you the way to Kun-Lai Summit. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Messenger Grummle at Grassy Cline, Valley of the Four Winds.",
@@ -636083,7 +636254,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Taran Zhu in Townlong Steppes." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Taran Zhu in Townlong Steppes. The Shado-Pan want to reclaim their land from the clutches of the yaungol, but lack the numbers to do so. Assist them with their assault against the yaungol. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Taran Zhu at Longying Outpost, Townlong Steppes.",
@@ -636110,7 +636281,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Bowmistress Li on the Serpent's Spine." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Bowmistress Li on the Serpent's Spine in the Vale of Eternal Blossoms. The Shado-Pan are attempting to stop the mantid army from invading the entirety of Pandaria. You can reach Bowmistress Li by securing a kite and flying to the Serpent's Spine. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Bowmistress Li on the Serpent's Spine, Vale of Eternal Blossoms.",
@@ -645271,11 +645442,13 @@ RQEDatabase = {
 			locations = {
 				{ x = 62.20, y = 73.00, mapID = 84 },
 				{ x = 43.03, y = 73.73, continentID = 13 },
+				{ x = 52.02, y = 29.15, mapID = 111 },
+				{ x = 49.87, y = 50.38, mapID = 125 },
 			},
 			objectivesQuestText = { "Deliver the Free Ticket Voucher to Gelvas Grimegate, located inside the Darkmoon Faire." },
 			descriptionQuestText = { "The Darkmoon Faire is coming! Experience our thrilling games, win fabulous prizes, have your fortune told! If you act right now, you can redeem this voucher for free prize tickets and a copy of the world-famous Darkmoon Adventurer's Guide to help you identify treasures in your travels! Just hand your voucher to Gelvas Grimegate located inside the Faire. Right now, the entrance to the Faire is outside Goldshire, in Elwynn Forest." },
 			npcs = {
-				{ npc = "Darkmoon Faire Mystic Mage", id = "x99" },
+				{ npc = "Darkmoon Faire Mystic Mage", id = 54334 },
 			},
 			[1] = {
 				description = "Interact with {npc:54334:Darkmoon Faire Mystic Mage} in Stormwind and select, \"Take me to the staging area.\"",
@@ -674230,7 +674403,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring the Waterlogged Recipe to Christi Stockton in the Dalaran city." },
 			descriptionQuestText = { "This appears to be the remains of a mixture for potent wine. Perhaps the proprietor of One More Glass in Dalaran would be interested in it...." },
 			npcs = {
-				{ npc = "Marcia Chase", id = "x99" },
+				{ npc = "Marcia Chase", id = 28742 },
 			},
 			[1] = {
 				description = "Turn in the quest to Christi Stockton at One More Glass, Dalaran.",
@@ -795416,7 +795589,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Recruiter Burns at Stormwind Harbor in Stormwind City." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Recruiter Burns in Stormwind Harbor. Recent attacks by the Horde on our trade ships must be met with swift and just force! Stormwind Harbor can be found in the northwest region of Stormwind City. For the glory and honor of the Alliance! Fight on, brother!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = { 
 				description = "Turn in the quest to Recruiter Burns at Stormwind Harbor",
@@ -795467,7 +795640,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak to Cenarion Emissary Jademoon to secure transportation to Moonglade." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Emissary Windsong at Nighthaven in Moonglade. Our brothers in the Cenarion Circle report that Deathwing's minions have launched a destructive offensive against the world tree and threaten to burn it to the ground! Speak with Cenarion Emissary Jademoon in Stormwind Keep to gain entry into Moonglade. For the glory and honor of the Alliance! Fight on, sister!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Travel to the Stormwind Keep, Stormwind City and speak with Cenarion Emissary Jademoon, and select, \"Could you please send me to Moonglade, Emissary?\"",
@@ -795503,7 +795676,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Naraat the Earthspeaker at the Eastern Earthshrine in Stormwind City." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Naraat the Earthspeaker at the Eastern Earthshrine in Stormwind City. The Earthen Ring requires our aid! They report that the elemental plane of Deepholm threatens to overtake our world and destroy all life on Azeroth! The Eastern Earthshrine can be found directly northwest of Stormwind Keep. For the glory and honor of the Alliance! Fight on, brother!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = { 
 				description = "Turn in the quest to Naraat the Earthspeaker at The Eastern Earthshrine, Stormwind City.",
@@ -806930,7 +807103,7 @@ RQEDatabase = {
 				{ npc = "Harkkan", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at Crucible of Carnage, Twilight Highlands.",
+				description = "Turn in the quest to Wodin the Troll-Servant at the Crucible of Carnage, Twilight Highlands.",
 				coordinates = { x = 50.73, y = 58.37, mapID = 241 },
 				check = { "28038" },
 				neededAmt = { "1" },
@@ -830849,7 +831022,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Priestess Dentaria at Lor'danel in Darkshore." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Priestess Dentaria at Lor'danel in Darkshore. The people of Lor'danel need your aid in caring for the survivors of Auberdine's destruction and securing their town against Twilight's Hammer. Speak to Vesprystus, the hippogryph master at Rut'theran Village outside of Darnassus and he'll arrange a flight to Darkshore. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Dentaria Silverglade in Lor'danel, Darkshore.\n\n|cFFFF3333Use may need to speak to Zidormi in Darkshore at 48, 24 to enter the correct phase of Darkshore.|r",
@@ -830981,7 +831154,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Sentinel Shyela at Ordanil's Retreat in northwestern Ashenvale." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Sentinel Shyela at Orendil's Retreat in northwestern Ashenvale. The Horde's aggression in Ashenvale cannot be allowed to stand! Your help is needed to repel the invaders and restore the sacred forest. Head south through the Twilight Vale in Darkshore to reach the forest of Ashenvale. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Sentinel Shyela at Ordanil's Retreat, northwestern Ashenvale.",
@@ -831620,7 +831793,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Caryssia Moonhunter at New Thalanaar on the border between Feralas and Thousand Needles." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Caryssia Moonhunter at New Thalanaar at the border between Feralas and Thousand Needles. The sentinels need your help to turn back the marauding Grimtotem raiders who dominate the area. To reach New Thalaanar, travel to eastern Feralas, near the border with Thousand Needles. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Caryssia Moonhunter at New Thalanaar, Feralas (near the border with Thousand Needles).",
@@ -831766,7 +831939,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Kelsey Steelspark at Gadgetzan in Tanaris." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Kelsey Steelspark in Gadgetzan. The Alliance needs your help to win concessions from the local baron and access to the area's priceless resources. You can reach Gadgetzan by traveling south from the Shimmering Deep in Thousand Needles. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Kelsey Steelspark at Gadgetzan, Tanaris",
@@ -831902,7 +832075,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Telaron Windflight at Dreamer's Rest in Feralas." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Telaron Windflight at Dreamer's Rest in Feralas. The Alliance needs your help to overcome our enemies, the Horde and the Grimtotems. You can reach Dreamer's Rest by traveling south from Desolace into Feralas. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Telaron Windflight at Dreamer's Rest, Feralas.",
@@ -832375,7 +832548,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Williden Marshal at Marshal's Stand in Un'Goro Crater." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Williden Marshal at Marshal's Stand. The Alliance needs you to provide support to the Marshal Expeditions as they uncover the secrets of Un'Goro Crater's ancient beasts, unique flora, and powerful crystals. You can reach the crater by departing western Tanaris and following the road all the way to Marshal's Stand. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Williden Marshal at Marshal's Stand, Un'Goro Crater.",
@@ -832519,7 +832692,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Windcaller Proudhorn at Cenarion Hold in Silithus." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Windcaller Proudhorn at Cenarion Hold. Our Cenarion Circle allies require your assistance to fight back against the Twilight's Hammer onslaught. You can reach Silithus by taking the northwestern road out of the Un'Goro Crater. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Windcaller Proudhorn at Cenarion Hold, Silithus.\n\n|cFFFF3333Use may need to speak to Zidormi, in Silithus, to enter the correct phase of Silithus (that doesn't have a large sword through the center of the zone).",
@@ -832589,7 +832762,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Officer Jankie at Tethris Aran in Desolace." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Officer Jankie on the road into Desolace at Tethris Aran. The brave soldiers of Nijel's Point are beset by demons and the armies of the Horde, and they need your help. To reach Desolace, travel south on the road from the Charred Vale in the Stonetalon Mountains. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Officer Jankie at Tethris Aran, Desolace.",
@@ -832929,7 +833102,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Huntress Jalin at Stardust Spire at the border between Ashenvale and the Stonetalon Mountains." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Huntress Jalin at Stardust Spire in Ashenvale. The Horde's forces are poised to push into Stonetalon and they must be opposed! You can reach Stardust Spire by traveling to the southern part of Ashenvale Forest, near the border with Stonetalon. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Huntress Jalin at Stardust Spire, Ashenvale.",
@@ -833026,7 +833199,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Tenell Leafrunner at the Emerald Sanctuary in Felwood." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Tenell Leafrunner at the Emerald Sanctuary. His order requires your help to redeem Felwood from the demonic influences that rule the forest. Head north from Ashenvale and follow the road into Felwood until you reach the Emerald Sanctuary. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Tenell Leafrunner at the Emerald Sanctuary, Felwood.",
@@ -833053,7 +833226,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Donova Snowden at Frostfire Hot Springs in Winterspring." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Donova Snowden at Frostfire Hotsprings. She requires your help to overcome the threat of the Winterfall furbolg. To reach Winterspring, you must travel east from northern Felwood and traverse Timbermaw Hold. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Donova Snowden at Snowden Chalet, Winterspring.",
@@ -833192,7 +833365,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Dockmaster Lewis at the docks outside Northwatch Hold in the Southern Barrens." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Dockmaster Lewis near Northwatch Hold. Our brave soldiers have made tremendous gains in the Barrens, but they have paid a heavy price! Your efforts are needed to consolidate our gains. You can reach the docks outside Northwatch Hold by taking a boat from Booty Bay to Ratchet and traveling south along the coast. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Dockmaster Lewis at the docks outside of Northwatch Hold, Southern Barrens.",
@@ -833216,7 +833389,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Calia Hastings at Theramore Isle in Dustwallow Marsh." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Calia Hastings at Theramore Isle. You must aid SI:7's Calia Hastings in uncovering the threats to Theramore, both within the city and beyond its walls. You can reach Theramore Isle by taking the boat from Menethil or traveling across the marsh from the Southern Barrens. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Calia Hastings at Theramore Isle, Dustwallow Marsh.\n\n|cFFFF3333Use may need to speak to Zidormi in Dustwallow Marsh at 55, 49 to enter the correct phase of Dustwallow Marsh.",
@@ -833397,7 +833570,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Adarrah at Thistleshrub Valley in Tanaris." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Adarrah at Thistleshrub Valley in Tanaris. Be one of the first to enter glorious Uldum and claim its treasures in honor of the Alliance! You can reach Adarrah's caravan by traveling to the western reaches of Tanaris. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = { 
 				description = "Turn in the quest to Adarrah at Thistleshrub Valley, Tanaris.",
@@ -833445,7 +833618,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Lieutenant Horatio Laine at the Jansen Stead in Westfall." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Lieutenant Horatio Laine at the Jansen Stead. Westfall has been overrun by beggars and transients, leading to a massive increase in criminal activity. Your help is needed to restore order to the populace. You can reach the Jansen Stead in Westfall by traveling west from Elwynn Forest. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Lieutenant Horatio Laine at The Jansen Stead, Westfall.",
@@ -833473,7 +833646,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Watch Captain Parker at Tower Watch in Redridge Mountains." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report Watch Captain Parker at Tower Watch in the Redridge Mountains. Captain Parker's forces have come under attack from marauding gnolls and orcs. The people of Lakewood are in peril and your aid is needed to safeguard them. Travel east from the border of Elwynn Forest and into the Three Corners area of Redridge to reach Tower Watch. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Watch Captain Parker near Three Corners (inside Tower Watch), Redridge Mountains",
@@ -833501,7 +833674,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Commander Althea Ebonlocke at Darkshire in Duskwood." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Commander Althea Ebonlocke in Darkshire. The commander's watchmen are stretched thin defending against marauding wolves and bands of wild worgen. They cannot hold out for long without your help. You can reach Darkshire in Duskwood by following the road south at the border between Elwynn Forest and the Redridge Mountains. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Commander Althea Ebonlocke at Darkshire, Duskwood.",
@@ -833528,7 +833701,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Mountaineer Rharen at Dun Algaz." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Mountaineer Rharen at Dun Algaz. In the wake of the cataclysm's destruction, Wetlands has become overrun with wild beasts, orcish raiders, and savage gnolls! To reach the Wetlands, you must travel north from Loch Modan through the dwarven hold of Dun Algaz. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Mountaineer Rharen at Dun Algaz, Wetlands",
@@ -833721,7 +833894,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Pilot Hammerfoot at South Gate Outpost in Loch Modan." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Pilot Hammerfoot at South Gate Outpost. The destruction of the Stonewrought Dam and the resurgence of the kobolds and troggs has the mountaineers stretched thin. Reinforcements are desperately needed! Travel east through South Gate Pass from eastern Dun Morogh to reach South Gate Outpost. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Pilot Hammerfoot at South Gate Outpost, Loch Modan",
@@ -833841,7 +834014,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Captain Nials at Refuge Pointe in Arathi Highlands." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Captain Nials at Refuge Pointe. Ancient Stromgarde's honor must be redeemed! Too long have ogres and criminals sullied its streets. Travel north from the Wetlands and cross the Thandol Span to reach Arathi. Follow the road to Refuge Pointe and present yourself to the captain. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Captain Nials at Refuge Pointe, Arathi Highlands.\n\n|cFFFF3333If you're in the wrong version of Arathi Highlands, speak with Zidormi at 37, 89.|r",
@@ -833922,7 +834095,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Thassarian at Andorhal in the Western Plaguelands." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Thassarian at Andorhal. On the heels of our early victories in Andorhal, the Forsaken have decided to launch a counterattack. Your help is needed to beat back the Scourge and Horde and reclaim lost Andorhal. To reach Andorhal, travel north through the Hillsbrad Foothills and follow the road beyond Chillwind Camp. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Thassarian at Andorhal, Western Plaguelands.",
@@ -833977,7 +834150,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Fiona on the eastern bank of the Thondroril River in the Eastern Plaguelands." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Fiona on the east bank of the Thondroril River. The Argent Crusade needs your help to win back the Eastern Plaguelands from the grasp of the Scourge. To reach the Eastern Plaguelands, cross the Thondroril River from the Western Plaguelands and look for Fiona on the eastern bank. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Fiona at the eastern bank of the Thondroril River, Eastern Plaguelands.",
@@ -834005,7 +834178,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Gek Nozzlerocket at Light's Hope Chapel in the Eastern Plaguelands." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Gek Nozzlerocket at Light's Hope Chapel in the Eastern Plaguelands. Your help is needed to survey the damage done by Deathwing, and the disposition of Horde forces in the Badlands. Gek has agreed to provide transportation to the Badlands via rocket, in exchange for your help. Look for him at Light's Hope Chapel in the Eastern Plaguelands. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Gek Nozzlerocket at Light's Hope Chapel, Eastern Plaguelands.",
@@ -834086,7 +834259,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Jack Rockleg at Thorium Advance in the Searing Gorge." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Jack Rockleg at Thorium Advance. SI:7 reports that the Dark Iron dwarves of the Searing Gorge seem to be preparing to attack. Your duty is to learn all you can about their scheming and put a halt to it. You can reach the Searing Gorge by following the road west from the Badlands. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Jack Rockleg at Thorium Advance, Searing Gorge.",
@@ -837958,7 +838131,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to John J. Keeshan at Flamestar Post in the Burning Steppes." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to John J. Keeshan at Flamestar Post. Your aid is urgently needed to put an end to the Blackrock orc menace! You can reach the Burning Steppes by traveling south from the Searing Gorge through Blackrock Mountain. Look for Flamestar Post on the far side of the mountain. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to John J. Keeshan at Flamestar Post, Burning Steppes.",
@@ -838060,7 +838233,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Quartermaster Lungertz at Nethergarde Keep." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Quartermaster Lungertz at Nethergarde Keep. Nethergarde's garrison urgently needs your help to stem the Horde advance into the Blasted Lands! Travel south from the Swamp of Sorrows and follow the road east to reach Nethergarde Keep. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Quartermaster Lungertz at Nethergarde Keep, Blasted Lands.\n\n|cFFFF3333If you're in the wrong version of Blasted Lands, speak with Zidormi at 48, 7 to show Blasted Lands before invasion.|r",
@@ -838114,7 +838287,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Trade Baron Silversnap at Bogpaddle in the Swamp of Sorrows." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Trade Baron Silversnap at Bogpaddle. The Alliance forces urgently needs the munitions provided by the baron! You must do whatever is necessary to convince the baron to keep selling our forces supplies at reasonable prices. To get to the swamp, follow the road from the southeastern Burning Steppes through the Redridge Mountains. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Trade Baron Silversnap at Bogpaddle, Swamp of Sorrows",
@@ -838233,7 +838406,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Lieutenant Doren at the Rebel Camp in Northern Stranglethorn." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Lieutenant Doren at the Rebel Camp. Years after Colonel Kurzen's treachery against Stormwind, the truth of what happened remains a mystery. Aid the survivors in learning what became of the colonel. Travel south from Duskwood and follow the road west after crossing into the jungle to reach the Rebel Camp. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Lieutenant Doren at Rebel Camp, Northern Stranglethorn.",
@@ -838322,7 +838495,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Bronwyn Hewstrike at the Explorers' League Digsite on the Cape of Stranglethorn." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Bronwyn Hewstrike at the Explorers' League Digsite. The Explorers' League expedition needs your help to safeguard its site and findings from marauding ogres. Travel south from Northern Stranglethorn Vale and follow the road to the Explorers' League Digsite. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Bronwyn Hewstrike at Explorers' League Digsite, Cape of Stranglethorn.",
@@ -838835,7 +839008,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Grand Admiral Jes-Tereth at Stormwind Keep in Stormwind." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to the throne room in Stormwind Keep. King Wrynn requires a trustworthy and proven hero for a mission of the utmost importance. Stormwind Keep can be found in the eastern portion of Stormwind City. Anyone willing may report to Grand Admiral Jes-Tereth for briefing. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = { 
 				description = "Turn in the quest to Grand Admiral Jes-Tereth at Stormwind Keep, Stormwind City.",
@@ -851429,7 +851602,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Apothecary Lysander at Vengeance Landing wants you to recover 10 Intact Plague Containers from the wrecked ship to the southeast." },
 			descriptionQuestText = { "Not long after Arthas condemned us to this wretched existence, we in the Royal Apothecary Society endeavored to create a plague of our own. A plague that would devour all flesh: living, dead or undead. We've succeeded in creating this plague and we're here to hand deliver it to the Scourge's doorstep. The Alliance intercepted the ship carrying the latest strain engineered in our Undercity laboratories. Head to the wreckage southeast of here and salvage whatever containers you can." },
 			npcs = {
-				{ npc = "Apothecary Lysander", id = "x99" },
+				{ npc = "Apothecary Lysander", id = 24126 },
 			},
 			-- [1] = {
 				-- description = "! Intact Plague Container: 1/10 in Howling Fjord.",
@@ -851552,7 +851725,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [11] = {
-				-- description = "Turn in the quest to Apothecary Lysander at Vengeance Landing, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24126:Apothecary Lysander} at Vengeance Landing, Howling Fjord.",
 				-- coordinateHotspots = {
 					-- { x = 78.55, y = 28.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 84.45, y = 72.91, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -851576,7 +851749,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 3 Giant Toxin Glands from Giant Tidecrawlers to Apothecary Lysander at Vengeance Landing in Howling Fjord." },
 			descriptionQuestText = { "I've a feeling the long trip across the sea is affecting the effectiveness of our plague. What is needed is a potent toxin to boost the potency of the strain. The crabs near this beach are a distant relative of the much smaller brown-shelled tidecrawler. The smaller tropical variety produces a paralytic toxin strong enough to knock out an ogre. As we all know bigger is better! The much larger glands on the local variety should prove more potent. Bring me a few!" },
 			npcs = {
-				{ npc = "Apothecary Lysander", id = "x99" },
+				{ npc = "Apothecary Lysander", id = 24126 },
 			},
 			-- [1] = {
 				-- description = "! Kill Giant Tidecrawler and loot 3 Giant Toxin Gland: 1/3, from their bodies, at Howling Fjord.",
@@ -851615,7 +851788,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [4] = {
-				-- description = "Turn in the quest to Apothecary Lysander at Vengeance Landing, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24126:Apothecary Lysander} at Vengeance Landing, Howling Fjord.",
 				-- coordinateHotspots = {
 					-- { x = 78.55, y = 28.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 84.45, y = 72.91, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -851639,7 +851812,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak to Bat Handler Camille and take a riding bat to intercept the Alliance reinforcements. Once above their fleet, use the Plague Vials to infect 16 North Fleet reservists." },
 			descriptionQuestText = { "We've just received word of reinforcements coming to the aid of the Alliance forces. Their timing couldn't be better! We're in sore need of test subjects and these North Fleet reservists will do nicely! Take these plague vials with you and speak to Camille, the Bat Handler. Tell her you need to commandeer a riding bat for a special assignment for us. Once you're at sea, drop the vials on the reinforcement fleet. I can't wait to see the results!" },
 			npcs = {
-				{ npc = "Apothecary Lysander", id = "x99" },
+				{ npc = "Apothecary Lysander", id = 24126 },
 			},
 			-- [1] = {
 				-- description = "! North Fleet Reservist Infected: 1/16 in The Frozen Sea.",
@@ -851714,7 +851887,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [7] = {
-				-- description = "Turn in the quest to Apothecary Lysander at Vengeance Landing, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24126:Apothecary Lysander} at Vengeance Landing, Howling Fjord.",
 				-- coordinateHotspots = {
 					-- { x = 78.55, y = 28.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 84.45, y = 72.91, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -851765,7 +851938,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay 5 Dragonflayer Handlers and Skeld Drakeson. If you manage to do so, return to an Ember Clutch Ancient in the Ember Clutch." },
 			descriptionQuestText = { "All things in nature seek a balance. It is only through the interference of those not in tune with that harmony that the balance is shifted. You waste your efforts when you kill the whelps and drakes. The real culprits behind the expansion of these magically burning woods are the newly awakened vrykul and their master, Skeld Drakeson. If it's blood on your hands that you seek, start with them. You will find their lair on the south side of the Ember Clutch." },
 			npcs = {
-				{ npc = "Ember Clutch Ancient", id = "x99" },
+				{ npc = "Ember Clutch Ancient", id = 23870 },
 			},
 			[1] = {
 				description = "Kill 5 Dragonflayer Handlers at the Ember Clutch, Howling Fjord.",
@@ -851800,7 +851973,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Ember Clutch Ancient in Ember Clutch, Howling Fjord.",
+				description = "Turn in the quest to {npc:23870:Ember Clutch Ancient} in Ember Clutch, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 41.25, y = 49.43, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.48, y = 79.47, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -852084,11 +852257,11 @@ RQEDatabase = {
 		},
 		[11221] = {
 			title = "Reports from the Field", -- Objectives: Speak to Dark Ranger Lyana and Deathstalker Razael in the battlefield at the Bleeding Vale south of Vengeance Landing. Return to High Executor Anselm when you've completed this task.
-			location = { x = 78.67, y = 31.25, mapID = 117 },
+			location = { x = 78.66, y = 31.21, mapID = 117 },
 			objectivesQuestText = { "Speak to Dark Ranger Lyana and Deathstalker Razael in the battlefield at the Bleeding Vale south of Vengeance Landing. Return to High Executor Anselm when you've completed this task." },
 			descriptionQuestText = { "Our mission in Northrend is to destroy Arthas. The Alliance are but an obstacle that we'll crush wherever we find them. We've managed to destroy their easternmost fleet; but the survivors have barricaded themselves on the Derelict Strand, south of here. Our forces should've overwhelmed their make-shift defenses long ago, but we underestimated their will to live. Seek my officers in the field, Dark Ranger Lyana and Deathstalker Razael and get them to report on the situation." },
 			npcs = {
-				{ npc = "High Executor Anselm", id = "x99" },
+				{ npc = "High Executor Anselm", id = 23780 },
 			},
 			-- [1] = {
 				-- description = "! Listen to Razael's Report: 1/1 in Bleeding Vale, Howling Fjord.",
@@ -852115,7 +852288,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [3] = {
-				-- description = "Turn in the quest to High Executor Anselm at Vengeance Landing, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:23780:High Executor Anselm} at Vengeance Landing, Howling Fjord.",
 				-- coordinates = { x = 78.66, y = 31.21, mapID = 117 },
 				-- check = { "11221" },
 				-- neededAmt = { "1" },
@@ -852175,7 +852348,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Pontius, the kennel keeper at Vengeance Landing, wants you to use the Plaguehound Cage to summon a Hungry Plaguehound and feed it Crow Meat from Fjord Crows west of Vengeance Landing." },
 			descriptionQuestText = { "The high executor wants me to use my dogs to sniff out enemy scouts, but I can tell you right now these plaguehounds aren't going anywhere until they're properly fed. If our military doesn't understand that these beasts are picky enough to not eat the rubbish they've given me, then they can't expect them to be of any use in the field. You seem to have some time on your hands, why don't you take one of these dogs out hunting for crows out west? Their meat isn't very tasty to us, but my boys love it!" },
 			npcs = {
-				{ npc = "Pontius", id = "x99" },
+				{ npc = "Pontius", id = 23938 },
 			},
 			-- [1] = {
 				-- description = "! Plaguehound Fed: 1/5 in Bleeding Vale, Howling Fjord.",
@@ -852238,7 +852411,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to Pontius at Vengeance Landing, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:23938:Pontius} at Vengeance Landing, Howling Fjord.",
 				-- coordinates = { x = 79.15, y = 31.22, mapID = 117 },
 				-- check = { "11227" },
 				-- neededAmt = { "1" },
@@ -852279,11 +852452,11 @@ RQEDatabase = {
 		},
 		[11229] = {
 			title = "The Windrunner Fleet", -- Objectives: Speak to Bat Handler Camille at Vengeance Landing and obtain passage to the Windrunner. Report to Captain Harker aboard the ship.
-			location = { x = 78.67, y = 31.23, mapID = 117 },
+			location = { x = 78.66, y = 31.21, mapID = 117 },
 			objectivesQuestText = { "Speak to Bat Handler Camille at Vengeance Landing and obtain passage to the Windrunner. Report to Captain Harker aboard the ship." },
 			descriptionQuestText = { "We have the Windrunner, the Queen's Reprisal and the Oblivion stationed just east of the Derelict Strand. Send orders to the fleet's commander, Captain Harker, that they're to destroy the Alliance's cannons. Speak to our bat handler, Camille, and ask for passage to the fleet's location. Be quick, PLAYER, every minute we spend fighting the Alliance is a minute we could've spent fighting Arthas." },
 			npcs = {
-				{ npc = "High Executor Anselm", id = "x99" },
+				{ npc = "High Executor Anselm", id = 23780 },
 			},
 			[1] = {
 				description = "Turn in the quest to Captain Harker at The Windrunner.",
@@ -852622,8 +852795,8 @@ RQEDatabase = {
 				{ npc = "Dark Ranger Lyana", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to High Executor Anselm at Vengeance Landing, Howling Fjord.",
-				coordinates = { x = 78.66, y = 31.22, mapID = 117 },
+				description = "Turn in the quest to {npc:23780:High Executor Anselm} at Vengeance Landing, Howling Fjord.",
+				coordinates = { x = 78.66, y = 31.21, mapID = 117 },
 				check = { "11234" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
@@ -852762,7 +852935,11 @@ RQEDatabase = {
 			},
 			objectivesQuestText = { "Deliver the Gjalerbron Attack Plans to Mage-Lieutenant Malister at Westguard Keep." },
 			descriptionQuestText = { "These plans detail an imminent attack upon Westguard Keep. It would appear that the frost wyrm, Glacion, who circles overhead is to be used for the offensive. Surely Mage-Lieutenant Malister would be of some assistance in this matter. Deliver the plans to him at the keep to the south." },
-			npc = { "" },
+			npcs = {
+				{ npc = "Gjalerbron Warrior", id = 23991, hostile = true },
+				{ npc = "Gjalerbron Sleep-Watcher", id = 23989, hostile = true },
+				{ npc = "Gjalerbron Rune-Caster", id = 23990, hostile = true },
+			},
 			[1] = {
 				description = "Turn in the quest to Mage-Lieutenant Malister inside the barracks of Westguard Keep, Howling Fjord.",
 				coordinateHotspots = {
@@ -853017,7 +853194,7 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Apothecary Lysander at Vengeance Landing, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24126:Apothecary Lysander} at Vengeance Landing, Howling Fjord.",
 				-- coordinateHotspots = {
 					-- { x = 78.55, y = 28.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 84.45, y = 72.91, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -853461,7 +853638,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use the Plaguehound Leash near the plaguehound cages at Vengeance Landing and look for clues at the location you're led to by the Plaguehound Tracker." },
 			descriptionQuestText = { "Now that this rascal's belly's full, maybe he will be more willing to cooperate. Here's his leash, just come get him from his cage whenever you're ready to take him. I don't know what Anselm expects you to find, but look for clues wherever it is that the dog takes you." },
 			npcs = {
-				{ npc = "Pontius", id = "x99" },
+				{ npc = "Pontius", id = 23938 },
 			},
 			[1] = {
 				description = "Turn in the quest",
@@ -853480,7 +853657,7 @@ RQEDatabase = {
 			descriptionQuestText = { "Upon closer inspection, the scroll appears to be a heavily-illustrated map of the fjord. The location of various villages are depicted in what seem to be tribal symbols. The location of Vengeance Landing is marked with a disproportionately large skull. This map will almost certainly be of military value to High Executor Anselm." },
 			npc = { "" },
 			[1] = {
-				description = "Turn in the quest to High Executor Anselm at Vengeance Landing, Howling Fjord.",
+				description = "Turn in the quest to {npc:23780:High Executor Anselm} at Vengeance Landing, Howling Fjord.",
 				coordinates = { x = 78.66, y = 31.21, mapID = 117 },
 				check = { "11254" },
 				neededAmt = { "1" },
@@ -854566,7 +854743,11 @@ RQEDatabase = {
 			location = { x = 30.47, y = 16.66, mapID = 117 },
 			objectivesQuestText = { "Deliver the Gjalerbron Attack Plans to Celea Frozenmane at Camp Winterhoof." },
 			descriptionQuestText = { "These plans detail an imminent attack upon Camp Winterhoof. It would appear that the frost wyrm, Glacion, who circles overhead, is to be used for the offensive. Surely Celea Frozenmane would be of some assistance in this matter. Deliver the plans to her at the camp to the east." },
-			npc = { "" },
+			npcs = {
+				{ npc = "Gjalerbron Warrior", id = 23991, hostile = true },
+				{ npc = "Gjalerbron Sleep-Watcher", id = 23989, hostile = true },
+				{ npc = "Gjalerbron Rune-Caster", id = 23990, hostile = true },
+			},
 			[1] = {
 				description = "Turn in the quest to Celea Frozenmane at Camp Winterhoof, Howling Fjord.",
 				coordinates = { x = 49.56, y = 11.59, mapID = 117 },
@@ -854892,11 +855073,11 @@ RQEDatabase = {
 		},
 		[11270] = {
 			title = "War is Hell", -- Objectives: High Executor Anselm at Vengeance Landing wants you to take the Burning Torch and use it to burn 10 of the corpses littered to the west of town.
-			location = { x = 78.67, y = 31.24, mapID = 117 },
+			location = { x = 78.66, y = 31.21, mapID = 117 },
 			objectivesQuestText = { "High Executor Anselm at Vengeance Landing wants you to take the Burning Torch and use it to burn 10 of the corpses littered to the west of town." },
 			descriptionQuestText = { "We're slowly finishing off the remnants of Stormwind's North Fleet stationed on this coast. The bodies to the west are a testament to how brutal this confrontation has been. This does not happen to bother my refined aesthetics, but it does present a danger to our lives. In the lands of the Lich King, the dead are a weapon that can rise against us at any point in time. Take this torch - you're going to make sure that doesn't happen." },
 			npcs = {
-				{ npc = "High Executor Anselm", id = "x99" },
+				{ npc = "High Executor Anselm", id = 23780 },
 			},
 			-- [1] = {
 				-- description = "! Fallen Combatant burned: 1/10 in Bleeding Vale, Howling Fjord.",
@@ -855019,8 +855200,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [11] = {
-				-- description = "Turn in the quest to High Executor Anselm at Vengeance Landing, Howling Fjord.",
-				-- coordinates = { x = 78.67, y = 31.24, mapID = 117 },
+				-- description = "Turn in the quest to {npc:23780:High Executor Anselm} at Vengeance Landing, Howling Fjord.",
+				-- coordinates = { x = 78.66, y = 31.21, mapID = 117 },
 				-- check = { "11270" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -855037,7 +855218,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ahota Whitefrost at Camp Winterhoof wants you to bring him 10 clumps of Spotted Hippogryph Down." },
 			descriptionQuestText = { "The down of the spotted hippogryph is prized by my people and used for everything from fletching to ceremonial clothing. We're making preparations to leave the post, so this is the last chance I'll get to gather it this season. With your help, I'll have enough to make sure everyone has the equipment they need for the long trek into the hills. Conditions worsen very quickly up there and a storm can blow in without warning. The down can be found all over the ground in the area surrounding the post." },
 			npcs = {
-				{ npc = "Ahota Whitefrost", id = "x99" },
+				{ npc = "Ahota Whitefrost", id = 24127 },
 			},
 			-- [1] = {
 				-- description = "! Spotted Hippogryph Down: 1/10 in Howling Fjord.",
@@ -855160,7 +855341,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [11] = {
-				-- description = "Turn in the quest to Ahota Whitefrost at Camp Winterhoof, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24127:Ahota Whitefrost} at Camp Winterhoof, Howling Fjord.",
 				-- coordinates = { x = 48.37, y = 11.04, mapID = 117 },
 				-- check = { "11271" },
 				-- neededAmt = { "1" },
@@ -855232,7 +855413,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Nokoma Snowseer at Camp Winterhoof wants you to bring her 6 Undamaged Ram Horns." },
 			descriptionQuestText = { "My people have been hunting the giant yeti of these hills for generations and I will be participating for the first time this year. It will probably be the last before we leave the post forever. To prepare for the hunt, I must fashion a loud horn from the horns of the dire rams that roam the snowy areas near our camp. The elders tell me the sound mimics the mating call of the female yeti, but I have my doubts. Bring me the best dire ram horns you can find, PLAYER, and I'll select one from among them." },
 			npcs = {
-				{ npc = "Nokoma Snowseer", id = "x99" },
+				{ npc = "Nokoma Snowseer", id = 24123 },
 			},
 			-- [1] = {
 				-- description = "! Kill Frosthorn Ram and loot 6 Undamaged Ram Horn: 1/6, from their bodies, at Howling Fjord.",
@@ -855307,7 +855488,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [7] = {
-				-- description = "Turn in the quest to Nokoma Snowseer at Camp Winterhoof, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24123:Nokoma Snowseer} at Camp Winterhoof, Howling Fjord.",
 				-- coordinates = { x = 49.31, y = 11.97, mapID = 117 },
 				-- check = { "11275" },
 				-- neededAmt = { "1" },
@@ -855439,7 +855620,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Plaguebringer Tillinghast has asked you to collect 10 Plagued Proto-Whelp Specimens and deliver them to him at New Agamand." },
 			descriptionQuestText = { "This new plague that we're working on is wonderful and I think we should expand its testing. How about testing it on proto-whelps?! Just think of the possibilities. The ability to infect not only humanoids, but extend our reach to any creature! Here, I've hoarded an extra plague canister for the right time and place, and you look like the right person. Spray the eggs at Ember Clutch to the northwest, then get specimens from the plagued proto-whelps that hatch." },
 			npcs = {
-				{ npc = "Plaguebringer Tillinghast", id = "x99" },
+				{ npc = "Plaguebringer Tillinghast", id = 24157 },
 			},
 			-- [1] = {
 				-- description = "! Plagued Proto-Whelp Specimen: 2/10 in Ember Clutch, Howling Fjord.",
@@ -855514,7 +855695,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [7] = {
-				-- description = "Turn in the quest to Plaguebringer Tillinghast at New Agamand, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24157:Plaguebringer Tillinghast} at New Agamand, Howling Fjord.",
 				-- coordinates = { x = 53.06, y = 66.92, mapID = 117 },
 				-- check = { "11279" },
 				-- neededAmt = { "1" },
@@ -855532,7 +855713,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Plaguebringer Tillinghast at New Agamand wants you to use Tillinghast's Plagued Meat to attract down a Proto-Drake and observe its reaction to eating the stuff." },
 			descriptionQuestText = { "Wait, that gives me an idea! What if it didn't kill the whelps because it was sprayed on the outside of their eggs? PLAYER, we have to get the plague inside of them! I know! I've got some plagued meat here. Take it to the Ember Clutch and get them to eat it! But no, we're thinking too small. Let's get one of the proto-drakes flying overhead to come down and eat it. Yes! Stay close to the meat and observe what happens. Yes, it might attack you, but such is the price of progress." },
 			npcs = {
-				{ npc = "Plaguebringer Tillinghast", id = "x99" },
+				{ npc = "Plaguebringer Tillinghast", id = 24157 },
 			},
 			-- [1] = {
 				-- description = "! Proto-Drake Plague Results Observed: 1/1 in Ember Clutch, Howling Fjord.",
@@ -855547,7 +855728,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Plaguebringer Tillinghast at New Agamand, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24157:Plaguebringer Tillinghast} at New Agamand, Howling Fjord.",
 				-- coordinates = { x = 53.06, y = 66.92, mapID = 117 },
 				-- check = { "11280" },
 				-- neededAmt = { "1" },
@@ -855565,7 +855746,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Test the Carved Horn and then return to Nokoma Snowseer at Camp Winterhoof with the results." },
 			descriptionQuestText = { "The horn has been roughed out, but before I make the traditional carvings, I want to be certain that it will work. Ahota tells me that he tests his horns at the foot of the frozen waterfall to the northeast of the post. Ahota tells me that our hunters have used the acoustics of frozen water in this way for generations. I can't wait to learn more! Will you help me test out the horn? If I've done everything right, you may even attract a yeti, so be prepared! Bring the horn back once you've tested it." },
 			npcs = {
-				{ npc = "Nokoma Snowseer", id = "x99" },
+				{ npc = "Nokoma Snowseer", id = 24123 },
 			},
 			-- [1] = {
 				-- description = "! Test Nokoma's Horn: 1/1 in Howling Fjord.",
@@ -855580,7 +855761,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Nokoma Snowseer at Camp Winterhoof, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24123:Nokoma Snowseer} at Camp Winterhoof, Howling Fjord.",
 				-- coordinates = { x = 49.31, y = 11.98, mapID = 117 },
 				-- check = { "11281" },
 				-- neededAmt = { "1" },
@@ -856074,7 +856255,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Sage Mistwalker has asked you to collect 10 Steel Gate Artifacts. When you have all of them, return to him at Steel Gate." },
 			descriptionQuestText = { "I came out here for a different reason; an old friend of mine has been calling to me in my dreams. But now that I see these small things with their machines making a big hole in the ground, it makes my blood boil. From what I can see, these dwarves, as they are known, are digging up artifacts; artifacts that could be important to our past. I want you to go down there and get these things for me. Don't let any of those dwarves stand in your way." },
 			npcs = {
-				{ npc = "Sage Mistwalker", id = "x99" },
+				{ npc = "Sage Mistwalker", id = 24186 },
 			},
 			-- [1] = {
 				-- description = "! Steel Gate Artifact: 1/10 in Steel Gate, Howling Fjord.",
@@ -856197,7 +856378,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [11] = {
-				-- description = "Turn in the quest to Sage Mistwalker at Steel Gate, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24186:Sage Mistwalker} at the Steel Gate, Howling Fjord.",
 				-- coordinates = { x = 31.16, y = 24.50, mapID = 117 },
 				-- check = { "11286" },
 				-- neededAmt = { "1" },
@@ -856389,11 +856570,11 @@ RQEDatabase = {
 		},
 		[11295] = {
 			title = "The Offensive Begins", -- Objectives: Speak to Sergeant Gorth at the blockade near the elevator west of Vengeance Landing in Howling Fjord.
-			location = { x = 78.67, y = 31.22, mapID = 117 },
+			location = { x = 78.66, y = 31.21, mapID = 117 },
 			objectivesQuestText = { "Speak to Sergeant Gorth at the blockade near the elevator west of Vengeance Landing in Howling Fjord." },
 			descriptionQuestText = { "No one seems to know very much about the vrykul. Our records show no signs of activity in their lands for centuries. Yet here they are, just as we move against Arthas. The map you retrieved makes it clear that we'll have to defeat them if our forces are to get any further into Northrend. One of my best sergeants, an abomination known as Gorth, oversees the blockade beyond the lift. Assist him in launching a pre-emptive strike on Baleheim. If a vrykul attack occurs, it will be launched from there." },
 			npcs = {
-				{ npc = "High Executor Anselm", id = "x99" },
+				{ npc = "High Executor Anselm", id = 23780 },
 			},
 			[1] = {
 				description = "Turn in the quest to Sergeant Gorth at Vengeance Lift, Howling Fjord.",
@@ -856414,7 +856595,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Longrunner Skycloud has asked you to free his 7 Winterhoof Longrunners. Once you have managed to do so, return to him at Steel Gate." },
 			descriptionQuestText = { "Something, most likely the walking dead known as the Scourge, has agitated the creatures hereabouts. While escorting the sage here, we lost most of our hunting force to the riven widows -- huge and deadly spiders, which inhabit the Rivenwood to the north. I must stay here to protect the small force we have left, but you... you could see if my longrunners are still alive, trapped within the riven widow's cocoons. Would you do this, stranger?" },
 			npcs = {
-				{ npc = "Longrunner Skycloud", id = "x99" },
+				{ npc = "Longrunner Skycloud", id = 24209 },
 			},
 			-- [1] = {
 				-- description = "! Winterhoof Longrunner Freed: 1/7 in Rivenwood, Howling Fjord.",
@@ -856501,7 +856682,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [8] = {
-				-- description = "Turn in the quest to Longrunner Skycloud at Steel Gate, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24209:Longrunner Skycloud} at Steel Gate, Howling Fjord.",
 				-- coordinates = { x = 31.27, y = 24.34, mapID = 117 },
 				-- check = { "11296" },
 				-- neededAmt = { "1" },
@@ -856886,7 +857067,7 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
 			npcs = {
-				{ npc = "Apothecary Lysander", id = "x99" },
+				{ npc = "Apothecary Lysander", id = 24126 },
 			},
 			-- [1] = {
 				-- description = "! Lysander's Strain: 1/1 in Vengeance Landing, Howling Fjord.",
@@ -857129,7 +857310,7 @@ RQEDatabase = {
 				{ npc = "Chief Plaguebringer Harris", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to \"Hacksaw\" Jenny at New Agamand, Howling Fjord.",
+				description = "Turn in the quest to {npc:24252:\"Hacksaw\" Jenny} at New Agamand, Howling Fjord.",
 				coordinates = { x = 53.68, y = 65.21, mapID = 117 },
 				check = { "11308" },
 				neededAmt = { "1" },
@@ -857146,7 +857327,9 @@ RQEDatabase = {
 			location = { x = 53.69, y = 65.22, mapID = 117 },
 			objectivesQuestText = { "\"Hacksaw\" Jenny in New Agamand wants you to obtain 6 Shoveltusk Ligaments and 1 Fresh Pound of Flesh." },
 			descriptionQuestText = { "So Harris wants a demolition job, eh? Yeah, I can help out. You're gonna have to get me some parts, though. I can't afford to use up my choice components on something that's gonna get blown up. First of all, I'm going to need shoveltusk ligaments... way better than the human kind. I will also need a pound of flesh. A fellow known as Anton sells cheap meat. He travels up and down the road to the west." },
-			npc = { "\"Hacksaw\" Jenny" },
+			npcs = {
+				{ npc = "\"Hacksaw\" Jenny", id = 24252 },
+			},
 			-- [1] = {
 				-- description = "! Kill Shoveltusk Stag and loot 1 Shoveltusk Ligament: 3/6, from its body, at New Agamand, Howling Fjord.",
 				-- coordinates = { x = 50.01, y = 65.48, mapID = 117 },
@@ -857196,7 +857379,7 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [5] = {
-				-- description = "Turn in the quest to \"Hacksaw\" Jenny at New Agamand, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24252:\"Hacksaw\" Jenny} at New Agamand, Howling Fjord.",
 				-- coordinates = { x = 53.68, y = 65.20, mapID = 117 },
 				-- check = { "11309" },
 				-- neededAmt = { "1" },
@@ -857213,7 +857396,9 @@ RQEDatabase = {
 			location = { x = 53.69, y = 65.21, mapID = 117 },
 			objectivesQuestText = { "Use the Abomination Assembly Kit in Halgrind and round up plagued Vrykul with your Mindless Abomination. Slay at least 20 and return to \"Hacksaw\" Jenny in New Agamand when you're done." },
 			descriptionQuestText = { "Well, here you are! Our friend's going to be somewhat... unstable. So I suggest not putting him together until reaching Halgrind. Once you're there, use the abomination to round up as many vrykul as you can before self-destructing. Come back with whatever's left once you're done. I can always use more body parts!" },
-			npc = { "\"Hacksaw\" Jenny" },
+			npcs = {
+				{ npc = "\"Hacksaw\" Jenny", id = 24252 },
+			},
 			-- [1] = {
 				-- description = "! Plagued Vrykul exterminated: 1/20 in Halgrind, Howling Fjord.",
 				-- coordinates = { x = 49.85, y = 53.28, mapID = 117 },
@@ -857287,7 +857472,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [7] = {
-				-- description = "Turn in the quest to \"Hacksaw\" Jenny at New Agamand, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24252:\"Hacksaw\" Jenny} at New Agamand, Howling Fjord.",
 				-- coordinates = { x = 53.68, y = 65.20, mapID = 117 },
 				-- check = { "11310" },
 				-- neededAmt = { "1" },
@@ -857305,7 +857490,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Wind Tamer Kagan at Camp Winterhoof wants you to kill 8 mountain elementals. You may kill either Howling Cyclones or Iceshard Elementals." },
 			descriptionQuestText = { "If you are to survive here, as we have, you must learn to face the environment's challenges head on. The elements will claim your life if you're not vigilant, as the proliferation of elementals in these northern hills shows. We must cull the elementals one last time before we can leave this place. Are you willing to aid us while we continue to make preparations? You must kill any iceshard elementals or howling cyclones you encounter in the snowy hills surrounding the outpost." },
 			npcs = {
-				{ npc = "Wind Tamer Kagan", id = "x99" },
+				{ npc = "Wind Tamer Kagan", id = 24256 },
 			},
 			-- [1] = {
 				-- description = "! Mountain Elementals slain: 1/8 in Howling Fjord.",
@@ -857404,7 +857589,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [9] = {
-				-- description = "Turn in the quest to Wind Tamer Kagan at Camp Winterhoof, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24256:Wind Tamer Kagan} at Camp Winterhoof, Howling Fjord.",
 				-- coordinates = { x = 48.92, y = 11.98, mapID = 117 },
 				-- check = { "11311" },
 				-- neededAmt = { "1" },
@@ -857422,7 +857607,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Lurielle at the Frozen Glade." },
 			descriptionQuestText = { "For generations, my people have told tales of frost nymphs cavorting in glades hidden away in the wilderness. I used to search for them as a child, against the advice of my parents, until I nearly froze to death. These days, it isn't necessary to comb the forests for them. They've decided to reveal themselves for reasons I can only guess, but I don't think the change can be ignored. Venture southeast to the Frozen Glade and seek out the nymphs, but beware; you will pass the Twisted Glade on your way." },
 			npcs = {
-				{ npc = "Nokoma Snowseer", id = "x99" },
+				{ npc = "Nokoma Snowseer", id = 24123 },
 			},
 			[1] = {
 				description = "Turn in the quest to Lurielle at The Frozen Glade, Howling Fjord.",
@@ -857611,7 +857796,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Sage Mistwalker at Steel Gate has advised you to cleanse yourself of Your Inner Turmoil through meditation at the Frostblade Shrine." },
 			descriptionQuestText = { "We braved the Rivenwood because of my troubled dreams concerning my worg life-friend, Ulfang. He has called out for help, and you must go to him. But, you do not have the means to speak with him, or walk amongst the other worgs. I know a way. First, you must cleanse your inner turmoil. There is a shrine that sits at the top of Frostblade Peak, northeast of Camp Winterhoof. A single path leads up to it from the western base of the mountain. Meditate there and then return to me." },
 			npcs = {
-				{ npc = "Sage Mistwalker", id = "x99" },
+				{ npc = "Sage Mistwalker", id = 24186 },
 			},
 			-- [1] = {
 				-- description = "! Cleansed of Your Inner Turmoil: 1/1 in Frostblade Peak, Howling Fjord.",
@@ -857629,7 +857814,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Sage Mistwalker at Steel Gate, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24186:Sage Mistwalker} at the Steel Gate, Howling Fjord.",
 				-- coordinates = { x = 31.16, y = 24.51, mapID = 117 },
 				-- check = { "11317" },
 				-- neededAmt = { "1" },
@@ -857733,7 +857918,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Sage Mistwalker has asked you to seek out and help Ulfang in the Rivenwood. If you somehow lose the Worg Disguise, return to Sage Mistwalker for a replacement." },
 			descriptionQuestText = { "From my dreams, I know that Ulfang is in a cave on the snowy northwestern edge of the Rivenwood. He is in great danger. I have devised a magical disguise that will make you appear as a worg while you are within the Rivenwood. The disguise is weak, relying upon the strange magics of that haunted wood. While it will only convince the worgs, it will allow you to get close to Ulfang. Please, CLASS, find and help him." },
 			npcs = {
-				{ npc = "Sage Mistwalker", id = "x99" },
+				{ npc = "Sage Mistwalker", id = 24186 },
 			},
 			[1] = {
 				description = "Travel to Rivenwood, Howling Fjord. Use your {item:33618:Worg Disguise} when you get close to Ulfang's cave, and turn in the quest to Ulfang.\n\n|cFFFF3333Speak with Watcher Moonleaf (coords: 30, 28.6) at Steel Gate, Howling Fjord if you need a new {item:33618:Worg Disguise}!|r",
@@ -857775,7 +857960,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Sage Mistwalker at Steel Gate, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24186:Sage Mistwalker} at the Steel Gate, Howling Fjord.",
 				-- coordinates = { x = 31.16, y = 24.51, mapID = 117 },
 				-- check = { "11324" },
 				-- neededAmt = { "1" },
@@ -858777,7 +858962,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Rokk in Lower City has asked you to cook up some Kaliri Stew using his cooking pot. Return to him when it's done." },
 			descriptionQuestText = { "I'm providing the catering for some unusual party guests tonight. One of these fellows was flying around in Skettis and got knocked to the ground by a monstrous kaliri--his leg was broken badly. They've requested something special for his get well party: Kaliri Stew. I can loan you my cooking pot so you can whip up a batch of stew for me. The recipe itself is simple, but you'll need to get a giant kaliri wing and some cooked warp burgers." },
 			npcs = {
-				{ npc = "The Rokk", id = "x99" },
+				{ npc = "The Rokk", id = 24393 },
 			},
 			[1] = {
 				description = "Purchase |cFFffcc333|r {item:27659:Warped Burgers} from the AH (you can instead cook 3 of these via 3 {item:27681:Warped Flesh} that drop from Blackwind Warp Chaser in Skettis, Terokkar Forest if you have the {item:27692:Recipe: Warp Burger}).\n\n|cFFFF3333Coords are for AH in Aldor Bank of Shattrath, but there is an auctioneer in the Scryer Bank.|r",
@@ -858866,7 +859051,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Rokk in Lower City has asked you to cook up some Demon Broiled Surprise using his cooking pot, two Mok'Nathal Shortribs and a Crunchy Serpent. Return to him when it's done." },
 			descriptionQuestText = { "I'm trying to invent something with some real zing. But to be honest, I'm more of an idea goblin these days. I've lost my sense of adventure. But you... remind me of my younger days; ready to take on the world with a sword in one hand and a skillet in the other. I want you to take my beloved cooking pot and head out to Blade's Edge. Throw in some shortribs and crunchy serpent--already cooked for extra flavor--and broil it over an abyssal's corpse, the only thing hot enough to do the trick." },
 			npcs = {
-				{ npc = "The Rokk", id = "x99" },
+				{ npc = "The Rokk", id = 24393 },
 			},
 			[1] = {
 				description = "Purchase |cFFffcc331|r {item:31673:Serpent Flesh} from the AH (you can instead cook 1 of these via 1 {item:31671:Serpent Flesh} that drops from Scalewing Serpent in Blade's Edge Mountains if you have the {item:31674:Recipe: Crunchy Serpent}).\n\n|cFFFF3333Coords are for AH in Aldor Bank of Shattrath, but there is an auctioneer in the Scryer Bank.|r",
@@ -858943,7 +859128,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Rokk in Lower City has asked you collect 15 Mana Berries from the Eco-Domes in Netherstorm." },
 			descriptionQuestText = { "Wouldn't you know it, I think my foodstuffs are up to date and someone comes along and requests the unusual: Mana Berry Delight. Unfortunately, mana berries are only found in the eco-domes of Netherstorm. Just don't bother looking around Stormspire--it's picked clean. I could only trust someone trained in the culinary arts to pick the best berries, so don't let me down!" },
 			npcs = {
-				{ npc = "The Rokk", id = "x99" },
+				{ npc = "The Rokk", id = 24393 },
 			},
 			[1] = {
 				description = "Travel to Eco-Dome Midrealm, Netherstorm.",
@@ -859002,7 +859187,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Rokk in Lower City has asked you to cook up some Spiritual Soup using his cooking pot. Return to him when it's done." },
 			descriptionQuestText = { "Death is in the air. I've never had so many orders for my famous soup--it lifts your spirits and soothes the soul. And I know a fellow cook when I see one! Would you like to help me out and get a cut of the profits? Here, take my cooking pot, gather some clefthoof meat and I'll let you in on a little secret. What makes my soup so good for the soul? It's not chicken--I cook it at the Ancestral Grounds in Nagrand to soak up all that spiritual stuff there." },
 			npcs = {
-				{ npc = "The Rokk", id = "x99" },
+				{ npc = "The Rokk", id = 24393 },
 			},
 			[1] = {
 				description = "Purchase |cFFffcc334|r {item:27658:Roasted Clefthoof} from the AH (you can instead cook 4 of these via 4 Roasted Clefthoof that drop from Clefthoof in Nagrand if you have the {item:27691:Recipe: Roasted Clefthoof}).\n\n|cFFFF3333Coords are for AH in Aldor Bank of Shattrath, but there is an auctioneer in the Scryer Bank.|r",
@@ -860149,7 +860334,9 @@ RQEDatabase = {
 			location = { x = 53.67, y = 65.31, mapID = 117 },
 			objectivesQuestText = { "\"Hacksaw\" Jenny wants you to bring her 5 Ancient Vrykul Bones from the reanimated Vrykul in Shield Hill, south of New Agamand." },
 			descriptionQuestText = { "My work should be extremely easy in a time of war. There ought to be usable body parts everywhere. It's not that simple, though. With these eggheads making all sorts of killer plagues and sending them to enemy towns, most of the material gets contaminated. There is a place, though, where usable samples exist. Shield Hill, south of here, is an ancient vrykul burial ground where the dead walk but are not afflicted with any plague - ours or the Lich King's. Get me some bones, I'll pay ya well." },
-			npc = { "\"Hacksaw\" Jenny" },
+			npcs = {
+				{ npc = "\"Hacksaw\" Jenny", id = 24252 },
+			},
 			-- [1] = {
 				-- description = "! Kill Risen Vrykul Ancestor and loot 5 Ancient Vrykul Bone: 1/5, from their bodies, at Shield Hill, Howling Fjord.",
 				-- coordinates = { x = 58.05, y = 77.81, mapID = 117 },
@@ -860211,7 +860398,7 @@ RQEDatabase = {
 				-- objectiveIndex = 5,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to \"Hacksaw\" Jenny at New Agamand, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24252:\"Hacksaw\" Jenny} at New Agamand, Howling Fjord.",
 				-- coordinates = { x = 53.68, y = 65.20, mapID = 117 },
 				-- check = { "11424" },
 				-- neededAmt = { "1" },
@@ -860568,7 +860755,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ahota Whitefrost has tasked you with slaying 5 Dormant Vrykul. Return to him at Camp Winterhoof when you have done so." },
 			descriptionQuestText = { "I've overheard what you've had to say with Greatmother Ankha. With all due respect, she's not having you go far enough. You must also deal with the vrykul that lie dormant in the Waking Halls beneath Gjalerbron! I have no doubt that the rituals involved with awakening them are the key to their downfall. Most likely the necrolords have some device that you can use to bring the vrykul out of their dormant state prematurely. Surely such a disruption will prove fatal to the vrykul." },
 			npcs = {
-				{ npc = "Ahota Whitefrost", id = "x99" },
+				{ npc = "Ahota Whitefrost", id = 24127 },
 			},
 			-- [1] = {
 				-- description = "! Dormant Vrykul slain: 1/5 in The Waking Halls, Howling Fjord.",
@@ -860631,7 +860818,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to Ahota Whitefrost at Camp Winterhoof, Howling Fjord.",
+				-- description = "Turn in the quest to {npc:24127:Ahota Whitefrost} at Camp Winterhoof, Howling Fjord.",
 				-- coordinates = { x = 48.37, y = 11.03, mapID = 117 },
 				-- check = { "11433" },
 				-- neededAmt = { "1" },
@@ -860944,7 +861131,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elder Atuik at Kamagua in Howling Fjord wants you to obtain 6 pieces of Island Shoveltusk Meat from Island Shoveltusk in the Isle of Spears." },
 			descriptionQuestText = { "We tuskarr rely mostly on our fish catch for sustenance. In times of great need, however, we will on occasion hunt land animals. The nearby village of Iskaal was recently attacked by pirates and the survivors just keep pouring in. Our catch has been modest this week, but there are many shoveltusk on the island and their meat is plentiful. Aid my people by hunting these great beasts and obtaining their meat." },
 			npcs = {
-				{ npc = "Elder Atuik", id = "x99" },
+				{ npc = "Elder Atuik", id = 24755 },
 			},
 			[1] = {
 				description = "Kill Island Shoveltusk and loot 6 {item:36776:Island Shoveltusk Meat}, from their corpses, at The Isle of Spears, Howling Fjord.",
@@ -860963,7 +861150,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Elder Atuik at Kamagua, Howling Fjord.",
+				description = "Turn in the quest to {npc:24755:Elder Atuik} at Kamagua, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 25.01, y = 56.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.27, y = 81.89, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -860987,7 +861174,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elder Atuik wants you to obtain 3 Chimaera Horns." },
 			descriptionQuestText = { "Issliruk, the spirit of war, is depicted as a silver eagle by my people. Our stories tell of how Issliruk fought against a hundred worgs to save his young. It is time for us, too, to fight against our foes to save our brethren. We will need to craft new weapons. The horns of the frostwing chimaera that make their home in the snowy parts of the island are sharp and are easily crafted into spear tips. Bring me the best of these horns that you can find." },
 			npcs = {
-				{ npc = "Elder Atuik", id = "x99" },
+				{ npc = "Elder Atuik", id = 24755 },
 			},
 			[1] = {
 				description = "Kill Frostwing Chimaera and collect 3 {item:34101:Chimaera Horns}, from their bodies, at The Isle of Spears, Howling Fjord.",
@@ -861006,7 +861193,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Elder Atuik at Kamagua, Howling Fjord.",
+				description = "Turn in the quest to {npc:24755:Elder Atuik} at Kamagua, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 25.01, y = 56.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.27, y = 81.89, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -861030,7 +861217,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elder Atuik wants you to go to Iskaal and slay 8 Northsea Slavers. Use the Horn of Kamagua should you need assistance." },
 			descriptionQuestText = { "The totem of Issliruk is ready, PLAYER, and for that I thank you. We must cast our peaceful ways for the time being and strike at those who've attacked our land and our kin. The pirate slavers that raided Iskaal have lost their minds and slaughtered all their captives. Go to Iskaal, to the east of here and do what must must be done. Take this horn and call on my brethren should you need assistance." },
 			npcs = {
-				{ npc = "Elder Atuik", id = "x99" },
+				{ npc = "Elder Atuik", id = 24755 },
 			},
 			[1] = {
 				description = "Kill 8 Crazed Northsea Slavers in Iskaal, Howling Fjord.",
@@ -861048,7 +861235,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Elder Atuik at Kamagua, Howling Fjord.",
+				description = "Turn in the quest to {npc:24755:Elder Atuik} at Kamagua, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 25.01, y = 56.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.27, y = 81.89, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -862445,7 +862632,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Orfus of Kamagua at the Ancient Lift in the Howling Fjord wants you to find Fengir's Clue, Rodin's Clue, Isuldof's Clue and Windan's Clue." },
 			descriptionQuestText = { "The path east of us is a primary hunting trail of the tuskarr. At least that's what it used to be... More recently our hunters have been returning to Kamagua claiming that the dead have risen and are out for blood! That is what has brought my son and me here. Elder Atuik asks that we find resolution in the bluffs. Will you assist us in our time of need? I seek heroes willing to brave the perils of Shield Hill, southeast of here. Search the desecrated graves for clues and return your findings to me." },
 			npcs = {
-				{ npc = "Orfus of Kamagua", id = "x99" },
+				{ npc = "Orfus of Kamagua", id = 23804 },
 			},
 			[1] = {
 				description = "Travel to Shield Hill, Howling Fjord and collect {item:34222:Fengir's Clue} from the \"Mound of Debris\" near Fengir the Disgraced.",
@@ -862520,7 +862707,7 @@ RQEDatabase = {
 				objectiveIndex = 4,
 			},
 			[5] = {
-				description = "Turn in the quest to Orfus of Kamagua at the Ancient Lift, Howling Fjord.",
+				description = "Turn in the quest to {npc:23804:Orfus of Kamagua} at The Ancient Lift, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 40.29, y = 60.25, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.17, y = 82.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -862544,10 +862731,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Orfus of Kamagua in the Howling Fjord wants you to deliver Orfus's Bundle to Elder Atuik at Kamagua." },
 			descriptionQuestText = { "<Orfus bundles up the clues you brought him.> My people are bitterly entrenched in a war with the Northsea Freebooters. If any tuskarr could help us in our quest to right the wrongs of the pirates, it will be Elder Atuik of Kamagua. You must take these clues to him at once. To get to Kamagua you must take the Ancient Lift, behind me. Take the lift directly to Kamagua and find Elder Atuik." },
 			npcs = {
-				{ npc = "Orfus of Kamagua", id = "x99" },
+				{ npc = "Orfus of Kamagua", id = 23804 },
 			},
 			[1] = {
-				description = "Turn in the quest to Elder Atuik at Kamagua, Howling Fjord.",
+				description = "Turn in the quest to {npc:24755:Elder Atuik} at Kamagua, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 25.01, y = 56.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.27, y = 81.89, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -862571,7 +862758,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Grezzix Spindlesnap." },
 			descriptionQuestText = { "The pirate thieves have set up port at Scalawag Point, far to the south. Unfortunately, they have fortified their camp with many deadly defenses. There is someone that might be able to assist us in infiltrating Scalawag. A pirate mercenary by the name of Grezzix Spindlesnap recently came to our village in search of food and shelter. In exchange he gives us information about our enemies and feeds them misinformation about our attack plans. Seek him out at his ship just off the coast here - southwest." },
 			npcs = {
-				{ npc = "Elder Atuik", id = "x99" },
+				{ npc = "Elder Atuik", id = 24755 },
 			},
 			[1] = {
 				description = "Turn in the quest to Grezzix Spindlesnap southwest of Kamagua, in a boat on the water, Howling Fjord.",
@@ -862678,7 +862865,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Orfus of Kamagua at the Ancient Lift, Howling Fjord.",
+				description = "Turn in the quest to {npc:23804:Orfus of Kamagua} at The Ancient Lift, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 40.29, y = 60.25, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.17, y = 82.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -862715,7 +862902,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Orfus of Kamagua at the Ancient Lift, Howling Fjord.",
+				description = "Turn in the quest to {npc:23804:Orfus of Kamagua} at The Ancient Lift, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 40.29, y = 60.25, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.17, y = 82.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -862848,7 +863035,7 @@ RQEDatabase = {
 				{ npc = "Captain Ellis", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Orfus of Kamagua at the Ancient Lift, Howling Fjord.",
+				description = "Turn in the quest to {npc:23804:Orfus of Kamagua} at The Ancient Lift, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 40.29, y = 60.25, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.17, y = 82.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -862872,7 +863059,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 5 Winterfin Clams and deliver them to Ahlurglgr at Winterfin Retreat." },
 			descriptionQuestText = { "Now that you can speak with the Winterfin, it is time for you to let them get to know you. One of the best ways to do that is to conduct business with them. The murlocs prize clams over any other object and their only surviving merchant is Ahlurglgr. If I were you, I'd collect a handful of Winterfin clams and give them to him as a gift. The clams can be found all over down in the trench, as well as across it in the Winterfin village and their caverns." },
 			npcs = {
-				{ npc = "King Mrgl-Mrgl", id = "x99" },
+				{ npc = "King Mrgl-Mrgl", id = 25197 },
 			},
 			[1] = {
 				description = "Collect 5 {item:34597:Winterfin Clams} (from the ground) at Winterfin Village, Borean Tundra. These also drop from the Winterfin mobs in this area.",
@@ -862911,7 +863098,7 @@ RQEDatabase = {
 			objectivesQuestText = { "King Mrgl-Mrgl has asked you to rescue 20 Winterfin Tadpoles. Return to him at Winterfin Retreat once you have done so." },
 			descriptionQuestText = { "Oh good, you're back! When the landslide at the village across the water exposed the caverns, a malevolent lobstrok, known as Claximus, came out of the caves and stole the Winterfin tadpoles away. Something happened to all of the murlocs that followed him in there, and when they re-emerged, they were under his control. CLASS, you must swim across the waters and rescue the Winterfin tadpoles in the village and caverns. The future of the Winterfin tribe depends upon you!" },
 			npcs = {
-				{ npc = "King Mrgl-Mrgl", id = "x99" },
+				{ npc = "King Mrgl-Mrgl", id = 25197 },
 			},
 			[1] = {
 				description = "Open the Cages at Winterfin Village and inside Winterfin Caverns, Borean Tundra and free 20 Winterfin Tadpole.",
@@ -862929,7 +863116,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to King Mrgl-Mrgl at the Winterfin Retreat, Borean Tundra.",
+				description = "Turn in the quest to {npc:25197:King Mrgl-Mrgl} at the Winterfin Retreat, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 43.50, y = 13.97, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 19.63, y = 53.70, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -862997,7 +863184,7 @@ RQEDatabase = {
 			objectivesQuestText = { "King Mrgl-Mrgl has asked you to speak with Mrmrglmr at the northwest end of Winterfin Retreat." },
 			descriptionQuestText = { "I have something embarrassing to admit: I'm being blackmailed! Mrmrglmr agreed to clean some of my things, and got hold of my spare murloc costume. He's threatening to reveal my true nature to the other murlocs. I need not explain to you what a disaster that would be! Besides, I have a plan that's going to require that we get that costume back. Please, PLAYER, go to Mrmrglmr at the other end of the Retreat to the north and do whatever he asks of you." },
 			npcs = {
-				{ npc = "King Mrgl-Mrgl", id = "x99" },
+				{ npc = "King Mrgl-Mrgl", id = 25197 },
 			},
 			[1] = {
 				description = "Turn in the quest to Mrmrglmr at the Winterfin Retreat, Borean Tundra.",
@@ -863111,7 +863298,7 @@ RQEDatabase = {
 				{ npc = "Mrmrglmr", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to King Mrgl-Mrgl at the Winterfin Retreat, Borean Tundra.",
+				description = "Turn in the quest to {npc:25197:King Mrgl-Mrgl} at the Winterfin Retreat, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 43.50, y = 13.97, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 19.63, y = 53.70, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863135,7 +863322,7 @@ RQEDatabase = {
 			objectivesQuestText = { "King Mrgl-Mrgl at Winterfin Retreat has asked you to bring him a Claw of Claximus." },
 			descriptionQuestText = { "The time has come to put an end to this unnatural situation, PLAYER. For the Winterfin murlocs to have a chance at a future, Claximus must die! I want you to take my spare murloc suit and enter the Winterfin Caverns under the pretext of surrender. With the white flag in hand, the murlocs won't attack you. You'll find him in the southwestern most corner of the caverns. Once you get close enough, deal with Claximus. Bring me one of his claws as proof that the grisly deed has been done." },
 			npcs = {
-				{ npc = "King Mrgl-Mrgl", id = "x99" },
+				{ npc = "King Mrgl-Mrgl", id = 25197 },
 			},
 			[1] = {
 				description = "Use {item:34619:King Mrgl-Mrgl's Spare Suit} and travel into the Winterfin Caverns.\n\n|cFFFF3333The buff is optional and just allows you to bypass the murlocs in the Winterfin Caverns cave while you proceed to the back to kill Claximus.|r",
@@ -863166,7 +863353,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to King Mrgl-Mrgl at the Winterfin Retreat, Borean Tundra.\n\n|cFFFF3333You can reapply the disguise if you wish to avoid combat with the murlocs.|r",
+				description = "Turn in the quest to {npc:25197:King Mrgl-Mrgl} at the Winterfin Retreat, Borean Tundra.\n\n|cFFFF3333You can reapply the disguise if you wish to avoid combat with the murlocs.|r",
 				coordinateHotspots = {
 					{ x = 43.50, y = 13.97, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 19.63, y = 53.70, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863203,7 +863390,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Orfus of Kamagua at the Ancient Lift, Howling Fjord.",
+				description = "Turn in the quest to {npc:23804:Orfus of Kamagua} at The Ancient Lift, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 40.29, y = 60.25, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.17, y = 82.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863227,7 +863414,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use the Bundle of Vrykul Artifacts at the ransacked burial mounds of Shield Hill to return the Frozen Heart of Isuldof, the Shield of the Aesirites, the Staff of Storm's Fury and the Ancient Armor of the Kvaldir. Return to Orfus of Kamagua at the Ancient Lift should you succeed." },
 			descriptionQuestText = { "<Orfus hands you a satchel.> Within this satchel are the artifacts that you recovered. Locate the burial mounds of Shield Hill, far to the southeast, where the items were originally stolen from and return the artifacts. It is my hope that this gesture will quell the spirits that now haunt our hunting grounds. Be strong, PLAYER..." },
 			npcs = {
-				{ npc = "Orfus of Kamagua", id = "x99" },
+				{ npc = "Orfus of Kamagua", id = 23804 },
 			},
 			[1] = {
 				description = "Use the {item:34624:Bundle of Vrykul Artifacts} near Fengir the Disgraced at Shield Hill, Howling Fjord to return the Shield of the Aesirites.",
@@ -863302,7 +863489,7 @@ RQEDatabase = {
 				objectiveIndex = 4,
 			},
 			[5] = {
-				description = "Turn in the quest to Orfus of Kamagua at the Ancient Lift, Howling Fjord.",
+				description = "Turn in the quest to {npc:23804:Orfus of Kamagua} at The Ancient Lift, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 40.29, y = 60.25, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.17, y = 82.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863386,7 +863573,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to King Mrgl-Mrgl at the Winterfin Retreat, Borean Tundra.",
+				description = "Turn in the quest to {npc:25197:King Mrgl-Mrgl} at the Winterfin Retreat, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 43.50, y = 13.97, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 19.63, y = 53.70, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863410,7 +863597,7 @@ RQEDatabase = {
 			objectivesQuestText = { "King Mrgl-Mrgl has given you a conch to use upon Scalder's remains. Return The King's Filled Conch to him at Winterfin Retreat." },
 			descriptionQuestText = { "To help, you must learn how to speak the Winterfin dialect. We'll work with the forces of nature and magic to do that. Take this empty conch shell. At the bottom of the watery trench below exists Scalder, an elemental of air and watery fury. Once she is defeated, use the conch upon her remains to capture her magical steam. Return the full conch to me, and I'll imbue my knowledge of the Winterfin tongue into you. Luckily, a friend taught me a water breathing spell, which I will cast upon you." },
 			npcs = {
-				{ npc = "King Mrgl-Mrgl", id = "x99" },
+				{ npc = "King Mrgl-Mrgl", id = 25197 },
 			},
 			[1] = {
 				description = "Kill Scalder and use {item:34598:The King's Empty Conch} on its body (underwater) at The Westrift, Borean Tundra.\n\n|cFFFF3333Scalder patrols along the bottom of the Westrift.|r",
@@ -863428,7 +863615,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to King Mrgl-Mrgl at the Winterfin Retreat, Borean Tundra.",
+				description = "Turn in the quest to {npc:25197:King Mrgl-Mrgl} at the Winterfin Retreat, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 43.50, y = 13.97, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 19.63, y = 53.70, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863452,10 +863639,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver the bad news to Elder Atuik at Kamagua." },
 			descriptionQuestText = { "Return to Elder Atuik at Kamagua. He and the rest of my people must be warned of this impending doom that approaches from the sea. <Orfus shivers.> Use the Ancient Lift to reach him. Please hurry!" },
 			npcs = {
-				{ npc = "Orfus of Kamagua", id = "x99" },
+				{ npc = "Orfus of Kamagua", id = 23804 },
 			},
 			[1] = {
-				description = "Turn in the quest to Elder Atuik at Kamagua, Howling Fjord.",
+				description = "Turn in the quest to {npc:24755:Elder Atuik} at Kamagua, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 25.01, y = 56.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.27, y = 81.89, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863477,7 +863664,7 @@ RQEDatabase = {
 			descriptionQuestText = { "" },
 			npc = { "" },
 			[1] = {
-				description = "Turn in the quest to Orfus of Kamagua at The Ancient Lift, Howling Fjord.",
+				description = "Turn in the quest to {npc:23804:Orfus of Kamagua} at The Ancient Lift, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 40.29, y = 60.25, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.17, y = 82.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863504,7 +863691,7 @@ RQEDatabase = {
 				{ npc = "Endorah", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Librarian Donathan at Amber Ledge (outside of the tower), Borean Tundra.",
+				description = "Turn in the quest to {npc:25262:Librarian Donathan} at Amber Ledge (outside of the tower), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 45.27, y = 33.35, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.18, y = 59.63, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863531,7 +863718,7 @@ RQEDatabase = {
 				{ npc = "Midge", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Librarian Donathan at Amber Ledge (outside of the tower), Borean Tundra.",
+				description = "Turn in the quest to {npc:25262:Librarian Donathan} at Amber Ledge (outside of the tower), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 45.27, y = 33.35, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.18, y = 59.63, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863555,7 +863742,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Garren on Amber Ledge wants you to use the Arcanometer at the Cleftcliff Anomaly." },
 			descriptionQuestText = { "Greetings, blood elf. I am Garren of Dalaran. Not long ago, the rift was a peaceful place - geothermally speaking at least. Recently though, earthquakes have occurred with alarming frequency and scars in the earth have appeared, exposing unique energy fields of chaotic power. My mission here is to chart and monitor these anomalies. My instruments indicate that another has appeared on the cliff face to the southwest. Take this device with you and use it when you locate the new disruption." },
 			npcs = {
-				{ npc = "Librarian Garren", id = "x99" },
+				{ npc = "Librarian Garren", id = 25291 },
 			},
 			[1] = {
 				description = "Use the {item:34669:Arcanometer} to take a reading of the Cleftcliff Anomaly in The Westrift, Borean Tundra.",
@@ -863570,7 +863757,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Librarian Garren at Amber Ledge, Borean Tundra.",
+				description = "Turn in the quest to {npc:25291:Librarian Garren} at Amber Ledge, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 44.98, y = 33.38, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.09, y = 59.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863594,7 +863781,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Garren at Amber Ledge wants you to use the Arcanometer at the Sundered Chasm anomaly and return to him with the readings." },
 			descriptionQuestText = { "Did you feel that?! That was just an aftershock... you should've been here a few minutes ago! I'm afraid I must call upon your services again. My instruments indicate that there is an immense disruption just west of here, far beneath the water's surface. Just as before, I need you to take the arcanometer and capture the anomaly's data. I'll cast a spell that will enable you to breathe underwater. If it wears off before you find it, come let me know and I'll renew its effects." },
 			npcs = {
-				{ npc = "Librarian Garren", id = "x99" },
+				{ npc = "Librarian Garren", id = 25291 },
 			},
 			[1] = {
 				description = "Use the {item:34669:Arcanometer} to take a reading of the Sundered Chasm (close to the river bottom) in The Westrift, Borean Tundra.",
@@ -863609,7 +863796,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Librarian Garren at Amber Ledge, Borean Tundra.",
+				description = "Turn in the quest to {npc:25291:Librarian Garren} at Amber Ledge, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 44.98, y = 33.38, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.09, y = 59.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863660,7 +863847,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Librarian Donathan on Amber Ledge wants you to collect the Beryl Prison Key from one of the Beryl Mage Hunters at Beryl Point and use it to release a trapped mage from an arcane prison." },
 			descriptionQuestText = { "Greetings, CLASS. I am Donathan, a loyal representative of Dalaran. Forgive my abruptness, but we find ourselves in the midst of a crisis. Mages all across Azeroth are being abducted and I have been authorized to conscript anyone able to assist in the unraveling of this mystery. The camp just south of ours is where our investigation begins. I call upon you to rescue one of the imprisoned mages held there. You must obtain a key from one of the mage hunters and use it to open an arcane prison." },
 			npcs = {
-				{ npc = "Librarian Donathan", id = "x99" },
+				{ npc = "Librarian Donathan", id = 25262 },
 			},
 			[1] = {
 				description = "Collect a {item:34688:Beryl Prison Key} by killing/looting Beryl Mage Hunters in Beryl Point, Borean Tundra.",
@@ -863691,7 +863878,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Librarian Donathan at Amber Ledge (outside of the tower), Borean Tundra.",
+				description = "Turn in the quest to {npc:25262:Librarian Donathan} at Amber Ledge (outside of the tower), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 45.27, y = 33.35, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.18, y = 59.63, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -863715,7 +863902,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Donathan wants you to use the Arcane Binder on a wounded Beryl Sorcerer at Beryl Point and return to Amber Ledge with him." },
 			descriptionQuestText = { "PLAYER, we have a situation. I've just learned that one of our archmages en route from Dalaran has gone missing. Naturally, we suspect the mage hunters are behind her disappearance. Time is clearly of the essence. We must know what has become of Lady Evanor at once if we are to have any hope of rescuing her. Take this device. Return to Beryl Point and use it on a Beryl sorcerer when he is near death. It should bind him long enough for you to bring him here for questioning." },
 			npcs = {
-				{ npc = "Librarian Donathan", id = "x99" },
+				{ npc = "Librarian Donathan", id = 25262 },
 			},
 			[1] = {
 				description = "|cFFFF3333WEAKEN|r, but DO NOT kill a Beryl Sorcerer, and use your {item:34691:Arcane Binder} on it in Borean Tundra.",
@@ -863733,7 +863920,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Librarian Donathan at Amber Ledge (outside of the tower), Borean Tundra.",
+				description = "Turn in the quest to {npc:25262:Librarian Donathan} at Amber Ledge (outside of the tower), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 45.27, y = 33.35, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.18, y = 59.63, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -864905,7 +865092,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Karuk wants you to slay 6 Skadir Raiders and 5 Skadir Longboatsmen." },
 			descriptionQuestText = { "They call themselves the Kvaldir. My people have legends about them; we call them the tuk-hariq - walkers of the fog. My village was destroyed by these giant mist-men. Everyone I knew was slain, including my father Ariut. By tuskarr law I must seek retribution against those who shed my kin's blood. I am but a fisherman and I've not yet passed the test of manhood... I cannot stand toe-to-toe with the vile Kvaldir. If you were to carry out my blood duty for me, I will be in great debt to you." },
 			npcs = {
-				{ npc = "Karuk", id = "x99" },
+				{ npc = "Karuk", id = 25435 },
 			},
 			[1] = {
 				description = "Kill 6 Skadir Raiders in Riplash Strand, Borean Tundra.",
@@ -864939,7 +865126,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[2] = {
-				description = "Turn in the quest to Karuk at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
+				description = "Turn in the quest to {npc:25435:Karuk} at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 47.13, y = 75.50, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.75, y = 72.52, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -865182,7 +865369,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Karuk wants you to defeat Gamel the Cruel at Riplash Strand." },
 			descriptionQuestText = { "My own father was slain by the leader of this raiding party, Gamel the Cruel. He has made his abode inside a cave on the beach. You've dealt with his men already. Finish what you've started, PLAYER. Avenge my father and I will share with you what little I still have." },
 			npcs = {
-				{ npc = "Karuk", id = "x99" },
+				{ npc = "Karuk", id = 25435 },
 			},
 			[1] = {
 				description = "Kill Gamel the Cruel in a cave within Riplash Strand, Borean Tundra.",
@@ -865200,7 +865387,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Karuk at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
+				description = "Turn in the quest to {npc:25435:Karuk} at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 47.13, y = 75.50, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.75, y = 72.52, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -865224,7 +865411,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Look for Veehja at the Shrine of Scales on Riplash Strand." },
 			descriptionQuestText = { "There is someone who might shed light on this mystery, blood elf. It is rumored that the Kvaldir have kept a naga priestess alive at the temple on the west side of the shore. She will no doubt have great reason to resent her uninvited Kvaldir guests. Perhaps my father is expecting her to cooperate with you in some way." },
 			npcs = {
-				{ npc = "Karuk", id = "x99" },
+				{ npc = "Karuk", id = 25435 },
 			},
 			[1] = {
 				description = "Turn in the quest to Veehja at Shrine of Scales (building), Riplash Strand, Borean Tundra.",
@@ -865374,7 +865561,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Karuk at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
+				description = "Turn in the quest to {npc:25435:Karuk} at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 47.13, y = 75.50, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.75, y = 72.52, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -865744,7 +865931,7 @@ RQEDatabase = {
 				{ npc = "Wind Master To'bor", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Annihilator Grek'lor at Coast of Echoes, Borean Tundra.",
+				description = "Turn in the quest to {npc:25329:Annihilator Grek'lor} at Coast of Echoes, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 32.25, y = 54.06, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.19, y = 65.97, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -866123,7 +866310,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Mobu at Garrosh's Landing." },
 			descriptionQuestText = { "We need to get these tanks back up and runnin'! They ain't gonna fix themselves. Mobu's gonna be the one to handle that stuff. Talk to him and see what he needs. Maybe you can shut him up before he finally drives me into a berserker frenzy and I cleave him in two!" },
 			npcs = {
-				{ npc = "Annihilator Grek'lor", id = "x99" },
+				{ npc = "Annihilator Grek'lor", id = 25329 },
 			},
 			[1] = {
 				description = "Turn in the quest to Mobu at Coast of Echoes, Borean Tundra.",
@@ -866267,7 +866454,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Donathan ordered you to offer your assistance to Librarian Normantis in the mage tower on Amber Ledge." },
 			descriptionQuestText = { "Listen closely, PLAYER, for there is not a moment to spare. Your prisoner is being prepared for interrogation here in our tower. In the event that he is less than forthcoming, your assistance may be required. Make your way up to where he is being detained and tell Librarian Normantis that I've sent you to assist him." },
 			npcs = {
-				{ npc = "Librarian Donathan", id = "x99" },
+				{ npc = "Librarian Donathan", id = 25262 },
 			},
 			[1] = {
 				description = "Turn in the quest to Librarian Normantis, inside the tower, at Amber Ledge, Borean Tundra",
@@ -866519,7 +866706,7 @@ RQEDatabase = {
 				{ npc = "Mobu", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Annihilator Grek'lor at Coast of Echoes, Borean Tundra.",
+				description = "Turn in the quest to {npc:25329:Annihilator Grek'lor} at Coast of Echoes, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 32.25, y = 54.06, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.19, y = 65.97, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -866543,7 +866730,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use the Horde Siege Tank to destroy 100 Scourge Soldiers and rescue 3 Injured Warsong Soldiers on the Plains of Nasam. You must also discover the identity of the leader of the Scourge assault. Report to Garrosh Hellscream at Warsong Hold should you succeed." },
 			descriptionQuestText = { "Once you're ready, jump into one of the tanks and drive it out to the Plains of Nasam, southeast of here. Use the tank's weapon arsenal to take down the Scourge army. If you get in a jam, the \"Meatpounder\" will tear 'em up and the land mines will finish 'em off! If you find any of our soldiers, grab 'em! One last thing, fuel tanks can be found all over the field. Try to get close enough to that structure in the center and see what's going on. If you do all of this and live, go to Hellscream!" },
 			npcs = {
-				{ npc = "Annihilator Grek'lor", id = "x99" },
+				{ npc = "Annihilator Grek'lor", id = 25329 },
 			},
 			-- [1] = {
 				-- description = "! Scourge Unit obliterated: 1/100 in Plains of Nasam, Borean Tundra.",
@@ -867378,7 +867565,7 @@ RQEDatabase = {
 				{ npc = "Waltor of Pal'ea", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Karuk at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
+				description = "Turn in the quest to {npc:25435:Karuk} at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 47.13, y = 75.50, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.75, y = 72.52, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -867405,7 +867592,7 @@ RQEDatabase = {
 				{ npc = "Librarian Normantis", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Librarian Donathan at Amber Ledge (outside of the tower), Borean Tundra.",
+				description = "Turn in the quest to {npc:25262:Librarian Donathan} at Amber Ledge (outside of the tower), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 45.27, y = 33.35, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.18, y = 59.63, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -867537,7 +867724,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Donathan on Amber Ledge has tasked you with using the Beryl Shield Detonator to bring down the shield at Beryl Point. You are then to defeat Salrand and collect the key she holds." },
 			descriptionQuestText = { "So it's true. They have her. It's clear what must be done, blood elf. She WILL be saved. I must remain here and aid in the rescue preparations. I call upon you again; this time to collect the prison key. All we know of this Salrand figure is that she cannot be harmed so long as her shield is intact. We've customized a special explosive that should strip her of this protection, allowing you to perform your duty. Return to me when you've collected the key. Hurry, PLAYER. Lady Evanor is suffering!" },
 			npcs = {
-				{ npc = "Librarian Donathan", id = "x99" },
+				{ npc = "Librarian Donathan", id = 25262 },
 			},
 			[1] = {
 				description = "Use the {item:34897:Beryl Shield Detonator} near Inquisitor Salrand and then kill the mob. Loot \"Salrand's Lockbox\" to collect the {item:34909:Salrand's Broken Key} at Beryl Point, Borean Tundra.\n\n|cFFFF3333For the detonator to work, you need to be in a precise location, so move around near Salrand if the detonator doesn't work.|r",
@@ -867555,7 +867742,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Librarian Donathan at Amber Ledge (outside of the tower), Borean Tundra.",
+				description = "Turn in the quest to {npc:25262:Librarian Donathan} at Amber Ledge (outside of the tower), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 45.27, y = 33.35, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.18, y = 59.63, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -868067,7 +868254,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Donathan wants you to speak to Surristrasz on Amber Ledge." },
 			descriptionQuestText = { "Delays, delays... the one thing we cannot afford right now! As much as I hate to disturb Lord Surristrasz, he's our only hope of saving our beloved Evanor. Bring him the key fragments and hope that his mood is favorable. Hurry, CLASS, our assault team is waiting." },
 			npcs = {
-				{ npc = "Librarian Donathan", id = "x99" },
+				{ npc = "Librarian Donathan", id = 25262 },
 			},
 			[1] = {
 				description = "Turn in the quest to Surristrasz at Amber Ledge, Borean Tundra.",
@@ -869408,7 +869595,7 @@ RQEDatabase = {
 				{ npc = "Supply Master Taz'ishi", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to King Mrgl-Mrgl at Winterfin Retreat, Borean Tundra.",
+				description = "Turn in the quest to {npc:25197:King Mrgl-Mrgl} at the Winterfin Retreat, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 43.50, y = 13.97, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 19.63, y = 53.70, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -869462,7 +869649,7 @@ RQEDatabase = {
 				{ npc = "Mordle Cogspinner", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to King Mrgl-Mrgl at the Winterfin Retreat, Borean Tundra.",
+				description = "Turn in the quest to {npc:25197:King Mrgl-Mrgl} at the Winterfin Retreat, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 43.50, y = 13.97, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 19.63, y = 53.70, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -870520,7 +870707,7 @@ RQEDatabase = {
 				{ npc = "Surristrasz", id = "x99" },
 			},
 			[1] = {
-				description = "After landing, turn in the quest to Archmage Berinand at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "After landing, turn in the quest to {npc:25314:Archmage Berinand} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 32.94, y = 34.39, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.41, y = 59.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -871056,10 +871243,10 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "The demon has many names and each name has held special meaning at one time or another. While the details were sometimes insignificant, the end result was always the same: death. But it is now, nearly fifty years after it all began, that the details will find the devil and lead to his downfall. This time, we have him... There will be no escape for Nesingwary. Northrend will be the battleground for our war. The hunter will become the hunted!" },
 			npcs = {
-				{ npc = "Archdruid Lathorius", id = "x99" },
+				{ npc = "Archdruid Lathorius", id = 25809 },
 			},
 			[1] = {
-				description = "Turn in the quest to Archdruid Lathorius at the D.E.H.T.A. Encampment, Borean Tundra.",
+				description = "Turn in the quest to {npc:25809:Archdruid Lathorius} at the D.E.H.T.A. Encampment, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 57.05, y = 44.33, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 23.78, y = 62.99, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -871149,7 +871336,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Archdruid Lathorius at the D.E.H.T.A. Encampment, Borean Tundra.",
+				description = "Turn in the quest to {npc:25809:Archdruid Lathorius} at the D.E.H.T.A. Encampment, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 57.05, y = 44.33, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 23.78, y = 62.99, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -871176,7 +871363,7 @@ RQEDatabase = {
 				{ npc = "Archdruid Lathorius", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Archdruid Lathorius at the D.E.H.T.A. Encampment, Borean Tundra.",
+				description = "Turn in the quest to {npc:25809:Archdruid Lathorius} at the D.E.H.T.A. Encampment, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 57.05, y = 44.33, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 23.78, y = 62.99, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -871439,7 +871626,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Archdruid Lathorius at the D.E.H.T.A. Encampment, Borean Tundra.",
+				description = "Turn in the quest to {npc:25809:Archdruid Lathorius} at the D.E.H.T.A. Encampment, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 57.05, y = 44.33, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 23.78, y = 62.99, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -871540,7 +871727,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Archdruid Lathorius at the D.E.H.T.A. Encampment, Borean Tundra.",
+				description = "Turn in the quest to {npc:25809:Archdruid Lathorius} at the D.E.H.T.A. Encampment, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 57.05, y = 44.33, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 23.78, y = 62.99, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -871989,7 +872176,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Archdruid Lathorius at the D.E.H.T.A. Encampment, Borean Tundra.",
+				description = "Turn in the quest to {npc:25809:Archdruid Lathorius} at the D.E.H.T.A. Encampment, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 57.05, y = 44.33, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 23.78, y = 62.99, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -872666,7 +872853,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Archmage Berinand at the Transitus Shield has asked you to collect the readings from his instruments in Coldarra." },
 			descriptionQuestText = { "I had hoped that the Nexus' impact was limited to this region. Recently though, reports have flooded in from all over Azeroth suggesting that geologic instability is growing exponentially! I need the Nexus monitored regularly as I work to develop a solution. I've placed sensitive instruments around Coldarra, disguised as Malygos' scrying orbs. One lies in the trench near the Nexus, and three are hidden in the structures around the valley's perimeter. Visit each and return to me with their readings." },
 			npcs = {
-				{ npc = "Archmage Berinand", id = "x99" },
+				{ npc = "Archmage Berinand", id = 25314 },
 			},
 			[1] = {
 				description = "Interact with the \"Coldarra Geological Monitor\" for the Southern Coldarra Reading in Coldarra, Borean Tundra.",
@@ -872726,7 +872913,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[5] = {
-				description = "Turn in the quest to Archmage Berinand at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:25314:Archmage Berinand} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 32.94, y = 34.39, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.41, y = 59.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873127,7 +873314,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Archmage Berinand in the Transitus Shield wants you to collect 3 Glacial Splinters and 3 Magic-Bound Splinters from the Ancients in Coldarra." },
 			descriptionQuestText = { "It's become clear that the instability in the region has had an effect on its indigenous creatures. I've taken a particular interest in the Glacial Ancients and their recent adaptations. I suspect that their transformation into these 'Magic-bound' Ancients may hold clues to our predicament here. For my studies, I'll need samples from both. Do hurry...." },
 			npcs = {
-				{ npc = "Archmage Berinand", id = "x99" },
+				{ npc = "Archmage Berinand", id = 25314 },
 			},
 			[1] = {
 				description = "Kill Glacial Ancients and collect 3 {item:35483:Glacial Splinters}, from their bodies, in Coldarra, Borean Tundra.",
@@ -873161,7 +873348,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Archmage Berinand at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:25314:Archmage Berinand} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 32.94, y = 34.39, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.41, y = 59.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873185,7 +873372,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Librarian Serrah in the Transitus Shield wants you to gather 10 Frostberries from the Frostberry Bushes in Coldarra." },
 			descriptionQuestText = { "Oh! What a relief it is to see a fresh face. I was beginning to feel we had been forsaken. Our supply lines were cut off days ago, and things have been looking - well, bleak. To be honest, this was a suicide mission to begin with if you ask me. Maybe I'm simply not cut out for all of this violence - to say nothing of the bitter cold! I'd much rather be back in Dalaran studying ancient texts. To the point, our food supply is nearly spent. Please, gather what you can and bring it to me." },
 			npcs = {
-				{ npc = "Librarian Serrah", id = "x99" },
+				{ npc = "Librarian Serrah", id = 26110 },
 			},
 			[1] = {
 				description = "Collect 10 {item:35492:Frostberries} in Coldarra, Borean Tundra.",
@@ -873203,7 +873390,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Librarian Serrah at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26110:Librarian Serrah} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.49, y = 34.39, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.57, y = 59.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873266,7 +873453,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Librarian Serrah in the Transitus Shield needs you to kill Arcane Serpents near the Nexus and collect 5 Nexus Mana Essences from them." },
 			descriptionQuestText = { "Our existence here depends entirely upon staying hidden. Should the shield fail, even for a moment, Malygos' minions would have us. One of my responsibilities is to rejuvenate the warmages' mana levels so their focus doesn't falter. With our supply lines lost, I've been forced to improvise. I could use your help, PLAYER. Very near the Nexus, Arcane Serpents feast on the abundant magical energies. Once defeated, they will yield a mana essence that I can make use of." },
 			npcs = {
-				{ npc = "Librarian Serrah", id = "x99" },
+				{ npc = "Librarian Serrah", id = 26110 },
 			},
 			[1] = {
 				description = "Kill Arcane Serpents and loot 5 {item:35493:Nexus Mana Essence}, from their bodies, in region of The Nexus, Borean Tundra.",
@@ -873284,7 +873471,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Librarian Serrah at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26110:Librarian Serrah} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.49, y = 34.39, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.57, y = 59.95, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873335,7 +873522,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Raelorasz at the Transitus Shield wants you to slay 10 Coldarra Spellweavers." },
 			descriptionQuestText = { "This is war, mortal, and we are the tip of the spear. Your little spats over land or currency pale in comparison to this conflict. We face the aspect Malygos and his entire blue dragonflight. All you need to know is that if he is victorious, this world shall be no more. We are but few here, and we fly against many. Our deaths are all but a certainty, and our ultimate success lies in merely delaying our enemy. Go now. Busy yourself while I decide what to do with you." },
 			npcs = {
-				{ npc = "Raelorasz", id = "x99" },
+				{ npc = "Raelorasz", id = 26117 },
 			},
 			[1] = {
 				description = "Kill 10 Coldarra Spellweavers in Coldarra, Borean Tundra.",
@@ -873355,7 +873542,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Raelorasz at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873379,7 +873566,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Raelorasz wants you to use Raelorasz's Spear to subdue a Nexus Drake Hatchling and return it to him at the Transitus Shield." },
 			descriptionQuestText = { "The blues have begun to cover their drakes in mysterious runes. I must discover their significance. <Raelorasz pokes his hand with a spear and coats the tip with his blood.> Take this and use it on one of them. Wait for it to become subdued, then bring it here to me before it expires. Their hatchlings feed around the northwest edge of the valley." },
 			npcs = {
-				{ npc = "Raelorasz", id = "x99" },
+				{ npc = "Raelorasz", id = 26117 },
 			},
 			[1] = {
 				description = "Use {item:35506:Raelorasz's Spear} while targeting the Nexus Drake Hatchling to capture it. The best place is on the cliff at 22, 29 in Coldarra, Borean Tundra.\n\n|cFFFF3333After a short duration of the Drake attacking you it will become friendly (just stand there and take the hits)!|r",
@@ -873410,7 +873597,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Raelorasz at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873580,7 +873767,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Raelorasz at the Transitus Shield wants you to get the Azure Codex from Inquisitor Caleras and collect 3 Shimmering Runes from his Coldarra Spellbinders." },
 			descriptionQuestText = { "I sense a distinct peculiarity in the drakes here but the meaning of the runes that cover their bodies still eludes me. Without a codex, it will take more time than we can afford for me to interpret them. Not far from here is a Kirin Tor traitor, Caleras, who is likely to have a copy of the tome I require. His underlings hold the runes I will need for my translation. Hurry, mortal. Malygos gains strength with every passing moment." },
 			npcs = {
-				{ npc = "Raelorasz", id = "x99" },
+				{ npc = "Raelorasz", id = 26117 },
 			},
 			[1] = {
 				description = "Kill Inquisitor Caleras and loot the {item:35628:Azure Codex}, from its body, in Coldarra, Borean Tundra.",
@@ -873614,7 +873801,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Raelorasz at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873641,7 +873828,7 @@ RQEDatabase = {
 				{ npc = "Private Brau", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Ataika in Kaskala, Borean Tundra.",
+				description = "Turn in the quest to {npc:26169:Ataika} in Kaskala, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 63.80, y = 46.12, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 25.85, y = 63.55, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873665,7 +873852,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Raelorasz at the Transitus Shield wants you to kill Coldarra Wyrmkin and use their frozen axes to break 5 blue dragon eggs." },
 			descriptionQuestText = { "Our goals here are simple. We are to remain hidden from Malygos, observe his brood, and thwart his efforts wherever possible. To that end, I have a task for you. The blues are laying their eggs at the base of the Nexus. Exposure to so much arcane energy will surely make them hatch sooner, and there's no telling what effect it will have on their spawn. I don't intend to find out. Slay the local wyrmkin and use their frozen axes to break the eggs." },
 			npcs = {
-				{ npc = "Raelorasz", id = "x99" },
+				{ npc = "Raelorasz", id = 26117 },
 			},
 			[1] = {
 				description = "Kill Coldarra Wyrmkin and loot |cFFffcc335|r {item:35586:Frozen Axes}, from their bodies, in Borean Tundra.",
@@ -873760,7 +873947,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[7] = {
-				description = "Turn in the quest to Raelorasz at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873860,7 +874047,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Raelorasz at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873887,7 +874074,7 @@ RQEDatabase = {
 				{ npc = "Coldarra Spellbinder", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Raelorasz at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -873996,7 +874183,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Raelorasz at the Transitus Shield wants you to obtain the Prison Casing from General Cerulean and the Energy Core from Warbringer Goredrak." },
 			descriptionQuestText = { "You've discovered a fragment of a special prison, PLAYER. Malygos' minions use similar prisons to hold their captured mages and other arcane entities, but this prison was constructed to hold something... stronger. In hopes that the enemy of our enemy will prove to be a friend, you must search for the prison's remaining fragments. They are likely to be in the possession of Malygos' most trusted underlings." },
 			npcs = {
-				{ npc = "Raelorasz", id = "x99" },
+				{ npc = "Raelorasz", id = 26117 },
 			},
 			[1] = {
 				description = "Kill Warbringer Goredrak and loot the {item:35669:Energy Core}, from its body, in Coldarra, Borean Tundra.",
@@ -874031,7 +874218,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Raelorasz at the Transitus Shield, Coldarra, Borean Tundra.",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -874097,7 +874284,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Utaik wants you to gather 8 Kaskala Supplies in Kaskala." },
 			descriptionQuestText = { "Dark times are upon us. Karkut's spirit walks the earth and gathers the spirits of dead tuskarr. The sons of the mist have taken many of our brethren. Soon dear Kaskala will be reduced to ashes. There is hope yet. Not for us perhaps, but we've sent our families to Unu'pe. We fight here so there may be a future for them. They will need supplies or they will starve. There's not enough food in Unu'pe. Salvage any supplies before it's too late for our families." },
 			npcs = {
-				{ npc = "Utaik", id = "x99" },
+				{ npc = "Utaik", id = 26213 },
 			},
 			[1] = {
 				description = "Collect 8 {item:35711:Kaskala Supplies} (baskets on the ground) in Kaskala, Borean Tundra.",
@@ -874112,7 +874299,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Utaik in Kaskala, Borean Tundra.",
+				description = "Turn in the quest to {npc:26213:Utaik} in Kaskala, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 63.96, y = 45.71, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 25.89, y = 63.42, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -874163,7 +874350,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ataika wants you to slay 12 Kvaldir Raiders in Kaskala." },
 			descriptionQuestText = { "Kaskala is a sacred place for us, blood elf. Our ancestors were guided here by the spirit of Tayutka herself. Now these foul creatures attack us from the mists without any provocation. We will show them that our spears are not merely for whaling. Fight alongside us, friend. Perhaps my people might repay you some time in the future." },
 			npcs = {
-				{ npc = "Ataika", id = "x99" },
+				{ npc = "Ataika", id = 26169 },
 			},
 			[1] = {
 				description = "Kill 12 Kvaldir Raiders in Kaskala, Borean Tundra.",
@@ -874181,7 +874368,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Ataika in Kaskala, Borean Tundra.",
+				description = "Turn in the quest to {npc:26169:Ataika} in Kaskala, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 63.80, y = 46.12, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 25.85, y = 63.55, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -874205,7 +874392,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Find Elder Muahit in Kaskala." },
 			descriptionQuestText = { "Listen, PLAYER. Warriors like me are replaceable. If I fall, my brothers and cousins will pick up my spear and fight. My people cannot survive without wise elders. Stubborn Muahit, our most venerable shaman, refuses to leave the altar to Tayutka in the central island. We would suffer a significant loss if he was slain by these monsters. You are an outsider, maybe he'll listen to you. Show him reason... ask him to flee to the safety of Unu'pe before it's too late." },
 			npcs = {
-				{ npc = "Ataika", id = "x99" },
+				{ npc = "Ataika", id = 26169 },
 			},
 			[1] = {
 				description = "Turn in the quest to Elder Muahit in Njord's Breath Bay (SE of Kaskala), Borean Tundra.",
@@ -874358,7 +874545,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Retrieve 6 Stolen Moa'ki Goods from the wolvar. Return them to Elder Ko'nani at Moa'ki Harbor." },
 			descriptionQuestText = { "The wolvar have always been our natural enemies. But the incursion of your peoples into the Great Dragonblight has forced them into a small space upon the glade to the north. Combined with the land's upheaval this morning, they have become even more aggressive than ever before. They have made several raids upon our goods... things that we'll need if we are to survive the trek from our home here. As a sign of good faith and friendship, retrieve our goods from the Snowfall Glade wolvar." },
 			npcs = {
-				{ npc = "Elder Ko'nani", id = "x99" },
+				{ npc = "Elder Ko'nani", id = 26194 },
 			},
 			[1] = {
 				description = "Kill Snowfall Glade mobs and loot 6 {item:35686:Stolen Moa'ki Goods}, from their bodies, near Moa'ki Harbor, Dragonblight.",
@@ -874379,7 +874566,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Elder Ko'nani at Moa'ki Harbor, Dragonblight.",
+				description = "Turn in the quest to {npc:26194:Elder Ko'nani} at Moa'ki Harbor, Dragonblight.",
 				coordinateHotspots = {
 					{ x = 48.00, y = 74.87, mapID = 115, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 46.86, y = 66.33, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -874403,7 +874590,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Smear the Blood of Loguhn upon yourself and then return to Elder Ko'nani at Moa'ki Harbor." },
 			descriptionQuestText = { "Already it goes from bad to worse. There is only one course to take... regrettably, Loguhn must die! He's the alpha male of the Snowfall Glade tribe and one mean wolvar. But it's the only way to get a short break from their attacks and stealing forays. You will find the \"Render of Flesh\" in front of his hovel upon the northern rise of the glade. It's larger than the others and hard to miss. Kill him and smear his blood upon yourself, both to show your dominance and respect." },
 			npcs = {
-				{ npc = "Elder Ko'nani", id = "x99" },
+				{ npc = "Elder Ko'nani", id = 26194 },
 			},
 			[1] = {
 				description = "Kill Loguhn and loot the {item:35688:Blood of Loguhn} at Snowfall Glade, Dragonblight.",
@@ -874434,7 +874621,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Elder Ko'nani at Moa'ki Harbor, Dragonblight.",
+				description = "Turn in the quest to {npc:26194:Elder Ko'nani} at Moa'ki Harbor, Dragonblight.",
 				coordinateHotspots = {
 					{ x = 48.00, y = 74.87, mapID = 115, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 46.86, y = 66.33, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -874458,7 +874645,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 12 Snowfall Glade Pups. Deliver them to Trapper Mau'i at Moa'ki Harbor." },
 			descriptionQuestText = { "We must move decisively against the wolvar if we're to have a chance of survival. However, I worry that in our zeal, too many of them will be slain. The Snowfall Glade wolvar have as much right to exist as do we. You and I will see to it that they get that chance. If Elder Ko'nani hasn't asked you already, he will ask you to deal with them. While you're upon the glade to the north, I'd like you to bag up their pups and bring them back to me." },
 			npcs = {
-				{ npc = "Trapper Mau'i", id = "x99" },
+				{ npc = "Trapper Mau'i", id = 26228 },
 			},
 			[1] = {
 				description = "Interact with 12 Snowfall Glade Pups at Snowfall Glade, Dragonblight.",
@@ -874477,7 +874664,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Trapper Mau'i at the Moa'ki Harbor, Dragonblight.",
+				description = "Turn in the quest to {npc:26228:Trapper Mau'i} at the Moa'ki Harbor, Dragonblight.",
 				coordinateHotspots = {
 					{ x = 48.25, y = 74.34, mapID = 115, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 46.93, y = 66.17, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -874639,7 +874826,7 @@ RQEDatabase = {
 				{ npc = "Keristrasza", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Raelorasz at Transitus Shield, Borean Tundra.\n\n|cFFFF3333You can speak with Keristrasza to be teleported to the Transitus Shield after you have picked up this quest.|r",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at Transitus Shield, Borean Tundra.\n\n|cFFFF3333You can speak with Keristrasza to be teleported to the Transitus Shield after you have picked up this quest.|r",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -874705,7 +874892,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Raelorasz wants you to use Raelorasz' Spark at the signal fire in Coldarra." },
 			descriptionQuestText = { "We owe this opportunity in great part to your efforts, PLAYER. It is only fitting that you initiate the attack on Malygos. Take this spark and use it to light the signal fire northwest of the Nexus. Keristrasza will direct you from there." },
 			npcs = {
-				{ npc = "Raelorasz", id = "x99" },
+				{ npc = "Raelorasz", id = 26117 },
 			},
 			[1] = {
 				description = "Use the {item:44950:Raelorasz' Spark} near the \"Signal Fire\" to lure Malygos at Coldarra, Borean Tundra.",
@@ -874720,7 +874907,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Raelorasz at Transitus Shield, Borean Tundra.",
+				description = "Turn in the quest to {npc:26117:Raelorasz} at the Transitus Shield, Coldarra, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 33.32, y = 34.55, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 16.52, y = 60.00, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -875036,7 +875223,7 @@ RQEDatabase = {
 			descriptionQuestText = { "" },
 			npc = { "" },
 			[1] = {
-				description = "Turn in the quest to Kurun at Boulder Hills, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26260:Kurun} at Boulder Hills, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 65.76, y = 17.79, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 76.04, y = 49.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -875060,7 +875247,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kurun on the hill overlooking Thor Modan wants you to disrupt the iron dwarves' work by throwing boulders into the exposed area of Thor Modan." },
 			descriptionQuestText = { "Beneath us is iron's ancient bastion, Thor Modan. Thousands of years ago, the stone giants tore the land asunder, collapsing part of the city and exposing much of the rest. Even now, the iron dwarves attempt to reclaim their old capital, but we will not permit it. My giants fill the trench with boulders and debris, hoping to seal it off and kill the servants of iron as they work. Take up the boulders you see near the trench to the northeast, and help us put an end to their efforts." },
 			npcs = {
-				{ npc = "Kurun", id = "x99" },
+				{ npc = "Kurun", id = 26260 },
 			},
 			[1] = {
 				description = "Collect up to 5 {item:35734:Boulders} at Boulder Hills, Grizzly Hills.",
@@ -875136,7 +875323,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[7] = {
-				description = "Turn in the quest to Kurun at Boulder Hills, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26260:Kurun} at Boulder Hills, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 65.76, y = 17.79, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 76.04, y = 49.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -875261,7 +875448,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kurun on the hill overlooking Thor Modan wants you to kill Iron Thane Argrum." },
 			descriptionQuestText = { "If we can't overcome the defenders inside Thor Modan, the iron dwarves can hold out forever. The Earthen are bravely taking on the constructs built by the sons of iron, but they cannot break into the city. The tunnels narrow too quickly for my fellow giants to be of use, so our options are few. Would you be willing to venture into the city and kill the dwarf commanding the resistance?" },
 			npcs = {
-				{ npc = "Kurun", id = "x99" },
+				{ npc = "Kurun", id = 26260 },
 			},
 			[1] = {
 				description = "Kill Iron Thane Argrum at Thor Modan, Grizzly Hills.",
@@ -875279,7 +875466,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Kurun at Boulder Hills, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26260:Kurun} at Boulder Hills, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 65.76, y = 17.79, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 76.04, y = 49.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -875768,7 +875955,7 @@ RQEDatabase = {
 				{ npc = "Captain Gryan Stoutmantle", id = "x99" },
 			},
 			[1] = {
-				description = "Purchase {item:35796:Howlin' Good Moonshine}, from Hugh Glass, at the Redwood Trading Post, Grizzly Hills.",
+				description = "Purchase {item:35796:Howlin' Good Moonshine}, from {npc:26484:Hugh Glass}, at the Redwood Trading Post, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 69.10, y = 40.10, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 76.97, y = 55.68, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -875807,7 +875994,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Find the Moonrest Gardens Plans and return them to the Image of Archmage Aethas Sunreaver at Agmar's Hammer." },
 			descriptionQuestText = { "The Moonrest Gardens to the southwest were the final resting place of a group of Highborne elves. It was also a ley line nexus. The blue dragonflight used a magical device they call a surge needle to destroy that nexus, freeing the power to redirect at their will. I want more information and you are going to get it for me! After the land was destroyed at the ruins, the ghosts of the Highborne rose up and decimated half of the mage hunters there. Go rifle their corpses for clues." },
 			npcs = {
-				{ npc = "Image of Archmage Aethas Sunreaver", id = "x99" },
+				{ npc = "Image of Archmage Aethas Sunreaver", id = 26471 },
 			},
 			[1] = {
 				description = "Collect {item:35792:Mage Hunter Personal Effects} from the {npc:26477:Dead Mage Hunters} at Moonrest Gardens, Dragonblight.",
@@ -876093,7 +876280,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver Wind Trader Mu'fah's Remains and the Scales of Goramosh to the Image of Archmage Aethas Sunreaver at Agmar's Hammer." },
 			descriptionQuestText = { "We need to kill two birds with one stone here, CLASS. You're the stone. Our two birds are Wind Trader Mu'fah and Goramosh. They should be somewhere in the western half of the Moonrest Gardens. Most likely they're in the larger two-story building overlooking the pit. I require proof of their demise, if you would be so kind." },
 			npcs = {
-				{ npc = "Image of Archmage Aethas Sunreaver", id = "x99" },
+				{ npc = "Image of Archmage Aethas Sunreaver", id = 26471 },
 			},
 			[1] = {
 				description = "Kill {npc:26349:Goramosh} and loot {item:35801:The Scales of Goramosh}, from its body, in Moonrest Gardens, Dragonblight.",
@@ -876577,7 +876764,9 @@ RQEDatabase = {
 			location = { x = 64.29, y = 19.76, mapID = 116 },
 			objectivesQuestText = { "Recover 8 Missing Journal Pages, combine them with the Incomplete Journal, and return the completed journal to Sage Paluna at Camp Oneqwah." },
 			descriptionQuestText = { "This battered, mud-stained journal has seen better days. Leafing through the pages, you discover dozens of notes, diagrams, and maps in the dwarven language. The only text you're able to decipher is the name of Brann Bronzebeard scrawled at the end of one of the entries. The back half of the book, containing the most recent entries, has been torn away. Someone thought the notes important enough to attempt to destroy them. Perhaps gathering the missing pages from the battlefield will yield some clues." },
-			npc = { "" },
+			npcs = {
+				{ object = "Battered Journal", id = 188261 },
+			},
 			-- [1] = {
 				-- description = "! Brann Bronzebeard's Journal: 1/1 in Thor Modan, Grizzly Hills.",
 				-- coordinates = { x = 63.99, y = 22.47, mapID = 116 },
@@ -877870,7 +878059,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill High Cultist Zangus and return High Cultist Zangus's Head to Captain Gort at Agmar's Hammer in the Dragonblight." },
 			descriptionQuestText = { "I witnessed his treachery with my own eyes! The traitor led an Anub'ar assault on this stronghold, taking out some of my best soldiers. <Gort shakes his head.> He'd been working with the Scourge the whole time and we didn't have a clue! How many more like Zangus are there? We'll find 'em all and when we do... <Gort makes a cutting motion across his neck.> First on the list is Zangus. Our scouts report that he is hiding in The Pit of Narjun, west of here. Find him, kill him, bring me his head." },
 			npcs = {
-				{ npc = "Captain Gort", id = "x99" },
+				{ npc = "Captain Gort", id = 26618 },
 			},
 			-- [1] = {
 				-- description = "! Kill High Cultist Zangus and loot 1 Head of High Cultist Zangus: 1/1, from its body, at The Pit of Narjun, Dragonblight.",
@@ -877885,7 +878074,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Captain Gort at Agmar's Hammer, Dragonblight.",
+				-- description = "Turn in the quest to {npc:26618:Captain Gort} at Agmar's Hammer, Dragonblight.",
 				-- coordinates = { x = 35.81, y = 48.39, mapID = 115 },
 				-- check = { "12056" },
 				-- neededAmt = { "1" },
@@ -877904,7 +878093,7 @@ RQEDatabase = {
 			descriptionQuestText = { "The tome is bound in flesh and appears to be bleeding. Upon examination you discover page after page filled with strange symbols that appear to be written in blood. Whatever knowledge is held within the pages of this tome could be important. Return it to Captain Gort at Agmar's Hammer, east of Icemist Village." },
 			npc = { "" },
 			[1] = {
-				description = "Turn in the quest to Captain Gort at Agmar's Hammer, Dragonblight.",
+				description = "Turn in the quest to {npc:26618:Captain Gort} at Agmar's Hammer, Dragonblight.",
 				coordinates = { x = 35.81, y = 48.38, mapID = 115 },
 				check = { "12057" },
 				neededAmt = { "1" },
@@ -878070,7 +878259,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get close to and observe the projection atop the Surge Needle floating above Moonrest Gardens. Afterward, return to the Image of Archmage Aethas Sunreaver at Agmar's Hammer with the information." },
 			descriptionQuestText = { "This is a teleportation device. If I had to guess, I'd say that it leads to the surge needle platform floating above the Moonrest Gardens to the southwest. PLAYER, I need you to use it to investigate what's up there. It appears that the device works both ways so you shouldn't have to jump off. I expect that once you teleport up to the top of the surge needle, there will be some sort of apparatus on it to observe. You should be able to use the teleporter from anywhere within the gardens." },
 			npcs = {
-				{ npc = "Image of Archmage Aethas Sunreaver", id = "x99" },
+				{ npc = "Image of Archmage Aethas Sunreaver", id = 26471 },
 			},
 			[1] = {
 				description = "Travel to the Surge Needle, in the sky above the Moonrest Gardens, (if you don't have flying you can use the {item:36747:Surge Needle Teleporter}).",
@@ -878291,7 +878480,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain the Ley Line Focus Control Ring and use it to gain information from the Ley Line Focus on the Glittering Strand. Then, return to the Image of Archmage Aethas Sunreaver at Agmar's Hammer." },
 			descriptionQuestText = { "The mage hunter forces are active on the Glittering Strand to the south of Moonrest Gardens. My guess is that you'll find a heavily guarded focus on the beach and a captain who is in charge of it. No doubt the captain of the force down there will have some sort of controlling device on their person. Get the controller and use it on the focus. With any skill on your part, we'll be able to get some more information about what they're really up to out there." },
 			npcs = {
-				{ npc = "Image of Archmage Aethas Sunreaver", id = "x99" },
+				{ npc = "Image of Archmage Aethas Sunreaver", id = 26471 },
 			},
 			[1] = {
 				description = "Kill Captain Emmy Malin and collect the {item:36751:Ley Line Focus Control Ring} from their body, in Glittering Strand, Dragonblight.",
@@ -878483,7 +878672,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use the Shard of the Earth to rally the Grizzly Hills Giants fighting in the Boulder Hills, kill any iron dwarves who oppose you, then report to Kurun on the hill overlooking Thor Modan." },
 			descriptionQuestText = { "The sons of iron have used their runes to enthrall many of my brothers and are using them to break the siege on Thor Modan. I wish we did not have to fight them, but we have no choice. My giants will not hold out long against them. I have imbued this earthen shard with a blessing that will aid our allies. Take it with you to the battle in the Boulder Hills to the north, and use it to reassure and fortify my brethren. Kill any iron dwarves who would stand in your way." },
 			npcs = {
-				{ npc = "Kurun", id = "x99" },
+				{ npc = "Kurun", id = 26260 },
 			},
 			[1] = {
 				description = "Use the {item:36764:Shard of the Earth} on 5 Grizzly Hills Giants (that are fighting Runed Giants) at Boulder Hills, Grizzly Hills.",
@@ -878517,7 +878706,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Kurun at Boulder Hills, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26260:Kurun} at Boulder Hills, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 65.76, y = 17.79, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 76.04, y = 49.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -878627,7 +878816,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill any 10 Iron Dwarves defending Thor Modan and report back to Scout Vor'takh at Camp Oneqwah." },
 			descriptionQuestText = { "The Alliance isn't the only force opposing us in Grizzly Hills. The iron dwarves have firm control of the eastern coast, although Thor Modan, to the northeast, is besieged by stone giants. A skilled warrior uses an enemy's weakness against him and we would be fools to ignore the vulnerability of the iron dwarves at Thor Modan. Show the iron dwarves no mercy. Slay any and all who would stand in your way. The 'sons of iron' will learn to fear the Horde." },
 			npcs = {
-				{ npc = "Scout Vor'takh", id = "x99" },
+				{ npc = "Scout Vor'takh", id = 26666 },
 			},
 			-- [1] = {
 				-- description = "! Iron Dwarf Defenders Killed: 1/10 in Thor Modan, Grizzly Hills.",
@@ -878738,7 +878927,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [10] = {
-				-- description = "Turn in the quest to Scout Vor'takh at Camp Oneqwah, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26666:Scout Vor'takh} at Camp Oneqwah, Grizzly Hills.",
 				-- coordinates = { x = 65.16, y = 47.67, mapID = 116 },
 				-- check = { "12073" },
 				-- neededAmt = { "1" },
@@ -878756,10 +878945,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Kurun on the hill overlooking Thor Modan." },
 			descriptionQuestText = { "The old iron dwarf capital of Thor Modan, far to the northeast, is under siege by a mysterious band of stone giants and earthen. Why the creations of the titans would war against each other is beyond my understanding and the Horde's interest, but there is an opportunity here to weaken a mutual enemy. Travel to Thor Modan and seek out this 'Kurun' who commands the giants and earthen. Make common cause with him and use his forces to crush the iron dwarves." },
 			npcs = {
-				{ npc = "Scout Vor'takh", id = "x99" },
+				{ npc = "Scout Vor'takh", id = 26666 },
 			},
 			[1] = {
-				description = "Turn in the quest to Kurun at Boulder Hills, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26260:Kurun} at Boulder Hills, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 65.76, y = 17.79, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 76.04, y = 49.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -879036,7 +879225,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Gavrock at the Ruins of Tethys." },
 			descriptionQuestText = { "Without your help, we wouldn't have been able to turn the tide of the battle for Thor Modan. This ancient city has long been a battlefield between the forces of earth and stone. I can only hope we have silenced it for the last time. The iron dwarves can still use their magic to capture and enslave my brothers. Gavrock is searching for a way to free the runed giants. Look for him on a small cluster of islands, called the Ruins of Tethys, off the central part of the Eastwind Shore to the south." },
 			npcs = {
-				{ npc = "Kurun", id = "x99" },
+				{ npc = "Kurun", id = 26260 },
 			},
 			[1] = {
 				description = "Turn in the quest to Gavrock at Ruins of Tethys, Grizzly Hills.",
@@ -879082,7 +879271,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Harkor at Harkor's Camp, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26884:Harkor} at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 73.76, y = 34.02, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 78.27, y = 53.98, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -879161,7 +879350,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain the Ley Line Focus Control Amulet and use it to gain information from the Ley Line Focus in the Lothalor Woodlands. Then, return to the Image of Archmage Aethas Sunreaver at Agmar's Hammer." },
 			descriptionQuestText = { "I'm convinced that there must be more of those foci, each of them in-turn redirecting the ley line energies. We still don't know precisely what they're doing with all of that power, though. My guess is that you'll find another one atop the Lothalor Woodlands to the south. Once again you'll need to find the person in charge and take whatever controlling device they have in their possession as I'm sure that each focus has its own. Be quick about your business, CLASS. I feel that time may be running out." },
 			npcs = {
-				{ npc = "Image of Archmage Aethas Sunreaver", id = "x99" },
+				{ npc = "Image of Archmage Aethas Sunreaver", id = 26471 },
 			},
 			-- [1] = {
 				-- description = "Kill Lieutenant Ta'zinni and collect the {item:36779:Ley Line Focus Control Amulet} from their body, at Lothalor Woodlands, Dragonblight.",
@@ -879238,7 +879427,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Go east to Death's Stand, just beyond Unu'pe." },
 			descriptionQuestText = { "The man you seek went far to the east, to a place near the coast called Death's Stand, beyond Unu'pe. Be careful if you go in search of him, PLAYER. He bore the mark of Karkut... he who watches over the dead." },
 			npcs = {
-				{ npc = "Ataika", id = "x99" },
+				{ npc = "Ataika", id = 26169 },
 			},
 			[1] = {
 				description = "Turn in the quest to Corporal Venn at Death's Stand, Borean Tundra.",
@@ -879292,7 +879481,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay Magister Keldonus and return to Captain Gort at Agmar's Hammer in the Dragonblight." },
 			descriptionQuestText = { "By decree of Overlord Agmar: Target: Magister Keldonus Crime: Treason Status: Alive Magister Keldonus, once mage commander of Agmar's Hammer, is to be killed on sight in the name of the Horde. Keldonus was last seen traveling southwest towards Moonrest Gardens to join the blue dragonflight in their campaign against magic. Approach with caution as Keldonus is a powerful magus. All bounties are paid out by Captain Gort at Agmar's Hammer." },
 			npcs = {
-				{ npc = "Wanted!", id = "x99" },
+				{ object = "Wanted!", id = 188418 },
 			},
 			-- [1] = {
 				-- description = "! Magister Keldonus slain: 1/1 in Moonrest Gardens, Dragonblight.",
@@ -879307,7 +879496,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Captain Gort at Agmar's Hammer, Dragonblight.",
+				-- description = "Turn in the quest to {npc:26618:Captain Gort} at Agmar's Hammer, Dragonblight.",
 				-- coordinates = { x = 35.81, y = 48.38, mapID = 115 },
 				-- check = { "12089" },
 				-- neededAmt = { "1" },
@@ -879328,7 +879517,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay Gigantaur and return to Captain Gort at Agmar's Hammer in the Dragonblight." },
 			descriptionQuestText = { "By decree of Overlord Agmar: Target: Gigantaur Crime: Attacks upon the Horde; \"Bein' ugly\" Status: Alive The magnataur lord, Gigantaur, is wanted in relation to a number of attacks against Horde soldiers and installations in the Dragonblight. Gigantaur was last seen wandering the woods and roads south by southeast of Agmar's Hammer. Gigantaur should be considered armed and extremely dangerous. All bounties are paid out by Captain Gort at Agmar's Hammer." },
 			npcs = {
-				{ npc = "Wanted!", id = "x99" },
+				{ object = "Wanted!", id = 188418 },
 			},
 			-- [1] = {
 				-- description = "! Gigantaur slain: 1/1 in Snowfall Glade, Dragonblight.",
@@ -879343,7 +879532,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Captain Gort at Agmar's Hammer, Dragonblight.",
+				-- description = "Turn in the quest to {npc:26618:Captain Gort} at Agmar's Hammer, Dragonblight.",
 				-- coordinates = { x = 35.81, y = 48.38, mapID = 115 },
 				-- check = { "12090" },
 				-- neededAmt = { "1" },
@@ -879364,7 +879553,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay Dreadtalon and return to Captain Gort at Agmar's Hammer in the Dragonblight." },
 			descriptionQuestText = { "By decree of Overlord Agmar: Target: Dreadtalon Crime: Attacks upon the Horde Status: Alive Dreadtalon is wanted for numerous attacks upon Horde caravans traveling to and from Venomspite. Dreadtalon makes his home on a bluff overlooking the Ruby Dragonshrine, east of Agmar's Hammer. He should be approached with extreme caution. All bounties are paid out by Captain Gort at Agmar's Hammer." },
 			npcs = {
-				{ npc = "Wanted!", id = "x99" },
+				{ object = "Wanted!", id = 188418 },
 			},
 			-- [1] = {
 				-- description = "! Dreadtalon slain: 1/1 in The Dragon Wastes, Dragonblight.",
@@ -879379,7 +879568,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Captain Gort at Agmar's Hammer, Dragonblight.",
+				-- description = "Turn in the quest to {npc:26618:Captain Gort} at Agmar's Hammer, Dragonblight.",
 				-- coordinates = { x = 35.81, y = 48.38, mapID = 115 },
 				-- check = { "12091" },
 				-- neededAmt = { "1" },
@@ -879657,7 +879846,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Rokhan at Dragon's Fall in the Dragonblight." },
 			descriptionQuestText = { "East of here, in the heart of the Dragonblight, is a field full of nothing but dragon bones and snow. The Scourge have set up multiple camps in the central tundra and are raising frostwyrms to send against our forces at the Wrathgate. While most of these frostwyrms are easily dealt with by Rokhan and his dragon hunters, one of them is proving to be a bit problematic. Go northeast and seek out Rokhan at Dragon's Fall. Help him and his men put down Sarathstra and you'll be rewarded handsomely!" },
 			npcs = {
-				{ npc = "Captain Gort", id = "x99" },
+				{ npc = "Captain Gort", id = 26618 },
 			},
 			[1] = {
 				description = "Turn in the quest to Rokhan at Dragon's Fall, Dragonblight.",
@@ -880193,7 +880382,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Search for the commander of the mage hunter forces at Indu'le Village and Lake Indu'le." },
 			descriptionQuestText = { "I'm certain that you'll find the next ley line focus somewhere in the remains of Indu'le Village to the southeast. The problem is, I've had absolutely no reports of there being one there. I need you to go investigate the village for any signs of the focus or the mage hunters and their commander in the area. Search in the lake if you have to!" },
 			npcs = {
-				{ npc = "Image of Archmage Aethas Sunreaver", id = "x99" },
+				{ npc = "Image of Archmage Aethas Sunreaver", id = 26471 },
 			},
 			[1] = {
 				description = "Turn in the quest to Mage-Commander Evenstar at Lake Indu'le, Dragonblight.",
@@ -880488,7 +880677,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Harkor at Harkor's Camp wants you to collect 10 pieces of Fibrous Worg Meat from Duskhowl Prowlers and 10 Shovelhorn Steaks from Longhoof Grazers." },
 			descriptionQuestText = { "G'day to ya, CLASS! Have yerself a seat by me fire, eh? I'd offer to share a nice hot meal, only I ain't got one. I'm stuck here waitin' on an associate, or I'd be out tryin' to remedy that situation meself. Say, you seem to have nuthin' but time on yer hands and there be plenty o' meat in these parts. What say ya lend a hand and round up some grub? " },
 			npcs = {
-				{ npc = "Harkor", id = "x99" },
+				{ npc = "Harkor", id = 26884 },
 			},
 			[1] = {
 				description = "Kill Duskhowl Prowlers and loot 10 {item:36819:Fibrous Worg Meat}, from their bodies, around Eastwind Shore, Grizzly Hills.",
@@ -880523,7 +880712,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Harkor at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
+				description = "Turn in the quest to {npc:26884:Harkor} at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 73.76, y = 34.02, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 78.27, y = 53.98, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -880547,7 +880736,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Harkor at Harkor's Camp wants you to kill 10 Drakkari Protectors and 10 Drakkari Oracles outside Drakil'jin Ruins." },
 			descriptionQuestText = { "Trolls... me hates 'em all! <Harkor spits.> I once got meself captured by a band o' tha beasts... came this close ta gettin' me head shrunk! Me friends tell me to just move on and put it all behind me, but that just ain't sittin' right. Wanna know what would make me feel better, blood elf? Seein' a pile of their corpses so high it blots out the sun! I've got good gold to spend if ya can make that happen." },
 			npcs = {
-				{ npc = "Harkor", id = "x99" },
+				{ npc = "Harkor", id = 26884 },
 			},
 			[1] = {
 				description = "Kill 10 Drakkari Protectors in Drakil'jin Ruins, Grizzly Hills.",
@@ -880581,7 +880770,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Harkor at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
+				description = "Turn in the quest to {npc:26884:Harkor} at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 73.76, y = 34.02, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 78.27, y = 53.98, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -880602,7 +880791,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Take the Flesh-Bound Tome to Koltira Deathweaver." },
 			descriptionQuestText = { "There is one who recently joined our cause that might be able to decipher this tome. An unbound CLASS known as Koltira Deathweaver has temporarily taken residence here at Agmar's Hammer. As he was once a CLASS of Arthas and member of the Scourge, he might be able to translate the language of the dead. Take the flesh-bound tome to Koltira and ask him to translate the pages." },
 			npcs = {
-				{ npc = "Captain Gort", id = "x99" },
+				{ npc = "Captain Gort", id = 26618 },
 			},
 			[1] = {
 				description = "Turn in the quest to Koltira Deathweaver at Agmar's Hammer, Dragonblight.",
@@ -880626,7 +880815,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kraz at Harkor's Camp wants you to enter Drakil'jin Ruins and collect 5 Drakkari Canopic Jars." },
 			descriptionQuestText = { "Greetings, CLASS. It is kind of you to stop and listen to Kraz's tale. For many years Kraz has strained to hear the spirits and do their bidding. Recently, many voices have been crying to Kraz from these ruins. They seek for a peace they cannot find on their own. If you would help the spirits of those who have come before, enter this crypt and collect something that once belonged to those tormented souls." },
 			npcs = {
-				{ npc = "Kraz", id = "x99" },
+				{ npc = "Kraz", id = 26886 },
 			},
 			[1] = {
 				description = "|cFF00ff00(Use path @|r {coords:71.37,22.93,116;waypointTitle:\"Drakkari Canopic Jars\"}) and collect 5 {item:36825:Drakkari Canopic Jars} in Drakil'jin Ruins, Grizzly Hills.\n\n|cFFFF3333When you take a {item:36825:Drakkari Canopic Jars} an Ancient Drakkari nearby will attack you.|r",
@@ -880641,7 +880830,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Kraz at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
+				description = "Turn in the quest to {npc:26886:Kraz} at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 73.92, y = 34.13, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 78.31, y = 54.01, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -880668,7 +880857,7 @@ RQEDatabase = {
 				{ npc = "Hotawa", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Elder Ko'nani at Moa'ki Harbor, Dragonblight.",
+				description = "Turn in the quest to {npc:26194:Elder Ko'nani} at Moa'ki Harbor, Dragonblight.",
 				coordinateHotspots = {
 					{ x = 48.00, y = 74.87, mapID = 115, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 46.86, y = 66.33, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -880719,7 +880908,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kraz at Harkor's Camp wants you to slay Drak'aguul outside Drakil'jin Ruins and return with the Drakil'jin Mallet." },
 			descriptionQuestText = { "Corruption.... Even before you delivered these jars, Kraz could sense it. This corruption fills the ancient Drakkari spirits with great angst and prevents them from entering the rest they seek. Kraz will not lie, CLASS. Cleansing this place will require great sacrifice, but we shall speak of that at another time. There is one among the living here who holds the key to its cleansing. Seek out Drak'aguul and return to Kraz with the mallet he carries." },
 			npcs = {
-				{ npc = "Kraz", id = "x99" },
+				{ npc = "Kraz", id = 26886 },
 			},
 			[1] = {
 				description = "Kill Drak'aguul and loot the {item:36826:Drakil'jin Mallet}, from its body, at the Drakil'jin Ruins, Grizzly Hills.",
@@ -880737,7 +880926,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Kraz at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
+				description = "Turn in the quest to {npc:26886:Kraz} at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 73.92, y = 34.13, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 78.31, y = 54.01, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -880761,7 +880950,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kraz at Harkor's Camp wants you to use the Drakil'jin Mallet on the gongs outside Drakil'jin Ruins. Once you have been slain, you are to enter the ruins and speak with the spirit of Gan'jo while you are dead." },
 			descriptionQuestText = { "These Drakkari have met you with nothing but savage hostility. You owe them nothing. Few indeed would carry out the task that Kraz asks of you today. To cleanse this place and send the spirits to their eternal rest, you must join them in death. There is one inside the crypt who awaits you - on the other side. He holds the knowledge we seek, PLAYER. Use the mallet on the gongs. The spirit of he who corrupts this place will surely deliver you to the spirit world. Kraz awaits your return." },
 			npcs = {
-				{ npc = "Kraz", id = "x99" },
+				{ npc = "Kraz", id = 26886 },
 			},
 			[1] = {
 				description = "Use the {item:36834:Charged Drakil'jin Mallet} near the gongs outside of the Drakil'jin Ruins underground passage, Grizzly Hills.\n\n|cFFFF3333It won't work if you don't die, and you may not die if you're mounted!|r",
@@ -880800,7 +880989,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver your Letter of Introduction to Wyrmrest Temple to Tariolstrasz at Wyrmrest Temple." },
 			descriptionQuestText = { "PLAYER, you must travel as swiftly as you can to Wyrmrest Temple and present this letter to the steward, Tariolstrasz. The temple sits in the center of the Dragonblight. Follow the road east until it ends, and then cross The Dragon Wastes to get to it. I'm sure that when the steward reads your introduction, he'll see to it that you gain an audience with Queen Alexstrasza. We can only hope that we're not too late. Thank you for all that you have done on our behalf. Safe journeys!" },
 			npcs = {
-				{ npc = "Image of Archmage Aethas Sunreaver", id = "x99" },
+				{ npc = "Image of Archmage Aethas Sunreaver", id = 26471 },
 			},
 			[1] = {
 				description = "Turn in the quest to Tariolstrasz, on the ground level, but at the exterior of Wyrmrest Temple, Dragonblight.",
@@ -881421,7 +881610,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Captain Gort at Agmar's Hammer, Dragonblight.",
+				-- description = "Turn in the quest to {npc:26618:Captain Gort} at Agmar's Hammer, Dragonblight.",
 				-- coordinates = { x = 35.81, y = 48.38, mapID = 115 },
 				-- check = { "12136" },
 				-- neededAmt = { "1" },
@@ -881485,7 +881674,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[4] = {
-				description = "Turn in the quest to Kraz at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
+				description = "Turn in the quest to {npc:26886:Kraz} at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 73.92, y = 34.13, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 78.31, y = 54.01, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -881742,7 +881931,7 @@ RQEDatabase = {
 				{ npc = "Counselor Talbot", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Karuk at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
+				description = "Turn in the quest to {npc:25435:Karuk} at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 47.13, y = 75.50, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.75, y = 72.52, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -882355,7 +882544,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kraz at Harkor's Camp wants you to collect the Sacred Drakkari Offering from the Drakil'jin Ruins and use the Drakkari Spirit Dust on it. You must use the Infused Drakkari Offering at the gongs outside of Drakil'jin Ruins." },
 			descriptionQuestText = { "It is good to see you back among the living. Many who travel the path of the dead do not return to speak of it. While you were away, a vision appeared to Kraz revealing what remains to be done. A sacred offering lies somewhere inside the crypt. Take this spirit dust fashioned from the remnants you collected and use it on the offering. The infused offering will bring an end to the corrupted warlord and will release the many tormented souls. May the spirits guide your actions, PLAYER." },
 			npcs = {
-				{ npc = "Kraz", id = "x99" },
+				{ npc = "Kraz", id = 26886 },
 			},
 			[1] = {
 				description = "|cFF00ff00(Enter the Drakil'jin Ruins underground passage @|r {coords:71.37,22.93,116;waypointTitle:\"Collect the Sacred Drakkari Offering\"}) (in Grizzly Hills) and collect the {item:36870:Sacred Drakkari Offering} from inside the Drakil'jin Ruins, Grizzly Hills.",
@@ -882397,7 +882586,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Turn in the quest to Kraz at Harkor's Camp, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26886:Kraz} at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 73.92, y = 34.13, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 78.31, y = 54.01, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -882771,7 +882960,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring the completed War Golem Blueprints to Prospector Rokar at Camp Oneqwah." },
 			descriptionQuestText = { "Prospector Rokar has decided to help us. He's concocted a plan to use the iron dwarves' strength against them. I must admit, our new 'friend' is more insightful than I'd given him credit for. He's correct in that our numbers are too few for a direct attack. Travel to Dun Argol, in the snowy regions to the southeast, and capture all the parts of their war golem blueprints from the iron rune-smiths there. Bring the assembled blueprint to Rokar and we'll see if his plan has any merit." },
 			npcs = {
-				{ npc = "Tormak the Scarred", id = "x99" },
+				{ npc = "Tormak the Scarred", id = 27221 },
 			},
 			-- [1] = {
 				-- description = "! War Golem Blueprint: 1/1 in Dun Argol, Grizzly Hills.",
@@ -883052,7 +883241,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Hidetrader Jun'ik in Conquest Hold wants you to get 3 Gray Worg Hides from Graymist Hunters in the woods to the north." },
 			descriptionQuestText = { "Let me tell you something, mon. When you get put in charge of outfittin' the armies of the Horde, you go through a lot of hides! Conqueror Krenna, the she-wolf runnin' this place, she gave me a tight deadline. If I don't outfit her whole regiment by week's end she's gonna have me wrestling bears in the pit. Help me out and I'll pay you top price. I'll be needin' hides from graymist hunters. You'll find them all around in pockets to the north, hunting stag. Remember, mon. Top price!" },
 			npcs = {
-				{ npc = "Hidetrader Jun'ik", id = "x99" },
+				{ npc = "Hidetrader Jun'ik", id = 27037 },
 			},
 			-- [1] = {
 				-- description = "! Kill Graymist Hunter and loot 3 Gray Worg Hide: 1/3, from their bodies, at Grizzly Hills.",
@@ -883091,7 +883280,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [4] = {
-				-- description = "Turn in the quest to Hidetrader Jun'ik at Conquest Hold, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:27037:Hidetrader Jun'ik} at Conquest Hold, Grizzly Hills.",
 				-- coordinates = { x = 22.04, y = 65.10, mapID = 116 },
 				-- check = { "12175" },
 				-- neededAmt = { "1" },
@@ -883109,7 +883298,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Hidetrader Jun'ik wants you to bring him 6 Grizzly Hides." },
 			descriptionQuestText = { "Krenna, she be wantin' worg hides for all the outfits. There's not gonna be enough worg hides for her army, though. Not now, not ever. Those worgs -- they be skinny, mon! Here's what we're gonna do... if you can keep a secret that is. East of Voldrune there be grizzly bears as fat as an ogre. Those large hides -- those we can use! Hurry, sister. Krenna's not known for her patience." },
 			npcs = {
-				{ npc = "Hidetrader Jun'ik", id = "x99" },
+				{ npc = "Hidetrader Jun'ik", id = 27037 },
 			},
 			-- [1] = {
 				-- description = "! Kill Grizzly Bear and loot 6 Grizzly Hide: 1/6, from their bodies, at Grizzly Hills.",
@@ -883172,7 +883361,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to Hidetrader Jun'ik at Conquest Hold, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:27037:Hidetrader Jun'ik} at Conquest Hold, Grizzly Hills.",
 				-- coordinates = { x = 22.04, y = 65.10, mapID = 116 },
 				-- check = { "12176" },
 				-- neededAmt = { "1" },
@@ -883190,7 +883379,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 1 piece of Coal and 5 Simple Flour to Hidetrader Jun'ik at Conquest Hold in Grizzly Hills." },
 			descriptionQuestText = { "Ah, we have a small problem. Grizzly hides... they be brown, mon! Think... think! I got it, mon! Is like this: gray is black an' white all mixed up. You get me some coal an' some flour, I'll grind it all up and dust the hides with it. No one will know the better! Blacksmiths sell coal for smeltin' an' you can get flour from the provisioner." },
 			npcs = {
-				{ npc = "Hidetrader Jun'ik", id = "x99" },
+				{ npc = "Hidetrader Jun'ik", id = 27037 },
 			},
 			-- [1] = {
 				-- description = "! {item:30817:Simple Flour}: 5/5 in Conquest Hold, Grizzly Hills.",
@@ -883217,7 +883406,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [3] = {
-				-- description = "Turn in the quest to Hidetrader Jun'ik at Conquest Hold, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:27037:Hidetrader Jun'ik} at Conquest Hold, Grizzly Hills.",
 				-- coordinates = { x = 22.04, y = 65.11, mapID = 116 },
 				-- check = { "12177" },
 				-- neededAmt = { "1" },
@@ -883235,10 +883424,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Take the Bundle of Hides to Krenna in Conquest Hold." },
 			descriptionQuestText = { "This is it, mon. Let's take these hides to Krenna and see if they pass the test. Let's hope for both our sakes Krenna doesn't notice anything." },
 			npcs = {
-				{ npc = "Hidetrader Jun'ik", id = "x99" },
+				{ npc = "Hidetrader Jun'ik", id = 27037 },
 			},
 			[1] = {
-				description = "Turn in the quest to Conqueror Krenna at Conquest Hold, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26860:Conqueror Krenna} at Conquest Hold, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 20.70, y = 64.17, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.48, y = 62.38, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -883397,7 +883586,7 @@ RQEDatabase = {
 				{ npc = "Chief Plaguebringer Harris", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Tobias Sarkhoff at New Agamand, Howling Fjord.",
+				description = "Turn in the quest to {npc:24155:Tobias Sarkhoff} at New Agamand, Howling Fjord.",
 				coordinates = { x = 52.00, y = 67.38, mapID = 117 },
 				check = { "12181" },
 				neededAmt = { "1" },
@@ -883415,7 +883604,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver the Blight Specimen to Chief Plaguebringer Middleton at Venomspite in eastern Dragonblight." },
 			descriptionQuestText = { "I got a special bat all lined up for you, buddy. Fastest and smoothest ride I've got. He'll take you right to Venomspite - in style. Just hand that vial over to Chief Plaguebringer Middleton once you land." },
 			npcs = {
-				{ npc = "Tobias Sarkhoff", id = "x99" },
+				{ npc = "Tobias Sarkhoff", id = 24155 },
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:27172:Chief Plaguebringer Middleton} at Venomspite, Dragonblight.",
@@ -883870,7 +884059,7 @@ RQEDatabase = {
 				{ npc = "Prigmon", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Harkor at Harkor's Camp, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26884:Harkor} at Harkor's Camp (SE of Drakil'jin Ruins), Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 73.76, y = 34.02, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 78.27, y = 53.98, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -883891,7 +884080,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 5 Mature Stag Horns to Tormak the Scarred at Camp Oneqwah." },
 			descriptionQuestText = { "A recent hunting expedition brought back more than just game. They encountered a wounded dwarf fleeing the iron dwarf stronghold of Dun Argol. He may have information we can use to strike at our ancient enemy, but before he's of any use to us, we must bring down his fever. The horns of the silvercoat stags, who roam the nearby forest, have long been used to make healing poultices. If you can bring enough of the horns to me, we'll see if the poultice can bring our 'guest' around." },
 			npcs = {
-				{ npc = "Tormak the Scarred", id = "x99" },
+				{ npc = "Tormak the Scarred", id = 27221 },
 			},
 			-- [1] = {
 				-- description = "! Mature Stag Horn: 1/5 in Grizzly Hills.",
@@ -883954,7 +884143,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to Tormak the Scarred at Camp Oneqwah, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:27221:Tormak the Scarred} at Camp Oneqwah, Grizzly Hills.",
 				-- coordinates = { x = 65.26, y = 47.49, mapID = 116 },
 				-- check = { "12195" },
 				-- neededAmt = { "1" },
@@ -884290,7 +884479,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Tormak the Scarred at Camp Oneqwah, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:27221:Tormak the Scarred} at Camp Oneqwah, Grizzly Hills.",
 				-- coordinates = { x = 65.26, y = 47.51, mapID = 116 },
 				-- check = { "12199" },
 				-- neededAmt = { "1" },
@@ -884431,7 +884620,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring an Overseer's Uniform to Scout Vor'takh at Camp Oneqwah." },
 			descriptionQuestText = { "It sounds like this Loken is the mastermind behind the sudden preparations for war on the part of the iron dwarves. Only the highest ranking irons are likely to have access to him, so we'll have to make you into an overseer to find out what's going on in there. I have a plan, for that, but we'll need some supplies. Find one of the iron rune overseers at Dun Argol, to the southeast, kill him, and bring back his uniform." },
 			npcs = {
-				{ npc = "Scout Vor'takh", id = "x99" },
+				{ npc = "Scout Vor'takh", id = 26666 },
 			},
 			-- [1] = {
 				-- description = "! Kill Iron Rune Overseer and loot 1 Overseer's Uniform: 1/1, from its body, at Dun Argol, Grizzly Hills.",
@@ -884446,7 +884635,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Scout Vor'takh at Camp Oneqwah, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26666:Scout Vor'takh} at Camp Oneqwah, Grizzly Hills.",
 				-- coordinates = { x = 65.16, y = 47.67, mapID = 116 },
 				-- check = { "12201" },
 				-- neededAmt = { "1" },
@@ -884464,7 +884653,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use Rokar's Camera to record the images of 8 Iron Dwarves in Dun Argol, then return to Scout Vor'takh at Camp Oneqwah." },
 			descriptionQuestText = { "Now we have to finish the job of making you as repulsive as those iron dwarves. The best way to do that is to base your disguise on the ugly mugs of real iron dwarves. When Tormak's hunting party discovered that wayward prospector, they took the camera he carried. Now, I suppose, we'll get the chance to use it. Take it with you to Dun Argol, kill some iron dwarves, and record their likenesses in this device. Bring it back once you have enough examples." },
 			npcs = {
-				{ npc = "Scout Vor'takh", id = "x99" },
+				{ npc = "Scout Vor'takh", id = 26666 },
 			},
 			-- [1] = {
 				-- description = "! Iron Dwarf Images Captured: 1/8 in Dun Argol, Grizzly Hills.",
@@ -884563,7 +884752,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [9] = {
-				-- description = "Turn in the quest to Scout Vor'takh at Camp Oneqwah, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26666:Scout Vor'takh} at Camp Oneqwah, Grizzly Hills.",
 				-- coordinates = { x = 65.16, y = 47.67, mapID = 116 },
 				-- check = { "12202" },
 				-- neededAmt = { "1" },
@@ -884581,7 +884770,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Disguise yourself as an Iron Rune Overseer, intercept the message from Loken, then report to Scout Vor'takh at Camp Oneqwah." },
 			descriptionQuestText = { "I've created everything else you'll need for your overseer disguise kit. Try not to retch when you put it on. I took pains to make it as true to reality as possible. Take the kit with you southeast to Dun Argol, use it to disguise yourself, then go to the easternmost building on the broad middle tier of the city. There, you should see a pedestal where the thane and overseers receive their orders from this Loken. Activate it while disguised and learn all you can from the communication." },
 			npcs = {
-				{ npc = "Scout Vor'takh", id = "x99" },
+				{ npc = "Scout Vor'takh", id = 26666 },
 			},
 			-- [1] = {
 				-- description = "! Message from Loken received: 1/1 in Dun Argol, Grizzly Hills.",
@@ -884596,7 +884785,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Scout Vor'takh at Camp Oneqwah, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26666:Scout Vor'takh} at Camp Oneqwah, Grizzly Hills.",
 				-- coordinates = { x = 65.16, y = 47.67, mapID = 116 },
 				-- check = { "12203" },
 				-- neededAmt = { "1" },
@@ -884614,10 +884803,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Hugh Glass and Gavrock about Loken, then report your findings to Scout Vor'takh at Camp Oneqwah." },
 			descriptionQuestText = { "The iron dwarves stand as one of the fiercest and most coordinated foes in Northrend. Wherever we have traveled, they have battled us with the name of Loken on their lips. We must learn who this Loken is and what he seeks. The locals may be of help. To the northeast, at the Redwood Trading Post, a human named Hugh Glass peddles his wares. Further east, at the Ruins of Tethys, you'll find a stone giant named Gavrock. Ask them about this Loken. They've got to know something of use." },
 			npcs = {
-				{ npc = "Scout Vor'takh", id = "x99" },
+				{ npc = "Scout Vor'takh", id = 26666 },
 			},
 			-- [1] = {
-				-- description = "! Hugh Glass Questioned: 1/1 in Redwood Trading Post, Grizzly Hills.",
+				-- description = "! {npc:26484:Hugh Glass} Questioned: 1/1 in Redwood Trading Post, Grizzly Hills.",
 				-- coordinates = { x = 69.06, y = 40.11, mapID = 116 },
 				-- check = { "12204" },
 				-- neededAmt = { "1" },
@@ -884641,7 +884830,7 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [3] = {
-				-- description = "Turn in the quest to Scout Vor'takh at Camp Oneqwah, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26666:Scout Vor'takh} at Camp Oneqwah, Grizzly Hills.",
 				-- coordinates = { x = 65.17, y = 47.66, mapID = 116 },
 				-- check = { "12204" },
 				-- neededAmt = { "1" },
@@ -889380,7 +889569,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 6 Northern Salmon to Hugh Glass at the Redwood Trading Post." },
 			descriptionQuestText = { "Thank goodness you're back, Limpy! I worried that Griselda and I were going to be all alone. I'm cooking up some food here for us, but Griselda'll have none of it. She's fond of the fish that live off the coast of the Eastwind Shore, to the east. Can't stand them myself, but she's always been a picky eater. Six good-sized fish ought to keep her happy for a while. Now, run... err... limp along, Joe. Wouldn't want to keep the girl waiting, would ya?" },
 			npcs = {
-				{ npc = "Hugh Glass", id = "x99" },
+				{ npc = "Hugh Glass", id = 26484 },
 			},
 			[1] = {
 				description = "Dismount and use the {item:37542:Fishing Net} to collect |cFFffcc336|r {item:37501:Northern Salmon} (from the glittering pools of fish) in Grizzly Hills.",
@@ -889455,7 +889644,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[7] = {
-				description = "Turn in the quest to Hugh Glass at the Redwood Trading Post, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26484:Hugh Glass} at the Redwood Trading Post, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 69.10, y = 40.10, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 76.97, y = 55.68, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -890156,7 +890345,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Surveyor Hansen, just north of the Forgotten Shore, has asked you to slay 20 Forgotten ghosts." },
 			descriptionQuestText = { "It's time for Venomspite to expand! We'll take care of the Onslaught in due time, but I want you to spearhead our efforts on the Forgotten Shore. The property value has outstanding potential and just look at that view! Unfortunately, there's an infestation of human ghosts, shipwrecked crews and the like who haven't quite realized that they're dead. Clear the beach and the waters off the shore, and maybe you and I will talk about building a cozy, new mausoleum down there soon." },
 			npcs = {
-				{ npc = "Surveyor Hansen", id = "x99" },
+				{ npc = "Surveyor Hansen", id = 32599 },
 			},
 			-- [1] = {
 				-- description = "! Forgotten ghosts slain: 1/20 in The Forgotten Shore, Dragonblight.",
@@ -890375,7 +890564,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [19] = {
-				-- description = "Turn in the quest to Surveyor Hansen at Dragonblight.",
+				-- description = "Turn in the quest to {npc:32599:Surveyor Hansen} at Dragonblight.",
 				-- coordinates = { x = 79.34, y = 65.05, mapID = 115 },
 				-- check = { "12304" },
 				-- neededAmt = { "1" },
@@ -891107,7 +891296,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Conqueror Krenna in Conquest Hold wants you to slay 8 Silverbrook Hunters and their leader, Vladek, at the Forest's Edge Post." },
 			descriptionQuestText = { "If there is one thing I can get through your head, let it be this: the Alliance will be crushed in the Grizzly Hills. There is far too much lumber, ore, game and strategic territory for us to give up on any single battlefront here. So far we've been successful... but there's something that could tip the scales in our enemy's favor. Far to the east of here, at the Forest Edge's Post, local trappers seek to join the Alliance. Slaughter them before they have the chance to do so." },
 			npcs = {
-				{ npc = "Conqueror Krenna", id = "x99" },
+				{ npc = "Conqueror Krenna", id = 26860 },
 			},
 			-- [1] = {
 				-- description = "! Vladek slain: 1/1 in Forest's Edge Post, Grizzly Hills.",
@@ -891206,7 +891395,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [9] = {
-				-- description = "Turn in the quest to Conqueror Krenna at Conquest Hold, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26860:Conqueror Krenna} at Conquest Hold, Grizzly Hills.",
 				-- coordinateHotspots = {
 					-- { x = 20.70, y = 64.17, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 63.48, y = 62.38, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -891230,7 +891419,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Conqueror Krenna at Conquest Hold wants you to slay 8 Silverbrook Defenders in the Silverbrook Hills." },
 			descriptionQuestText = { "A few hours ago, the trappers were nothing but peasants threatening to add their number to the Alliance's. Now they've become something else... an uncertainty. I do not like uncertainties. Go to the hills outside their main town in northern Grizzly Hills, Silverbrook, and help my men crush them." },
 			npcs = {
-				{ npc = "Conqueror Krenna", id = "x99" },
+				{ npc = "Conqueror Krenna", id = 26860 },
 			},
 			-- [1] = {
 				-- description = "! Silverbrook Defender slain: 1/8 in Silverbrook Hills, Grizzly Hills.",
@@ -891317,7 +891506,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [8] = {
-				-- description = "Turn in the quest to Conqueror Krenna at Conquest Hold, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26860:Conqueror Krenna} at Conquest Hold, Grizzly Hills.",
 				-- coordinateHotspots = {
 					-- { x = 20.70, y = 64.17, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 63.48, y = 62.38, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -891596,7 +891785,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Scare 15 Highland Mustangs and return to Soulok Stormfury at Camp Oneqwah." },
 			descriptionQuestText = { "The Alliance's 'Westfall Brigade' is camped far to the north, near Thor Modan. They have foolishly divided their forces to contest our control of Venture Bay, and they have been left without cavalry. They're now trying to capture and tame the wild highland mustangs that roam the area around the Westfall Brigade Encampment and Boulder Hills. We must stop them before they're able to replace their lost mounts. Take this and throw it near the horses to drive them away." },
 			npcs = {
-				{ npc = "Soulok Stormfury", id = "x99" },
+				{ npc = "Soulok Stormfury", id = 26944 },
 			},
 			-- [1] = {
 				-- description = "! Highland Mustangs Frightened: 1/15 in Grizzly Hills.",
@@ -891659,7 +891848,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to Soulok Stormfury at Camp Oneqwah, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26944:Soulok Stormfury} at Camp Oneqwah, Grizzly Hills.",
 				-- coordinates = { x = 65.01, y = 47.88, mapID = 116 },
 				-- check = { "12415" },
 				-- neededAmt = { "1" },
@@ -892053,7 +892242,7 @@ RQEDatabase = {
 			descriptionQuestText = { "From what you can gather, this journal was written by a denizen of Silverbrook named Mikhail. It is written in some variant of the common human tongue. Perhaps you should bring this back to Conqueror Krenna." },
 			npc = { "" },
 			[1] = {
-				description = "Turn in the quest to Conqueror Krenna at Conquest Hold, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26860:Conqueror Krenna} at Conquest Hold, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 20.70, y = 64.17, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.48, y = 62.38, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -892077,7 +892266,7 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
 			npcs = {
-				{ npc = "Conqueror Krenna", id = "x99" },
+				{ npc = "Conqueror Krenna", id = 26860 },
 			},
 			-- [1] = {
 				-- description = "! Mikhail's Journal: 1/1 in Conquest Hold, Grizzly Hills.",
@@ -892326,7 +892515,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Provisioner Lorkran at Conquest Hold wants you to obtain 5 Succulent Venison from the nearby Tallhorn Stag." },
 			descriptionQuestText = { "Hail, CLASS. You'll find that here at Conquest Hold, we buy and sell what Krenna wants us to buy and sell... at the price that Krenna wants us to buy and sell. All this is stifling business. I'm hoping to make a little bit of coin on the side and feed our grunts at the same time. Why don't you go hunt down some stag and bring me the venison? They're numerous in the area, so bring me only the best meat." },
 			npcs = {
-				{ npc = "Provisioner Lorkran", id = "x99" },
+				{ npc = "Provisioner Lorkran", id = 26868 },
 			},
 			-- [1] = {
 				-- description = "! Kill Tallhorn Stag and loot 5 Succulent Venison: 1/5, from their bodies, at Grizzly Hills.",
@@ -892389,7 +892578,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to Provisioner Lorkran at The Conquest Pit, Grizzly Hills.",
+				-- description = "Turn in the quest to {npc:26868:Provisioner Lorkran} at The Conquest Pit, Grizzly Hills.",
 				-- coordinates = { x = 22.67, y = 66.17, mapID = 116 },
 				-- check = { "12436" },
 				-- neededAmt = { "1" },
@@ -892947,7 +893136,7 @@ RQEDatabase = {
 				{ npc = "Sergeant Nazgrim", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Scout Vor'takh at Camp Oneqwah, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26666:Scout Vor'takh} at Camp Oneqwah, Grizzly Hills.",
 				coordinates = { x = 65.16, y = 47.67, mapID = 116 },
 				check = { "12451" },
 				neededAmt = { "1" },
@@ -893061,7 +893250,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Nishera the Garden Keeper at the Emerald Dragonshrine has asked you to slay 5 Emerald Skytalons." },
 			descriptionQuestText = { "Ysera sleeps in the Emerald Dream, watching over both the Dream and Azeroth. But a horrible nightmare has taken hold in the Dream, and now I fear that Ysera is being affected by it. Recently, I asked her to aid in the fight against the Scourge that are raising frostwyrms at the other dragonshrines. She misunderstood. Instead, she told our dragonshrine's defenders to treat those not of the green dragonflight as enemies. I need you to slay some of the skytalons. The shrine must regain its balance." },
 			npcs = {
-				{ npc = "Nishera the Garden Keeper", id = "x99" },
+				{ npc = "Nishera the Garden Keeper", id = 27255 },
 			},
 			[1] = {
 				description = "Kill 5 Emerald Skytalon in Emerald Dragonshrine, Dragonblight.",
@@ -893079,7 +893268,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Nishera the Garden Keeper at the Emerald Dragonshrine, Dragonblight (this mob patrols on the path within the dragonshrine).",
+				description = "Turn in the quest to {npc:27255:Nishera the Garden Keeper} at the Emerald Dragonshrine, Dragonblight (this mob patrols on the path within the dragonshrine).",
 				coordinateHotspots = {
 					{ x = 63.76, y = 71.91, mapID = 115, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 51.55, y = 65.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -893142,7 +893331,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Nishera the Garden Keeper at the Emerald Dragonshrine has asked you to acquire The Plume of Alystros." },
 			descriptionQuestText = { "I can feel that the shrine is not completely back in balance. The verdant keeper has been angered by our actions, and I sense that he will not listen to reason. Alystros is an immense skytalon who perches at the south end of the Emerald Dragonshrine. It is he who is in charge of the dragonshrine's aerial defenses. I fear that we will have to deal with him. Take these skytalon molts and place them on the ground where he can see them. He will come. Bring me his plume." },
 			npcs = {
-				{ npc = "Nishera the Garden Keeper", id = "x99" },
+				{ npc = "Nishera the Garden Keeper", id = 27255 },
 			},
 			[1] = {
 				description = "Use the {item:37881:Skytalon Molts} and then kill/loot {item:37880:The Plume of Alystros}, from its body, at the Emerald Dragonshrine, Dragonblight.",
@@ -893160,7 +893349,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Nishera the Garden Keeper at the Emerald Dragonshrine, Dragonblight (this mob patrols on the path within the dragonshrine).",
+				description = "Turn in the quest to {npc:27255:Nishera the Garden Keeper} at the Emerald Dragonshrine, Dragonblight (this mob patrols on the path within the dragonshrine).",
 				coordinateHotspots = {
 					{ x = 63.76, y = 71.91, mapID = 115, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 51.55, y = 65.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -893761,7 +893950,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak to Sergeant Nazgrim in Conquest Hold." },
 			descriptionQuestText = { "The Horde is a magnificent war machine and you are nothing but a cog. I am in charge of securing fuel for this machine. If I fail, the machine fails. Lumber, ore, water... it's all here and we want it. And so does the Alliance. Before we can move against the human scum, we need to solidify our control over the western region. Speak to Sergeant Nazgrim about eradicating the vrykul in Voldrune and then maybe - if you turn out to not be a complete failure - we'll send you on further tasks." },
 			npcs = {
-				{ npc = "Conqueror Krenna", id = "x99" },
+				{ npc = "Conqueror Krenna", id = 26860 },
 			},
 			[1] = {
 				description = "Turn in the quest to Sergeant Nazgrim at Conquest Hold, Grizzly Hills.",
@@ -893862,7 +894051,7 @@ RQEDatabase = {
 				{ npc = "Captured Tuskarr Prisoner", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Karuk at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
+				description = "Turn in the quest to {npc:25435:Karuk} at Riplash Strand (SW of Valiance Keep), Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 47.13, y = 75.50, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.75, y = 72.52, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -894604,7 +894793,7 @@ RQEDatabase = {
 				{ npc = "High Executor Wroth", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Conqueror Krenna at Conquest Hold, Grizzly Hills.",
+				description = "Turn in the quest to {npc:26860:Conqueror Krenna} at Conquest Hold, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 20.70, y = 64.17, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.48, y = 62.38, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -894879,7 +895068,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Falstaav has tasked you with the destruction of any 10 Scourge in the courtyard at The Argent Stand." },
 			descriptionQuestText = { "Despite our substantial successes in the lower third of Zul'Drak, we must still face the onslaught of the Scourge. Such is the way in this frigid hell. The attacks are unrelenting, yet my men need rest. If you are willing, we could use your aid in reinforcing them. Below in the courtyard you'll find no end to the fighting. Dispatch the Scourge there with all the zeal you can muster, CLASS." },
 			npcs = {
-				{ npc = "Commander Falstaav", id = "x99" },
+				{ npc = "Commander Falstaav", id = 28059 },
 			},
 			[1] = {
 				description = "Kill 10 Scourge in the courtyard at The Argent Stand, Zul'Drak.",
@@ -894902,7 +895091,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Commander Falstaav at The Argent Stand, Zul'Drak.",
+				description = "Turn in the quest to {npc:28059:Commander Falstaav} at The Argent Stand, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 39.43, y = 66.95, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.45, y = 45.12, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -894968,7 +895157,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Kunz has asked you to deliver the New Deployment Orders to Sergeant Stackhammer at the Altar of Sseratus." },
 			descriptionQuestText = { "CLASS, you're here to help, right? I've got new orders for our forces that are currently deployed at the Drakkari altar to the north. You can't miss it. Just head straight up the avenue. Sergeant Stackhammer shouldn't be hard to find." },
 			npcs = {
-				{ npc = "Commander Kunz", id = "x99" },
+				{ npc = "Commander Kunz", id = 28039 },
 			},
 			[1] = {
 				description = "Turn in the quest to Sergeant Stackhammer at the Altar of Sseratus, Zul'Drak",
@@ -894995,7 +895184,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Hexxer Ubungo at The Argent Stand has asked you to investigate the main altar building at the Altar of Sseratus." },
 			descriptionQuestText = { "There's trouble at the altar of the snake god. The presence of the Scourge has weakened the land, CLASS. This in turn has weakened the wild gods. We know that the Drakkari are taking advantage of this to do evil things to the gods. I need you to be my eyes and ears. The Altar of Sseratus is at the end of the avenue to the north. Sneak around the back and get a look inside of the main altar building. Whatever you do, avoid the prophet at all costs!" },
 			npcs = {
-				{ npc = "Hexxer Ubungo", id = "x99" },
+				{ npc = "Hexxer Ubungo", id = 28062 },
 			},
 			[1] = {
 				description = "Main building at the Altar of Sseratus investigated (by going inside) at the Altar of Sseratus, Zul'Drak.",
@@ -895010,7 +895199,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Hexxer Ubungo at The Argent Stand, Zul'Drak.",
+				description = "Turn in the quest to {npc:28062:Hexxer Ubungo} at The Argent Stand, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 40.53, y = 65.59, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.75, y = 44.76, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895033,9 +895222,13 @@ RQEDatabase = {
 			},
 			objectivesQuestText = { "Deliver the Strange Mojo to Hexxer Ubungo at The Argent Stand." },
 			descriptionQuestText = { "This bottle of strange mojo may be the key to what is truly going on here. The Zandalari troll Hexxer Ubungo, back at The Argent Stand, may want to take a look at it." },
-			npc = { "" },
+			npcs = {
+				{ npc = "Champion of Sseratus", id = 28036, hostile = true },
+				{ npc = "Priest of Sseratus", id = 28035, hostile = true },
+				{ npc = "Drakkari Snake Handler", id = 28034, hostile = true },
+			},
 			[1] = {
-				description = "Turn in the quest to Hexxer Ubungo at The Argent Stand, Zul'Drak.",
+				description = "Turn in the quest to {npc:28062:Hexxer Ubungo} at The Argent Stand, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 40.53, y = 65.59, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.75, y = 44.76, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895103,7 +895296,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Hexxer Ubungo at The Argent Stand wants you to acquire 3 Precious Elemental Fluids." },
 			descriptionQuestText = { "<The hexxer examines the decanter of mojo.> I have an idea for how to deal with the prophet of Sseratus. But first, we're going to need some things. The Drak'Sotra Fields are directly to the south. Because of the stresses on the land from the Scourge and the deaths of gods, the wall between worlds has weakened and the elementals are flooding in. We need the precious fluids of their lords. If you combine three links from the elementals a tether will be made, and one of their lords can be summoned." },
 			npcs = {
-				{ npc = "Hexxer Ubungo", id = "x99" },
+				{ npc = "Hexxer Ubungo", id = 28062 },
 			},
 			[1] = {
 				description = "Kill Crazed Water Spirit (water elementals) and collect |cFFffcc333|r {item:38323:Water Elemental Links} (you will need 3 to convert into {item:38324:Tether to the Plane of Water}) around the Drak'Sotra Fields, Zul'Drak.",
@@ -895343,7 +895536,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[16] = {
-				description = "Turn in the quest to Hexxer Ubungo at The Argent Stand, Zul'Drak.",
+				description = "Turn in the quest to {npc:28062:Hexxer Ubungo} at The Argent Stand, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 40.53, y = 65.59, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.75, y = 44.76, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895394,7 +895587,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Dr. Rogers at Drak'Sotra wants you to find Crusader Lamoof, Crusader Jonathan, and Crusader Josephine. Use the Crusader's Bandage on them, and escort them safely back to him." },
 			descriptionQuestText = { "Ahh, good. They sent someone. Listen, CLASS. We need a hand here. Our forces were pushed back and we've lost Drak'Sotra to the Scourge. Where they came from is anyone's guess.... The point is, we need every man we can get here, and some of our best have yet to return from battle. I need you to enter the ruins now that the fighting has died down and find our wounded, patch them up, and bring them here to me. Scour Drak'Sotra! They couldn't have gone far." },
 			npcs = {
-				{ npc = "Dr. Rogers", id = "x99" },
+				{ npc = "Dr. Rogers", id = 28125 },
 			},
 			[1] = {
 				description = "Use the {item:38330:Crusader's Bandage} and |cFF00ff00(escort Crusader Jonathan back to Rogers @|r {coords:58.2,72.4,121;waypointTitle:\"Escort Crusader Jonathan back to Rogers\"}) to rescue him at Drak'Sotra, Zul'Drak.",
@@ -895442,7 +895635,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[4] = {
-				description = "Turn in the quest to Dr. Rogers at Drak'Sotra, Zul'Drak.",
+				description = "Turn in the quest to {npc:28125:Dr. Rogers} at Drak'Sotra, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 58.67, y = 72.50, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 70.56, y = 46.58, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895466,7 +895659,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Muddlecap Fungus and deliver them to Hexxer Ubungo at The Argent Stand." },
 			descriptionQuestText = { "Now what we need is something to spike the mojo with. Something that'll make it so that when the prophet drinks it, he'll become less powerful. Drak'Agal lies to the east. There's a mushroom there that the natives call muddlecap fungus. I think it's exactly what we need. Bring back lots of them. When we mix them into the mojo, the mind of anyone who drinks it will become muddled." },
 			npcs = {
-				{ npc = "Hexxer Ubungo", id = "x99" },
+				{ npc = "Hexxer Ubungo", id = 28062 },
 			},
 			[1] = {
 				description = "Collect |cFFffcc3310|r {item:38326:Muddlecap Fungus}, from the ground, around Drak'Agal, Zul'Drak.",
@@ -895589,7 +895782,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[11] = {
-				description = "Turn in the quest to Hexxer Ubungo at The Argent Stand, Zul'Drak.",
+				description = "Turn in the quest to {npc:28062:Hexxer Ubungo} at The Argent Stand, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 40.53, y = 65.59, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.75, y = 44.76, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895613,7 +895806,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay the Muddled Prophet of Sseratus and then return to Hexxer Ubungo at The Argent Stand." },
 			descriptionQuestText = { "There. I've modified the mojo. Now when the prophet drinks it, not only will he lose some of his power, his mind will also be addled by the effects of the fungus. At least that's the theory. As for how to get him to drink it, might I suggest you simply throw it at him? No doubt he'll catch and drink it given the arrogance that he's displayed at the altar. Unless you can kill him, CLASS, your Argent Crusade is about to come to a terrible end." },
 			npcs = {
-				{ npc = "Hexxer Ubungo", id = "x99" },
+				{ npc = "Hexxer Ubungo", id = 28062 },
 			},
 			[1] = {
 				description = "Use the {item:38332:Modified Mojo} on the Prophet of Sseratus and then kill it at the Altar of Sseratus, Zul'Drak.",
@@ -895632,7 +895825,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Hexxer Ubungo at The Argent Stand, Zul'Drak.",
+				description = "Turn in the quest to {npc:28062:Hexxer Ubungo} at The Argent Stand, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 40.53, y = 65.59, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.75, y = 44.76, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895700,7 +895893,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Talk to Archmage Pentarus when you're ready to leave for Sholazar Basin. When you arrive, speak with Monte Muzzleshot in the Wildgrowth Mangal of Sholazar Basin." },
 			descriptionQuestText = { "When I heard that the legendary Hemet Nesingwary was setting sail for the Sholazar Basin, I offered to help fund his expedition. We know little of Sholazar, but it's said to be a lush paradise in the midst of this frozen continent. Hemet has agreed to send back samples of exotic plants, reagents, and crystals. There hasn't been any word from him. Monte Muzzleshot was supposed to be bringing them supplies, but he hasn't returned, either. If you'll look into it, I'll send you in my flying machine." },
 			npcs = {
-				{ npc = "Sky-Reaver Klum", id = "x99" },
+				{ npc = "Archmage Pentarus", id = 28160 },
 			},
 			[1] = {
 				description = "Speak with Archmage Pentarus and select \"I'm ready to fly to Sholazar Basin\" to get transport to Sholazar Basin.",
@@ -895737,7 +895930,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Weslex Quickwrench at the Nesingwary Base Camp wants you to bring him a Flying Machine Engine." },
 			descriptionQuestText = { "She's ruined... ruined! I told that captain to be careful with such a precious cargo, but would she listen to me? No! When the ship ran aground, it damaged my flying machine, the Spirit of Gnomeregan. Now, we're left without any means to send our reports! There is a chance, though, that the Venture Company's antics may work in our favor. They shot down another flying machine right about where Monte parachuted into the swamp to the east. Go there and retrieve the engine. It may be our only hope." },
 			npcs = {
-				{ npc = "Weslex Quickwrench", id = "x99" },
+				{ npc = "Weslex Quickwrench", id = 28033 },
 			},
 			[1] = {
 				description = "Collect the {item:38334:Flying Machine Engine} from within Wildgrowth Mangal, Sholazar Basin.",
@@ -895752,7 +895945,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Weslex Quickwrench at the Nesingwary Base Camp, Sholazar Basin.",
+				description = "Turn in the quest to {npc:28033:Weslex Quickwrench} at the Nesingwary Base Camp, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 25.35, y = 58.48, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.90, y = 43.92, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895776,7 +895969,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 7 Venture Co. Spare Parts to Weslex Quickwrench at the Nesingwary Base Camp." },
 			descriptionQuestText = { "Great, now that we've got an engine, we're going to need an assortment of other parts to get her back in flying condition. Don't worry, I know what I'm doing. A good mechanic can hold his creations together with anything, but we're better off if it doesn't come to that. Anyway, those Venture Company dullards have plenty of spare parts for their mining equipment all over Swindlegrin's Dig on the far side of that yellow crystal pillar to the northeast. Scoop up a few and bring them back here." },
 			npcs = {
-				{ npc = "Weslex Quickwrench", id = "x99" },
+				{ npc = "Weslex Quickwrench", id = 28033 },
 			},
 			[1] = {
 				description = "Collect 7 {item:38349:Venture Co. Spare Parts}, on the ground, at Swindlegrin's Dig, Sholazar Basin.",
@@ -895791,7 +895984,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Weslex Quickwrench at the Nesingwary Base Camp, Sholazar Basin.",
+				description = "Turn in the quest to {npc:28033:Weslex Quickwrench} at the Nesingwary Base Camp, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 25.35, y = 58.48, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.90, y = 43.92, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895815,7 +896008,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Debaar at the Nesingwary Base Camp wants you to kill 15 Venture Company members. You may kill either Venture Co. Ruffians or Venture Co. Excavators." },
 			descriptionQuestText = { "Ever since we arrived, the Venture Company has hampered our efforts to secure our campsite and survey the area. Normally, we wouldn't care what they were up to, but they've started antagonizing our scouts and shooting down supply flights. We can't allow this insult to stand. Hemet Nesingwary's expedition came here to hunt, and hunt it shall. Go to Swindlegrin's Dig, on the far side of the crystal pillar to the northeast, and kill any Venture Company employee you see!" },
 			npcs = {
-				{ npc = "Debaar", id = "x99" },
+				{ npc = "Debaar", id = 28032 },
 			},
 			[1] = {
 				description = "Kill 15 Venture Company members in Swindlegrin's Dig, Sholazar Basin.",
@@ -895834,7 +896027,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Debaar at Nesingwary's Base Camp, Sholazar Basin.",
+				description = "Turn in the quest to {npc:28032:Debaar} at Nesingwary's Base Camp, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 27.25, y = 59.90, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 21.34, y = 44.25, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -895858,7 +896051,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill Foreman Swindlegrin and Meatpie and return to Debaar at the Nesingwary Base Camp." },
 			descriptionQuestText = { "We must send Foreman Swindlegrin packing if we're going to shut down his mine permanently, but be careful. His bodyguard, Meatpie, is a large, mean ogre, and isn't likely to let you see the foreman without a fight. The two probably occupy a platform that would let them look out over the entire Venture Company operation at Swindlegrin's Dig. Remember, the dig is on the far side of the Suntouched Pillar to the northeast. Good luck, PLAYER." },
 			npcs = {
-				{ npc = "Debaar", id = "x99" },
+				{ npc = "Debaar", id = 28032 },
 			},
 			[1] = {
 				description = "Kill Foreman Swindlegrin at Swindlegrin's Dig, Sholazar Basin.",
@@ -895893,7 +896086,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Debaar at Nesingwary's Base Camp, Sholazar Basin.",
+				description = "Turn in the quest to {npc:28032:Debaar} at Nesingwary's Base Camp, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 27.25, y = 59.90, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 21.34, y = 44.25, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -896504,7 +896697,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to High-Shaman Rakjak at Frenzyheart Hill as the new \"slave.\"" },
 			descriptionQuestText = { "My kill! You take my kill! <Gekgek taunts you with his spear.> You dumb, CLASS. Now you owe Gekgek! You be Frenzyheart slave. You slay many more beasts for Frenzyheart. You go Frenzyheart Hill to northeast - you tell High-Shaman Rakjak you the new slave. Go, CLASS! Go or I taunt you a second time! <Gekgek waves his spear around menacingly.>" },
 			npcs = {
-				{ npc = "Tracker Gekgek", id = "x99" },
+				{ npc = "Tracker Gekgek", id = 28095 },
 			},
 			[1] = {
 				description = "Turn in the quest to High-Shaman Rakjak at Frenzyheart Hill, Sholazar Basin.",
@@ -897482,7 +897675,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Go to the Avalanche in Sholazar Basin and use the Omega Rune to deploy Etymidian. Use him to slay 200 Scourge Minions, Bythius the Flesh-Shaper, Urgreth of the Thousand Tombs and Hailscorn. Speak to the Avatar of Freya in Sholazar Basin when you've completed this task." },
 			descriptionQuestText = { "It is time, PLAYER. The Etymidian is one of the most destructive forces ever created by the titans and I am loathe to unleash him in my lands. There is little choice, however. Our enemies have forced my hand and the fury of the titans will cleanse all." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Travel to The Avalanche, Sholazar Basin and use the {item:38709:Omega Rune} (in your inventory) to take control of Etymidian.",
@@ -897574,7 +897767,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[6] = {
-				description = "Exit the Etymidian to leave the unit and fly back to turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Exit the Etymidian to leave the unit and fly back to turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -897640,7 +897833,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Go through the Waygate in the southern end of Sholazar Basin and look for the weapon known as the Etymidian on the other side." },
 			descriptionQuestText = { "It is time, PLAYER. The Waygate has been activated for the first time in seven centuries. Use it to travel to where our final hope lies. Let us put an end to those who would seek to bring the taint of undeath to this pristine land. Let us unleash the Etymidian." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Travel to and through the Waygate SE of The Mosslight Pillar, Sholazar Basin.",
@@ -897761,7 +897954,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill 15 Mangal Crocolisks and return to Debaar at the Nesingwary Encampment." },
 			descriptionQuestText = { "I warn you, stranger -- do not make any comments about crashing the ship. I already get enough of it from the rest of the expedition. If you're looking to try your hand at hunting, though, you should test your skills against the wily mangal crocolisks. They live all along the river to the south, and in the Wildgrowth Mangal to the east. Prove you can hold your own against them and we'll talk again, CLASS." },
 			npcs = {
-				{ npc = "Debaar", id = "x99" },
+				{ npc = "Debaar", id = 28032 },
 			},
 			[1] = {
 				description = "Kill 15 Mangal Crocolisks around Sholazar Basin.",
@@ -897779,7 +897972,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Debaar at Nesingwary's Base Camp, Sholazar Basin.",
+				description = "Turn in the quest to {npc:28032:Debaar} at Nesingwary's Base Camp, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 27.25, y = 59.90, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 21.34, y = 44.25, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -898190,7 +898383,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Avatar of Freya at the Rainspeaker Rapids wants you to go to the Makers' Perch and use the Activation Switch Gamma." },
 			descriptionQuestText = { "It is time then. Let us activate the waygate. You will find the first switch inside the Makers' Perch in the western edge of the basin. Beware, PLAYER. The titans used the perch to watch over their creations. Many of their stone servants still guard the place." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Press the \"Activation Switch Gamma,\" inside the building built into the hill, at The Makers' Perch, Sholazar Basin.",
@@ -898205,7 +898398,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -898229,7 +898422,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 5 Sandfern fronds to Debaar at the Nesingwary Base Camp." },
 			descriptionQuestText = { "The mangal crocolisk is a master of the ambush, and I intend to beat the best at his game. To do that, we'll need to construct a convincing camouflage for you. We'll use plants that grow in the sandy soil of the riverbanks and lake beaches. The sandfern is best for this purpose. It grows in the sandy areas near the shores of the Seabreach Flow, just to the south, Bittertide Lake and Bittertide Falls, to the north, and the edges of River's Heart, the large lake beyond the mangal to the east." },
 			npcs = {
-				{ npc = "Debaar", id = "x99" },
+				{ npc = "Debaar", id = 28032 },
 			},
 			[1] = {
 				description = "Collect 5 {item:38553:Sandfern} around River's Heart, Sholazar Basin.",
@@ -898247,7 +898440,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Debaar at Nesingwary's Base Camp, Sholazar Basin.",
+				description = "Turn in the quest to {npc:28032:Debaar} at Nesingwary's Base Camp, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 27.25, y = 59.90, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 21.34, y = 44.25, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -898271,7 +898464,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain Freya's trust by destroying 6 Blighted Corpses and 10 Bonescythe Ravagers in the Lost Lands." },
 			descriptionQuestText = { "This should never have happened. The forces of undeath storm the very cradle of life! If you're not here to destroy the minions of the Lich King, then leave at once. Do not incur my wrath by distracting me from my duties." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Kill 6 Blighted Corpses in The Lost Lands, Sholazar Basin.",
@@ -898306,7 +898499,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -898372,7 +898565,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Hexxer Ubungo at The Argent Stand wants you to present 10 Drakkari Offerings to the statue of Zim'Abwa." },
 			descriptionQuestText = { "I am heartened to see the zeal with which your Argent Crusade is dealing with the Scourge, CLASS. I would like to help with your efforts. The Drakkari trolls of this once-great city used to make regular offerings to their gods, but now neglect them, or worse. If you were to make offerings to the gods, they would show their appreciation in return. Zim'Abwa's statue is just to the southwest. Zim'Abwa would gladly accept your offerings of Drakkari artifacts as a sign that you are protecting Zul'Drak." },
 			npcs = {
-				{ npc = "Hexxer Ubungo", id = "x99" },
+				{ npc = "Hexxer Ubungo", id = 28062 },
 			},
 			[1] = {
 				description = "Collect 10 {item:38551:Drakkari Offerings} from mobs around Zul'Drak.",
@@ -898461,7 +898654,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring Bushwhacker's Jaw to Debaar at the Nesingwary Base Camp." },
 			descriptionQuestText = { "The largest crocolisk in the basin, known around here as \"Bushwhacker\" for his ambush prowess, likes to sun himself in the shallow waters of River's Heart. It's the large lake at the basin's center, and is to the east of our camp. I want you to take the camouflage I've prepared and hide on the western beach of River's Heart and ambush Bushwhacker when he shows himself. Bring back his mighty jaws if you are able to overcome him." },
 			npcs = {
-				{ npc = "Debaar", id = "x99" },
+				{ npc = "Debaar", id = 28032 },
 			},
 			[1] = {
 				description = "Use the {item:38564:Sandfern Disguise} on the log at River's Heart, Sholazar Basin.",
@@ -898491,7 +898684,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Debaar at Nesingwary's Base Camp, Sholazar Basin.",
+				description = "Turn in the quest to {npc:28032:Debaar} at Nesingwary's Base Camp, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 27.25, y = 59.90, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 21.34, y = 44.25, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -899386,7 +899579,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Kunz at the Argent Stand wants you to visit the four Argent Crusade posts, follow their captain's orders, and then return and report to him. Captain Brandon and Captain Rupert are posted at Drak'Sotra, Captain Grondel is posted in Drak'Agal, and Alchemist Finklestein is posted in Heb'valok." },
 			descriptionQuestText = { "Unsheathe that weapon, RACE. It's time to go on patrol! I've got four posts under my command and it's crucial to our success that they remain in our control. I'm ordering you to visit each of them and offer your assistance. You can begin with Captain Brandon southeast of here. He'll direct you to the next post when he's finished with you. Report back to me once you've assisted each of my men. And remember, you'll be more richly rewarded for returning to me quickly - so double-time it! Dismissed!" },
 			npcs = {
-				{ npc = "Commander Kunz", id = "x99" },
+				{ npc = "Commander Kunz", id = 28039 },
 			},
 			[1] = {
 				description = "Complete the task quest from Alchemist Finklestein's Task at Heb'Valok, Zul'Drak.",
@@ -899461,7 +899654,7 @@ RQEDatabase = {
 				objectiveIndex = 4,
 			},
 			[5] = {
-				description = "Turn in the quest to Commander Kunz at The Argent Stand, Zul'Drak",
+				description = "Turn in the quest to {npc:28039:Commander Kunz} at The Argent Stand, Zul'Drak",
 				coordinateHotspots = {
 					{ x = 40.27, y = 66.62, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.68, y = 45.03, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -899604,7 +899797,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Kunz at The Argent Stand wants you to visit the four Argent Crusade posts, follow their leaders' orders, and then return and report to him. Captain Brandon and Captain Rupert are posted at Drak'Sotra, Southeast of here. Captain Grondel is posted in Drak'Agal, due east. Alchemist Finklestein is posted in Heb'Valok, to the north." },
 			descriptionQuestText = { "Welcome to The Argent Stand, scrub. I am Commander Kunz, but you - you can call me... Commander. Don't think you're going to just cruise through my region, picking which missions you're going to participate in, answering to no one. Here, you report to me and you follow my orders to the letter. Understood?! First, you're going to get familiar with my men and the region we're charged with clearing. Report to each of them and do as they ask. Return to me when your patrol is done." },
 			npcs = {
-				{ npc = "Commander Kunz", id = "x99" },
+				{ npc = "Commander Kunz", id = 28039 },
 			},
 			[1] = {
 				description = "Complete the task quest from Alchemist Finklestein's Task at Heb'Valok, Zul'Drak.",
@@ -899679,7 +899872,7 @@ RQEDatabase = {
 				objectiveIndex = 4,
 			},
 			[5] = {
-				description = "Turn in the quest to Commander Kunz at The Argent Stand, Zul'Drak",
+				description = "Turn in the quest to {npc:28039:Commander Kunz} at The Argent Stand, Zul'Drak",
 				coordinateHotspots = {
 					{ x = 40.27, y = 66.62, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.68, y = 45.03, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -900103,7 +900296,7 @@ RQEDatabase = {
 				{ npc = "Cultist Corpse", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -900333,7 +900526,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Avatar of Freya wants you to defeat Thalgran Blightbringer by using Freya's Ward to reflect his Deathbolts back to him sevenfold." },
 			descriptionQuestText = { "The agents of the Lich King have foolishly trespassed upon these lands where the power of life rules supreme. All harm they inflict will be returned to them sevenfold. The monster directly responsible for corrupting the land is known as Thalgran Blightbringer; you will find him just to the north of here. Take this ward and use it to reflect the power of death upon him. Show the Scourge that the power of life prevails above all." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Kill Thalgran Blightbringer in The Lost Lands, Sholazar Basin.\n\nUse {item:38657:Freya's Ward} when {spell:51854:Deathbolt} cast used after 1 second\nMove out of {spell:54210:Rain of Fire}\n",
@@ -900351,7 +900544,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -900375,7 +900568,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Travel to the Lifeblood Pillar and look for clues to its destruction." },
 			descriptionQuestText = { "The titans shaped entire life forms here, fostering their unfettered growth. The five crystal pillars that surround the basin emanate pure lifeforce. The Scourge should've never been able to penetrate the basin, but one of the pillars was destroyed. Go to the Lifeblood Pillar and see if you can find out what happened. No undead would've been able to approach the pillar, so keep your eyes out for living intruders. You'll find what remains of the pillar directly south of here." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Turn in the quest to Cultist Corpse at The Lifeblood Pillar, Sholazar Basin.",
@@ -900402,7 +900595,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Avatar of Freya wants you to head to the Makers' Overlook in eastern Sholazar Basin and use the Activation Switch Theta." },
 			descriptionQuestText = { "We cannot stop now, CLASS. You've triggered the first switch, but one remains. The titans constructed a second vantage point where they oversaw their creations. You'll find it to the east, high in the mountains. Pull the activation switch theta inside the overlook and the waygate will open." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Enter the Makers' Overlook (building built into the mountain), Sholazar Basin.",
@@ -900442,7 +900635,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -900540,7 +900733,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Avatar of Freya at the Rainspeaker Rapids wants you to go to the Death's Hand Encampment to the northwest and slay 8 Cultist Infiltrators." },
 			descriptionQuestText = { "I am an embodiment of but one aspect of Freya, daughter of the titans. I am the Lifewarden -- I was left here to protect this land against the threat of the Scourge. I never anticipated the Lich King would send willing living servants to do his work. I could easily crush these cultists myself, but I am all that stands between the undead armies and the rest of the basin. Go, PLAYER. Deliver my wrath to these insolent trespassers." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Kill 8 Cultist Infiltrators in Death's Hand Encampment, Sholazar Basin.",
@@ -900558,7 +900751,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -900604,7 +900797,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Avatar of Freya at the Rainspeaker Rapids wants you to use Freya's Horn atop of the Glimmering Pillar." },
 			descriptionQuestText = { "We were not quick enough, PLAYER. The cultist scum have arrived at the Glimmering Pillar and are making preparations to destroy it, I can sense them. We don't have much time. Blow upon this horn atop the Glimmering Pillar to channel my power through the crystal. We shall show this scum to not trifle with the titans' creations." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Use {item:38684:Freya's Horn} at the top of The Glimmering Pillar, Sholazar Basin.",
@@ -900619,7 +900812,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -900643,7 +900836,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Listen to what the Avatar of Freya has to say." },
 			descriptionQuestText = { "The cultists have been taken care of, but the Scourge's invasion has not slowed down. The situation is becoming desperate, PLAYER. There exists a last resort. Before I reveal any more, however, I must be sure I have your absolute trust." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Speak with Avatar of Freya selecting \"I want to stop the Scourge as much as you do? How can I help?\" at Rainspeaker Rapids, Sholazar Basin.\n\n|cFFFF3333Continue with the subsequent gossip options.|r",
@@ -900661,7 +900854,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -900771,7 +900964,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Witch Doctor Khufu at Zim'Torga." },
 			descriptionQuestText = { "We Zandalari could use your help, PLAYER. We must put an end to what the Drakkari are doing to their gods! To the northeast, up the great steps that lead to the next tier of Zul'Drak, lies Zim'Torga. It is the home to another of the god statues and a refuge that my people are desparately attempting to defend. I would like for you to travel there and speak to Witch Doctor Khufu. Be warned though, the place is under constant attack from the Drakkari." },
 			npcs = {
-				{ npc = "Hexxer Ubungo", id = "x99" },
+				{ npc = "Hexxer Ubungo", id = 28062 },
 			},
 			[1] = {
 				description = "Turn in the quest to Witch Doctor Khufu at Zim'Torga, Zul'Drak.",
@@ -900798,7 +900991,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Look for a Golden Engagement Ring on the various creatures in Sholazar Basin." },
 			descriptionQuestText = { "When I found out that Miss Boulian was helping Nesingwary with his expedition, I signed up as a deckhand immediately. You see, I'd been meaning to marry her for months! I had it all planned out. I was going to propose the very night of the shipwreck... but now the ring is gone. I've searched everywhere! I know it might sound crazy, but I know the engagement ring is in the Basin. If some Venture Company didn't steal it, maybe a wild creature ate it. But it's here somewhere... I just know it!" },
 			npcs = {
-				{ npc = "Chad", id = "x99" },
+				{ npc = "Chad", id = 28497 },
 			},
 			[1] = {
 				description = "Kill/loot creatures around Sholazar Basin until you collect the {item:38642:Golden Engagement Ring}.",
@@ -900816,7 +901009,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Chad at Nesingwary base Camp, Sholazar Basin.",
+				description = "Turn in the quest to {npc:28497:Chad} at Nesingwary base Camp, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 26.86, y = 58.93, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 21.25, y = 44.03, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -902703,7 +902896,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Avatar of Freya wants you to go to the Death's Hand Encampment to the northwest and destroy 4 Unstable Explosives." },
 			descriptionQuestText = { "The Lich King's lackeys have dared to bring weapons of destruction into my domain. I will not stand for this. Go to their outpost to the north and destroy the weapons they would use against the land. We cannot let the Scourge taint another inch of these sacred lands." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Destroy |cFFffcc334|r \"Unstable Explosives\" at Death's Hand Encampment, Sholazar Basin.",
@@ -902758,7 +902951,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[5] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -905019,7 +905212,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Librarian Garren at Amber Ledge wants you to use the Arcanometer at Winterfin Caverns." },
 			descriptionQuestText = { "I need to compile my notes and prepare a presentation for my colleagues in Dalaran. While I do, I must ask that you visit the Winterfin Cavern to the north. You must use the Arcanometer while standing in the mouth of the cavern. Return to me at once when you have the data. My documentation will be incomplete without it." },
 			npcs = {
-				{ npc = "Librarian Garren", id = "x99" },
+				{ npc = "Librarian Garren", id = 25291 },
 			},
 			[1] = {
 				description = "Use the {item:34669:Arcanometer} to take a reading of the Winterfin Cavern (just inside the opening of the cavern or on the rocks that make up the roof of the cave) in Winterfin Caverns, Borean Tundra.",
@@ -905034,7 +905227,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Librarian Garren at Amber Ledge, Borean Tundra.",
+				description = "Turn in the quest to {npc:25291:Librarian Garren} at Amber Ledge, Borean Tundra.",
 				coordinateHotspots = {
 					{ x = 44.98, y = 33.38, mapID = 114, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 20.09, y = 59.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -905159,7 +905352,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Falstaav at The Argent Stand has asked you to equip 10 Argent Crusaders or Argent Shieldmen out in the courtyard with parachutes." },
 			descriptionQuestText = { "Those sky terrors are destroying my men and women! Dying from falling is a horrible way to go. CLASS, you have to get these parachutes out to them! At least then they'll have a fighting chance to survive." },
 			npcs = {
-				{ npc = "Commander Falstaav", id = "x99" },
+				{ npc = "Commander Falstaav", id = 28059 },
 			},
 			[1] = {
 				description = "Use {item:39615:Crusader Parachute} on |cFFffcc3310|r Argent forces at The Argent Stand, Zul'Drak (if they already have a \"Crusader Parachute\" buff, it won't work until after they are lifted off by scourge.",
@@ -905322,7 +905515,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[11] = {
-				description = "Turn in the quest to Commander Falstaav at The Argent Stand, Zul'Drak.",
+				description = "Turn in the quest to {npc:28059:Commander Falstaav} at The Argent Stand, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 39.43, y = 66.95, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 65.45, y = 45.12, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -905343,7 +905536,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Scout Vor'takh wants you to travel to Zul'Drak and report to Sergeant Riannah at Light's Breach. Makki Wintergale in Camp Oneqwah will provide you transportation." },
 			descriptionQuestText = { "As pressing as our needs are here, there's news from the lands to the north that cannot be ignored. I've just received a message from the Argent Crusade. It seems that scourge forces are gathering there and are threatening to overrun Zul'Drak. Needless to say, PLAYER, if that were to happen our struggle here would be meaningless. You must go there and aid the Crusaders in beating back the Lich King's armies. Speak to Makki when you are ready to travel." },
 			npcs = {
-				{ npc = "Scout Vor'takh", id = "x99" },
+				{ npc = "Scout Vor'takh", id = 26666 },
 			},
 			[1] = {
 				description = "Turn in the quest to Sergeant Riannah at Light's Breach, Zul'Drak.",
@@ -905602,7 +905795,9 @@ RQEDatabase = {
 			},
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
-			npc = { "" },
+			npcs = {
+				{ npc = "Commander Kunz", id = 28039 },
+			},
 			[1] = {
 				description = "Turn in the quest to Sergeant Riannah at Light's Breach, Zul'Drak.",
 				coordinateHotspots = {
@@ -905672,7 +905867,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -905809,7 +906004,7 @@ RQEDatabase = {
 				{ npc = "Pilot Vic", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -905875,7 +906070,7 @@ RQEDatabase = {
 			objectivesQuestText = { "The Avatar of Freya wants you to go to the Sundered Shard to the southeast and use the Lifeforce Gem on 8 destroyed Lifeblood Elementals." },
 			descriptionQuestText = { "The Lifeblood Pillar was toppled over with great force, sending the very earth into an upheaval. The elementals that wander the sundered shard carry with them the very life essence that gave the pillar its strength. I cannot allow this energy to be wasted, for only four pillars remain. Head to the sundered shard, to the southeast, and seek the lifeblood elementals. Use this gem on their remains to recover their rampant energy. We'll need the energy to heal the land when all this is over." },
 			npcs = {
-				{ npc = "Avatar of Freya", id = "x99" },
+				{ npc = "Avatar of Freya", id = 27801 },
 			},
 			[1] = {
 				description = "Kill Lifeblood Elemental and use while targeting their dead bodies the {item:40397:Lifeblood Gem}, on their dead bodies, to collect 8 Lifeblood Energy at The Lost Lands, Sholazar Basin.",
@@ -905894,7 +906089,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Avatar of Freya at the Rainspeaker Rapids, Sholazar Basin.",
+				description = "Turn in the quest to {npc:27801:Avatar of Freya} at the Rainspeaker Rapids, Sholazar Basin.",
 				coordinateHotspots = {
 					{ x = 64.55, y = 48.60, mapID = 119, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 29.97, y = 41.64, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906145,7 +906340,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Jeer Sparksocket at K3 would like 10 pieces of Charred Wreckage." },
 			descriptionQuestText = { "To the point... Ricket's asked me to put together some stronger land mines, but I'm running low on parts. Just west of town, you'll find the remains of our last rocket sled... Ricket got a little excited when she was fueling it, but I probably should have thought to not put the nozzle right over the exhaust. Live and learn, eh? There should be a good stock of spare parts scattered around the destroyed sled... why don't you go ahead and chase off those scavengers and nab me some of that wreckage?" },
 			npcs = {
-				{ npc = "Jeer Sparksocket", id = "x99" },
+				{ npc = "Jeer Sparksocket", id = 29431 },
 			},
 			[1] = {
 				description = "Collect 10 {item:40603:Charred Wreckage}, from on the ground, around Snowblind Hills and Ricket's Folly, The Storm Peaks.",
@@ -906160,7 +906355,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Jeer Sparksocket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29431:Jeer Sparksocket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 41.02, y = 86.44, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.53, y = 39.86, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906186,7 +906381,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Jeer Sparksocket at K3 would like Sparksocket's Tools retrieved from his minefield." },
 			descriptionQuestText = { "Blast it! Where are my tools? I had them here just a moment ago. Oh! I probably forgot them when I was setting up that minefield in the west. That's mildly inconvenient. I'd be quite appreciative if you could go get them for me. You'll need to watch your step though... you should be able to use the same path that I did to get out. Oh, and don't try to fly in... I had the presence of mind to set up turrets to shoot down anything that might fly, and they aren't very discerning in who they target." },
 			npcs = {
-				{ npc = "Jeer Sparksocket", id = "x99" },
+				{ npc = "Jeer Sparksocket", id = 29431 },
 			},
 			[1] = {
 				description = "|cFF00ff00(Use path on the ground @|r {coords:35.37,88.83,120;waypointTitle:\"Use path to tools\"}), and collect {item:40642:Sparksocket's Tools} from in Sparksocket Minefield, The Storm Peaks.",
@@ -906201,7 +906396,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Jeer Sparksocket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29431:Jeer Sparksocket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 41.02, y = 86.44, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.53, y = 39.86, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906226,7 +906421,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ricket at K3 wants you to use Improved Land Mines at Garm's Bane to fend off 12 attackers from Garm. Both Garm Invaders and Snowblind Followers will count towards this goal." },
 			descriptionQuestText = { "I've been waiting an eternity for these mines! Well, a few days at least. What took him so long? Here's the low down, compadre... there's this nasty bunch of magnataur--you know, big, hairy, and extremely ugly--and they seem pretty keen on taking K3 for themselves. Not going to happen. We've got some defenses set up in their path, northeast of here. Sadly, our laser turrets have pretty limited power supplies... that's where these mines come in! Get over there and blow them up good!" },
 			npcs = {
-				{ npc = "Ricket", id = "x99" },
+				{ npc = "Ricket", id = 29428 },
 			},
 			[1] = {
 				description = "Use the {item:40676:Improved Land Mines} (in your inventory) in the path of, in order to kill, 12 Garm Attackers at Garm's Bane, The Storm Peaks.",
@@ -906241,7 +906436,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.90, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906265,7 +906460,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ricket at K3 would like you to locate the Transporter Power Cell and use it to activate the Transportation Pad at Garm's Rise." },
 			descriptionQuestText = { "The sapper squad is ready. That means it's time for fun! There's only one thing holding us up from our full-scale assault on Garm! I sent a runner to set a teleporter up behind him--successfully I might add--and he returned to get the power cell it needs to function. It isn't working yet... which means the power cell didn't get there. I need you to look just on the other side of Garm's Bane for the power cell. When you find it, bring it farther east to Garm's Rise and activate the teleporter." },
 			npcs = {
-				{ npc = "Ricket", id = "x99" },
+				{ npc = "Ricket", id = 29428 },
 			},
 			[1] = {
 				description = "Collect the Transporter Power Cell, near the Snowblind Worshiper, in Garm, The Storm Peaks.",
@@ -906286,7 +906481,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.90, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906310,7 +906505,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ricket at K3 wants you to kill 6 Garm Watchers and 8 Snowblind Devotees." },
 			descriptionQuestText = { "Now that we have the teleporter open, my plan is quite complex... it has several facets and will take impeccable coordination. And there are supplies to be gathered! And troops to recruit! Likely, weeks of hard labor as well! Hahah, I had you going there for a moment, didn't I? You've got this, kid. Hop through the teleporter and take the fight to them! Our sappers will back you up... they won't have anywhere to run." },
 			npcs = {
-				{ npc = "Ricket", id = "x99" },
+				{ npc = "Ricket", id = 29428 },
 			},
 			[1] = {
 				description = "Kill 6 Garm Watchers in Garm, The Storm Peaks.",
@@ -906340,7 +906535,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.90, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906409,7 +906604,7 @@ RQEDatabase = {
 				{ npc = "Gino", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.90, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906434,10 +906629,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver Jeer's Improved Land Mines to Ricket in K3." },
 			descriptionQuestText = { "Looking good! No, not you - my new mines. You're just a little full of yourself, aren't you? I, on the other hand, am absolutely brilliant! My intellect cannot be matched. What were we talking about? Oh yes, my new mines! New and improved... ready for whatever devious use Ricket has concocted. Be a doll and go hand them off to Ricket, will you? She's right over there... it should be quite the epic journey, I'm sure. Be careful though, she's a little loopy." },
 			npcs = {
-				{ npc = "Jeer Sparksocket", id = "x99" },
+				{ npc = "Jeer Sparksocket", id = 29431 },
 			},
 			[1] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.92, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906461,7 +906656,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ricket at K3 wants you to repossess 16 Dried Gnoll Rations from the nearby Savage Hill Gnolls." },
 			descriptionQuestText = { "Hey hey! You're a new face! Care to lend Ricket a hand? We have a somewhat unexpected problem - food shortage. I know, I know... we should have seen that coming, but you don't get it. We tend to have somewhat of a quick turn-around here with our sapper squad and all, so usually we don't have to worry about long term eats. Good old K3's gotten popular though. Convenient solution? There are gnoll camps to the west and some gnolls scattered, scavenging as gnolls do. Care to go nab some of their rations?" },
 			npcs = {
-				{ npc = "Ricket", id = "x99" },
+				{ npc = "Ricket", id = 29428 },
 			},
 			[1] = {
 				description = "Collect 16 {item:40645:Dried Gnoll Rations} (from boxes/killing Savage Hill gnolls) in Snowblind Hills, The Storm Peaks.",
@@ -906484,7 +906679,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.90, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906508,7 +906703,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ricket at K3 wants you to retrieve a U.D.E.D, use it to blow up a mammoth, and retrieve 8 Hearty Mammoth Meat." },
 			descriptionQuestText = { "Wow! That stuff is nasty. Not to account for gnoll taste or anything, but I figured whatever they had would at least be... edible? Let's get more creative. Tore's got an explosive dispenser north of town... not far from the big cavern entrance, can't miss it. I'm sure she intends them for mining purposes of some sort, but I've got a better idea. Grab one of those things and rush it to one of the nearby mammoths... most of them are to the west. Collect the meat, bring it back." },
 			npcs = {
-				{ npc = "Ricket", id = "x99" },
+				{ npc = "Ricket", id = 29428 },
 			},
 			[1] = {
 				description = "Collect a {item:40686:U.D.E.D} from the U.D.E.D. Dispenser in Snowblind Hills, The Storm Peaks.",
@@ -906540,7 +906735,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.90, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906695,7 +906890,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.90, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906719,7 +906914,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ricket at K3 wants you to kill Gnarlhide." },
 			descriptionQuestText = { "I know just the job for an eager newcomer! We've got a gnoll problem. You might even call it a gnoll infestation! Pesky things. They keep creeping up more and more, and now they're on our doorstep, stealing our parts! Inconceivable. It all begins and ends with their uppity leader, Gnarlhide. I want you to see to that \"ends\" part. Go pay him a visit at his camp all the way to the west, in Snowblind Hills. And when I say \"pay him a visit,\" that's a euphemism for \"kill him painfully.\" Kay? Kay!" },
 			npcs = {
-				{ npc = "Ricket", id = "x99" },
+				{ npc = "Ricket", id = 29428 },
 			},
 			[1] = {
 				description = "Kill Gnarlhide in Snowblind Hills, The Storm Peaks.",
@@ -906737,7 +906932,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Ricket at K3, The Storm Peaks",
+				description = "Turn in the quest to {npc:29428:Ricket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 40.90, y = 85.31, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.50, y = 39.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -906948,7 +907143,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Gretchen Fizzlespark wants you to go to Sifreldar Village and rescue 5 Goblin Prisoners." },
 			descriptionQuestText = { "You have to help us! We were in the middle of an expedition into the mountains to set up a transmission tower when we were attacked. They looked like vrykul, except their skin was blue and layered with frost... and they were all female! They took all the men in the expedition and let us women go. Please, PLAYER! We think they're being held in Sifreldar, the village overlooking K3." },
 			npcs = {
-				{ npc = "Gretchen Fizzlespark", id = "x99" },
+				{ npc = "Gretchen Fizzlespark", id = 29473 },
 			},
 			[1] = {
 				description = "Kill Sifreldar Storm Maidens, and loot 5 {item:40641:Cold Iron Keys} from their bodies, in Sifreldar Village, The Storm Peaks.",
@@ -906983,7 +907178,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Gretchen Fizzlespark at the inn within K3, The Storm Peaks",
+				descriptiondescription = "Turn in the quest to {npc:29473:Gretchen Fizzlespark} at the inn within K3, The Storm Peaks",
 				coordinateHotspots = {
 					{ x = 41.15, y = 86.15, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.58, y = 39.75, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -907007,7 +907202,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Gretchen Fizzlespark wants you to obtain 8 pieces of K3 Equipment in Sifreldar Village north of K3." },
 			descriptionQuestText = { "Please, PLAYER. When the Hyldnir took our men, they also took all our equipment. Of course, it's more important that we get our boys back, but if you run into any of our equipment, I'd really appreciate it if you brought it back to us. You'll find their village just above us, to the north." },
 			npcs = {
-				{ npc = "Gretchen Fizzlespark", id = "x99" },
+				{ npc = "Gretchen Fizzlespark", id = 29473 },
 			},
 			[1] = {
 				description = "Collect 8 boxes of {item:40726:K3 Equipment} from within Sifreldar Village, The Storm Peaks.",
@@ -907022,7 +907217,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Gretchen Fizzlespark at the inn within K3, The Storm Peaks",
+				descriptiondescription = "Turn in the quest to {npc:29473:Gretchen Fizzlespark} at the inn within K3, The Storm Peaks",
 				coordinateHotspots = {
 					{ x = 41.15, y = 86.15, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.58, y = 39.75, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -907046,7 +907241,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Find the entrance to the Forlorn Mine in northern Sifreldar Village and look for clues for Zeev Fizzlespark's whereabouts." },
 			descriptionQuestText = { "All of our boys are back... thanks to you, PLAYER! Well... all but one. My brother Zeev is still up there according to the others. Apparently they have some sort of mine where they make their prisoners work. Go in there and see if you can find out anything." },
 			npcs = {
-				{ npc = "Gretchen Fizzlespark", id = "x99" },
+				{ npc = "Gretchen Fizzlespark", id = 29473 },
 			},
 			[1] = {
 				description = "Enter The Forlorn Mine at Sifreldar Village, The Storm Peaks.",
@@ -907223,7 +907418,7 @@ RQEDatabase = {
 				{ npc = "Rin Duoctane", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Jeer Sparksocket at K3, The Storm Peaks.",
+				description = "Turn in the quest to {npc:29431:Jeer Sparksocket} at K3, The Storm Peaks.",
 				coordinateHotspots = {
 					{ x = 41.02, y = 86.44, mapID = 120, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.53, y = 39.86, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -907547,7 +907742,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Chief Rageclaw at Light's Breach, Zul'Drak.",
+				description = "Turn in the quest to {npc:29690:Chief Rageclaw} at Light's Breach, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 32.18, y = 75.63, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.53, y = 47.42, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -907706,7 +907901,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elder Shaman Moky at Light's Breach in Zul'Drak wants you to use the Rageclaw Fire Extinguisher to douse 15 hut fires at Rageclaw Den." },
 			descriptionQuestText = { "Trolls attack Rageclaw Den and kick Rageclaw out! It get worse. Trolls now burning village! This very bad. Chief make top Rageclaw shaman, Moky, do study on fire. Results very surprising! Fire still hot and can burn things. Will you help Rageclaw and put fire out? Moky has special Rageclaw fire extinguisher for you. Use special fire extinguisher to put out fire at Rageclaw Den to southeast. Sometimes take many sprays to douse fire, but extinguisher always have water! Rageclaw magic strong!" },
 			npcs = {
-				{ npc = "Elder Shaman Moky", id = "x99" },
+				{ npc = "Elder Shaman Moky", id = 29733 },
 			},
 			[1] = {
 				description = "Use {item:41131:Rageclaw Fire Extinguisher} on 15 buildings at Rageclaw Den, Zul'Drak.",
@@ -907721,7 +907916,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Elder Shaman Moky at Light's Breach, Zul'Drak.",
+				description = "Turn in the quest to {npc:29733:Elder Shaman Moky} at Light's Breach, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 32.02, y = 75.60, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.49, y = 47.40, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -907856,7 +908051,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Chief Rageclaw at Light's Breach in Zul'Drak wants you to use the Drakuru \"Lock Openers\" found on various Drakuru trolls to free 8 Captured Rageclaw." },
 			descriptionQuestText = { "Drakuru... You know who this troll is? I think bad troll are controlled by the Drakuru troll. They call themself Drakuru trolls - that how I know. Now you see why I am chief of Rageclaw. Smartest of all wolvar! But that not why I talk to you now. Bad troll come and kick Rageclaw out of den. Rageclaw that no run away held as prisoner in village. You go to Rageclaw Den, southeast, and free captured Rageclaw. Kill troll for lock opener. You maybe kill many troll for many lock opener." },
 			npcs = {
-				{ npc = "Chief Rageclaw", id = "x99" },
+				{ npc = "Chief Rageclaw", id = 29690 },
 			},
 			[1] = {
 				description = "Collect up to |cFFffcc338|r {item:41161:Drakuru \"Lock Opener\"} (you will need 1 per shackle for a total of 8) around the Rageclaw Den, Zul'Drak.",
@@ -908155,7 +908350,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[17] = {
-				description = "Turn in the quest to Chief Rageclaw at Light's Breach, Zul'Drak.",
+				description = "Turn in the quest to {npc:29690:Chief Rageclaw} at Light's Breach, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 32.18, y = 75.63, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.53, y = 47.42, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -909432,7 +909627,7 @@ RQEDatabase = {
 			descriptionQuestText = { "Minions be hearin' da call of your masta! Da Lich King be givin' Drakuru full control of da armies of da Scourge in Zul'Drak. We be commanded ta kill everyting. EVERYTING MUST DIE! We be processin' all da corpses in da Dead Fields and sendin' em up ta Prince Navarius' crew in Zeramas for Scourgin'! Notin' goes ta waste on Drakuru's watch! Soon we be drinkin' da blood of da prophets ta become stronger dan eva before! Zul'Drak and Gundrak gonna fall to da Scourge!" },
 			npc = { "" },
 			[1] = {
-				description = "Turn in the quest to Crusader Lord Lantinga at Light's Breach, Zul'Drak.",
+				description = "Turn in the quest to {npc:29687:Crusader Lord Lantinga} at Light's Breach, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 32.14, y = 75.75, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.53, y = 47.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -909456,7 +909651,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver the Orders From Drakuru to Stefan Vadu at Ebon Watch in Zul'Drak." },
 			descriptionQuestText = { "West of here, across the ruined roads and structures, is the death knight encampment of Ebon Watch. <Crusader Lord Lantinga rolls up Drakuru's orders.> Take these orders and deliver them to Stefan Vadu. He is the death knight in command at Ebon Watch. Let him know that the Argent Crusade will deal with Prince Navarius. They'll have to handle Drakuru. Be careful, PLAYER. The way to Ebon Watch is teeming with Scourge." },
 			npcs = {
-				{ npc = "Crusader Lord Lantinga", id = "x99" },
+				{ npc = "Crusader Lord Lantinga", id = 29687 },
 			},
 			[1] = {
 				description = "Turn in the quest to Stefan Vadu at Ebon Watch, Zul'Drak",
@@ -909741,7 +909936,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Destroy The Ocular and then report to Baron Sliver at The Shadow Vault." },
 			descriptionQuestText = { "The Knights of the Ebon Blade want to take the Scourge base known as The Shadow Vault to the northwest. I have a contact in their group who has asked for help. The first step is to blind the Lich King. He's using a device known as The Ocular to watch the area, which floats above the vault's spires. Our goblins have created something for you to use against it. After the 'eye' has been destroyed, find Baron Sliver on the vault grounds. He's pretending to still be under the Lich King's will." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! The Ocular has been destroyed: 1/1 in The Shadow Vault, Icecrown.",
@@ -909864,7 +910059,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Seek out Crusader MacKellar at the Crusader Forward Camp in Zul'Drak." },
 			descriptionQuestText = { "Crusader Dargath, Crusader MacKellar, Engineer Reed and the twins, Gerk and Burr, were sent to the Dead Fields to establish a battle front days ago. As of my last correspondence with them, they had successfully established a camp on the border of the Dead Fields, northwest of here. In light of this newfound information about Drakuru and Prince Navarius I think it would be prudent to send someone to the Crusader Forward Camp post-haste. Pack up your belongings, PLAYER. You must leave at once!" },
 			npcs = {
-				{ npc = "Crusader Lord Lantinga", id = "x99" },
+				{ npc = "Crusader Lord Lantinga", id = 29687 },
 			},
 			[1] = {
 				description = "Turn in the quest to Crusader MacKellar at the Crusader Forward Camp, Zul'Drak",
@@ -909981,8 +910176,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at The Valley of Lost Hope, Icecrown.",
-				-- coordinates = { x = 63.66, y = 44.07, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "12897" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -910022,11 +910217,11 @@ RQEDatabase = {
 		},
 		[12899] = {
 			title = "The Shadow Vault", -- Objectives: Report back to Baron Sliver at The Shadow Vault.
-			location = { x = 63.80, y = 44.42, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Report back to Baron Sliver at The Shadow Vault." },
 			descriptionQuestText = { "It sounds like you did extremely well. And you secured three very important allies for the Knights of the Ebon Blade in the process. <Koltira gazes down at the map on the floor.> You should head back. By now, Baron Sliver and the other CLASSs will be fighting tooth and nail to hold The Shadow Vault against the might of the Scourge. I'm sure they'll need your help." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			[1] = {
 				description = "Turn in the quest to Baron Sliver at The Shadow Vault, Icecrown.",
@@ -910272,7 +910467,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Search Rageclaw Den for a clue about who or what initiated the attacks against the Rageclaw Wolvar." },
 			descriptionQuestText = { "These poor creatures are the only survivors. According to their chief, the Drakkari trolls and Rageclaw wolvar have been allies for thousands of years. They've been living here, alongside the trolls, for generations, completely unaware of the ever changing world around them. To the Rageclaw, a troll is a troll, so the troll attack upon their den took them by surprise. We need some answers, PLAYER. Scour their village - southeast of here - for clues as to who or what is in charge of these attacks." },
 			npcs = {
-				{ npc = "Crusader Lord Lantinga", id = "x99" },
+				{ npc = "Crusader Lord Lantinga", id = 29687 },
 			},
 			[1] = {
 				description = "Turn in the quest to the \"Orders From Drakuru.\"",
@@ -912138,7 +912333,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get in the arena at the Amphitheater of Anguish and defeat Yggdras! Return to Wodin the Troll-Servant to redeem your reward." },
 			descriptionQuestText = { "I'll tell you what, buddy, this place is a far cry from the rolling plains of Nagrand. These trolls are dirtier than ogres; but hey, I go where the gold's at! So welcome to Zul'Drak, pal. You're new to this racket, so let me set you straight. I'm the fight promoter and this feisty troll next to me is Wodin, my bodyguard. You're the entertainment. When you wanna fight, let me know and I'll set up the match. If you're ready and got a group of friends with you, we can start! What do you say?" },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 30007 },
 			},
 			[1] = {
 				description = "Get in the arena at the Amphitheater of Anguish and defeat Yggdras.",
@@ -912156,7 +912351,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at Amphitheater of Anguish, Zul'Drak.",
+				description = "Turn in the quest to {npc:30009:Wodin the Troll-Servant} at the Amphitheater of Anguish, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 48.48, y = 56.40, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.85, y = 42.32, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -912180,7 +912375,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get in the arena at the Amphitheater of Anguish and defeat Stinkbeard! Return to Wodin the Troll-Servant to redeem your reward." },
 			descriptionQuestText = { "This next match is a doozy, buddy! Apparently some magnataur from the Dragonblight wants a piece of the action. You ever fought one of those before? All I can tell you is to aim high! We'll get this party started when you give me the word." },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 30007 },
 			},
 			[1] = {
 				description = "Get in the arena at the Amphitheater of Anguish and defeat Stinkbeard.",
@@ -912198,7 +912393,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at Amphitheater of Anguish, Zul'Drak.",
+				description = "Turn in the quest to {npc:30009:Wodin the Troll-Servant} at the Amphitheater of Anguish, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 48.48, y = 56.40, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.85, y = 42.32, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -912222,7 +912417,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get in the arena at the Amphitheater of Anguish and defeat one of the elemental lords! Return to Wodin the Troll-Servant to redeem your reward." },
 			descriptionQuestText = { "I'm not gonna lie to you, pal. You might be overmatched here. This next one is a being from the elemental planes! I don't even know what's gonna show up in that arena! If you think you're up to it, get in there and give 'em hell!" },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 30007 },
 			},
 			[1] = {
 				description = "Get in the arena at the Amphitheater of Anguish and defeat Duke Singen.",
@@ -912240,7 +912435,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at Amphitheater of Anguish, Zul'Drak.",
+				description = "Turn in the quest to {npc:30009:Wodin the Troll-Servant} at the Amphitheater of Anguish, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 48.48, y = 56.40, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.85, y = 42.32, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -912264,7 +912459,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get in the arena at the Amphitheater of Anguish and defeat Orinoko Tuskbreaker! Return to Wodin the Troll-Servant to redeem your reward." },
 			descriptionQuestText = { "This next one's fightin' from a dark place, kid. The kind of dark that can only happen when you've been on the flip-side. He's hungry and willing to do whatever it takes to win. Watch yourself! I've heard he wrestles yetis for exercise! We'll start when you're ready." },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 30007 },
 			},
 			[1] = {
 				description = "Get in the arena at the Amphitheater of Anguish and defeat Orinoko Tuskbreaker.",
@@ -912282,7 +912477,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at Amphitheater of Anguish, Zul'Drak.",
+				description = "Turn in the quest to {npc:30009:Wodin the Troll-Servant} at the Amphitheater of Anguish, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 48.48, y = 56.40, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.85, y = 42.32, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -912306,7 +912501,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get in the arena at the Amphitheater of Anguish and defeat Korrak the Bloodrager! Return to Wodin the Troll-Servant to redeem your reward." },
 			descriptionQuestText = { "You're not gonna believe this, pal. Your next fight is against Korrak the Bloodrager! Looks like the Drakkari trolls are pulling a power play! And let me tell you, buddy, he's been sippin' the animal god juice. He's good and ready to pound you into the ground. Are you ready?" },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 30007 },
 			},
 			[1] = {
 				description = "Get in the arena at the Amphitheater of Anguish and defeat Korrak the Bloodrager.",
@@ -912324,7 +912519,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at Amphitheater of Anguish, Zul'Drak.",
+				description = "Turn in the quest to {npc:30009:Wodin the Troll-Servant} at the Amphitheater of Anguish, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 48.48, y = 56.40, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.85, y = 42.32, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -912918,7 +913113,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get in the arena at the Amphitheater of Anguish and defeat Vladof the Butcher! Return to Wodin the Troll-Servant to redeem your reward." },
 			descriptionQuestText = { "This is the end, my friend! Your last opponent is going to be your greatest challenge. He's a vrykul champion from the steppes of Icecrown and he's out for blood! Defeat him and you'll be crowned the champion of the Amphitheater of Anguish! This fight is going to make us both rich! Let me know when you're ready and we'll start." },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 30007 },
 			},
 			[1] = {
 				description = "Get in the arena at the Amphitheater of Anguish and defeat Vladof the Butcher.",
@@ -912937,7 +913132,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at Amphitheater of Anguish, Zul'Drak.",
+				description = "Turn in the quest to {npc:30009:Wodin the Troll-Servant} at the Amphitheater of Anguish, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 48.48, y = 56.40, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.85, y = 42.32, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -913125,7 +913320,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get in the arena at the Amphitheater of Anguish and defeat Yggdras! Return to Wodin the Troll-Servant to redeem your reward." },
 			descriptionQuestText = { "I was wondering when you'd show up, <name>! Having a past champion of the Ring of Blood here will be a huge draw! We're gonna be rich, buddy! RICH! Anyway, this dump is Zul'Drak. All the ice trolls seem to use it as a toilet. I dunno, the whole place is off its rocker if you ask me! Who cares, though, right? We're here to make some gold! You know the drill, <name>. When you're ready let me know and we'll get this show on the road!" },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 30007 },
 			},
 			[1] = {
 				description = "Get in the arena at the Amphitheater of Anguish and defeat Yggdras.",
@@ -913143,7 +913338,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at Amphitheater of Anguish, Zul'Drak.",
+				description = "Turn in the quest to {npc:30009:Wodin the Troll-Servant} at the Amphitheater of Anguish, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 48.48, y = 56.40, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.85, y = 42.32, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -913987,7 +914182,7 @@ RQEDatabase = {
 				{ npc = "Shifty Vickers", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Gurgthock at the Amphitheater of Anguish, Zul'Drak",
+				description = "Turn in the quest to {npc:30007:Gurgthock} at the Amphitheater of Anguish, Zul'Drak",
 				coordinateHotspots = {
 					{ x = 48.42, y = 56.37, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 67.84, y = 42.31, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -916753,7 +916948,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Crusade Commander Entari at the Argent Vanguard in Icecrown." },
 			descriptionQuestText = { "Long has been the path to our salvation, young CLASS. We have fought across continents, worlds even, to reach this point. Now we face our greatest challenge: the destruction of the Lich King and his Scourge. Alas, we fight this battle divided. The Horde and Alliance are in the throes of war and will lend us no support. We must remain unyielding in our cause! For what choice have we to do otherwise? Do you join the cause? Lend us your strength, CLASS! My commander, Entari, awaits you at his post." },
 			npcs = {
-				{ npc = "Highlord Tirion Fordring", id = "x99" },
+				{ npc = "Highlord Tirion Fordring", id = 28179 },
 			},
 			[1] = {
 				description = "Turn in the quest to Crusade Commander Entari at The Argent Vanguard, Icecrown.",
@@ -917192,7 +917387,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[5] = {
-				description = "Exit he Skytalon and turn in the quest to Highlord Tirion Fordring at The Argent Vanguard, Icecrown.",
+				description = "Exit he Skytalon and turn in the quest to {npc:28179:Highlord Tirion Fordring} at The Argent Vanguard, Icecrown.",
 				coordinateHotspots = {
 					{ x = 87.46, y = 75.84, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 52.04, y = 38.61, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -917996,7 +918191,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Siegemaster Fezzik at the Argent Vanguard in Icecrown." },
 			descriptionQuestText = { "The chill of death stirs in the west, threatening to freeze our hearts and souls to this wasteland and bind us to its dark master. We will stand and we will fight! The preparations have begun. Report to Siegemaster Fezzik at the front gate for your assignment." },
 			npcs = {
-				{ npc = "Highlord Tirion Fordring", id = "x99" },
+				{ npc = "Highlord Tirion Fordring", id = 28179 },
 			},
 			[1] = {
 				description = "Turn in the quest to Siegemaster Fezzik at The Argent Vanguard, Icecrown.",
@@ -919297,7 +919492,7 @@ RQEDatabase = {
 				{ npc = "Baron Sliver", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				coordinateHotspots = {
 					{ x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -919350,7 +919545,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Turn in the quest to Archmage Pentarus at Krasus' Landing, Dalaran.",
+				description = "Turn in the quest to {npc:28160:Archmage Pentarus} at Krasus' Landing, Dalaran.",
 				coordinateHotspots = {
 					{ x = 68.53, y = 42.03, mapID = 125, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 49.26, y = 41.97, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -919561,7 +919756,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use your Meatloaf Pan to cook 4 Infused Mushrooms and 2 Chilled Meats and bring the finished Mushroom Meatloaf to Orton Bennet in Curiosities & Moore, located in Runeweaver Square in Dalaran." },
 			descriptionQuestText = { "Orton Bennet in Curiosities & Moore be needin' a mushroom meatloaf. Get ya some infused mushrooms found in the Dalaran sewers, chilled meat, and cook 'em in the meatloaf pan. When ye be done, bring that meatloaf to Orton. If only de council would let me serve me gnome specialty, I would show dem a real treat!" },
 			npcs = {
-				{ npc = "Awilo Lon'Gomba", id = "x99" },
+				{ npc = "Awilo Lon'gomba", id = 29631 },
 			},
 			[1] = {
 				description = "Travel to the Dalaran Sewer. If you're an Herbalist you will be able to track herbs for the next part (make sure that it is turned on).",
@@ -919626,7 +919821,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 4 Northern Stews and a Jug of Wine from the cheese shop in Dalaran to Arille Azuregaze at the Legerdemain Lounge found in Runeweaver Square in Dalaran." },
 			descriptionQuestText = { "Can you believe da horde has outlawed cannibalism...it just ain't right I tell ya! I guess I should keep me mind on me work when we gots an order to fill. Arille Azuregaze at the Legerdemain Lounge has many a guest a'comin to his place, mon. You gots to be providin' some Northern Stew and a Jug of Wine from the cheese shop in central Dalaran. Bring the wine and stew to Arille." },
 			npcs = {
-				{ npc = "Awilo Lon'Gomba", id = "x99" },
+				{ npc = "Awilo Lon'gomba", id = 29631 },
 			},
 			[1] = {
 				description = "Create |cFFffcc334|r {item:34747:Northern Stew} via Cooking or through AH.",
@@ -919692,7 +919887,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Cook 4 Crystalsong Carrots from Crystalsong Forest with 4 Chilled Meat in the Cookpot. Then bring the Vegetable Stew to the Dalaran sewers Innkeeper Ajay Green." },
 			descriptionQuestText = { "We be havin' another order to fill. Da innkeeper in da Dalaran sewers needs a vegetable stew as his customers dey don't have so much to eat, mon. He asked for a vegetable stew as he didn't appreciate da gnome that was in the last stew I sent. Get 4 Crystalsong Carrots from the Crystalsong Forest and cook them together with 4 Chilled Meat and bring it to Ajay. You can be gettin' to da Forest from da portal chamber in da eastern corner of Runeweaver Square." },
 			npcs = {
-				{ npc = "Awilo Lon'gomba", id = "x99" },
+				{ npc = "Awilo Lon'gomba", id = 29631 },
 			},
 			[1] = {
 				description = "Travel to the river underneath Dalaran, in Crystalsong Forest and collect 4 {item:43148:Crystalsong Carrots}.",
@@ -919762,7 +919957,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Combine the Empty Cheese Platter with Aged Dalaran Limburger from the cheese shop \"One More Glass\" and with 6 Half Full Dalaran Wine Glasses found on tables around Dalaran. Bring the Wine and Cheese platter to Ranid Glowergold at the Leatherworkers in the Magus Commerce Exchange." },
 			descriptionQuestText = { "Ranid Glowergold in da Leatherworkers shop be havin' a need for wine and cheese. Why he don't want some tasty gnome is beyond me. Collect da cheese from da cheese shop in central Dalaran and da half full wine glasses found on tables around da city. Bring da wine and serve it with the cheese to Ranid. You can call da wine a Wine Medley, mon'." },
 			npcs = {
-				{ npc = "Awilo Lon'gomba", id = "x99" },
+				{ npc = "Awilo Lon'gomba", id = 29631 },
 			},
 			[1] = {
 				description = "Collect an {item:43137:Aged Dalaran Limburger} (on a table inside/outside/upstairs in One More Glass wine and cheese shop).",
@@ -919809,7 +920004,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Fill the Empty Picnic Basket with 4 Rhino Dogs that you be cookin' with your skill and 4 Wild Mustard that you find in the grassy areas of Dalaran. Bring the Picnic Basket to Archmage Pentarus at Krasus' Landing in Dalaran." },
 			descriptionQuestText = { "Da Archmage Pentarus likes to be watchin' his crazy battle ball game, but he be needin' some food for da game. You be needin' to fill his picnic basket with 4 cooked rhino dogs and then 4 wild mustard that are found in da grassy corners of de city. Fill up his basket with the mustard dog goodies, mon'." },
 			npcs = {
-				{ npc = "Awilo Lon'gomba", id = "x99" },
+				{ npc = "Awilo Lon'gomba", id = 29631 },
 			},
 			[1] = {
 				description = "Collect 4 {item:43143:Wild Mustard} from either the patch of grass near The Violet Citadel, Dalaran or Antonidas Memorial, Dalaran.",
@@ -919841,7 +920036,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Turn in the quest to Archmage Pentarus at Krasus' Landing, Dalaran.",
+				description = "Turn in the quest to {npc:28160:Archmage Pentarus} at Krasus' Landing, Dalaran.",
 				coordinateHotspots = {
 					{ x = 68.53, y = 42.03, mapID = 125, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 49.26, y = 41.97, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -919866,7 +920061,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Investigate a Summoning Altar in the eastern part of the Fleshwerks, then report back to Darkrider Arly at Blackwatch." },
 			descriptionQuestText = { "The Lich King's tireless minions labor away night and day to assemble scores of abominations and flesh giants down there in the Fleshwerks. Yet, that is not enough. More and more skeletal constructors keep appearing to increase the pace of work. If we do not discover where they're coming from and how they're able to work so quickly, we'll be overrun before we can act in force. Search to the southeast and see if you can find the source of these skeletons." },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Interact with Darkrider Arly: Summoning Altar investigated: 1/1 in The Fleshwerks, Icecrown.",
@@ -919881,7 +920076,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -919980,7 +920175,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill Master Summoner Zarod and use his Summoning Stave to destroy the First, Second, Third, and Fourth Summoning Altars. When you've completed this task, report to Darkrider Arly at Blackwatch." },
 			descriptionQuestText = { "So they're summoning in their workers and warriors at those altars? They'll need to be the first thing to go. The master summoner should have a staff which allows him to activate the portal. If you kill the master summoner and take the staff, you can use it to overload the summoning portal and destroy its altar. Do this at all four of the altars and return to me once they've been destroyed." },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Interact with Risen Soldier: Second Summoning Altar destroyed: 1/1 in The Fleshwerks, Icecrown.",
@@ -920031,7 +920226,7 @@ RQEDatabase = {
 				-- objectiveIndex = 4,
 			-- },
 			-- [5] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -920055,7 +920250,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use the Death's Gaze Orb to place orbs on the Abomination Lab Orb Stand, the Flesh Giant Lab Orb Stand, and the Cauldron Area Orb Stand, then return to Darkrider Arly at Blackwatch." },
 			descriptionQuestText = { "The Fleshwerks is a vast operation, and it will be difficult to keep an eye on all that transpires there. Fortunately, I have a plan. <Arly produces an orb from the folds of her cloak and shows it to you.> This is a death's gaze orb. With it, we can observe the Scourge's actions and decide how best to strike. Place these orbs on the stands at three crucial areas -- the abomination lab and the flesh giant lab to the southwest, along with the area surrounding the green cauldron far to the west." },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Orb placed in flesh giant lab: 1/1 in The Fleshwerks, Icecrown.",
@@ -920094,7 +920289,7 @@ RQEDatabase = {
 				-- objectiveIndex = 3,
 			-- },
 			-- [4] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -920394,7 +920589,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Darkrider Arly at Blackwatch wants you to destroy 5 vats of Embalming Fluid and 5 Blood Orbs." },
 			descriptionQuestText = { "The Scourge cannot create their flesh monsters without blood and embalming fluid to preserve the parts and keep them functioning. If we can deny them these materials, their army will fall apart and we can easily destroy their creations. Throughout the labs where the flesh giants and abominations are cobbled together, you will find vats of embalming fluid and large orbs filled with blood. Destroy these, and bring death to any who would stop you!" },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Interact with Darkrider Arly: Blood Orbs shattered: 1/5 in The Fleshwerks, Icecrown.",
@@ -920517,7 +920712,7 @@ RQEDatabase = {
 				-- objectiveIndex = 10,
 			-- },
 			-- [11] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -921178,7 +921373,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Darkrider Arly at Blackwatch wants you to destroy 3 Chained Abominations with Burning Skeletons." },
 			descriptionQuestText = { "The workers in the Fleshwerks abomination lab have already completed a number of their creations. For now, the creatures are chained to the pillars around the edge of the lab, but if we do not act, they will march with the Lich King's armies. Grasping arms reach out of the bone piles spread throughout the Fleshwerks. These arms belong to skeletons enchanted with the power of fire. Find and free these skeletons, then take them near the completed abominations and watch the show!" },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Chained Abominations burned: 1/3 in The Fleshwerks, Icecrown.",
@@ -921217,7 +921412,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [4] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -921460,7 +921655,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Darkrider Arly at Blackwatch wants you to destroy the Metal Stake imprisoning Patches in the Sanctum of Reanimation and help him get his revenge on Doctor Sabnok." },
 			descriptionQuestText = { "So they've been embedding these ghouls with broken shards of saronite down in the Sanctum of Reanimation? We must put a stop to this, before these ghouls can be deployed against our troops. Find the entrance to the Sanctum of Reanimation in the flesh giant lab area of the Fleshwerks. There, the ghoul mastermind, Doctor Sabnok, keeps the most fearsome of his creations, Patches. Free Patches from his chains and help him take his revenge on the doctor. Let his own creation be his undoing." },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Patches freed: 1/1 in Sanctum of Reanimation, Icecrown.",
@@ -921487,7 +921682,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [3] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -923203,7 +923398,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Recover Olakin's Torso, Olakin's Legs, Olakin's Left Arm, and Olakin's Right Arm and bring them to Darkrider Arly at Blackwatch." },
 			descriptionQuestText = { "With the abduction of Crusader Olakin, the Argent Crusade's forces will have no commander in the final assault on the Fleshwerks. While one crusader is the same as any other to me, the argents won't see it that way. I hate to see us waste time chasing after this, but I have no choice. Our gallant crusader has likely been dismembered by now, and his remains used to construct abominations. Go down into the Fleshwerks, kill the corpulent horrors fighting our forces, and recover Olakin's body parts." },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Kill Corpulent Horror and loot 1 Olakin's Torso: 1/1, from its body, at The Fleshwerks, Icecrown.",
@@ -923242,7 +923437,7 @@ RQEDatabase = {
 				-- objectiveIndex = 4,
 			-- },
 			-- [4] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -923509,7 +923704,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain a Spool of Thread and the Doctor's Cleaver, then take them to the Sanctum of Reanimation Slab and use Olakin's remains to attempt to reanimate the crusader. Return to Darkrider Arly at Blackwatch when this task is complete." },
 			descriptionQuestText = { "We can't afford to waste any time putting Olakin back together. Fortunately, the Scourge has provided a perfect place for you to stitch him back together. Near the Fleshwerks' flesh giant lab is the Sanctum of Reanimation. Search the area for a spool of thread and the doctor's cleaver. Then, take Olakin's remains to the large slab in the middle of the sanctum and get to work." },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Crusader Olakin Sainrith revived: 1/1 in Sanctum of Reanimation, Icecrown.",
@@ -923524,7 +923719,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -923598,12 +923793,39 @@ RQEDatabase = {
 				{ npc = "Absalan the Pious", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Highlord Tirion Fordring at The Argent Vanguard, Icecrown.",
+				description = "Turn in the quest to {npc:28179:Highlord Tirion Fordring} at The Argent Vanguard, Icecrown.",
 				coordinateHotspots = {
 					{ x = 87.46, y = 75.84, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 52.04, y = 38.61, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 				},
 				check = { "13226" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				npcTargets = {
+					{ name = "Highlord Tirion Fordring", marker = 6, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:2554\n/tar Highlord Tirion Fordring\n/tm 6" },
+				objectiveIndex = 99,
+			},
+		},
+		[13227] = {
+			title = "Judgment Day Comes!", -- Objectives: Report to Highlord Tirion Fordring at the Argent Vanguard in Icecrown.
+			locations = {
+				{ x = 68.14, y = 52.59, mapID = 118 },
+				{ x = 45.61, y = 30.88, continentID = 113 },
+			},
+			objectivesQuestText = { "Report to Highlord Tirion Fordring at the Argent Vanguard in Icecrown." },
+			descriptionQuestText = { "We cannot defeat the Lich King on our own. Divided we shall all fall! I implore you answer the call, sister. The Argent Crusade accepts all that would volunteer to aid in the war effort. Highlord Tirion Fordring himself awaits you at the Argent Vanguard! Get upon your mount and fly to the southeastern reaches of Icecrown. It is there that you will find Lord Fordring and the soldiers of the Argent Crusade. Go now, death knight, for judgment day comes!" },
+			npcs = {
+				{ npc = "Brother Keltan", id = 31261 },
+			},
+			[1] = {
+				description = "Turn in the quest to {npc:28179:Highlord Tirion Fordring} at The Argent Vanguard, Icecrown.",
+				coordinateHotspots = {
+					{ x = 87.46, y = 75.84, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 52.04, y = 38.61, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "13227" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
 				npcTargets = {
@@ -923855,7 +924077,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Margrave Dhakar at the western end of the Fleshworks to engage Morbidus. After you have defeated Morbidus, report to Darkrider Arly at Blackwatch." },
 			descriptionQuestText = { "You've done well in destroying the Fleshwerks and slaughtering the Lich King's servants. Now, all that remains is to defeat the Fleshwerks' greatest accomplishment -- the flesh giant known as Morbidus. It will not be an easy fight, but the Shadow Vault has dispatched Margrave Dhakar with some reinforcements. Meet up with him at the highest point at the western end of the Fleshwerks. Tell him when you're ready to begin the attack and he'll order his forces into battle." },
 			npcs = {
-				{ npc = "Darkrider Arly", id = "x99" },
+				{ npc = "Darkrider Arly", id = 30631 },
 			},
 			-- [1] = {
 				-- description = "! Morbidus slain: 1/1 in The Fleshwerks, Icecrown.",
@@ -923870,7 +924092,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Darkrider Arly at Blackwatch, Icecrown.",
+				-- description = "Turn in the quest to {npc:30631:Darkrider Arly} at Blackwatch, Icecrown.",
 				-- coordinateHotspots = {
 					-- { x = 35.38, y = 66.32, mapID = 118, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 34.70, y = 35.45, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -924050,11 +924272,11 @@ RQEDatabase = {
 		},
 		[13237] = {
 			title = "Poke and Prod", -- Objectives: Koltira Deathweaver aboard Orgrim's Hammer wants you to go the Broken Front and defeat 5 Hulking Abominations, 5 Malefic Necromancers, and 5 Shadow Adepts.
-			location = { x = 69.81, y = 41.27, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver aboard Orgrim's Hammer wants you to go the Broken Front and defeat 5 Hulking Abominations, 5 Malefic Necromancers, and 5 Shadow Adepts." },
 			descriptionQuestText = { "While your commander has his focus diluted by his loathing of your Alliance rivals, you can depend on me to direct my attention squarely on the real enemy here - the Lich King and his minions. In order to hold any hope of conquering him at the citadel, your people must take and hold each gate. For now, let us focus on the first. Return to the front and prod their defenses. Look for any sign of weakness that we might exploit. I'll await your report, CLASS." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Shadow Adepts Slain: 1/5 in The Broken Front, Icecrown.",
@@ -924213,8 +924435,8 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [14] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at The Valley of Lost Hope, Icecrown.",
-				-- coordinates = { x = 63.10, y = 42.58, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13237" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -924308,11 +924530,11 @@ RQEDatabase = {
 		},
 		[13258] = {
 			title = "Opportunity", -- Objectives: Speak to Sergeant Kregga below Icecrown Citadel.
-			location = { x = 63.30, y = 29.61, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Speak to Sergeant Kregga below Icecrown Citadel." },
 			descriptionQuestText = { "We recently came upon schematics that indicate a weakness in Icecrown Citadel. An opening in its defenses, both figuratively and literally. The captured diagrams show an orifice leading several hundred feet into the ground. We're unsure of its purpose, but our scouting has revealed it to be of high importance to the Scourge. Speak to Sergeant Kregga below Icecrown Citadel, she's leading the attack on the site." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			[1] = {
 				description = "Turn in the quest to Sergeant Kregga at Icecrown Citadel, Icecrown.",
@@ -924480,8 +924702,8 @@ RQEDatabase = {
 				{ npc = "Sky-Reaver Korm Blackscar", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Koltira Deathweaver at Sindragosa's Fall, Icecrown.",
-				coordinates = { x = 69.81, y = 41.46, mapID = 118 },
+				description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				check = { "13260" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
@@ -924531,11 +924753,11 @@ RQEDatabase = {
 		},
 		[13264] = {
 			title = "That's Abominable!", -- Objectives: Koltira Deathweaver on Orgrim's Hammer wants you to use the Abomination Reanimation Kit to create a Reanimated Abomination, which you are to use to kill 15 Icy Ghouls, 15 Vicious Geists, and 15 Risen Alliance Soldiers.
-			location = { x = 63.26, y = 42.98, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver on Orgrim's Hammer wants you to use the Abomination Reanimation Kit to create a Reanimated Abomination, which you are to use to kill 15 Icy Ghouls, 15 Vicious Geists, and 15 Risen Alliance Soldiers." },
 			descriptionQuestText = { "Abominations... They can be a very capable enemy. I've seen them turn the tide of battle more than once. What few realize, is that they can also be very capable friends. They are not deep thinkers. If you know the secrets of their creation, you can issue them basic orders that they will not question. Fortunately for you, I know these secrets. This kit will reanimate the remains of the abominations you defeat. Take it, and learn to use them against the Scourge on the death gate." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Vicious Geists Exploded: 1/15 in The Broken Front, Icecrown.",
@@ -924670,8 +924892,8 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [12] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 69.90, y = 47.28, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13264" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -924838,11 +925060,11 @@ RQEDatabase = {
 		},
 		[13277] = {
 			title = "Against the Giants", -- Objectives: Koltira Deathweaver on Orgrim's Hammer wants you to bring him 5 Pustulant Spines from the Pustulant Horrors on Mord'rethar.
-			location = { x = 63.34, y = 43.17, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver on Orgrim's Hammer wants you to bring him 5 Pustulant Spines from the Pustulant Horrors on Mord'rethar." },
 			descriptionQuestText = { "While it's going to be crucial to defeat the Scourge on the ground, we mustn't neglect the gate itself. The flesh giants on the ramparts are capable of hurling massive boulders and chunks of ice, inflicting devastating damage to enemy infantry below. Muster a force and defeat these giants. We need to know just what we're up against in terms of their strength. Oh... and bring me their spines. If memory serves, there's a little trick I can share with you." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Kill Pustulent Horror and loot 5 Pustulant Spine: 1/5, from their bodies, at Mord'rethar: The Death Gate, Icecrown.",
@@ -924905,8 +925127,8 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 69.90, y = 47.08, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13277" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -924919,11 +925141,11 @@ RQEDatabase = {
 		},
 		[13278] = {
 			title = "Coprous the Defiled", -- Objectives: Koltira Deathweaver aboard Orgrim's Hammer wants you to kill Coprous the Defiled at Mord'rethar.
-			location = { x = 69.89, y = 46.29, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver aboard Orgrim's Hammer wants you to kill Coprous the Defiled at Mord'rethar." },
 			descriptionQuestText = { "Reports of a powerful zombie at the death gate have reached my ears, CLASS. We cannot allow a potential threat such as this to go unchallenged. Any information you are able to glean from engaging it will be better than what we know now. Go to the western chamber of the gate and find this creature. Fight him, and find a weakness we might exploit." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Coprous the Defiled Defeated: 1/1 in Mord'rethar: The Death Gate, Icecrown.",
@@ -924938,8 +925160,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 64.30, y = 28.77, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13278" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -924952,11 +925174,11 @@ RQEDatabase = {
 		},
 		[13279] = {
 			title = "Basic Chemistry", -- Objectives: Koltira Deathweaver aboard Orgrim's Hammer wants you to use Pustulant Spinal Fluid on a plague cauldron at Mord'rethar.
-			location = { x = 69.90, y = 46.47, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver aboard Orgrim's Hammer wants you to use Pustulant Spinal Fluid on a plague cauldron at Mord'rethar." },
 			descriptionQuestText = { "<Koltira takes the pustulant spines and drains their fluid into a flask.> A little-known quality of the flesh giants... Their spinal fluid interacts with the plague in a very interesting way, turning it into a corrosive acid. Poured from the towering ramparts, acid may not be a welcome sight to the troops below, but at least the victims won't rise up and add to the enemy's numbers. Pour the contents of this flask into one of the plague cauldrons in the western chamber of the death gate." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Plague Cauldron Neutralized: 1/1 in Mord'rethar: The Death Gate, Icecrown.",
@@ -924971,8 +925193,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 64.36, y = 28.72, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13279" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -924992,8 +925214,8 @@ RQEDatabase = {
 				{ npc = "Matthias Lehner", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Koltira Deathweaver at The Valley of Lost Hope, Icecrown.",
-				coordinates = { x = 61.60, y = 39.36, mapID = 118 },
+				description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				check = { "13282" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
@@ -925473,11 +925695,11 @@ RQEDatabase = {
 		},
 		[13304] = {
 			title = "Field Repairs", -- Objectives: Koltira Deathweaver aboard Orgrim's Hammer wants you to collect 5 Demolisher Parts from the Scavenging Geists in the Valley of Lost Hope and take them to the Wrecked Demolisher.
-			location = { x = 61.68, y = 39.52, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver aboard Orgrim's Hammer wants you to collect 5 Demolisher Parts from the Scavenging Geists in the Valley of Lost Hope and take them to the Wrecked Demolisher." },
 			descriptionQuestText = { "The Scourge is still reeling from our attack, PLAYER. Now is the time to capitalize on our momentum. The strategically important valley below us is wide open. We've located a disassembled demolisher vehicle in what we believe is working condition in the southeastern corner of the Valley of Lost Hope area. If you can get the remaining parts from the Scourge scavengers, you should be able to get it running again. A single working demolisher can wreak havoc on the enemy's ground units." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Kill Scavenging Geist and loot 5 Demolisher Parts: 1/5, from their bodies, at The Valley of Lost Hope, Icecrown.",
@@ -925611,11 +925833,11 @@ RQEDatabase = {
 		},
 		[13306] = {
 			title = "Raise the Barricades", -- Objectives: Koltira Deathweaver, aboard Orgrim's Hammer, wants you to construct 8 Barricades using your Barricade Construction Kit.
-			location = { x = 67.13, y = 26.31, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver, aboard Orgrim's Hammer, wants you to construct 8 Barricades using your Barricade Construction Kit." },
 			descriptionQuestText = { "When our forces begin to move beyond Aldur'thar, they will be vulnerable to attack from the Ironwall Rampart and the broad glacier below. We have neither the time nor the materials to build fortifications, but we can put up some barricades to shield our men from fire and break up Scourge charges. Take this barricade kit to the Valley of Fallen Heroes, on the west side of Aldur'thar. Locate the markers I've placed there and use this kit to construct your barricades there." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Barricades constructed: 1/8 in The Valley of Fallen Heroes, Icecrown.",
@@ -925714,8 +925936,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [9] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 62.42, y = 30.41, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13306" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -925728,11 +925950,11 @@ RQEDatabase = {
 		},
 		[13307] = {
 			title = "Bloodspattered Banners", -- Objectives: Koltira Deathweaver, aboard Orgrim's Hammer, wants you to kill 5 Scourge Banner-Bearers, 5 Scourge Converters, and 20 Converted Heroes.
-			location = { x = 62.14, y = 40.48, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver, aboard Orgrim's Hammer, wants you to kill 5 Scourge Banner-Bearers, 5 Scourge Converters, and 20 Converted Heroes." },
 			descriptionQuestText = { "In the Valley of Fallen Heroes and Icecrown Glacier, to the west of Aldur'thar, the Scourge seeks to use the fallen against us. Scourge lieutenants have woken the valley's dead and imbued them with fearsome strength and fervor. The banners carried by the Scourge leaders in the glacier area are the source of these powers. Kill the banner-bearers, and you will weaken the converted heroes they lead. It falls to you to rid us of this obstacle, and thin the resistance before the main body can advance." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Scourge Converter slain: 1/5 in The Valley of Fallen Heroes, Icecrown.",
@@ -925927,8 +926149,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [17] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at The Valley of Lost Hope, Icecrown.",
-				-- coordinates = { x = 66.97, y = 52.08, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13307" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -925941,11 +926163,11 @@ RQEDatabase = {
 		},
 		[13312] = {
 			title = "The Ironwall Rampart", -- Objectives: Defeat Grimkor the Wicked and return to Koltira Deathweaver aboard Orgrim's Hammer.
-			location = { x = 62.09, y = 40.36, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Defeat Grimkor the Wicked and return to Koltira Deathweaver aboard Orgrim's Hammer." },
 			descriptionQuestText = { "The Ironwall Rampart overlooks the Valley of Fallen Heroes, west of Aldur'thar. The rampart dominates the fields below on all sides. We will not be able to advance if the rampart cannot be taken, but it is held by Grimkor the Wicked and his Cult of the Damned disciples. If you can weaken Grimkor, our forces know what to expect as we advance. Take this rune of distortion. Unleashing its power near Grimkor's orb at the end of the rampart should be enough to get the necromancer's attention." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Grimkor the Wicked slain: 1/1 in Ironwall Rampart, Icecrown.",
@@ -925960,8 +926182,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at The Valley of Lost Hope, Icecrown.",
-				-- coordinates = { x = 66.92, y = 52.01, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13312" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -926073,11 +926295,11 @@ RQEDatabase = {
 		},
 		[13316] = {
 			title = "The Guardians of Corp'rethar", -- Objectives: Koltira Deathweaver, aboard Orgrim's Hammer, wants you to kill 5 Harbingers of Horror and 5 Corp'rethar Guardians.
-			location = { x = 69.81, y = 41.68, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver, aboard Orgrim's Hammer, wants you to kill 5 Harbingers of Horror and 5 Corp'rethar Guardians." },
 			descriptionQuestText = { "Corp'rethar, called the Horror Gate. It is the last barrier between us and the Icecrown Citadel. It waits to the south of the Ironwall Rampart, beyond the glacier and the Conflagration. By the time our troops reach it, they will be exhausted and worse. We must weaken its defenses, or our army's strength will break upon its walls. Its battlements are manned by some of the Lich King's fiercest and most zealous servants. Do all you can to destroy these guardians and hope it is enough." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Corp'rethar Guardian slain: 1/5 in Corp'rethar: The Horror Gate, Icecrown Citadel.",
@@ -926200,8 +926422,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [11] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 68.99, y = 26.58, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13316" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -926214,11 +926436,11 @@ RQEDatabase = {
 		},
 		[13328] = {
 			title = "Shatter the Shards", -- Objectives: Bring the Broken Shard of Horror, the Broken Shard of Despair, and the Broken Shard of Suffering to Koltira Deathweaver aboard Orgrim's Hammer.
-			location = { x = 69.81, y = 41.31, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Bring the Broken Shard of Horror, the Broken Shard of Despair, and the Broken Shard of Suffering to Koltira Deathweaver aboard Orgrim's Hammer." },
 			descriptionQuestText = { "Atop the battlements of Corp'rethar, the Lich King's minions have erected three crystals, the shards of horror, despair, and suffering. Should our men reach the walls of Corp'rethar, he will unleash these weapons on our army. In full effect, the crystals will afflict the minds of our men with paralyzing pain and fear. Then, the Scourge will be able to slaughter them at will. Find these shards, destroy them, and bring me their broken remains. We cannot allow the Lich King to deploy these weapons!" },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Broken Shard of Despair: 1/1 in Corp'rethar: The Horror Gate, Icecrown Citadel.",
@@ -926257,8 +926479,8 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [4] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 68.84, y = 26.48, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13328" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -926271,11 +926493,11 @@ RQEDatabase = {
 		},
 		[13329] = {
 			title = "Before the Gate of Horror", -- Objectives: Koltira Deathweaver, aboard Orgrim's Hammer, wants you to use the Volatile Acid to dissolve the remains of 6 Skeletal Reavers.
-			location = { x = 67.74, y = 52.67, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver, aboard Orgrim's Hammer, wants you to use the Volatile Acid to dissolve the remains of 6 Skeletal Reavers." },
 			descriptionQuestText = { "The Conflagration, the ground before Corp'rethar, south of the Ironwall Rampart, is where the Lich King's elite soldiers have formed up to defend the citadel. Led by a contingent of CLASSs, a legion of skeletal reavers bars the way. I fear that even when these reavers fall, the Scourge will simply reconstitute them and send them back at us. I've come up with a plan to stop this, but I have no way of knowing if it will work. Take this solution and use it to dissolve the remains of the reavers." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Skeletal Reaver bones dissolved: 1/6 in The Conflagration, Icecrown.",
@@ -926350,8 +926572,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [7] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Sindragosa's Fall, Icecrown.",
-				-- coordinates = { x = 69.90, y = 45.38, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13329" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -926461,8 +926683,8 @@ RQEDatabase = {
 				{ npc = "Matthias Lehner", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				coordinates = { x = 66.82, y = 26.48, mapID = 118 },
+				description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				check = { "13348" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
@@ -926475,11 +926697,11 @@ RQEDatabase = {
 		},
 		[13349] = {
 			title = "Cradle of the Frostbrood", -- Objectives: Koltira Deathweaver aboard Orgrim's Hammer wants you to slay 5 Wyrm Reanimators, 8 Cultist Corrupters and 3 Vrykul Necrolords at Sindragosa's Fall.
-			location = { x = 62.82, y = 30.08, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira Deathweaver aboard Orgrim's Hammer wants you to slay 5 Wyrm Reanimators, 8 Cultist Corrupters and 3 Vrykul Necrolords at Sindragosa's Fall." },
 			descriptionQuestText = { "We need to keep our momentum going. Let's not give the Scourge forces any respite. Sindragosa's Fall lies east just beyond the Valley of Lost Hope. The Cult of the Damned operate there, under close supervision of the Lich King's undead vrykul lackeys. It is a place of great power, possibly a blue dragonflight graveyard. The feared frostbrood are raised there from the bones of blue dragons. An attack there would have great impact on the enemy's access to frost wyrms. Are you up to it, PLAYER?" },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Cultist Corrupter slain: 1/8 in Sindragosa's Fall, Icecrown.",
@@ -926674,8 +926896,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [17] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at The Valley of Lost Hope, Icecrown.",
-				-- coordinates = { x = 61.08, y = 38.16, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13349" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -926688,11 +926910,11 @@ RQEDatabase = {
 		},
 		[13351] = {
 			title = "Sneak Preview", -- Objectives: Koltira, aboard Orgrim's Hammer, wants you to fly down to the gate of desolation, visiting the south, central, north, and northwest regions of the gate.
-			location = { x = 69.89, y = 46.15, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira, aboard Orgrim's Hammer, wants you to fly down to the gate of desolation, visiting the south, central, north, and northwest regions of the gate." },
 			descriptionQuestText = { "Progress is being made. We have a promising array of tactics that should gain us control of the death gate. There will doubtlessly be many casualties, but in the end, we should be able to prevail - barring any interference from the Alliance. Our next focus will be Aldur'thar, the gate of desolation. Fly down and become familiar with it and with the enemies posted there. When you return, I will have your missions prepared." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Aldur'thar South Visited: 1/1 in Aldur'thar: The Desolation Gate, Icecrown.",
@@ -926743,8 +926965,8 @@ RQEDatabase = {
 				-- objectiveIndex = 3,
 			-- },
 			-- [5] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 64.21, y = 28.84, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13351" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -926757,11 +926979,11 @@ RQEDatabase = {
 		},
 		[13352] = {
 			title = "Drag and Drop", -- Objectives: Koltira, aboard Orgrim's Hammer, wants you to collect Orbs of Illusion from Bitter Initiates at Aldur'thar and use them on 3 Dark Subjugators there.
-			location = { x = 63.86, y = 44.57, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira, aboard Orgrim's Hammer, wants you to collect Orbs of Illusion from Bitter Initiates at Aldur'thar and use them on 3 Dark Subjugators there." },
 			descriptionQuestText = { "The Cult of the Damned hold the gate of desolation, eh? No surprise there. Time to have a little fun. At the southern end of the gate, you mentioned there were new cultists being trained. They're almost certain to be holding a special item given to all initiates - an Orb of Illusion. These artifacts are used to disguise a cult member, allowing them to gain safe passage, infiltrate, or simply blend in with an enemy. Kill the fools until you find one, CLASS, then use it on a subjugator." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Dark Subjugator dragged and dropped: 1/3 in Aldur'thar: The Desolation Gate, Icecrown.",
@@ -926800,8 +927022,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [4] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 69.58, y = 30.36, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13352" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -926814,11 +927036,11 @@ RQEDatabase = {
 		},
 		[13354] = {
 			title = "Chain of Command", -- Objectives: Koltira aboard Orgrim's Hammer wants you to go to Aldur'thar and defeat Overseer Faedris, Overseer Savryn, Overseer Veraj, and Overseer Jhaeqon.
-			location = { x = 63.90, y = 44.68, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira aboard Orgrim's Hammer wants you to go to Aldur'thar and defeat Overseer Faedris, Overseer Savryn, Overseer Veraj, and Overseer Jhaeqon." },
 			descriptionQuestText = { "Based on your report, and my knowledge of the Cult, they have an overseer managing the operation of each encampment on the gate. While taking their leaders down will only be a temporary setback, it will at least slow them down and keep them off-balance. And that, blood elf, is a worthy enough goal for now. Seek out these overseers and return to me when they have been dispatched." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Overseer Faedris Killed: 1/1 in Aldur'thar: The Desolation Gate, Icecrown.",
@@ -926869,8 +927091,8 @@ RQEDatabase = {
 				-- objectiveIndex = 3,
 			-- },
 			-- [5] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 69.59, y = 30.25, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13354" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -926883,11 +927105,11 @@ RQEDatabase = {
 		},
 		[13355] = {
 			title = "Cannot Reproduce", -- Objectives: Koltira aboard Orgrim's Hammer wants you to use the Partitioned Flask at each of the 3 Cultists' Cauldrons at Aldur'thar, then bring it to Chief Engineer Copperclaw.
-			location = { x = 63.94, y = 44.79, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira aboard Orgrim's Hammer wants you to use the Partitioned Flask at each of the 3 Cultists' Cauldrons at Aldur'thar, then bring it to Chief Engineer Copperclaw." },
 			descriptionQuestText = { "I smell their cauldrons from here, but that's not plague they're cooking. Pledges to the cult are forced to drink a concoction that steals their will and enslaves them forever to the Lich King. Some say the potion contains the twisted soul of a being who was tormented before being mercilessly slaughtered, but I've never been able to reproduce it... Fill this flask with a sample from each of the three cauldrons in the northwest region of the gate and bring it to Chief Engineer Copperclaw." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Dark Sample Collected: 1/1 in Aldur'thar: The Desolation Gate, Icecrown.",
@@ -926971,11 +927193,11 @@ RQEDatabase = {
 		},
 		[13358] = {
 			title = "Not a Bug", -- Objectives: Koltira, aboard Orgrim's Hammer, wants you to collect 5 Dark Matters and summon a Dark Messenger at Aldur'thar.
-			location = { x = 63.24, y = 29.66, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira, aboard Orgrim's Hammer, wants you to collect 5 Dark Matters and summon a Dark Messenger at Aldur'thar." },
 			descriptionQuestText = { "Alright, missy, time to plant a bug. Relax, it's not a bug exactly, but it'll serve our purposes. In the northern portion of Aldur'thar, the cult's void summoners enslave demonic minions. Use this rod to siphon the dark matter from the corpses of these enslaved minions, and then use the cultists' summoning crystal to bring our little spy into being. Until it is discovered, the messenger will serve as our eyes and ears, discreetly observing the actions of our enemy." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Dark Messenger summoned: 1/1 in Aldur'thar: The Desolation Gate, Icecrown.",
@@ -926990,8 +927212,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Sindragosa's Fall, Icecrown.",
-				-- coordinates = { x = 69.73, y = 39.22, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13358" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -927146,8 +927368,8 @@ RQEDatabase = {
 				{ npc = "Matthias Lehner", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				coordinates = { x = 62.45, y = 30.38, mapID = 118 },
+				description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				check = { "13362" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
@@ -927160,11 +927382,11 @@ RQEDatabase = {
 		},
 		[13363] = {
 			title = "Argent Aid", -- Objectives: Speak to Highlord Tirion Fordring at the Crusader's Pinnacle.
-			location = { x = 60.42, y = 31.99, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Speak to Highlord Tirion Fordring at the Crusader's Pinnacle." },
 			descriptionQuestText = { "There were rumors about the events you speak of among the CLASSs. I always expected the story to be more... symbolic. We must warn others, but we must be discreet. As soon as the Lich King knows we're making our move, he'll move the location of the heart -- we'll never get a chance like this again. The Horde and the Alliance have been infiltrated by the Cult of the Damned before. The Ebon Blade operates too close to the Scourge. We have to speak to Tirion Fordring and his Argent Crusade." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			[1] = {
 				description = "Turn in the quest to Highlord Tirion Fordring at Crusaders' Pinnacle, Icecrown.",
@@ -927223,11 +927445,11 @@ RQEDatabase = {
 		},
 		[13366] = {
 			title = "Need More Info", -- Objectives: Koltira, aboard Orgrim's Hammer, wants you to collect the 3 pages of Cultists' Research from the Cult Researchers at Aldur'thar and use them to create the Cult of the Damned Thesis.
-			location = { x = 63.20, y = 29.71, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira, aboard Orgrim's Hammer, wants you to collect the 3 pages of Cultists' Research from the Cult Researchers at Aldur'thar and use them to create the Cult of the Damned Thesis." },
 			descriptionQuestText = { "The Cult of the Damned are notorious for concocting grandiose plans that in the end, rarely succeed. But something feels different this time.... Perhaps it's the proximity to the Lich King that has their fervor heightened. Whatever it is, they appear to be more confident than ever. We must know what feeds this bravado and then find a way to strip them of it! I believe the key lies with their researchers. Find out what they're up to and report back to me with the details." },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Cult of the Damned Thesis: 1/1 in Aldur'thar: The Desolation Gate, Icecrown.",
@@ -927242,8 +927464,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Sindragosa's Fall, Icecrown.",
-				-- coordinates = { x = 69.73, y = 39.07, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13366" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -927256,11 +927478,11 @@ RQEDatabase = {
 		},
 		[13367] = {
 			title = "No Rest For The Wicked", -- Objectives: Koltira, aboard Orgrim's Hammer, wants you to slay Alumeth the Ascended at Aldur'thar.
-			location = { x = 69.72, y = 38.76, mapID = 118 },
+			location = { x = 64.14, y = 45.36, mapID = 118 },
 			objectivesQuestText = { "Koltira, aboard Orgrim's Hammer, wants you to slay Alumeth the Ascended at Aldur'thar." },
 			descriptionQuestText = { "These fools have actually stumbled upon something that could pose a serious threat to our plans! The leader of this particular sect, Alumeth, has ritualistically sacrificed himself and now his underlings are channeling power to his soul. If he's allowed to rest, their efforts will soon transform him into a mighty adversary. Combine his heart, skull, scepter and robes from around their chamber and use his remains on the crystal there. Hurry, blood elf! Destroy him before he becomes any more powerful!" },
 			npcs = {
-				{ npc = "Koltira Deathweaver", id = "x99" },
+				{ npc = "Koltira Deathweaver", id = 29795 },
 			},
 			-- [1] = {
 				-- description = "! Alumeth the Ascended Defeated: 1/1 in Aldur'thar: The Desolation Gate, Icecrown.",
@@ -927275,8 +927497,8 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Koltira Deathweaver at Icecrown.",
-				-- coordinates = { x = 67.43, y = 26.19, mapID = 118 },
+				-- description = "Turn in the quest to {npc:29795:Koltira Deathweaver} aboard Orgrim's Hammer (flying ship), Icecrown.",
+				-- coordinates = { x = 64.14, y = 45.36, mapID = 118 },
 				-- check = { "13367" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
@@ -927318,7 +927540,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Librarian Serrah wants you to speak to Corastrasza in Coldarra." },
 			descriptionQuestText = { "Greetings, CLASS. Might I impose on you for a favor? Corastrasza is the sister of Raelorasz - the red dragon in charge of our outpost here. Against his will, she has ascended to one of the upper rings of the Nexus to observe some frighteningly powerful blue drakes. Though he will never say it, he worries about her, and would welcome any news of her well-being. Please seek her out. Ask her to put her pride aside and send word to her brother." },
 			npcs = {
-				{ npc = "Librarian Serrah", id = "x99" },
+				{ npc = "Librarian Serrah", id = 26110 },
 			},
 			[1] = {
 				description = "Turn in the quest to Corastrasza (located on one of the upper platforms around The Nexus).",
@@ -927509,10 +927731,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak to Sky-Reaver Klum to secure passage to Orgrim's Hammer in Icecrown, and then report to Sky-Reaver Korm Blackscar." },
 			descriptionQuestText = { "You there! You look like you have some wits about you. We could use some more able bodies in Icecrown. The Alliance scum rushed into Icecrown ahead of us, unprepared, and got just what they deserved for their impatience. We took our time, we made ready, and soon we will mount a true assault from one of the most advanced pieces of engineering known to Azeroth - Orgrim's Hammer. The Alliance don't stand a chance, and neither does Arthas. Speak to me when you're ready to depart and lend a hand." },
 			npcs = {
-				{ npc = "Sky-Reaver Klum", id = "x99" },
+				{ npc = "Sky-Reaver Klum", id = 31085 },
 			},
 			-- [1] = {
-				-- description = "Speak with Sky-Reaver Klum at Krasus' Landing, Dalaran and select, \"Take me to the ship.\"",
+				-- description = "Speak with {npc:31085:Sky-Reaver Klum} at Krasus' Landing, Dalaran and select, \"Take me to the ship.\"",
 				-- coordinates = { x = 69.34, y = 40.60, mapID = 125 },
 				-- check = { "118" },
 				-- neededAmt = { "1" },
@@ -928312,7 +928534,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Ha'wana at Dubra'Jin needs you to collect 12 Gundrak Raptor Eggs." },
 			descriptionQuestText = { "How ya doin', mon? Thinkin' ya might be helpin' me out? Bah'Kini be needin' lots o' the raptor eggs to be sacrificin' to Dubra'Jin. How ya thinkin' we not be overrun yet by the Drakkari? Dubra'Jin be lendin' us his aid! We need ya to gather up the raptor eggs from around the trees outside here in Gundrak. Sometimes the raptors carry 'em to keep 'em warm, too." },
 			npcs = {
-				{ npc = "Ha'wana", id = "x99" },
+				{ npc = "Ha'wana", id = 33025 },
 			},
 			[1] = {
 				description = "Collect from the ground (tree-covered areas) and/or kill Gundrak Raptor and loot 12 {item:44921:Gundrak Raptor Egg}, from its body, in the area outside of Gundrak, Zul'Drak.",
@@ -928332,7 +928554,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Ha'wana at Dubra'Jin, Zul'Drak.",
+				description = "Turn in the quest to {npc:33025:Ha'wana} at Dubra'Jin, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 69.99, y = 20.96, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 73.55, y = 32.92, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -928353,7 +928575,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Marcia Chase in Dalaran City wants you to discover the mystery of the Phantom Ghostfish." },
 			descriptionQuestText = { "Any Northrend angler worth her salt knows about the pygmy suckerfish. It's not edible, but sometimes useful to alchemists. There is, however, a stealthy fish that hides among the suckerfish in the River's Heart of Sholazar Basin. The phantom ghostfish. When out of water, they become increasingly translucent until they fade away completely. Some hypothesize they return to Sholazar, and others are more... superstitious. I want you to catch this fish and discover its secret by any means!" },
 			npcs = {
-				{ npc = "Marcia Chase", id = "x99" },
+				{ npc = "Marcia Chase", id = 28742 },
 			},
 			[1] = {
 				description = "Travel to River's Heart, Sholazar Basin.",
@@ -928413,7 +928635,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Marcia Chase in Dalaran City wants you to bring her a piece of Corroded Jewelry." },
 			descriptionQuestText = { "Hard to believe that most people fish in the Dalaran Sewers for giant rats and mutated fish. Especially when those waters are filled with priceless jewelry - discarded by broken hearted fools, thieves, and careless drunks. The trick is to let your hook drag the bottom and don't pull up too hard when you get something. Try it out, PLAYER. I'd be willing to trade whatever you find for a few trinkets of my own." },
 			npcs = {
-				{ npc = "Marcia Chase", id = "x99" },
+				{ npc = "Marcia Chase", id = 28742 },
 			},
 			[1] = {
 				description = "Travel to the Dalaran Sewers entrance and then go inside.",
@@ -928454,7 +928676,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Marcia Chase in Dalaran City wants you to bring her 5 Bloodtooth Frenzies." },
 			descriptionQuestText = { "The bloodtooth is a feisty little fish used in a recipe to cure infected wounds. We could use some of them, if you're up to it. As the name suggests, they've a hunger for blood. The only way I know how to catch the little devils is by creating a blood pool and fishing in it. Get yourself covered in blood - just slaughter a beast in the Borean Tundra - and then jump in the water. It'll wash right off and create the perfect fishing spot." },
 			npcs = {
-				{ npc = "Marcia Chase", id = "x99" },
+				{ npc = "Marcia Chase", id = 28742 },
 			},
 			[1] = {
 				description = "Travel SW of Kaskala, Borean Tundra.",
@@ -928500,7 +928722,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Marcia Chase in Dalaran City wants you to bring her 10 Terrorfish." },
 			descriptionQuestText = { "The best fishing is often the most dangerous. Wintergrasp boasts a bountiful catch for the brazen. In fact, it's the only place to catch the fabled Terrorfish - a fish both lethal and delicious. Bring me some, and we'll have something to discuss." },
 			npcs = {
-				{ npc = "Marcia Chase", id = "x99" },
+				{ npc = "Marcia Chase", id = 28742 },
 			},
 			[1] = {
 				description = "ALLIANCE: Travel to Valiance Landing Camp, Wintergrasp.\n\n|cFFFF3333This is the Alliance's Wintergrasp flight master location|r",
@@ -928677,7 +928899,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Olisarra the Kind in Dalaran City wants you to return the Severed Arm to her." },
 			descriptionQuestText = { "I've received word of an unfortunate accident at the Dalaran prison; a guard had his arm severed and thrown into the water by a particularly vicious inmate. Our first aid clinic promises they can reattach the arm if we bring it back. You fish long enough in the water outside the prison, and I'd bet my favorite fishing pole that arm will surface. Find that arm, and bring it to Olisarra the Kind here in Dalaran. She'll know what to do." },
 			npcs = {
-				{ npc = "Marcia Chase", id = "x99" },
+				{ npc = "Marcia Chase", id = 28742 },
 			},
 			[1] = {
 				description = "Travel to area outside of Violet Hold, and fish the waters for a {item:45328:Bloated Slippery Eel} and use the item in your bag to collect {item:45323:Severed Arm}.",
@@ -929325,7 +929547,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Recruitment Officer Blythe at Valiance Keep in Borean Tundra." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Recruitment Officer Blythe at Valiance Keep in Borean Tundra. The Valiance Expedition needs your help to keep the forces of the Scourge under control and safeguard civilized lands! Make your way to the Stormwind Docks and take the ship north to Valiance Keep. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Recruitment Officer Blythe at Valiance Keep, Borean Tundra.",
@@ -929704,7 +929926,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with the Image of Archmage Modera at Stars' Rest." },
 			descriptionQuestText = { "Volunteers are needed to aid the Silver Covenant forces in the Dragonblight as they attempt to counter the chaotic arcane energies that threaten to rip the land apart. Those skilled in fighting dragons and undead are greatly welcome. Those willing to answer the call should report to Archmage Modera at Stars' Rest in Dragonblight." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Image of Archmage Modera at Stars' Rest, Dragonblight.",
@@ -929734,7 +929956,7 @@ RQEDatabase = {
 				{ object = "Warchief's Command Board", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Conqueror Krenna at Conquest Hold, Grizzly Hills",
+				description = "Turn in the quest to {npc:26860:Conqueror Krenna} at Conquest Hold, Grizzly Hills.",
 				coordinateHotspots = {
 					{ x = 20.70, y = 64.17, mapID = 116, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.48, y = 62.38, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -929758,7 +929980,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Lieutenant Dumont at Amberpine Lodge in western Grizzly Hills." },
 			descriptionQuestText = { "While we focus to hold our ground at Wintergarde and deal with the unfolding events of the Wrathgate, battalions from as far away as Westfall battle their way through the dense foliage and inhospitable denizens of Grizzly Hills. All in hopes of finding an alternate route into Icecrown. Lieutenant Dumont, stationed at Amberpine Lodge, has enlisted the aid of able bodied citizens willing to risk life and limb in the uncharted wilds. Will you rise to meet this challenge?" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Lieutenant Dumont at Amberpine Lodge, Grizzly Hills.",
@@ -929788,7 +930010,7 @@ RQEDatabase = {
 				{ object = "Warchief's Command Board", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Apothecary Lysander at Vengeance Landing, Howling Fjord.",
+				description = "Turn in the quest to {npc:24126:Apothecary Lysander} at Vengeance Landing, Howling Fjord.",
 				coordinateHotspots = {
 					{ x = 78.55, y = 28.97, mapID = 117, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 84.45, y = 72.91, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -929815,7 +930037,7 @@ RQEDatabase = {
 				{ object = "Warchief's Command Board", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Crusader Lord Lantinga at Light's Breach, Zul'Drak.",
+				description = "Turn in the quest to {npc:29687:Crusader Lord Lantinga} at Light's Breach, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 32.14, y = 75.75, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.53, y = 47.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -929842,7 +930064,7 @@ RQEDatabase = {
 				{ object = "Warchief's Command Board", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Archmage Pentarus at Krasus' Landing, Dalaran.",
+				description = "Turn in the quest to {npc:28160:Archmage Pentarus} at Krasus' Landing, Dalaran.",
 				coordinateHotspots = {
 					{ x = 68.53, y = 42.03, mapID = 125, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 49.26, y = 41.97, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -929897,7 +930119,7 @@ RQEDatabase = {
 				{ object = "Warchief's Command Board", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Sky-Reaver Klum in Dalaran over Crystalsong Forest",
+				description = "Turn in the quest to {npc:31085:Sky-Reaver Klum} in Dalaran over Crystalsong Forest",
 				coordinates = { x = 69.34, y = 40.60, mapID = 125 },
 				check = { "49537" },
 				neededAmt = { "1" },
@@ -929918,7 +930140,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Macalroy in Howling Fjord." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Macalroy in Howling Fjord. The port town of Valgarde is located in the heart of the Howling Fjord, and it allows for the Alliance to have an advantageous position to strike at the Scourge. Assist the soldiers stationed there. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Macalroy on the docks in Valgarde, Howling Fjord.",
@@ -929945,10 +930167,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Crusader Lord Lantinga in Zul'Drak." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Crusader Lord Lantinga in Zul'Drak. The Scourge is massacring the local population in Zul'Drak and converting them over to be part of the Scourge army. Assist the Argent Crusade and the Ebon Blade in stopping this threat. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
-				description = "Turn in the quest to Crusader Lord Lantinga at Light's Breach, Zul'Drak.",
+				description = "Turn in the quest to {npc:29687:Crusader Lord Lantinga} at Light's Breach, Zul'Drak.",
 				coordinateHotspots = {
 					{ x = 32.14, y = 75.75, mapID = 121, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.53, y = 47.44, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -929972,10 +930194,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Archmage Pentarus in Dalaran over Crystalsong Forest." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Archmage Pentarus in Dalaran over Crystalsong Forest. Hemet Nesingwary, along with his expeditionary force, was sent to explore Sholazar Basin, but has gone missing. We do not know much about the lush landscape of Sholazar, but there might be secrets in the basin that can give us an advantage in our fight against the Lich King. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
-				description = "Turn in the quest to Archmage Pentarus at Krasus' Landing, Dalaran.",
+				description = "Turn in the quest to {npc:28160:Archmage Pentarus} at Krasus' Landing, Dalaran.",
 				coordinateHotspots = {
 					{ x = 68.53, y = 42.03, mapID = 125, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 49.26, y = 41.97, continentID = 113, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -930000,7 +930222,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Rin Duoctane in Dalaran over Crystalsong Forest." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Rin Duoctane in Dalaran over Crystalsong Forest. The goblins of K3 have built a city in Storm Peaks and have sent their ambassador to recruit adventurers. Speak with Rin and see what the people of K3 need. They would make valuable allies in our fight against the Lich King. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Rin Duoctane at Cantrips & Crows, Dalaran (sewers).",
@@ -930027,7 +930249,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Officer Van Rossem in Dalaran over Crystalsong Forest." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Officer Van Rossem in Dalaran over Crystalsong Forest. The Valiance Expedition needs more adventurers to bolster their assault on assault Icecrown Citadel and Arthas himself. It is time to make the Lich King pay for his crimes. Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Officer Van Rossem at Krasus' Landing, Dalaran.",
@@ -949307,7 +949529,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Hunt down 12 Clefthoof and return to Hemet Nesingwary at Nesingwary's Safari in Nagrand to prove yourself." },
 			descriptionQuestText = { "You want to earn a place in this safari? You'll have to prove yourself. I don't care what you've hunted before, you haven't hunted until you hunt what we hunt here. Start with the clefthoof if you're tough enough. I know that I've seen them in the immediate area around the safari and also close by to the south." },
 			npcs = {
-				{ npc = "Hemet Nesingwary", id = "x99" },
+				{ npc = "Hemet Nesingwary", id = 18180 },
 			},
 			[1] = {
 				description = "Kill 12 Clefthoof in Nagrand.",
@@ -949842,7 +950064,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elementalist Lo'ap at the Throne of the Elements in Nagrand wants you to bring him 8 Digested Caracoli." },
 			descriptionQuestText = { "You are ill-equipped to face the restless elements of Nagrand. Before you can help the Earthen Ring, you must help yourself. To the west you will find dung heaps left behind by the wildlife of Nagrand. You must search the dung for the digested remnants of the Nagrand caracoli. From this bean I am able to make a tablet that will aid you in your battle against the restless forces of nature. Return to me when you have collected no less than two fists worth of caracoli... Ogre sized fists." },
 			npcs = {
-				{ npc = "Elementalist Lo'ap", id = "x99" },
+				{ npc = "Elementalist Lo'ap", id = 18073 },
 			},
 			[1] = {
 				description = "Collect |cFFffcc338|r {item:24419:Digested Caracoli}, from the ground, west of the Throne of the Elements, Nagrand.",
@@ -949949,7 +950171,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[9] = {
-				description = "Turn in the quest to Elementalist Lo'ap at the Throne of the Elements, Nagrand.",
+				description = "Turn in the quest to {npc:18073:Elementalist Lo'ap} at the Throne of the Elements, Nagrand.",
 				coordinateHotspots = {
 					{ x = 60.79, y = 22.39, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 34.70, y = 56.72, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -950341,7 +950563,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elementalist Lo'ap at the Throne of the Elements in Nagrand wants you to destroy 8 Lake Spirits." },
 			descriptionQuestText = { "The disturbance in the ebb and flow of the waters of Nagrand has greatly agitated the water spirits of Skysong Lake. They have in turn begun sowing destruction throughout the waterways of the area. Watoosun of the Water has come to us in a vision and granted us permission to remedy the problem - so long as the source of the disturbance is also dealt with... We will get to the source, but first you must deal with the problems immediate to the Throne. Destroy the agitated lake spirits and return to me." },
 			npcs = {
-				{ npc = "Elementalist Lo'ap", id = "x99" },
+				{ npc = "Elementalist Lo'ap", id = 18073 },
 			},
 			[1] = {
 				description = "Kill 8 Lake Spirits in Skysong Lake, Nagrand.",
@@ -950359,7 +950581,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Elementalist Lo'ap at the Throne of the Elements, Nagrand.",
+				description = "Turn in the quest to {npc:18073:Elementalist Lo'ap} at the Throne of the Elements, Nagrand.",
 				coordinateHotspots = {
 					{ x = 60.79, y = 22.39, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 34.70, y = 56.72, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -950383,7 +950605,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elementalist Lo'ap at the Throne of the Elements in Nagrand wants you to destroy the Large Hut, the Western Hut, the Southern Hut and the Eastern Hut at Windyreed Village. Return the Living Fire to Elementalist Lo'ap when the task is complete." },
 			descriptionQuestText = { "The wretched Lost Ones, heretofore banished to the swamps of Zangarmarsh, are seeking to spread their filth to other parts of our world. I have sought the wisdom of the furies and gained their blessing. To stop the source, we must unleash the elements upon them! I give you living fire, plucked from the fiery essence of Incineratus himself. Travel to Windyreed Village, southeast of here, and unleash the living fire upon their huts! Let them see the fury of the elements!" },
 			npcs = {
-				{ npc = "Elementalist Lo'ap", id = "x99" },
+				{ npc = "Elementalist Lo'ap", id = 18073 },
 			},
 			[1] = {
 				description = "Use the {item:24467:Living Fire} (in your inventory), inside the Large Hut, to destroy it at the Windyreed Village, Nagrand.",
@@ -950440,7 +950662,7 @@ RQEDatabase = {
 				objectiveIndex = 4,
 			},
 			[5] = {
-				description = "Turn in the quest to Elementalist Lo'ap at the Throne of the Elements, Nagrand.",
+				description = "Turn in the quest to {npc:18073:Elementalist Lo'ap} at the Throne of the Elements, Nagrand.",
 				coordinateHotspots = {
 					{ x = 60.79, y = 22.39, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 34.70, y = 56.72, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -951130,7 +951352,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elementalist Lo'ap at the Throne of the Elements in Nagrand wants you to destroy Watoosun's Polluted Essence and 8 Lake Surgers." },
 			descriptionQuestText = { "Watoosun was able to shed the stink of corruption; but in doing so, created a twisted spirit essence. A spirit essence composed of the vilest corruption found amongst the elements! You will find this polluted spirit of the swamp southwest of here, hidden in the depths of Lake Sunspring. Find and destroy the polluted essence of Watoosun and any corrupt offspring that it may have created." },
 			npcs = {
-				{ npc = "Elementalist Lo'ap", id = "x99" },
+				{ npc = "Elementalist Lo'ap", id = 18073 },
 			},
 			[1] = {
 				description = "Kill 8 Lake Surgers (water elementals) in Lake Sunspring, Nagrand.",
@@ -951165,7 +951387,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Elementalist Lo'ap at the Throne of the Elements, Nagrand.",
+				description = "Turn in the quest to {npc:18073:Elementalist Lo'ap} at the Throne of the Elements, Nagrand.",
 				coordinateHotspots = {
 					{ x = 60.79, y = 22.39, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 34.70, y = 56.72, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -951229,7 +951451,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elementalist Lo'ap at the Throne of the Elements in Nagrand wants you to retrieve 5 Muck-ridden Cores." },
 			descriptionQuestText = { "The most affected elements of water can be found in the Halaani Basin, southwest of here, beneath the abandoned city of Halaa. While some distressed elements can be destroyed without any impact upon the environment, spawns of muck must be physically removed from the world once destroyed. You see, muck spawns leave behind globules of tainted debris that if left untouched will spread and further contaminate the environment. Destroy these muck spawns and bring back their muck-ridden cores." },
 			npcs = {
-				{ npc = "Elementalist Lo'ap", id = "x99" },
+				{ npc = "Elementalist Lo'ap", id = 18073 },
 			},
 			[1] = {
 				description = "Kill Muck Spawn and collect |cFFffcc335|r {item:24469:Muck-Ridden Cores}, from their corpses, in Halaa and Halaani Basins, Nagrand.",
@@ -951312,7 +951534,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[6] = {
-				description = "Turn in the quest to Elementalist Lo'ap at the Throne of the Elements, Nagrand.",
+				description = "Turn in the quest to {npc:18073:Elementalist Lo'ap} at the Throne of the Elements, Nagrand.",
 				coordinateHotspots = {
 					{ x = 60.79, y = 22.39, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 34.70, y = 56.72, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -951417,7 +951639,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Communicate with Gordawg." },
 			descriptionQuestText = { "Something rails the underneath. It beats the ground as if to punish. *Thud* <Untrag beats his chest with his fist.> It makes this sound a hundred-thousand times. Endlessly it beats. The earth reels. It is calling out to us now. Gordawg speaks to me. Gordawg knows that something forces the elements out. Something from the underneath. Go now and speak to Gordawg. No, listen to Gordawg, do not speak. Hear Gordawg..." },
 			npcs = {
-				{ npc = "Elementalist Untrag", id = "x99" },
+				{ npc = "Elementalist Untrag", id = 18071 },
 			},
 			[1] = {
 				description = "Turn in the quest to Gordawg.\n\n|cFFFF3333Gordawg patrols around Throne of Elements in a clockwise direction.|r",
@@ -953230,7 +953452,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill 12 Clefthoof Bulls and then speak to Hemet Nesingwary at Nesingwary's Safari in Nagrand about your prowess." },
 			descriptionQuestText = { "You've proved to me that you can find and take down a regular clefthoof, but far more dangerous are the clefthoof bulls. Bag yourself twelve of those. Then you can talk to me of your hunting prowess. Look for them all along the middle region of Nagrand to the west and south." },
 			npcs = {
-				{ npc = "Hemet Nesingwary", id = "x99" },
+				{ npc = "Hemet Nesingwary", id = 18180 },
 			},
 			[1] = {
 				description = "Kill 12 Clefthoof Bull in Nagrand.",
@@ -953277,7 +953499,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Acquire the Horn of Banthar and return it to Hemet Nesingwary at the Nesingwary Safari in Nagrand." },
 			descriptionQuestText = { "Banthar is the fiercest and most elusive of all the clefthoof in Outland. She's also the hairiest. It is said that she roams with her clefthoof herd in the Spirit Fields near Oshu'gun. You want to truly prove your hunting mastery? Bring me her horn!" },
 			npcs = {
-				{ npc = "Hemet Nesingwary", id = "x99" },
+				{ npc = "Hemet Nesingwary", id = 18180 },
 			},
 			[1] = {
 				description = "Kill Banthar and loot the {item:24496:Horn of Banthar}, from its body, in Nagrand.\n\n|cFFFF3333Banthar patrols along the area moving possibly counterclockwise around Oshu'gun.|r",
@@ -953319,7 +953541,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring the Heart of Tusker to Hemet Nesingwary at Nesingwary's Safari in Nagrand." },
 			descriptionQuestText = { "The queen of all that dwell in Nagrand is known as Tusker. She's a giant elekk the likes of which you won't see anywhere else! You're right to be fearful of that name. Bach'lor, Gutripper, and Banthar are nothing when compared to her. It is said that she can be found on a huge bluff far to the southwest overlooking Oshu'gun. Bring me her massive heart if you dare. Do you want to leave a letter with me so that I can have it delivered to your next of kin in the likely event that you don't return?" },
 			npcs = {
-				{ npc = "Hemet Nesingwary", id = "x99" },
+				{ npc = "Hemet Nesingwary", id = 18180 },
 			},
 			[1] = {
 				description = "Kill Tusker and loot the {item:24505:Heart of Tusker}, from its body, in Nagrand.",
@@ -953536,7 +953758,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill 12 Windrocs and then return to Fitz at the Nesingwary Safari in Nagrand." },
 			descriptionQuestText = { "Do you live for the hunt as I do, CLASS? Do you seek the quietude that comes as you stalk your prey? Would you know what it is to honor the last heartbeats of your fallen quarry? I will help you to achieve this. Nagrand is a lush land, full of life in the midst of this broken world. Bring down a handful of the windrocs and then we will speak more. You can find them in many places nearby in all directions around our camp." },
 			npcs = {
-				{ npc = "Shado 'Fitz' Farstrider", id = "x99" },
+				{ npc = "Shado 'Fitz' Farstrider", id = 18200 },
 			},
 			[1] = {
 				description = "Kill 12 Windroc in Telaari Basin, Nagrand.",
@@ -953581,7 +953803,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Hunt down 12 Ravenous Windrocs and then return to Fitz at the Nesingwary Safari in Nagrand." },
 			descriptionQuestText = { "You must always push yourself if you are to one day stalk the mightiest of prey! While you are not yet ready, I will point you in the right direction. There is another breed of windroc even deadlier. Seek out the ravenous windroc to test your mettle against. You will find them in the heart of Nagrand to the west and southwest." },
 			npcs = {
-				{ npc = "Shado 'Fitz' Farstrider", id = "x99" },
+				{ npc = "Shado 'Fitz' Farstrider", id = 18200 },
 			},
 			[1] = {
 				description = "Kill 12 Ravenous Windroc in area north of Telaar (near Southwind Cleft), Nagrand.",
@@ -953623,7 +953845,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring the Eye of Gutripper to Fitz at the Nesingwary Safari in Nagrand." },
 			descriptionQuestText = { "You are ready, CLASS. Ready to face the mother of all windrocs, Gutripper! Honor demands that after hunting so many of her children that you give her the chance to defeat you! Seek her out amongst the greater windroc far to the west. Should you survive, bring her eye to me." },
 			npcs = {
-				{ npc = "Shado 'Fitz' Farstrider", id = "x99" },
+				{ npc = "Shado 'Fitz' Farstrider", id = 18200 },
 			},
 			[1] = {
 				description = "Kill Gutripper and loot the {item:24513:Eye of Gutripper}, from its body, in Nagrand.\n\n|cFFFF3333Often lingers near the treetops around 35, 24.|r",
@@ -953665,7 +953887,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill 12 Talbuk Stags and then return to Harold Lane at the Nesingwary Safari in Nagrand." },
 			descriptionQuestText = { "I don't think that I'm up to the hunt today. Do you think that you might take my place? I told Hemet that I was going to see about bagging us some of those talbuk that seem to be all over the place. The stags are especially nice to hunt. You can find them congregated around the nearby trees. Think that you could take care of that for me?" },
 			npcs = {
-				{ npc = "Harold Lane", id = "x99" },
+				{ npc = "Harold Lane", id = 18218 },
 			},
 			[1] = {
 				description = "Kill 12 Talbuk Stag in Nagrand.",
@@ -953710,7 +953932,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Hunt down 12 Talbuk Thorngrazers and then return to Harold Lane at the Nesingwary Safari in Nagrand." },
 			descriptionQuestText = { "This darned scratch is getting the worst of me it would seem. So, are you up to filling...<cough>... in for me again? This time you're going to bag yourself some thorngrazers. They're tougher and wilier than the stags, so keep your wits about you. Look for them... <cough>... sheltered under the trees in the middle of Nagrand to the west and south. Go on, get out there and...<cough>... show Hemet what you're made of. I'll be fine." },
 			npcs = {
-				{ npc = "Harold Lane", id = "x99" },
+				{ npc = "Harold Lane", id = 18218 },
 			},
 			[1] = {
 				description = "Kill 12 Talbuk Thorngrazer in area northwest and also southwest of Garadar, Nagrand.",
@@ -953753,7 +953975,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain the Hoof of Bach'lor and return it to Harold Lane at the Nesingwary Safari in Nagrand." },
 			descriptionQuestText = { "<Wracking cough.> Don't worry about...<cough>... me. I'll be fine. It's just a...<cough>... scratch. Just the same, I think you'll... <cough>... have to fill in for me one more... <cough>... time. You must seek out the great Bach'lor, king of...<cough>... the stags. Bring me one of his hooves...<cough>, <cough>... as confirmation. Look for him...<cough>... leading his herd in the far west of Nagrand." },
 			npcs = {
-				{ npc = "Harold Lane", id = "x99" },
+				{ npc = "Harold Lane", id = 18218 },
 			},
 			[1] = {
 				description = "Kill Bach'lor and loot the {item:24523:Hoof of Bach'lor} from its body in Nagrand.\n\n|cFFFF3333Bach'lor travels often with a group of other talbuk.|r",
@@ -953801,12 +954023,12 @@ RQEDatabase = {
 			objectivesQuestText = { "Find someone at the Throne of the Elements that knows how to speak Kalimag and show them the Howling Wind." },
 			descriptionQuestText = { "This amorphous mass of elemental air is speaking to you in a language that you cannot understand. You believe the language to be the tongue of the elements: Kalimag. Perhaps someone at the Throne of the Elements could shed some insight on this unusual find." },
 			npcs = {
-				{ npc = "Dust Howler", id = "x99" },
-				{ npc = "Storm Rager", id = "x99" },
-				{ npc = "Living Cyclone", id = "x99" },
+				{ npc = "Dust Howler", id = 17158, hostile = true },
+				{ npc = "Storm Rager", id = 17159, hostile = true },
+				{ npc = "Living Cyclone", id = 17160, hostile = true },
 			},
 			[1] = {
-				description = "Turn in the quest to Elementalist Morgh at the Throne of the Elements, Nagrand.",
+				description = "Turn in the quest to {npc:18074:Elementalist Morgh} at the Throne of the Elements, Nagrand.",
 				coordinateHotspots = {
 					{ x = 60.50, y = 22.33, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 34.60, y = 56.72, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -953830,7 +954052,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Elementalist Morgh at the Throne of the Elements in Nagrand wants you to slay 5 Murkblood Putrefiers." },
 			descriptionQuestText = { "Murkblood are capturing and torturing the spirits of air! Murkblood are my kin: A tribe of the Broken who serve the vile Musel'ek, beast lord of Coilfang. The air spirit states that the Murkblood putrefiers are capturing other spirits of air and using them to sow chaos into the ranks of the elements. It would seem that the Murkblood have recently sacked an orc village to the southwest known as Sunspring and are using powerful elemental magic to disturb the lake. Find the putrefiers and destroy them." },
 			npcs = {
-				{ npc = "Elementalist Morgh", id = "x99" },
+				{ npc = "Elementalist Morgh", id = 18074 },
 			},
 			[1] = {
 				description = "Kill |cFFffcc335|r Murkblood Putrefiers at Sunspring Post, Nagrand.",
@@ -953908,7 +954130,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[6] = {
-				description = "Turn in the quest to Elementalist Morgh at the Throne of the Elements, Nagrand.",
+				description = "Turn in the quest to {npc:18074:Elementalist Morgh} at the Throne of the Elements, Nagrand.",
 				coordinateHotspots = {
 					{ x = 60.50, y = 22.33, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 34.60, y = 56.72, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -954175,7 +954397,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Escort the Mag'har Captive out of Sunspring Post. Speak to Garrosh at Garadar if you succeed." },
 			descriptionQuestText = { "Thank you, stranger. They would have surely killed me had it not been for you. I was kidnapped by these Murkbloods 3 nights ago during a nighttime raid on Garadar. What I have since uncovered may very well shake the foundation of the Outland: these savages seek to recover the totem of Kar'dash! We cannot allow the totem to fall into the hands of the Murkbloods! You must help me escape. And stranger, if I do not make it back to Garadar, you must tell Garrosh what happened here..." },
 			npcs = {
-				{ npc = "Mag'har Captive", id = "x99" },
+				{ npc = "Mag'har Captive", id = 18210 },
 			},
 			-- [1] = {
 				-- description = "! Free the Mag'har Captive (Complete) in Nagrand.",
@@ -954264,7 +954486,9 @@ RQEDatabase = {
 			},
 			objectivesQuestText = { "Take the Murkblood Invasion Plans to Arechron at Telaar in Nagrand." },
 			descriptionQuestText = { "The parchment holds a crudely painted map of Nagrand. There is a big red 'X' where Telaar would be on the map. It would seem that these savages are planning an attack on the city. Take the Murkblood invasion plans to Arechron in Telaar." },
-			npc = { "" },
+			npcs = {
+				{ npc = "Murkblood Invader", id = 18238, hostile = true },
+			},
 			[1] = {
 				description = "Reach Honored with the Kurenai.",
 				coordinateHotspots = {
@@ -954300,7 +954524,9 @@ RQEDatabase = {
 			},
 			objectivesQuestText = { "Take the Murkblood Invasion Plans to Garrosh." },
 			descriptionQuestText = { "The parchment holds a crudely painted map of Nagrand. There is a big red 'X' where Garadar would be on the map. It would seem that these savages are planning an attack on the city. Take the Murkblood invasion plans to Garrosh in Garadar." },
-			npc = { "" },
+			npcs = {
+				{ npc = "Murkblood Invader", id = 18238, hostile = true },
+			},
 			[1] = {
 				description = "Turn in the quest to Garrosh at Garadar, Nagrand.",
 				coordinates = { x = 55.44, y = 37.64, mapID = 107 },
@@ -954673,7 +954899,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain 10 Oshu'gun Crystal Fragments and bring them to Gezhe at Aeris Landing in Nagrand." },
 			descriptionQuestText = { "Nexus Prince Haramad has ordered us to not begin work inside of Oshu'gun as it might anger a certain powerful naaru. Sort of puts a damper on our operation. I think I might've found a loophole, however. You see, we're not the only ethereals drawn to this colossal diamond. A thief called Gava'xi has led a band of rogue ethereals into Oshu'gun and they've begun to dislodge large fragments from it. Your job, blood elf, is to go there and retrieve what is rightfully ours." },
 			npcs = {
-				{ npc = "Gezhe", id = "x99" },
+				{ npc = "Gezhe", id = 18265 },
 			},
 			[1] = {
 				description = "Collect |cFFffcc3310|r {item:25416:Oshu'gun Crystal Fragments}, from the ground, around the Spirit Fields, Nagrand.\n\n|cFFFF3333These also drop from Vir'aani Raiders and can also be purchased from the auction house!|r",
@@ -954846,7 +955072,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[11] = {
-				description = "Turn in the quest to Gezhe at Aeris Landing, Nagrand.",
+				description = "Turn in the quest to {npc:18265:Gezhe} at Aeris Landing, Nagrand.",
 				coordinateHotspots = {
 					{ x = 31.36, y = 57.79, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 25.38, y = 67.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -954870,10 +955096,10 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
 			npcs = {
-				{ npc = "Gezhe", id = "x99" },
+				{ npc = "Gezhe", id = 18265 },
 			},
 			[1] = {
-				description = "Turn in the quest to Gezhe at Aeris Landing, Nagrand.",
+				description = "Turn in the quest to {npc:18265:Gezhe} at Aeris Landing, Nagrand.",
 				coordinateHotspots = {
 					{ x = 31.36, y = 57.79, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 25.38, y = 67.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -955079,7 +955305,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Gezhe at Aeris Landing, Nagrand.",
+				-- description = "Turn in the quest to {npc:18265:Gezhe} at Aeris Landing, Nagrand.",
 				-- coordinateHotspots = {
 					-- { x = 31.36, y = 57.79, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 25.38, y = 67.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -955975,7 +956201,7 @@ RQEDatabase = {
 				{ npc = "Consortium Recruiter", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Gezhe at Aeris Landing, Nagrand.",
+				description = "Turn in the quest to {npc:18265:Gezhe} at Aeris Landing, Nagrand.",
 				coordinateHotspots = {
 					{ x = 31.36, y = 57.79, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 25.38, y = 67.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -955999,7 +956225,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 3 Pair of Ivory Tusks and return them to Shadrek at Aeris Landing in Nagrand." },
 			descriptionQuestText = { "Ivory is a much sought after prize. I have many customers lined up in far off places to purchase it. I could be convinced to let you in on a cut of the profits. The wild elekk roaming Nagrand have the high quality of tusks that I'm after. Steer clear of the bull elekk; their ivory isn't in the condition that I desire. Oh and don't worry, it's not poaching; I have an understanding with both the orcs and the draenei. Do you and I have an understanding?" },
 			npcs = {
-				{ npc = "Shadrek", id = "x99" },
+				{ npc = "Shadrek", id = 18333 },
 			},
 			[1] = {
 				description = "Kill Wild Elekks (elephants) and loot |cFFffcc333|r {item:25463:Pair of Ivory Tusks}, from their bodies, around Nagrand.\n\n|cFFFF3333These can also be purchased from the auction house!|r",
@@ -956044,7 +956270,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Turn in the quest to Shadrek at Aeris Landing, Nagrand.",
+				description = "Turn in the quest to {npc:18333:Shadrek} at Aeris Landing, Nagrand.",
 				coordinateHotspots = {
 					{ x = 31.78, y = 56.79, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 25.51, y = 67.61, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -956068,10 +956294,10 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
 			npcs = {
-				{ npc = "Shadrek", id = "x99" },
+				{ npc = "Shadrek", id = 18333 },
 			},
 			[1] = {
-				description = "Turn in the quest to Shadrek at Aeris Landing, Nagrand.",
+				description = "Turn in the quest to {npc:18333:Shadrek} at Aeris Landing, Nagrand.",
 				coordinateHotspots = {
 					{ x = 31.78, y = 56.79, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 25.51, y = 67.61, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -956855,7 +957081,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Lantresor of the Blade at the Burning Blade Ruins in Nagrand wants you to drive 10 Warmaul Ogre Banners through the bodies of Kil'sorrow members at Kil'sorrow Fortress. Return any unused Warmaul Ogre Banners." },
 			descriptionQuestText = { "<Lantresor hands you a pack full of banners.> These are Warmaul ogre banners that I recently acquired. I want you to travel to Kil'sorrow Fortress, directly south of here, and kill as many of the Kil'sorrow filth as you can find. Drive a Warmaul ogre banner through the heart of each fallen Kil'sorrow soldier. Return to me when you have completed this task and the other that this plan requires." },
 			npcs = {
-				{ npc = "Lantresor of the Blade", id = "x99" },
+				{ npc = "Lantresor of the Blade", id = 18261 },
 			},
 			[1] = {
 				description = "Kill Kil'sorrow Agents and use your {item:25552:Warmaul Ogre Banner} near |cFFffcc3310|r of their bodies at the Kil'sorrow Fortress, Nagrand.",
@@ -957082,7 +957308,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Lantresor of the Blade at the Burning Blade Ruins in Nagrand wants you to collect 10 Kil'sorrow Armaments." },
 			descriptionQuestText = { "You will need to steal Kil'sorrow armaments from Kil'sorrow Fortress if my plan is to work. Search the fortress for crates of Kil'sorrow armaments. Bring whatever you can find to me. Kil'sorrow Fortress is located directly south and a little to the west of the Burning Blade Ruins." },
 			npcs = {
-				{ npc = "Lantresor of the Blade", id = "x99" },
+				{ npc = "Lantresor of the Blade", id = 18261 },
 			},
 			[1] = {
 				description = "Collect |cFFffcc3310|r {item:25554:Kil'sorrow Armaments}, from the ground, at the Kil'sorrow Fortress, Nagrand.",
@@ -957229,7 +957455,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Lantresor of the Blade at the Burning Blade Ruins in Nagrand wants you to drive 10 Kil'sorrow Banners through the bodies of Warmaul ogres at the Laughing Skull Ruins. Return any unused Kil'sorrow Banners." },
 			descriptionQuestText = { "Now you must plant the seed of war in the fat, useless heads of the Warmaul. To the northwest, near the mountains, you will find the Laughing Skull Ruins. <Lantresor points into the crate of armaments you brought him.> Do you recognize those banners? They are Kil'sorrow banners. I want you to take a stack of Kil'sorrow banners and plant them on the corpses of Warmaul ogres. Remember, northwest is where you will find the ogres." },
 			npcs = {
-				{ npc = "Lantresor of the Blade", id = "x99" },
+				{ npc = "Lantresor of the Blade", id = 18261 },
 			},
 			[1] = {
 				description = "Kill Warmaul ogres and use the {item:25555:Kil'sorrow Banner} on |cFFffcc3310|r of their bodies at the Laughing Skull Courtyard, Nagrand.",
@@ -957416,7 +957642,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Lantresor of the Blade at the Burning Blade Ruins in Nagrand wants you to use the Damp Woolen Blanket at the Blazing Warmaul Pyre in the Laughing Skull Courtyard to signal his ogres." },
 			descriptionQuestText = { "Your rampage through Kil'sorrow Fortress has provided us with a special opportunity. We have enough bodies to make it appear as if a great battle has taken place. Travel to the Laughing Skull Ruins and find the Laughing Skull Courtyard. There should be a blazing pyre in the courtyard. Make sure the area is secure and then use this blanket to send up smoke signals. When my ogres see the smoke, they will sneak in and plant the bodies of slain Kil'sorrow soldiers. That should be the final straw!" },
 			npcs = {
-				{ npc = "Lantresor of the Blade", id = "x99" },
+				{ npc = "Lantresor of the Blade", id = 18261 },
 			},
 			[1] = {
 				description = "Use {item:25658:Damp Woolen Blanket} near the Blazing Warmaul Pyre (large fire) at the Laughing Skull Courtyard to have the Kil'sorrow Bodies Planted.\n\n|cFFFF3333Make sure that you defend the Boulderfist Saboteur, otherwise you will have to reapply the Damp Woolen Blanket to the fire!|r",
@@ -957458,7 +957684,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Take the Burning Blade Peace Offering to Arechron at Telaar in Nagrand." },
 			descriptionQuestText = { "<Lantresor points to an unmarked crate.> Take it. It is my offering to your people. You have single-handedly saved my clan from extermination. You may tell your leader that Lantresor of the Burning Blade and his Boulderfist ogres accept the offering of peace. <Lantresor bows.> " },
 			npcs = {
-				{ npc = "Lantresor of the Blade", id = "x99" },
+				{ npc = "Lantresor of the Blade", id = 18261 },
 			},
 			[1] = {
 				description = "Turn in the quest to Arechron at Telaar, Nagrand.",
@@ -957485,7 +957711,7 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
 			npcs = {
-				{ npc = "Lantresor of the Blade", id = "x99" },
+				{ npc = "Lantresor of the Blade", id = 18261 },
 			},
 			-- [1] = {
 				-- description = "! Burning Blade Peace Offering: 1/1 in Burning Blade Ruins, Nagrand.",
@@ -958507,7 +958733,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill Naphthal'ar and then return to Warden Treelos at the Cenarion Thicket in Terokkar Forest." },
 			descriptionQuestText = { "Quick, hide! The eyes of Naphthal'ar are upon you... upon us all! I dare not go to the top of the tower to speak with it, but you... you look as if you might know the right words to say. Just be careful, it doesn't like jokes and will not suffer fools easily. If you can, convince it to come down for tea. But, by all means, get it to stop staring at me!" },
 			npcs = {
-				{ npc = "Warden Treelos", id = "x99" },
+				{ npc = "Warden Treelos", id = 18424 },
 			},
 			[1] = {
 				description = "Kill Naphthal'ar at the tower at the Cenarion Thicket, Terokkar Forest.",
@@ -958525,7 +958751,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Warden Treelos (mob patrols around area) at the Cenarion Thicket, Terokkar Forest.",
+				description = "Turn in the quest to {npc:18424:Warden Treelos} (mob patrols around area) at the Cenarion Thicket, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 45.01, y = 23.23, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 47.78, y = 65.77, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -958868,7 +959094,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Defeat Brokentoe. Should you win, speak with Wodin the Troll-Servant to collect your reward." },
 			descriptionQuestText = { "So are you ready for your first battle? If you are, let me know and I'll get things started. All you have to do is go wait in the Ring of Blood for your opponent to arrive. This fight is against Brokentoe, a ferocious clefthoof. Good luck! I hope you brought friends. And remember, the fight's over when either you or your opponent are lying face down on the arena floor." },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 18471 },
 			},
 			[1] = {
 				description = "Kill Brokentoe at The Ring of Blood, Nagrand.",
@@ -958886,7 +959112,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at The Ring of Blood, Nagrand.",
+				description = "Turn in the quest to {npc:22893:Wodin the Troll-Servant} at The Ring of Blood, Nagrand.",
 				coordinateHotspots = {
 					{ x = 42.78, y = 20.68, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 28.99, y = 56.19, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -958910,7 +959136,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Defeat the Murkblood Twins that call themselves the Blue Brothers. Should you win, speak with Wodin the Troll-Servant to collect your reward." },
 			descriptionQuestText = { "This next battle involves a duo - twin brothers to be precise. They call themselves the \"Blue Brothers.\" It's not too late to chicken out, PLAYER. I'd certainly understand. But if you're ready for some action, step in the Ring of Blood and wait for the Murkblood twins to arrive. Last one standing is the winner!" },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 18471 },
 			},
 			[1] = {
 				description = "Kill the Murkblood Twins at The Ring of Blood, Nagrand.",
@@ -958928,7 +959154,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at The Ring of Blood, Nagrand.",
+				description = "Turn in the quest to {npc:22893:Wodin the Troll-Servant} at The Ring of Blood, Nagrand.",
 				coordinateHotspots = {
 					{ x = 42.78, y = 20.68, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 28.99, y = 56.19, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -958952,7 +959178,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 4 Teromoth Samples and 4 Vicious Teromoth Samples. Then return to Earthbinder Tavgren just outside of the Cenarion Thicket in Terokkar Forest." },
 			descriptionQuestText = { "Something strange has changed the teromoths of the thicket. Where once there was a diversity of life in there, now only the teromoths remain. And while before they were at peace, now they are agitated and will not hesitate to attack you should you get close. I need to compare the vicious ones to the normal. Collect for me a number of samples from both. You'll find the unaffected teromoths both to the south and the north. I'm certain this is related to whatever killed all of the druids." },
 			npcs = {
-				{ npc = "Earthbinder Tavgren", id = "x99" },
+				{ npc = "Earthbinder Tavgren", id = 18446 },
 			},
 			[1] = {
 				description = "Kill Teromoths (neutral ones) and loot |cFFffcc334|r {item:25672:Teromoth Samples}, from their bodies, at the Cenarion Thicket, Terokkar Forest.",
@@ -959107,7 +959333,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Defeat Rokdar the Sundered Lord. Should you win, speak with Wodin the Troll-Servant to collect your reward." },
 			descriptionQuestText = { "This fight is gonna be painful, PLAYER. Do you have any friends that are brave enough to help you out? The ogres managed to get a giant from Blade's Edge named Rokdar! Trust me, you're gonna need friends, he seems unbeatable! He's hard as a rock - literally! If you still want to fight him, step into the Ring of Blood and he will come." },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 18471 },
 			},
 			[1] = {
 				description = "Kill Rokdar the Sundered Lord at The Ring of Blood, Nagrand.",
@@ -959125,7 +959351,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at The Ring of Blood, Nagrand.",
+				description = "Turn in the quest to {npc:22893:Wodin the Troll-Servant} at The Ring of Blood, Nagrand.",
 				coordinateHotspots = {
 					{ x = 42.78, y = 20.68, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 28.99, y = 56.19, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -959149,7 +959375,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Investigate the Strange Object next to the Broken Corpse to determine what might have befallen the Cenarion Thicket. Then return to Earthbinder Tavgren just outside the thicket in Terokkar Forest." },
 			descriptionQuestText = { "I have no idea what killed all of the druids here. I've been away for a couple of days on a survey of the Bone Wastes to the south. Please, you must help me to uncover what's behind this horrible tragedy. Go into the thicket and look for a clue that might reveal something to us. When I was in there briefly, I could have sworn I saw a dead Broken and a strange object next to him. And don't worry about Treelos - he might have been driven insane by what happened, but I think he's mostly harmless." },
 			npcs = {
-				{ npc = "Earthbinder Tavgren", id = "x99" },
+				{ npc = "Earthbinder Tavgren", id = 18446 },
 			},
 			[1] = {
 				description = "Interact with the Strange Object in the building at the Cenarion Thicket, Terokkar Forest.",
@@ -959188,7 +959414,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Defeat Skra'gath. Should you win, speak with Wodin the Troll-Servant to collect your reward." },
 			descriptionQuestText = { "You're murderin' 'em out there, kid! They got a ringer for the next match. They say he's a void lord or something... No way do they want you up against their champion. Did you here that palooka, Mogor, yapping at you? The bets are through the roof! Get in that ring and take this one out fast!" },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 18471 },
 			},
 			[1] = {
 				description = "Kill Skra'gath at The Ring of Blood, Nagrand.",
@@ -959206,7 +959432,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at The Ring of Blood, Nagrand.",
+				description = "Turn in the quest to {npc:22893:Wodin the Troll-Servant} at The Ring of Blood, Nagrand.",
 				coordinateHotspots = {
 					{ x = 42.78, y = 20.68, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 28.99, y = 56.19, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -959230,7 +959456,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Defeat the Warmaul Champion. Should you win, speak with Wodin the Troll-Servant to collect your reward." },
 			descriptionQuestText = { "They had to ship the champion in from the Blade's Edge gladiator pits. He was training on mountain giants - three at a time. If you win this one, you become the new champion. What do you think your odds are, kid? Do you have a shot? Just give me the word and I'll bet the house on you. Now get in there and win!" },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 18471 },
 			},
 			[1] = {
 				description = "Kill Warmaul Champion at The Ring of Blood, Nagrand.",
@@ -959248,7 +959474,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at The Ring of Blood, Nagrand.",
+				description = "Turn in the quest to {npc:22893:Wodin the Troll-Servant} at The Ring of Blood, Nagrand.",
 				coordinateHotspots = {
 					{ x = 42.78, y = 20.68, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 28.99, y = 56.19, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -959272,7 +959498,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Defeat Mogor, Hero of the Warmaul. Should you win, speak with Wodin the Troll-Servant to collect your reward." },
 			descriptionQuestText = { "<Gurgthock is counting his massive pile of gold.> You've made me a lot of money, kid. If you can defeat Mogor, I promise to make it worth your while. All that pain you suffered in the Ring of Blood is gonna end up paying off. Now get in there and show these ogres what you're made of!" },
 			npcs = {
-				{ npc = "Gurgthock", id = "x99" },
+				{ npc = "Gurgthock", id = 18471 },
 			},
 			[1] = {
 				description = "Kill Mogor, Hero of the Warmaul at The Ring of Blood, Nagrand.",
@@ -959290,7 +959516,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Wodin the Troll-Servant at The Ring of Blood, Nagrand.",
+				description = "Turn in the quest to {npc:22893:Wodin the Troll-Servant} at The Ring of Blood, Nagrand.",
 				coordinateHotspots = {
 					{ x = 42.78, y = 20.68, mapID = 107, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 28.99, y = 56.19, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -959314,7 +959540,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Find Empoor on the road between Tuurem and Shattrath City in Terokkar Forest. Convince him to tell you what he knows." },
 			descriptionQuestText = { "I don't know what to make of all of this, but I do know how we can find more clues. Empoor is a Broken merchant that traffics in all sorts of goods and information. If you were to persuade him to talk, I'm sure he might have something interesting to say. He travels the road here between Tuurem and Shattrath. Watch out, though -- he travels with a bodyguard." },
 			npcs = {
-				{ npc = "Earthbinder Tavgren", id = "x99" },
+				{ npc = "Earthbinder Tavgren", id = 18446 },
 			},
 			[1] = {	-- Special thanks to eqsanctum on wowhead quest (comment) for advice on Shattrath cross-realm zoning
 				description = "Speak with Empoor and select, \"Empoor, you are going to tell me...\" and then fight Empoor and his bodyguard. Then turn in the quest to Empoor.\n\n|cFFFF3333Empoor patrols the road between Tuurem and Shattrath City, but if he isn't present, fly/zone east into Shattrath and turn around and he should hopefully be walking the road parallel to Shattrath.|r",
@@ -959617,7 +959843,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Sit back and enjoy the ride. Speak to Altruis when the survey is complete." },
 			descriptionQuestText = { "To be my eyes will require some diligence on your part. Nethrandamus will take you through the Legion camps, but you must catalog everything that you see. Even the smallest detail that you may think to be inconsequential could be useful for our purposes. Primarily, I want you to note what structures are in the camps and what comprises the camps' defenses. Nethrandamus is ready when you are, PLAYER. Do not be afraid, he will keep you safe from harm." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Speak with {npc:18417:Altruis the Sufferer} and select, \"Ready to survey the land.\"\n\n|cFFFF3333Dismount if you're not transported after speaking with him.|r",
@@ -959765,7 +959991,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver the Box of Parts to Jenai Starwhisper at the Allerian Stronghold in Terokkar Forest." },
 			descriptionQuestText = { "I don't know about you, but I have no idea what all of those things are. I do know one thing though - they look dangerous! PLAYER, I think you should take this box of parts to Jenai Starwhisper at the Allerian Stronghold to the southeast. She may have some idea of what these are." },
 			npcs = {
-				{ npc = "Earthbinder Tavgren", id = "x99" },
+				{ npc = "Earthbinder Tavgren", id = 18446 },
 			},
 			[1] = {
 				description = "Travel to Allerian Stronghold, and turn in the quest to Jenai Starwhisper (outside of the Allerian Stronghold inn).",
@@ -959792,7 +960018,7 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
 			npcs = {
-				{ npc = "Earthbinder Tavgren", id = "x99" },
+				{ npc = "Earthbinder Tavgren", id = 18446 },
 			},
 			-- [1] = {
 				-- description = "! Box of Parts: 1/1 in Cenarion Thicket, Terokkar Forest.",
@@ -960260,7 +960486,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Altruis the Sufferer in western Nagrand has asked that you kill 2 Felguard Legionnaires, 3 Mo'arg Engineers and 8 Gan'arg Tinkerers." },
 			descriptionQuestText = { "As long as the transporters stand, nothing we do to the forge camps will have any permanence. We must find a way to destroy the Legion structures. I need time to devise a plan of attack. If you can keep their engineers and tinkerers busy, it would greatly slow down their progress, buying me the time I need." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Kill |cFFffcc332|r Felguard Legionnaires at Forge Camps: Hate and Fear, Nagrand.",
@@ -960564,7 +960790,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Altruis the Sufferer in western Nagrand has asked that you recover the Master Planner's Blueprints." },
 			descriptionQuestText = { "All forge camps have a master planner. The master planner dictates what types of structures are present at a forge camp and how each structure is situated. Moreover, this information is kept on a set of blueprints that the planner carries around on their person. We need the master planner's blueprints. Armed with such exacting information, we could persuade an acquaintance of mine to lend some assistance. Find the mo'arg master planner and take his blueprints. He will be stationed behind the forges." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Kill Mo'arg Master Planner and loot {item:25751:Master Planner's Blueprints}, from its body, at Forge Camp: Hate, Nagrand.",
@@ -960690,7 +960916,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Altruis the Sufferer in western Nagrand wants you to take the Master Planner's Blueprints to Sal'salabim in Shattrath City and convince him to help you." },
 			descriptionQuestText = { "Take the blueprints and travel to Shattrath City in the Terokkar Forest. Once at Shattrath, go to the Lower City and look for a mo'arg by the name Sal'salabim. He'll probably be at the bar, drinking away his sorrows. By the way, you may need to convince him to lend his assistance. Try to approach him with patience and understanding. If that does not work, use your fists." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Speak with (and then defeat) Sal'salabim at the World's End Tavern, Shattrath City by first selecting, \"Altruis sent me. He said that you could help me.\"",
@@ -961084,7 +961310,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Altruis the Sufferer in western Nagrand has asked that you Destroy Forge Camp: Hate and Destroy Forge Camp: Fear." },
 			descriptionQuestText = { "Gather your courage, PLAYER. You will need it if you are to face an overseer. Once you are ready, find and kill the overseers at each camp. Take their keys and use them to turn and fire the fel cannons upon the camps. Return to me once the camps are destroyed." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Kill Demos, Overser of Hate and loot the {item:25770:Fel Cannon Activator}, from its body, at Forge Camp: Hate, Nagrand.",
@@ -962286,7 +962512,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 8 Pristine Shimmerscale Eels to Seth in Shattrath City." },
 			descriptionQuestText = { "Speaking of lakes, there's a lake with real good fishin' up to the northeast. I used to go up there with my friends, but my mom won't let me go anymore. She says it's too dangerous, but I haven't seen anything up there but a few little spiders. Like spiders can do anything to you... My favorites were always the eels that live up there. If you're going to be up by the lake, would you think about bringing back some of the eels? They're feisty but once you subdue 'em, you can bring 'em back no problem." },
 			npcs = {
-				{ npc = "Seth", id = "x99" },
+				{ npc = "Seth", id = 18653 },
 			},
 			[1] = { 
 				description = "Kill Shimmerscale Eel and loot 8 Pristine Shimmerscale Eels, from their bodies, at Silmyr Lake, Terokkar Forest.",
@@ -962301,14 +962527,14 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = { 
-				description = "Turn in the quest to Seth",
+				description = "Turn in the quest to {npc:18653:Seth} in the Lower City, Shattrath City.",
 				coordinates = { x = 63.94, y = 15.44, mapID = 111 },
 				check = { "10037" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
-				-- },
+				npcTargets = {
+					{ name = "Seth", marker = 6, mustBeAlive = true },
+				},
 				macro = { "#showtooltip item:2554\n/tar Seth\n/tm 6" },
 				objectiveIndex = 99,
 			},
@@ -966564,7 +966790,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Retrieve Archmage Vargoth's Staff from Ekkorash the Inquisitor and bring it to Ravandwyr in Area 52. To bring Ekkorash out of hiding, sprinkle the Conjuring Powder on the brazier in the center of the ruins." },
 			descriptionQuestText = { "Allow me to introduce myself, CLASS. I am Ravandwyr, apprentice to the Archmage Vargoth. My master is... indisposed, shall we say. I am here on a matter of great importance. The Arklon Ruins southeast of the city are a hotbed of Burning Legion activity. Their purpose in the ruins concerns neither me nor my master, but their leader, Ekkorash, possesses the archmage's staff. This conjuring powder will allow you to draw the demon out of hiding. Sprinkle it on the brazier at the center of the ruins." },
 			npcs = {
-				{ npc = "Ravandwyr", id = "x99" },
+				{ npc = "Ravandwyr", id = 19217 },
 			},
 			[1] = {
 				description = "Use {item:29207:Conjuring Powder} near the center and kill Ekkorash the Inquisitor at Arklon Ruins, Netherstorm. Then collect {item:28292:Archmage Vorgoth's Staff} from Ekkorash's corpse.",
@@ -966582,7 +966808,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Ravandwyr at Area 52, Netherstorm.",
+				description = "Turn in the quest to {npc:19217:Ravandwyr} at Area 52, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 31.36, y = 66.14, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 53.03, y = 24.25, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -966606,7 +966832,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use Archmage Vargoth's Staff to make contact with Archmage Vargoth. If you lose Archmage Vargoth's Staff, speak to Ravandwyr at Area 52 to receive a replacement." },
 			descriptionQuestText = { "Now, you will be able to use the archmage's staff to contact him. He resides in the Violet Tower, on an 'island' to the southeast. The tower is both sanctuary and prison to him, cursed as it is. Kirin Tor can neither enter nor leave, keeping me apart from my master. The staff's magic can penetrate the tower's defenses, but only if invoked by one outside the Kirin Tor. Take the archmage's staff and use it to conjure his image. Tell him what has happened and that I have not completely failed him." },
 			npcs = {
-				{ npc = "Ravandwyr", id = "x99" },
+				{ npc = "Ravandwyr", id = 19217 },
 			},
 			[1] = {
 				description = "Use {item:28455:Archmage Vargoth's Staff} (in your inventory) and turn in the quest to the Image of Archmage Vargoth at Area 52, Netherstorm.",
@@ -966675,7 +966901,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Isfar, who can be found just inside the Sethekk Halls in Auchindoun." },
 			descriptionQuestText = { "I tried to persuade Isfar to remain here, in the safety of Shattrath, but he would have none of it. Instead, he's decided to venture out to Auchindoun again on his own. He was lucky enough to escape the Sethekk Halls once, but if they discover him, there won't be a second time. I admire his desire to free his sister, but he's not going to be able to do it without help. Find Isfar and have a word with him, PLAYER. If you can't persuade him to come back, perhaps you could help him rescue Lakka?" },
 			npcs = {
-				{ npc = "Oloraak", id = "x99" },
+				{ npc = "Oloraak", id = 19045 },
 			},
 			[1] = {
 				description = "Travel to the entrance of the Sethekk Halls in Auchindoun, and go inside.",
@@ -966876,7 +967102,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Etherlithium Matrix Crystals and return them to Rocket-Chief Fuselage at Area 52 in the Netherstorm." },
 			descriptionQuestText = { "Let me be the first to welcome you aboard, Junior Technician 3rd Grade PLAYER! We're building my masterpiece out here - the X-52 Nether-Rocket! But first we need to get all of the parts and fuel for it. That's where you come in. To start, I need crystals - LOTS of crystals - for the rocket's Etherlithium Engine Matrix. The draenei had crystals coming out of their ears! So head north to the Ruins of Enkaat and get them for me! Nevermind all of the draenei ghosts." },
 			npcs = {
-				{ npc = "Rocket-Chief Fuselage", id = "x99" },
+				{ npc = "Rocket-Chief Fuselage", id = 19570 },
 			},
 			[1] = {
 				description = "Collect 10 {item:28364:Etherlithium Matrix Crystals} (red crystals on the ground) at the Ruins of Enkaat, Netherstorm.",
@@ -967379,7 +967605,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain 5 Nether Ray Stingers for Boots at Area 52 in the Netherstorm." },
 			descriptionQuestText = { "So, I'm just missing the one ingredient that'll give my concoction that little extra kick that it needs. The sting of the nether rays, roaming around near the shaleskin flayers, delivers quite a punch. Bring me some of their stingers and I'll extract the venom right out of them! I'm certain the results will be explosive!" },
 			npcs = {
-				{ npc = "Boots", id = "x99" },
+				{ npc = "Boots", id = 19617 },
 			},
 			[1] = {
 				description = "Kill Nether Rays and loot 5 {item:28417:Nether Ray Stingers}, from their bodies, northeast of the Arklon ruins, Netherstorm.",
@@ -967397,7 +967623,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Boots at Area 52, Netherstorm.",
+				description = "Turn in the quest to {npc:19617:Boots} at Area 52, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 32.27, y = 63.91, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 53.32, y = 23.54, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -967518,7 +967744,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use the Ultra Deconsolodation Zapper to beam the Hyper Rotational Dig-A-Matic, Servo-Pneumatic Dredging Claw, Multi-Spectrum Terrain Analyzer, and the Big Wagon Full of Explosives back to Area 52. Then report to Lead Sapper Blastfizzle at the eastern end of the fissure that runs through Area 52 in the Netherstorm." },
 			descriptionQuestText = { "See the fissure running through Area 52? We did that! <grin> It's yielding up all sorts of goodies for the X-52 Nether-Rocket, but we're running short on equipment. We had an operation at the Arklon Ruins to the southeast until the Burning Legion moved in. I need you to take this Ultra Deconsolodation Zapper to the ruins. Use it to beam our gear back to Lead Sapper Blastfizzle down in the fissure. Junior Technician 3rd Grade PLAYER, this is your chance for that promotion. Don't blow it!" },
 			npcs = {
-				{ npc = "Rocket-Chief Fuselage", id = "x99" },
+				{ npc = "Rocket-Chief Fuselage", id = 19570 },
 			},
 			[1] = {
 				description = "Use {item:30354:Ultra Deconsolodation Zapper} (in your inventory) on the Multi-Spectrum Terrain Analyzer at the Arklon Ruins, Netherstorm.",
@@ -967654,7 +967880,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill Warp-Raider Nesaad and then return to Nether-Stalker Khay'ji at Area 52 in the Netherstorm." },
 			descriptionQuestText = { "Warp-Raider Nesaad must be dealt with! I have no idea how he survived my attack, but he cannot be allowed to continue his operation out there. Go back and take out Nesaad. He keeps a small ethereal camp near the southwestern corner of the Heap. Don't fail like I did, CLASS." },
 			npcs = {
-				{ npc = "Nether-Stalker Khay'ji", id = "x99" },
+				{ npc = "Nether-Stalker Khay'ji", id = 19880 },
 			},
 			[1] = {
 				description = "Kill Warp-Raider Nesaad in The Heap, Netherstorm.",
@@ -967672,7 +967898,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Nether-Stalker Khay'ji at Area 52, Netherstorm.",
+				description = "Turn in the quest to {npc:19880:Nether-Stalker Khay'ji} at Area 52, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 32.44, y = 64.20, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 53.37, y = 23.63, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -967981,7 +968207,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak to A'dal, the leader of the Sha'tar, in the center of the Terrace of Light." },
 			descriptionQuestText = { "Welcome to Shattrath City, CLASS. This might be the one place in all of Outland where you'll find any semblance of safety. A group of naaru known as the Sha'tar drove the demons away from here. If you've never met a naaru, you ought to see A'dal inside the Terrace of Light. The leader of the Sha'tar is an awe-inspiring sight if I ever saw one. Sure is a change of pace from anything else in this bleak land." },
 			npcs = {
-				{ npc = "Haggard War Veteran", id = "x99" },
+				{ npc = "Haggard War Veteran", id = 19684 },
 			},
 			[1] = {
 				description = "Turn in the quest to A'dal in the center of the Terrace of Light, Shattrath City.",
@@ -968327,7 +968553,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver the Etherlithium Matrix Crystals to Chief Engineer Trep at Area 52 in the Netherstorm." },
 			descriptionQuestText = { "PLAYER! I need you to take all of these etherlithium crystals over to Chief Engineer Trep, my, uh, chief of engineering. He should know what to do with them. And if he doesn't, you see to it that he finds out!" },
 			npcs = {
-				{ npc = "Rocket-Chief Fuselage", id = "x99" },
+				{ npc = "Rocket-Chief Fuselage", id = 19570 },
 			},
 			[1] = {
 				description = "Turn in the quest to Chief Engineer Trep at Area 52, Netherstorm.",
@@ -969217,7 +969443,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Doctor Vomisa, Ph.T. at the Proving Grounds in Netherstorm." },
 			descriptionQuestText = { "On the outskirts of town to the east are the Proving Grounds. Our top experimentalist, Doctor Vomisa, has been toying with a combination of fel reaver, ethereal, and of course, goblin technologies there. This is in no small part thanks to your gathering efforts Junior Technician 3rd Grade, PLAYER! Go to him; I know that he'll have a solution for saving Area 52. And since he's likely to use you as a test subject, if I were you, I'd bring some friends along just in case." },
 			npcs = {
-				{ npc = "Rocket-Chief Fuselage", id = "x99" },
+				{ npc = "Rocket-Chief Fuselage", id = 19570 },
 			},
 			[1] = {
 				description = "Turn in the quest to Doctor Vomisa, Ph.T. at The Proving Grounds, Netherstorm.",
@@ -969711,7 +969937,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Zaxxis Insignias and return them to Nether-Stalker Khay'ji at Area 52 in the Netherstorm." },
 			descriptionQuestText = { "There is something else that I want your help with. A group of ethereals, known as the Zaxxis, have cut their relationship with the Consortium and gone into business for themselves. They've even cut deals with the Sunfury blood elves. This will not be tolerated! I infiltrated their group at the Heap to the south. But after I took out their leader, I had to escape here to Area 52. CLASS, go down there and bring back their insignias. Of course, not all wear them because they're cowards." },
 			npcs = {
-				{ npc = "Nether-Stalker Khay'ji", id = "x99" },
+				{ npc = "Nether-Stalker Khay'ji", id = 19880 },
 			},
 			[1] = {
 				description = "Kill Zaxxis Raiders and Stalkers, and loot 10 {item:29209:Zaxxis Insignia} from their bodies at The Heap, Netherstorm.",
@@ -969730,7 +969956,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Nether-Stalker Khay'ji at Area 52, Netherstorm",
+				description = "Turn in the quest to {npc:19880:Nether-Stalker Khay'ji} at Area 52, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 32.44, y = 64.20, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 53.37, y = 23.63, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -969754,7 +969980,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain an Arklon Crystal Artifact and return it to Nether-Stalker Khay'ji at Area 52 in the Netherstorm." },
 			descriptionQuestText = { "Our leader, Nexus-Prince Haramad, has tasked me with the acquisition of a crystal artifact from the Arklon Ruins to the southeast. They're old draenei ruins. Unfortunately for both myself and the goblins here, the Burning Legion has decided to move in to perform their own excavation. If you're willing to help me, go to the ruins and take the crystal artifact from the dreadlord named Pentatharon." },
 			npcs = {
-				{ npc = "Nether-Stalker Khay'ji", id = "x99" },
+				{ npc = "Nether-Stalker Khay'ji", id = 19880 },
 			},
 			[1] = {
 				description = "Kill Pentatharon and collect the {item:28829:Arklon Crystal Artifact}, from its corpse, in Arklon Ruins, Netherstorm.",
@@ -969772,7 +969998,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Nether-Stalker Khay'ji at Area 52, Netherstorm.",
+				description = "Turn in the quest to {npc:19880:Nether-Stalker Khay'ji} at Area 52, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 32.44, y = 64.20, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 53.37, y = 23.63, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -969796,10 +970022,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Seek out and offer your services to Gahruj. He is located at the Midrealm Post inside Eco-Dome Midrealm in the Netherstorm." },
 			descriptionQuestText = { "While you were at the Arklon Ruins, I received a request for assistance from one of our representatives out in the field. It would appear that the Consortium is having some 'difficulties' in trying to recover property from the blood elves, which they refuse to pay for. Please head east out of Area 52 and cross the bridge to the next island over. You'll find my associate, Gahruj, at the Midrealm Post, just inside of Eco-Dome Midrealm." },
 			npcs = {
-				{ npc = "Nether-Stalker Khay'ji", id = "x99" },
+				{ npc = "Nether-Stalker Khay'ji", id = 19880 },
 			},
 			[1] = {
-				description = "Turn in the quest to Gahruj at Midrealm Post inside Eco-Dome Midrealm, Netherstorm.",
+				description = "Turn in the quest to {npc:20066:Gahruj} at Midrealm Post inside Eco-Dome Midrealm, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 46.66, y = 56.94, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.91, y = 21.31, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -969823,7 +970049,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Boxes of Surveying Equipment and return them to Gahruj at the Midrealm Post inside Eco-Dome Midrealm in the Netherstorm." },
 			descriptionQuestText = { "Our business relations with the blood elves appear to be at an end. A few weeks ago a large shipment of surveying equipment was delivered to them at Manaforge Duro. They have refused to pay for it. PLAYER, I would ask that you pay the blood elves of Manaforge Duro to the east a visit. They appear to be having some trouble with an infestation of mana creatures there, so take advantage of their preoccupation. I care not what happens to them, but I would very much like to see the return of our property." },
 			npcs = {
-				{ npc = "Gahruj", id = "x99" },
+				{ npc = "Gahruj", id = 20066 },
 			},
 			[1] = {
 				description = "Collect 10 {item:28913:Boxes of Surveying Equipment}, from the ground, at Manaforge Duro, Netherstorm.",
@@ -969838,7 +970064,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Gahruj at Midrealm Post inside Eco-Dome Midrealm, Netherstorm.",
+				description = "Turn in the quest to {npc:20066:Gahruj} at Midrealm Post inside Eco-Dome Midrealm, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 46.66, y = 56.94, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.91, y = 21.31, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -969862,7 +970088,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver the Surveying Equipment to the Image of Nexus-Prince Haramad at the Stormspire in the Netherstorm." },
 			descriptionQuestText = { "Nexus-Prince Haramad has conveyed to me that he is interested in the immediate return of this property to him personally. I would greatly appreciate if you would deliver it in my stead. It is a great honor to gain an audience with the nexus-prince, and I am sure that he would be keenly interested in hearing the tales of your adventures here in the Netherstorm. Seek out his chamber atop the Stormspire to the north. He is often present as a holographic image, which you may address." },
 			npcs = {
-				{ npc = "Gahruj", id = "x99" },
+				{ npc = "Gahruj", id = 20066 },
 			},
 			[1] = {
 				description = "Turn in the quest to Image of Nexus-Prince Haramad at The Stormspire, Netherstorm.",
@@ -969928,7 +970154,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Retrieve the Teleporter Power Pack and bring it to the Ethereal Teleport Pad on the Celestial Ridge to the east of Manaforge Ultris. Activate the pad and give the Teleporter Power Pack to the Image of Wind Trader Marid so he can install it." },
 			descriptionQuestText = { "From the look on your face, I can tell you're a blood elf who appreciates a good profit. I've built a reputation as a dealer in exotic goods, and I'm about to launch a new venture. I need a reliable subcontractor to procure the goods from the Celestial Ridge. First, you'll need to re-energize a teleport pad. There is a spare power pack in Access Shaft Zeon, which is on the south side of Manaforge UItris. The Protectorate is operating in there, so you may be able to follow their tracers to your goal." },
 			npcs = {
-				{ npc = "Wind Trader Marid", id = "x99" },
+				{ npc = "Wind Trader Marid", id = 20071 },
 			},
 			[1] = {
 				description = "|cFF00ff00(Go inside Access Shaft Zeon @|r {coords:61,45.9,109;waypointTitle:\"Go inside Access Shaft Zeon\"}). Follow the passageways (taking the first left, as well as the next left) and collect the {item:28969:Teleporter Power Pack} at Access Shaft Zeon, Netherstorm.\n\n|cFFFF3333Looking at your minimap inside the mine, follow outermost passageways on the left clockwise to your destination|r",
@@ -970051,7 +970277,7 @@ RQEDatabase = {
 				{ npc = "Tyri", id = "x99" },
 			},
 			[1] = {
-				description = "Speak with Wind Trader Marid at the Protectorate Watch Post, Netherstorm, then follow and kill it.",
+				description = "Speak with {npc:20071:Wind Trader Marid} at the Protectorate Watch Post, Netherstorm, then follow and kill it.",
 				coordinateHotspots = {
 					{ x = 58.32, y = 31.65, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.63, y = 13.24, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -970781,7 +971007,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain 4 Flawless Crystal Shards from the ghosts at the Enkaat Ruins and return them to Ravandwyr at Area 52." },
 			descriptionQuestText = { "<Ravandwyr inspects the staff, noting that part of the headpiece seems to be missing.> Simply barbaric! Ekkorash must've taken the staff's crystalline headpiece for use in some other trinket, not realizing that it works in concert with the rest of the staff. As long as it remains broken, the staff's power is greatly diminished. With a suitable draenei crystal, I should be able to repair it. I've heard the goblins remarking about the crystals carried by the ghosts at the Enkaat Ruins to the north." },
 			npcs = {
-				{ npc = "Ravandwyr", id = "x99" },
+				{ npc = "Ravandwyr", id = 19217 },
 			},
 			[1] = {
 				description = "Collect 4 {item:29216:Flawless Crystal Shards} by killing/looting the Disembodied Draenei in Ruins of Enkaat, Netherstorm.",
@@ -970801,7 +971027,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Ravandwyr at Area 52, Netherstorm.",
+				description = "Turn in the quest to {npc:19217:Ravandwyr} at Area 52, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 31.36, y = 66.14, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 53.03, y = 24.25, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -971201,7 +971427,7 @@ RQEDatabase = {
 			descriptionQuestText = { "" },
 			npc = { "" },
 			[1] = {
-				description = "Collect at least 10 {item:29209:Zaxxis Insignias}, and turn in the quest to Nether-Stalker Khay'ji at Area 52, Netherstorm",
+				description = "Collect at least 10 {item:29209:Zaxxis Insignias}, and turn in the quest to {npc:19880:Nether-Stalker Khay'ji} at Area 52, Netherstorm",
 				coordinateHotspots = {
 					{ x = 32.44, y = 64.20, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 53.37, y = 23.63, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -971274,7 +971500,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Gahruj at Midrealm Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20066:Gahruj} at Midrealm Post inside Eco-Dome Midrealm, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 46.66, y = 56.94, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.91, y = 21.31, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -971298,7 +971524,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Drijya near Invasion Point: Destroyer in the Netherstorm." },
 			descriptionQuestText = { "CLASS, it is good to see a helpful face around here. The Burning Legion at the nearby fel reaver heap has become more bold, and I am beginning to fear for our safety here. The demons are constantly receiving reinforcements from Invasion Point: Destroyer to the south. My compatriot, Drijya, has gone down there to scout and see if he can do something about the Burning Legion's warp-gate. Please find and assist him in any way that you can." },
 			npcs = {
-				{ npc = "Gahruj", id = "x99" },
+				{ npc = "Gahruj", id = 20066 },
 			},
 			[1] = {
 				description = "Turn in the quest to Drijya south of Eco-Dome Midrealm, Netherstorm.",
@@ -972104,7 +972330,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Retrieve the Smithing Hammer from the Kirin'Var Apprentices and bring it back to Apprentice Andrethan in Kirin'Var Village." },
 			descriptionQuestText = { "You haven't seen a heavy smithing hammer lying around by chance, have you? I brought it out here with me to finish the shoes for some of old man Amorlin's horses, but I can't find it. I've searched the barn no less than a half dozen times and I just can't seem to find it. Maybe one of the other apprentices retrieved it and took it back to the smithy? Would you be willing to go down there and take a look? The workshop is to the southeast of the tower in the Town Square." },
 			npcs = {
-				{ npc = "Apprentice Andrethan", id = "x99" },
+				{ npc = "Apprentice Andrethan", id = 20463 },
 			},
 			[1] = {
 				description = "Kill Kirin'Var Apprentices and loot the mobs until you collect the {item:29365:Smithing Hammer}, from its body, at around the Kirin'Var Village's Town Square, Netherstorm.",
@@ -972122,7 +972348,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Apprentice Andrethan in the Town Square (near the Violet Tower), Kirin'Var Village, Netherstorm.",
+				description = "Turn in the quest to {npc:20463:Apprentice Andrethan} in the Town Square (near the Violet Tower), Kirin'Var Village, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 57.71, y = 85.19, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.44, y = 30.33, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -972146,7 +972372,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Apprentice Andrethan in Kirin'Var Village wants you to kill the ghost of Rhonsus, the town's master blacksmith." },
 			descriptionQuestText = { "At last, my journeyman project is complete! I can't wait to formally present it to Master Rhonsus. <The apprentice looks at you as you describe your experiences retrieving the hammer.> They attacked you? All of them? By the Light, they've gone mad! What are we to do, PLAYER? It grieves me to say so, but it may be necessary to kill Master Rhonsus. It would leave me as the only smith in Kirin'Var, but I believe my training is sufficient to serve the town's needs." },
 			npcs = {
-				{ npc = "Apprentice Andrethan", id = "x99" },
+				{ npc = "Apprentice Andrethan", id = 20463 },
 			},
 			[1] = {
 				description = "Kill Rhonsus near the Blacksmith building (mob patrols around immediate area) in Town Square, Netherstorm.",
@@ -972164,7 +972390,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Apprentice Andrethan in the Town Square (near the Violet Tower), Kirin'Var Village, Netherstorm.",
+				description = "Turn in the quest to {npc:20463:Apprentice Andrethan} in the Town Square (near the Violet Tower), Kirin'Var Village, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 57.71, y = 85.19, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.44, y = 30.33, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -972215,7 +972441,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Find Bessy in the fields near Kirin'Var Village's Chapel Hill in Netherstorm." },
 			descriptionQuestText = { "Where, oh where has my Bessy gone? After the attack, I searched the fields and the Chapel Yard for her, but she was nowhere to be seen! All I have left of her is this old cowbell. She usually comes running when she hears it, but these feeble old bones probably couldn't shake it hard enough. I'll loan you Bessy's bell if you're willing to go out to the fields and ring it as hard as you can. Perhaps all Bessy's waiting for is a little more cowbell." },
 			npcs = {
-				{ npc = "Thadell", id = "x99" },
+				{ npc = "Thadell", id = 20464 },
 			},
 			[1] = {
 				description = "Turn in the quest to Bessy near Kirin'Var Village's Chapel Hill, Netherstorm.",
@@ -972384,7 +972610,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Thadell in the Town Square (near the Violet Tower), Kirin'Var Village, Netherstorm.",
+				description = "Turn in the quest to {npc:20464:Thadell} in the Town Square (near the Violet Tower), Kirin'Var Village, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 57.73, y = 84.95, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.44, y = 30.25, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -972462,7 +972688,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Ameer wants you to kill 5 Ethereum Assassins, 5 Ethereum Shocktroopers, 2 Ethereum Researchers and Captain Zovax then activate Ethereum Transponder Zeta." },
 			descriptionQuestText = { "Directly south of here you will find the Ethereum Staging Grounds. The Ethereum are there, preparing for something... Perhaps an assault on Ultris. We can't take any chances, though, CLASS. Break through their perimeter defenses and take out their training facility. Once you've destroyed their soldiers and Captain Zovax, locate Ethereum transponder Zeta and use it to establish contact with me to get your next set of orders." },
 			npcs = {
-				{ npc = "Commander Ameer", id = "x99" },
+				{ npc = "Commander Ameer", id = 20448 },
 			},
 			[1] = {
 				description = "Kill 5 Ethereum Assassins in Ethereum Staging Grounds, Netherstorm.",
@@ -972669,7 +972895,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 5 Shaleskin Shale and give them to Boots at Area 52 in the Netherstorm." },
 			descriptionQuestText = { "I make a good living selling drinks to the boozehounds around here. But I want something more! The rocket-chief is always telling me how he can't perfect the rocket fuel needed to get the X-52 off of the ground. We can solve that little problem for him. For starters I need to extract the oil from the shale of the local shaleskin flayers! It'll form a concentrated, if explosive, base for the mix that I have in mind. Find the flayers, and their shale, all over the place near the purple rocks." },
 			npcs = {
-				{ npc = "Boots", id = "x99" },
+				{ npc = "Boots", id = 19617 },
 			},
 			[1] = {
 				description = "Kill Shaleskin Flayers and loot 5 {item:29464:Shaleskin Shale} from their corpses around the Ruins of Enkaat and northwest of the Arklon Ruins, Netherstorm.",
@@ -972689,7 +972915,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Boots at Area 52, Netherstorm.",
+				description = "Turn in the quest to {npc:19617:Boots} at Area 52, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 32.27, y = 63.91, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 53.32, y = 23.54, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -972902,7 +973128,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Gather 15 Ivory Bells and return to Mehrdad at Midrealm Post." },
 			descriptionQuestText = { "I hear that a group of 'druids' from Azeroth has taken quite an interest in the effects of our eco-dome technology. The Cenarion Expedition's representatives are eager to get access to the plants growing within the domes, particularly one called the ivory bell, known for its healing properties. They're found in clumps of brush around larger plants in Eco-Dome Midrealm. I'll share the profits with you if you're willing to gather the herbs for my first delivery." },
 			npcs = {
-				{ npc = "Mehrdad", id = "x99" },
+				{ npc = "Mehrdad", id = 20810 },
 			},
 			[1] = {
 				description = "Collect 15 {item:29474:Ivory Bells}, from the ground, at Eco-Dome Midrealm, Netherstorm.",
@@ -972917,7 +973143,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Mehrdad at Midrealm Post, Eco-Dome Midrealm, Netherstorm.",
+				description = "Turn in the quest to {npc:20810:Mehrdad} at Midrealm Post, Eco-Dome Midrealm, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 46.45, y = 56.40, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 21.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -973047,7 +973273,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "|cFF00ff00(Exit the mine, toward the south @|r {coords:61,45.4,109;waypointTitle:\"Exit the mine, toward the south\"}). Turn in the quest to Commander Ameer at Protectorate Watch Post, Netherstorm.",
+				description = "|cFF00ff00(Exit the mine, toward the south @|r {coords:61,45.4,109;waypointTitle:\"Exit the mine, toward the south\"}). Turn in the quest to {npc:20448:Commander Ameer} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 59.50, y = 32.37, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.01, y = 13.47, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -974669,7 +974895,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Researcher Navuud at the Protectorate Watch Post in Netherstorm has asked that you destroy 30 Void Waste Globules and 30 Seeping Sludge Globules." },
 			descriptionQuestText = { "Around the ruined manaforge you will find the run-off of Dimensius's handy work. Seeping sludge occupies the pools that surround Ultris. Directly below those pools, where the Ethereum Staging Grounds now stand, you will find even more run-off in the form of void waste. The best method of disposal is to use electro-shock to break slimes down to globules. Use this elixir to augment your attacks with electricity. The resultant discharge will break the slimes up into their raw form. Destroy the globules!" },
 			npcs = {
-				{ npc = "Researcher Navuud", id = "x99" },
+				{ npc = "Researcher Navuud", id = 20449 },
 			},
 			[1] = {
 				description = "Use {item:29737:Navuud's Concoction} potion and travel into the area surrounding Manaforge Ultris, Netherstorm.",
@@ -974732,7 +974958,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[5] = {
-				description = "Turn in the quest to Researcher Navuud at the Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20449:Researcher Navuud} at the Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 59.25, y = 32.59, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.93, y = 13.53, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -974793,7 +975019,7 @@ RQEDatabase = {
 			descriptionQuestText = { "" },
 			npc = { "" },
 			[1] = {
-				description = "Turn in the quest to Researcher Navuud at the Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20449:Researcher Navuud} at the Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 59.25, y = 32.59, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.93, y = 13.53, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -974932,7 +975158,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Retrieve the Diagnostic Results and return them to Mehrdad at Midrealm Post." },
 			descriptionQuestText = { "Wherever the Consortium establishes a presence, we bring our eco-dome technology. The fields allow us to work in a controlled and life-sustaining atmosphere since we often find ourselves in hostile environments. Netherstorm's volatile conditions and creatures have begun to destroy the equipment that sustains our domes, especially the generator east of here. I've started a diagnostic there in hopes of understanding what can be done to combat the damage. Would you collect the results and bring them to me?" },
 			npcs = {
-				{ npc = "Mehrdad", id = "x99" },
+				{ npc = "Mehrdad", id = 20810 },
 			},
 			[1] = {
 				description = "Travel northeast and click on the \"Diagnostic Equipment\", on the ground, at Eco-Dome Midrealm, Netherstorm.",
@@ -974947,7 +975173,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Mehrdad at Midrealm Post, Eco-Dome Midrealm, Netherstorm.",
+				description = "Turn in the quest to {npc:20810:Mehrdad} at Midrealm Post, Eco-Dome Midrealm, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 46.45, y = 56.40, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 21.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -974971,7 +975197,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Mehrdad at Midrealm Post wants you to kill 8 Barbscale Crocolisks." },
 			descriptionQuestText = { "In searching the area for clues about the damage to our equipment, I've seen pieces of the shield generators at the bottom of the small lake to the north. I'm not sure why the crocolisks have taken an interest in the equipment, but we have to put a stop to this problem. The Consortium is quite clear on this matter. If it comes down to a choice between the equipment and crocolisks, the animals will have to go. I'll make it worth your while to deal with them." },
 			npcs = {
-				{ npc = "Mehrdad", id = "x99" },
+				{ npc = "Mehrdad", id = 20810 },
 			},
 			[1] = {
 				description = "Kill 8 Barbscale Crocolisks, in the water nearby, at Eco-Dome Midrealm, Netherstorm.",
@@ -974989,7 +975215,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Mehrdad at Midrealm Post, Eco-Dome Midrealm, Netherstorm.",
+				description = "Turn in the quest to {npc:20810:Mehrdad} at Midrealm Post, Eco-Dome Midrealm, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 46.45, y = 56.40, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 21.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -975095,7 +975321,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Flesh Handler Viridius at the Protectorate Watch Post in Netherstorm has asked that you find and free Captain Tyralius." },
 			descriptionQuestText = { "Captain Tyralius took a platoon of soldiers south towards the Ethereum Staging Grounds 10 days ago. We haven't heard from him or his crew since. Chances are good that they were ambushed and killed but I'm getting a curious reading from my instruments. I think it's a distress signal but these things have been wrong before. If Tyralius is still alive, they're keeping him in one of their prisons. You'll have to locate the prison and open it with a key, probably found on the warden." },
 			npcs = {
-				{ npc = "Flesh Handler Viridius", id = "x99" },
+				{ npc = "Flesh Handler Viridius", id = 20450 },
 			},
 			[1] = {
 				description = "Kill Warden Icoshock and loot {item:29742:The Warden's Key} from its body at the Ethereum Staging Grounds, Netherstorm.",
@@ -975129,7 +975355,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Flesh Handler Viridius (this mob patrols around Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20450:Flesh Handler Viridius} (this mob patrols around Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 58.59, y = 31.76, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.72, y = 13.27, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -975153,7 +975379,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Ghabar at the Stormspire in Netherstorm." },
 			descriptionQuestText = { "Master Engineer Ghabar will want to know about the results of the diagnostics. If anything, they caution us to keep a close eye on the workings of our dome generators. As the fields become more and more unstable, their effects will become harder to control. It could spell disaster for our expedition and anything else housed within the domes. You'll find Ghabar at the Stormspire. Just follow the road north from this eco-dome and across the bridge. It'll lead you to the elevator at the base of the spire." },
 			npcs = {
-				{ npc = "Mehrdad", id = "x99" },
+				{ npc = "Mehrdad", id = 20810 },
 			},
 			[1] = {
 				description = "Turn in the quest to Ghabar at The Stormspire, Netherstorm.",
@@ -975237,7 +975463,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Commander Ameer at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20448:Commander Ameer} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 59.50, y = 32.37, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.01, y = 13.47, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -975497,7 +975723,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 10 Ripfang Lynx Pelts to Shauly Pore at Midrealm Post." },
 			descriptionQuestText = { "The ethereals are clever and very observant, so it's no accident that I'm here posing as a simple furrier. In fact, I've been sent from Area 52 to appraise the technology the ethereals use to generate their eco-domes. I'd like to enlist your help, CLASS. We've been asked to use non-goblin agents whenever possible. What I want you to do is bring me a number of ripfang lynx pelts in the guise of a hunter. You can find the lynxes all over Eco-Dome Midrealm." },
 			npcs = {
-				{ npc = "Shauly Pore", id = "x99" },
+				{ npc = "Shauly Pore", id = 20921 },
 			},
 			[1] = {
 				description = "Kill Ripfang Lynxes and loot 10 {item:29801:Ripfang Lynx Pelts}, from their bodies at the Eco-Dome Midrealm, Netherstorm.",
@@ -975515,7 +975741,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Shauly Pore at Midrealm Post, Eco-Dome Midrealm, Netherstorm.",
+				description = "Turn in the quest to {npc:20921:Shauly Pore} at Midrealm Post, Eco-Dome Midrealm, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 46.48, y = 56.02, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.85, y = 21.02, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -975539,7 +975765,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Audi the Needle at the Stormspire in Netherstorm." },
 			descriptionQuestText = { "Excellent job. <Shauly winks at you.> I think they're buying it. Now, when I send you up to speak with my associates at the Stormspire, there won't be any suspicion at all. You'll want to look for Action Jaxon and Audi the Needle up there. They'll tell you everything you need to know. Tell 'em Shauly sent you." },
 			npcs = {
-				{ npc = "Shauly Pore", id = "x99" },
+				{ npc = "Shauly Pore", id = 20921 },
 			},
 			[1] = {
 				description = "Turn in the quest to Audi the Needle at The Stormspire, Netherstorm.",
@@ -975647,7 +975873,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Professor Dabiri at the Protectorate Watch Post in Netherstorm wants you to recover 8 Fragments of Dimensius." },
 			descriptionQuestText = { "Atop Manaforge Ultris lies the tear in the nether that the void lord, Dimensius, came through. That tear provides Dimensius with a link to the void, rendering him immune to physical harm. If we can get a lock on the conduit that Dimensius is using to keep himself phased out of this plane of existence, we can destroy it and then destroy Dimensius. To do this, we're going to first need you to collect fragments of Dimensius from the void creatures that he sends out to do his dirty work." },
 			npcs = {
-				{ npc = "Professor Dabiri", id = "x99" },
+				{ npc = "Professor Dabiri", id = 20907 },
 			},
 			[1] = {
 				description = "Kill Unstable Voidwraiths and Voidshrieker, and collect 8 {item:29822:Fragments of Dimensius}, from their bodies, at Manaforge Ultris, Netherstorm.",
@@ -975666,7 +975892,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Professor Dabiri at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20907:Professor Dabiri} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 60.11, y = 31.73, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.20, y = 13.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -975690,7 +975916,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Professor Dabiri at the Protectorate Watch Post in Netherstorm wants you to use your Phase Disruptor when you get in range of the Void Conduit that rests atop Ultris. Drop as many charges of the Phase Disruptor as you can to ensure total annihilation. The Phase Disruptor charges will automatically home in on the Void Conduit so long as you are close enough to use it. Return to Professor Dabiri should you succeed! " },
 			descriptionQuestText = { "Here it is, PLAYER. Take this phase disruptor and mount up! The Protectorate nether drake will fly you close enough to Ultris so that you can drop the disruptor on top of the void conduit. Drop as many disruptor charges as possible to ensure complete annihilation! When you are ready, speak with the nether drake and he'll take you up. If you miss the mark you will have to get more bombs from me before you can go up again." },
 			npcs = {
-				{ npc = "Professor Dabiri", id = "x99" },
+				{ npc = "Professor Dabiri", id = 20907 },
 			},
 			[1] = {
 				description = "Speak to the Protectorate Nether Drake and select, \"I am ready to fly!\" Then while in the air, use your {item:29778:Phase Disruptor} above Manaforge Ultris.\n\n|cFFFF3333If you no longer have the {item:29778:Phase Disruptor}, then abandon the quest and pick it up again.|r",
@@ -975708,7 +975934,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Professor Dabiri at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20907:Professor Dabiri} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 60.11, y = 31.73, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.20, y = 13.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -975781,7 +976007,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[4] = {
-				description = "Turn in the quest to Professor Dabiri at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20907:Professor Dabiri} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 60.11, y = 31.73, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.20, y = 13.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -976266,7 +976492,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Earthmender Torlok at the Altar of Damnation in Shadowmoon Valley wants you to use the Totem of Spirits to capture 8 Earthen Souls and 8 Fiery Souls." },
 			descriptionQuestText = { "We must try and make amends. We must commune with the elements of this region and see if anything can be done! I grant you the totem of spirits, blood elf. If you slay an enraged elemental spirit in close proximity of the totem, it will consume the elemental's soul. You must use the totem to consume many souls before you may return to me. Do this for the spirits of fire and earth first. Return to me when the totem is full." },
 			npcs = {
-				{ npc = "Earthmender Torlok", id = "x99" },
+				{ npc = "Earthmender Torlok", id = 21024 },
 			},
 			[1] = {
 				description = "Use {item:30094:Totem of Spirits} near Enraged Earth Spirits and slay 8 of them in Shadowmoon Valley.\n\n|cFFFF3333Make sure that mob is within ~ 25 yards of totem when you kill it!|r",
@@ -976304,7 +976530,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Earthmender Torlok at The Altar of Damnation, Shadowmoon Valley",
+				description = "Turn in the quest to {npc:21024:Earthmender Torlok} at The Altar of Damnation, Shadowmoon Valley",
 				coordinateHotspots = {
 					{ x = 42.18, y = 45.06, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.51, y = 80.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -976548,7 +976774,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Earthmender Torlok at the Altar of Damnation in Shadowmoon Valley wants you to use the Totem of Spirits to capture 5 Watery Souls." },
 			descriptionQuestText = { "The Illidari naga of the region have taken control of the only clean water supply that exists in Shadowmoon Valley. Directly north of here you will find the lair of the naga: Coilskar. Around Coilskar are pockets of agitated water that howl to the land in anguish. It is at those pockets that the enraged spirits of water now wander. Travel to Coilskar and use the totem of spirits to capture watery souls. You will find the largest concentration of these spirits near Coilskar Cistern." },
 			npcs = {
-				{ npc = "Earthmender Torlok", id = "x99" },
+				{ npc = "Earthmender Torlok", id = 21024 },
 			},
 			[1] = {
 				description = "Use your {item:30094:Totem of Spirits} (in your inventory) near Enraged Water Spirits and slay 5 of them in Shadowmoon Valley.\n\n|cFFFF3333Make sure that mob is within ~ 25 yards of totem when you kill it!|r",
@@ -976568,7 +976794,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Earthmender Torlok at The Altar of Damnation, Shadowmoon Valley",
+				description = "Turn in the quest to {npc:21024:Earthmender Torlok} at The Altar of Damnation, Shadowmoon Valley",
 				coordinateHotspots = {
 					{ x = 42.18, y = 45.06, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.51, y = 80.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -976592,7 +976818,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Earthmender Torlok at the Altar of Damnation in Shadowmoon Valley wants you to use the Totem of Spirits to capture 10 Airy Souls." },
 			descriptionQuestText = { "Venture southeast, hero. When you see fields of gigantic blue crystals jutting out from the land, you will have reached your destination. It is there, at the Netherwing Fields, that you will find the enraged spirits of air. They roam the cliffs and mountain bases that surround the fields. Destroy their tortured forms and capture their souls with the totem of spirits. Return to me when this is done." },
 			npcs = {
-				{ npc = "Earthmender Torlok", id = "x99" },
+				{ npc = "Earthmender Torlok", id = 21024 },
 			},
 			[1] = {
 				description = "Use your {item:30094:Totem of Spirits} (in your inventory) near Enraged Air Spirits and slay 10 of them in Shadowmoon Valley.\n\n|cFFFF3333Make sure that mob is within ~ 25 yards of totem when you kill it!|r",
@@ -976613,7 +976839,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Earthmender Torlok at The Altar of Damnation, Shadowmoon Valley",
+				description = "Turn in the quest to {npc:21024:Earthmender Torlok} at The Altar of Damnation, Shadowmoon Valley",
 				coordinateHotspots = {
 					{ x = 42.18, y = 45.06, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.51, y = 80.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -977094,7 +977320,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay any 30 Bladespire Ogres and 10 Bladespire Raptors at Bladespire Hold and the Bladespire Grounds." },
 			descriptionQuestText = { "There is a threat to Thunderlord Stronghold worse than the Alliance at Sylvanaar. I speak of the ogres of these mountains. Just to the west, down in the ravine, lies the Bladespire clan. While they aren't the only ogres, they are the closest and they're the ones that we defeated to take this place. Head north through the Jagged Ridge, and then down the path, which leads to their hold. Slay as many of the Bladespire ogres and their raptors as you can at Bladespire Hold and the Bladespire Grounds." },
 			npcs = {
-				{ npc = "Tor'chunk Twoclaws", id = "x99" },
+				{ npc = "Tor'chunk Twoclaws", id = 21147 },
 			},
 			[1] = {
 				description = "Kill |cFFffcc33{objectiveRemaining}|r {npc:19995:Bladespire Brutes} and {npc:19998:Bladespire Shamans} at the Bladespire Hold and the Bladespire Grounds, Blade's Edge Mountains.",
@@ -977258,7 +977484,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay any 30 Bloodmaul Ogres at Bloodmaul Outpost." },
 			descriptionQuestText = { "To the south of the Bladespire clan lies yet another threat: Bloodmaul Outpost. While the Bloodmaul ogres are not the strongest clan in the mountains, not having the favor of the gronn known as Gruul the Dragonkiller, they run a close second. Now that we've dealt with winnowing the Bladespire, it is time to turn our eye upon their rivals. From Bladespire Hold head south through the ravine until you come to Bloodmaul Outpost. Slay as many of the Bloodmaul ogres in the vicinity as you can." },
 			npcs = {
-				{ npc = "Tor'chunk Twoclaws", id = "x99" },
+				{ npc = "Tor'chunk Twoclaws", id = 21147 },
 			},
 			[1] = {
 				description = "Kill |cFFffcc33{objectiveRemaining}|r Bloodmaul Ogres at the Bloodmaul Outpost, Blade's Edge Mountains.",
@@ -977747,7 +977973,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Seek out Oronok Torn-heart on the Shattered Shelf - north of Coilskar Cistern." },
 			descriptionQuestText = { "I do not know how we can acquire the spell that the spirits mentioned, PLAYER. Truth be told, I don't even know where we would start such a search. <Torlok stares off in the distance, lost in thought.> Hrm... It is a long shot but it might be our only chance. There is an orc that I have seen visit this area before. I spoke to him briefly once. He is a hermit that claims to live above Coilskar Cistern to the northeast. Seek out this orc, Oronok Torn-heart. As I said, it is a long shot." },
 			npcs = {
-				{ npc = "Earthmender Torlok", id = "x99" },
+				{ npc = "Earthmender Torlok", id = 21024 },
 			},
 			[1] = {
 				description = "Turn in the quest to Oronok Torn-heart at Oronok's Farm (north of Coilskar Cistern), Shadowmoon Valley",
@@ -978433,8 +978659,8 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect the Thunderlord Clan Drum, Thunderlord Clan Arrow and the Thunderlord Clan Tablet." },
 			descriptionQuestText = { "The artifact bears markings that indicate its origins as being created by the Thunderlord clan orcs. These orcs used to live at Thunderlord Stronghold before they were changed into fel orcs. For a time the Bladespire ogres inhabited the stronghold until recently when the Horde pushed them out. You've heard of other artifacts that were lost. A drum, an arrow and a tablet come to mind as objects that you know are being sought after. Find them in Bladespire Hold and return them to Rokgar Bloodgrip." },
 			npcs = {
-				{ npc = "Bladespire Brute", id = "x99" },
-				{ npc = "Bladespire Shaman", id = "x99" },
+				{ npc = "Bladespire Brute", id = 19995, hostile = true },
+				{ npc = "Bladespire Shaman", id = 19998, hostile = true },
 			},
 			[1] = {
 				description = "Collect the {item:30433:Thunderlord Clan Arrow}, up a stone ramp near a large bonfire {object:184727:from the ground}, at Bladespire Hold, Blade's Edge Mountains.",
@@ -980001,7 +980227,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect and use a Vekh'nir Crystal at the Vekh'nir Spell Circle to create a Charged Vekh'nir Crystal." },
 			descriptionQuestText = { "The arakkoa of Vekh'nir have been a thorn in our sides for many years. Some strange religion guides them, a religion which has the arakkoa in a frenzy of activity. They carry these crystals with them now, which they have turned to some dark purpose. I know something of their rituals. They take the crystals to their spell circles to infuse them. We at the village would like to know more. Waylay a few of the arakkoa until you find a crystal, charge it, then return it to me." },
 			npcs = {
-				{ npc = "Dertrok", id = "x99" },
+				{ npc = "Dertrok", id = 21496 },
 			},
 			-- [1] = {
 				-- description = "! Charged Vekh'nir Crystal: 1/1 in Veil Vekh, Blade's Edge Mountains.",
@@ -980016,13 +980242,13 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Dertrok at Mok'Nathal Village, Blade's Edge Mountains.",
+				-- description = "Turn in the quest to {npc:21496:Dertrok} at Mok'Nathal Village, Blade's Edge Mountains.",
 				-- coordinates = { x = 75.13, y = 62.10, mapID = 105 },
 				-- check = { "10565" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
 				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
+					-- { name = "Dertrok", marker = 6, mustBeAlive = true },
 				-- },
 				-- macro = { "#showtooltip item:2554\n/tar Dertrok\n/tm 6" },
 				-- objectiveIndex = 99,
@@ -980034,7 +980260,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Try out each of Dertrok's wands on an Arakkoa Ogre Slave. Each wand will require an Infused Vekh'nir Crystal to use." },
 			descriptionQuestText = { "I've fashioned four wands that I believe will enhance the power of the arakkoa's crystals. Take these wands to Trogma's Claim, and try them on the ogre slaves. You'll need to find an infused crystal off of the arakkoa in the area. When you figure out which is best, come back to me." },
 			npcs = {
-				{ npc = "Dertrok", id = "x99" },
+				{ npc = "Dertrok", id = 21496 },
 			},
 			-- [1] = {
 				-- description = "! Test the first wand: 1/1 in Trogma's Claim, Blade's Edge Mountains.",
@@ -980085,13 +980311,13 @@ RQEDatabase = {
 				-- objectiveIndex = 3,
 			-- },
 			-- [5] = {
-				-- description = "Turn in the quest to Dertrok at Mok'Nathal Village, Blade's Edge Mountains.",
+				-- description = "Turn in the quest to {npc:21496:Dertrok} at Mok'Nathal Village, Blade's Edge Mountains.",
 				-- coordinates = { x = 75.13, y = 62.10, mapID = 105 },
 				-- check = { "10566" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
 				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
+					-- { name = "Dertrok", marker = 6, mustBeAlive = true },
 				-- },
 				-- macro = { "#showtooltip item:2554\n/tar Dertrok\n/tm 6" },
 				-- objectiveIndex = 99,
@@ -980106,7 +980332,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 6 Ruuan'ok Claws and use them at the Ruaan'ok Oracle Circle to summon a Harbinger of the Raven. Kill it to collect its Harbinger's Pendant." },
 			descriptionQuestText = { "The arakkoa of Ruaan Weald elevate from their flock the Harbingers of the Raven, the heralds of their god. They believe that the Harbingers watch over them from the sky, where they receive the teachings of the Raven, and descend to pass this message along. The Harbingers hold a powerful sway over the souls of the arakkoa. They use magical pendants, which we need. Attract one of the Harbingers by slaying its flock and taking their claws. Place the claws upon the altar to get his attention." },
 			npcs = {
-				{ npc = "Timeon", id = "x99" },
+				{ npc = "Timeon", id = 21782 },
 			},
 			[1] = {
 				description = "Kill Ruuan'ok arakkoa and loot |cFFffcc336|r {item:30704:Ruuan'ok Claws}, from their bodies, at Veil Ruuan, Blade's Edge Mountains.",
@@ -980238,7 +980464,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[8] = {
-				description = "Turn in the quest to Timeon at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:21782:Timeon} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 62.17, y = 39.11, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.07, y = 24.28, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -981333,7 +981559,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Earthmender Torlok at The Altar of Damnation, Shadowmoon Valley.",
+				description = "Turn in the quest to {npc:21024:Earthmender Torlok} at The Altar of Damnation, Shadowmoon Valley",
 				coordinateHotspots = {
 					{ x = 42.18, y = 45.06, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.51, y = 80.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -981619,7 +981845,7 @@ RQEDatabase = {
 				{ npc = "Blood Guard Gulmok", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Scout Zagran at Slag Watch, Shadowmoon Valley.",
+				description = "Turn in the quest to {npc:21475:Scout Zagran} at Slag Watch, Shadowmoon Valley.",
 				coordinateHotspots = {
 					{ x = 38.58, y = 38.18, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.37, y = 78.76, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -981643,7 +981869,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Scout Zagran at Slag Watch wants you to kill 10 Deathforge Guardians and 5 Deathforge Summoners." },
 			descriptionQuestText = { "<Zagran listens to you recount the events at Legion Hold, nodding.> That fills in the gaps we've seen. We've caught glimpses of them launching infernals in the direction of the hold, but haven't been able to find much more than that. The Shadow Council has the forge pretty much locked down. Looks like you're going to need to fight your way in. Start eliminating the Shadow Council guarding the entrance to the Deathforge!" },
 			npcs = {
-				{ npc = "Scout Zagran", id = "x99" },
+				{ npc = "Scout Zagran", id = 21475 },
 			},
 			-- [1] = {
 				-- description = "! Deathforge Guardian slain: 1/10 in The Deathforge, Shadowmoon Valley.",
@@ -981826,7 +982052,7 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [16] = {
-				-- description = "Turn in the quest to Scout Zagran at Slag Watch, Shadowmoon Valley.",
+				-- description = "Turn in the quest to {npc:21475:Scout Zagran} at Slag Watch, Shadowmoon Valley.",
 				-- coordinateHotspots = {
 					-- { x = 38.58, y = 38.18, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 62.37, y = 78.76, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -981850,7 +982076,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Scout Zagran at Slag Watch wants you to search the Deathforge for Kagrosh and recover Kagrosh's Pack." },
 			descriptionQuestText = { "The scouting party originally had three members. Unfortunately, Kagrosh decided he wanted to be a hero. He descended into the Deathforge and we haven't heard from him since. In all likelihood, the fool's gone and gotten himself killed. The Shadow Council members aren't idiots and Kagrosh wasn't exactly strong in the subtlety department, if you know what I mean. Keep an eye out for him in the Deathforge and recover any information or items he might have collected." },
 			npcs = {
-				{ npc = "Scout Zagran", id = "x99" },
+				{ npc = "Scout Zagran", id = 21475 },
 			},
 			-- [1] = {
 				-- description = "! Kill Kagrosh and loot 1 Kagrosh's Pack: 1/1, from its body, at The Deathforge, Shadowmoon Valley.",
@@ -981865,7 +982091,7 @@ RQEDatabase = {
 				-- objectiveIndex = 2,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Scout Zagran at Slag Watch, Shadowmoon Valley.",
+				-- description = "Turn in the quest to {npc:21475:Scout Zagran} at Slag Watch, Shadowmoon Valley.",
 				-- coordinateHotspots = {
 					-- { x = 38.58, y = 38.18, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 62.37, y = 78.76, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -981889,7 +982115,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain an Elemental Displacer from a Deathforge Smith or Deathforge Tinkerer and use it to disrupt the ritual in the summoning chamber. Report to Scout Zagran at Slag Watch when you've completed your task." },
 			descriptionQuestText = { "In order to churn out infernals as quickly as the Deathforge seems to, they must have an area dedicated to summoning the elementals that form the core of the infernals. The summoning chamber is likely to be found below ground, near a pool of fouled water or lava. Locate the summoning chamber within the Deathforge and find a way to end their summoning ritual. The mo'arg involved in making the infernals may carry a tool that will help disrupt the summoner's magics." },
 			npcs = {
-				{ npc = "Scout Zagran", id = "x99" },
+				{ npc = "Scout Zagran", id = 21475 },
 			},
 			-- [1] = {
 				-- description = "! Kill Deathforge Smith and loot 1 Elemental Displacer: 1/1, from its body, at The Deathforge, Shadowmoon Valley.",
@@ -981916,7 +982142,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [3] = {
-				-- description = "Turn in the quest to Scout Zagran at Slag Watch, Shadowmoon Valley.",
+				-- description = "Turn in the quest to {npc:21475:Scout Zagran} at Slag Watch, Shadowmoon Valley.",
 				-- coordinateHotspots = {
 					-- { x = 38.58, y = 38.18, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 62.37, y = 78.76, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -981940,7 +982166,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Defeat Warbringer Razuun, recover Razuun's Orders, and report to Blood Guard Gulmok at Shadowmoon Village." },
 			descriptionQuestText = { "We've made a lot of progress against the Shadow Council here at the Deathforge, but now it's time to finish the job. I found a key among the items in Kagrosh's pack. At least he accomplished something before they got to him. The key should help you to track down this Warbringer Razuun you observed at Legion Hold. After you've hunted down and dealt with Warbringer Razuun, report directly to Blood Guard Gulmok. We must not keep him waiting." },
 			npcs = {
-				{ npc = "Scout Zagran", id = "x99" },
+				{ npc = "Scout Zagran", id = 21475 },
 			},
 			-- [1] = {
 				-- description = "! Warbringer Razuun slain: 1/1 in The Deathforge, Shadowmoon Valley.",
@@ -982085,7 +982311,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill Grishna arakkoa to gain Understanding Ravenspeech for 2 minutes. While under the effects of the spell, you can find and receive the prophecy from the four shrines." },
 			descriptionQuestText = { "At Grishnath, totems left by the Oracles of the Raven enable the arakkoa to hear the Word of the Raven. Unfortunately, the language of the arakkoa is indecipherable to us. Using the Harbinger's pendant, we can understand it. You will be able to take the souls of the arakkoa to understand their language. While you are suffused with the arakkoa's spirit, you can visit the totems and understand their message. Discover this for us, PLAYER." },
 			npcs = {
-				{ npc = "Timeon", id = "x99" },
+				{ npc = "Timeon", id = 21782 },
 			},
 			[1] = {
 				description = "Kill Grishna arakkoa to gain Understanding Ravenspeech at Grishnath, Blade's Edge Mountains.",
@@ -982214,7 +982440,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[9] = {
-				description = "Turn in the quest to Timeon at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:21782:Timeon} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 62.17, y = 39.11, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.07, y = 24.28, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -982570,7 +982796,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Leoroxx at the Mok'Nathal Village in the Blade's Edge Mountains." },
 			descriptionQuestText = { "I have chased rumors of the Mok'Nathal across Outland with nothing to show for it. Finally, we may have found their home. But now that the moment is here, I am filled with unease. Unease that has kept me awake deep into the nights during my search. Will they accept me? I... know their leader's name: Leoroxx. Seek him out. You must be my eyes in this." },
 			npcs = {
-				{ npc = "Rexxar", id = "x99" },
+				{ npc = "Rexxar", id = 21984 },
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:22004:Leoroxx} at Mok'Nathal Village, Blade's Edge Mountains.",
@@ -982594,10 +982820,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Timeon at Evergrove, which is in the Ruuan Weald in the Blade's Edge Mountains." },
 			descriptionQuestText = { "The information you have helped me reveal about the nature of the arakkoa here will be of great interest to another. We were visited by members of the Cenarion Expedition, who have also become concerned with the arakkoa's intentions here in the Blade's Edge Mountains. You should seek him out. His name is Timeon, and you will find him at Evergrove in Ruuan Weald. Follow the road west from here, then north when it forks in Razor Ridge. Finally, follow the road west when it splits in the Bladed Gulch." },
 			npcs = {
-				{ npc = "Dertrok", id = "x99" },
+				{ npc = "Dertrok", id = 21496 },
 			},
 			[1] = {
-				description = "Turn in the quest to Timeon at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:21782:Timeon} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 62.17, y = 39.11, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.07, y = 24.28, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -982618,7 +982844,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 8 Silkwing Cocoons from Silkwing Larva. Kill the Larva quickly or they will turn into Silkwings, ruining their cocoons." },
 			descriptionQuestText = { "The silk from the cocoons of the silkwings are used for all manner of things in the village. We can never get enough, and we never have enough. It is difficult to harvest the cocoons from the larva once they begin the process of metamorphosis. Our warriors are occupied with the assault on our village. If you could gather these for us, that would be helpful." },
 			npcs = {
-				{ npc = "Taerek", id = "x99" },
+				{ npc = "Taerek", id = 21895 },
 			},
 			-- [1] = {
 				-- description = "! Kill Silkwing Larva and loot 8 Silkwing Cocoon: 1/8, from their bodies, at Vekhaar Stand, Blade's Edge Mountains.",
@@ -982717,7 +982943,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [9] = {
-				-- description = "Turn in the quest to Taerek at Mok'Nathal Village, Blade's Edge Mountains.",
+				-- description = "Turn in the quest to {npc:21895:Taerek} at Mok'Nathal Village, Blade's Edge Mountains.",
 				-- coordinates = { x = 75.87, y = 61.43, mapID = 105 },
 				-- check = { "10617" },
 				-- neededAmt = { "1" },
@@ -982735,7 +982961,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 12 Iridescent Wings." },
 			descriptionQuestText = { "Hunting silkwing larva is a difficult challenge for our young warriors, but luckily, even if they fail to harvest the cocoon from the larva, we can still use the wings of hatched silkwings. In fact, we use the wings for much more than the cocoons, and we can never have too many. If you'll be out there, it would be a great help if you could bring me some." },
 			npcs = {
-				{ npc = "Silmara", id = "x99" },
+				{ npc = "Silmara", id = 21896 },
 			},
 			-- [1] = {
 				-- description = "! Kill Mature Silkwing and loot 12 Iridescent Wing: 1/12, from their bodies, at Vekhaar Stand, Blade's Edge Mountains.",
@@ -982882,7 +983108,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [13] = {
-				-- description = "Turn in the quest to Silmara at Mok'Nathal Village, Blade's Edge Mountains.",
+				-- description = "Turn in the quest to {npc:21896:Silmara} at Mok'Nathal Village, Blade's Edge Mountains.",
 				-- coordinates = { x = 75.83, y = 61.53, mapID = 105 },
 				-- check = { "10618" },
 				-- neededAmt = { "1" },
@@ -984011,7 +984237,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Altruis the Sufferer wants you to obtain Freshly Drawn Blood from a Wrath Priestess at Forge Base: Gehenna in Netherstorm. Spill it on the ground and slay the Avatar of Sathal. Return to Altruis when you've completed this task." },
 			descriptionQuestText = { "The Burning Legion has proven its capacity to corrupt mortal souls time and again. If I'm to entrust you with the knowledge you seek, I must have proof of your allegiance. A demoness known as Sathal has eluded me for a long time as she's gifted with an incorporeal form. She watches over the wrath priestesses as they do her bidding at Forge Base: Gehenna. Slay one of her minions and spill her blood on the ground. This affront should cause Sathal to materialize temporarily. Slay her while you can." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Kill Wrath Priestesses and loot the mobs until you collect {item:30850:Freshly Drawn Blood}, from its body, at Forge Base: Gehenna, Netherstorm.",
@@ -984303,7 +984529,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Listen to Altruis's story." },
 			descriptionQuestText = { "You've proven your allegiance, PLAYER. You must forgive my caution, but in this world things are not what they appear. I will tell you about Varedis when you're ready." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Speak with {npc:18417:Altruis the Sufferer} in western Nagrand to hear the story.",
@@ -984427,7 +984653,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Venture inside the Shadow Labyrinth in Auchindoun and obtain the Book of Fel Names from Blackheart the Inciter. Return to Altruis in Nagrand once you've completed this task." },
 			descriptionQuestText = { "I sympathize with your intentions of stopping Varedis and his followers, but you won't stand a chance against him. That is, unless you find the artifact that gave him his power. The Book of Fel Names is rumored to be in the possession of Blackheart the Inciter inside the Shadow Labyrinth in Auchindoun. Obtaining it will be your only hope against Varedis." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Travel to the entrance of the Shadow Labyrinth, from the Ring of Observance (Auchindoun), Terokkar Forest.",
@@ -984952,7 +985178,7 @@ RQEDatabase = {
 				{ npc = "Ordinn Thunderfist", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to David Wayne at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
+				description = "Turn in the quest to {npc:21465:David Wayne} at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 77.58, y = 38.72, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 70.56, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -984980,7 +985206,7 @@ RQEDatabase = {
 				{ npc = "Grokom Deatheye", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to David Wayne at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
+				description = "Turn in the quest to {npc:21465:David Wayne} at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 77.58, y = 38.72, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 70.56, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -985006,7 +985232,7 @@ RQEDatabase = {
 			objectivesQuestText = { "David Wayne at Wayne's Refuge wants you to bring him an Adamantite Frame, 4 Heavy Knothide Leather, and a Demon Warding Totem." },
 			descriptionQuestText = { "The ingots that you brought contain most of the metal I'll need to forge the sword's blade, but I'll need a variety of things to create other parts of the weapon. Let's see, among the things I don't have here are an adamantite frame, some heavy knothide leather, and a demon warding totem. Skilled crafters should be able to produce the first two, but the third is only sold by the reagent vendor in Shattrath's Lower City, Fantei. You'll find him with the other tradesmen." },
 			npcs = {
-				{ npc = "David Wayne", id = "x99" },
+				{ npc = "David Wayne", id = 21465 },
 			},
 			[1] = {
 				description = "Collect 1 {item:23784:Adamantite Frame} from an engineer or purchasing at an auction house.",
@@ -985051,7 +985277,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[4] = {
-				description = "Turn in the quest to David Wayne at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
+				description = "Turn in the quest to {npc:21465:David Wayne} at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 77.58, y = 38.72, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 70.56, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -985077,7 +985303,7 @@ RQEDatabase = {
 			objectivesQuestText = { "David Wayne at Wayne's Retreat wants you to bring him an Overcharged Manacell." },
 			descriptionQuestText = { "Working with the ingots you brought is going to require a lot of heat -- rather more than a conventional forge can supply. I'm going to need a supplemental heat source for the forge and there are very few things in Outland that can supply that kind of power. The Mechanar area of Tempest Keep turns out manacells containing an incredible amount of power. Find one of the overcharged manacells from the stacks around Mechano-Lord Capacitus and bring it back here." },
 			npcs = {
-				{ npc = "David Wayne", id = "x99" },
+				{ npc = "David Wayne", id = 21465 },
 			},
 			[1] = {
 				description = "Travel to the entrance of the Mechanar (in the sky), and go inside.",
@@ -985106,7 +985332,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to David Wayne at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
+				description = "Turn in the quest to {npc:21465:David Wayne} at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 77.58, y = 38.72, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 70.56, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -985132,7 +985358,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain the Lexicon Demonica from Grandmaster Vorpil and bring it to David Wayne at Wayne's Refuge." },
 			descriptionQuestText = { "Recreating the enchantments on the blade requires several spells to be spoken in demonic. It's not something I was taught during my training as an apprentice, but there's no way around it. There's a book, called the Lexicon Demonica, that will provide most of the words I need, but it's in the hands of a powerful Shadow Council warlock. Deep in the halls of Auchindoun's Shadow Labyrinth, it is held by Grandmaster Vorpil. Do whatever you must to secure the book and bring it to me." },
 			npcs = {
-				{ npc = "David Wayne", id = "x99" },
+				{ npc = "David Wayne", id = 21465 },
 			},
 			[1] = {
 				description = "Travel to the entrance of the Shadow Labyrinth, from the Ring of Observance (Auchindoun), Terokkar Forest.",
@@ -985174,7 +985400,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Turn in the quest to David Wayne at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
+				description = "Turn in the quest to {npc:21465:David Wayne} at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 77.58, y = 38.72, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 70.56, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -985200,7 +985426,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Get a Vial of Underworld Loam from Hydromancer Thespia and bring it to David Wayne at Wayne's Refuge." },
 			descriptionQuestText = { "The frame that you brought me earlier will not be sufficient to hold molten metal without reinforcement. A rare kind of earth can be used to cool and imbue the frame, giving the adamantite an unnatural strength. Underworld loam, as the earth is known, is accorded great value among the naga. Few enough of them possess it, and in Outland, I know of only one naga who uses it -- Hydromancer Thespia, who resides in the Steamvault of Coilfang Reservoir." },
 			npcs = {
-				{ npc = "David Wayne", id = "x99" },
+				{ npc = "David Wayne", id = 21465 },
 			},
 			[1] = {
 				description = "Travel to the Coilfang Reservoir, at the center of Serpent Lake, Zangarmarsh.",
@@ -985242,7 +985468,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Turn in the quest to David Wayne at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
+				description = "Turn in the quest to {npc:21465:David Wayne} at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 77.58, y = 38.72, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 70.56, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -985267,7 +985493,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Altruis the Sufferer wants you to slay Lothros at Illidari Point in Shadowmoon Valley." },
 			descriptionQuestText = { "I still have respect for Illidan. Without him I would not have found my path. He is not who he once was, however. His soul has been corrupted by power, his mind has been twisted by defeat. He has become what I am sworn to destroy and his pet servants, the Illidari, are as much of an abomination as any demon of the Burning Legion. His grasp on Outland is slipping yet his reach is still vast. Prove you're not with him by slaying his lieutenant Lothros at Illidari Point in Shadowmoon Valley." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Kill Lothros at Illidari Point, Shadowmoon Valley.",
@@ -985309,7 +985535,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Altruis the Sufferer wants you to take the Imbued Silver Spear and use it at Portal Clearing near Marshlight Lake in Zangarmarsh to awake Xeleth. Return to Altruis after you've slain the demon." },
 			descriptionQuestText = { "Some demons pledge allegiance to no one but themselves. A true enemy of demons finds and destroys his prey regardless of affiliation, however. The demon Xeleth - a Legion defector - was once worshipped as a god by primitive swamp creatures in Zangarmarsh. When Draenor was nearly destroyed, he retreated into a slumber deep beneath Marshlight Lake. Find the portal at the lake and plant this spear into the ground. Xeleth will awake - be ready to slay him and prove you're an enemy to all demons." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Use {item:30853:Imbued Silver Spear} at the Portal Clearing to summon and then kill Xeleth near Marshlight Lake, Zangarmarsh.",
@@ -985352,7 +985578,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Recover the Tear of the Earthmother from Warbringer O'mrogg and return it to David Wayne at Wayne's Refuge." },
 			descriptionQuestText = { "The sword's enchantments must be contained within a powerful focus, such as a gem. I know of a gem that we can use for this purpose, for there are few that can play host to such powerful magics without shattering. The gem we need is called the tear of the earthmother. It's a powerful artifact in the hands of the ogres who created it, and Warbringer O'mrogg, who currently holds the gem, has many powerful allies in Hellfire Citadel's Shattered Halls. Take care in retrieving the tear, PLAYER." },
 			npcs = {
-				{ npc = "David Wayne", id = "x99" },
+				{ npc = "David Wayne", id = 21465 },
 			},
 			[1] = {
 				description = "Enter the Shattered Halls (Hellfire) instance (on any difficulty).",
@@ -985379,7 +985605,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to David Wayne at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
+				description = "Turn in the quest to {npc:21465:David Wayne} at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 77.58, y = 38.72, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 57.84, y = 70.56, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -985951,7 +986177,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Wait for David Wayne to finish forging a sword for you." },
 			descriptionQuestText = { "<David gathers his smithing supplies.> You've done well in getting everything we'll need to reforge the anti-demon blade. Your hard work and dedication is about to be repaid. The time has come to forge the sword." },
 			npcs = {
-				{ npc = "David Wayne", id = "x99" },
+				{ npc = "David Wayne", id = 21465 },
 			},
 			[1] = {
 				description = "Wait for David Wayne to finish forging a sword for you at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
@@ -986067,7 +986293,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Travel to the Scalding Pools located near the top of the Hand of Gul'dan and use the Forged Illidari-Bane Blade to quench it in the lava pools. Once you have the Quenched Illidari-Bane Blade, return to David Wayne at Wayne's Refuge." },
 			descriptionQuestText = { "The blade is nearly finished! You can almost feel the magic beginning to coalesce inside the steel, but one thing remains to be done. You must take the forged blade to the Scalding Pools near the top of the Hand of Gul'dan in Shadowmoon Valley and plunge it into the lava pools to quench the sword. When you have quenched the sword, return." },
 			npcs = {
-				{ npc = "David Wayne", id = "x99" },
+				{ npc = "David Wayne", id = 21465 },
 			},
 			-- [1] = {
 				-- description = "! Quenched Illidari-Bane Blade: 1/1 in The Scalding Pools, Shadowmoon Valley.",
@@ -986082,7 +986308,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to David Wayne at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
+				-- description = "Turn in the quest to {npc:21465:David Wayne} at Wayne's Refuge (east of Firewing Point), Terokkar Forest.",
 				-- coordinateHotspots = {
 					-- { x = 77.58, y = 38.72, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 57.84, y = 70.56, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -986110,7 +986336,7 @@ RQEDatabase = {
 				{ npc = "Earthmender Sophurus", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Earthmender Torlok at The Altar of Damnation, Shadowmoon Valley",
+				description = "Turn in the quest to {npc:21024:Earthmender Torlok} at The Altar of Damnation, Shadowmoon Valley",
 				coordinateHotspots = {
 					{ x = 42.18, y = 45.06, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.51, y = 80.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -986134,10 +986360,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Earthmender Torlok at the Altar of Damnation in Shadowmoon Valley." },
 			descriptionQuestText = { "The elements need your help, blood elf! Shadowmoon Valley has been subject to unspeakable evils. The spirits remain tortured to this day. Many are enraged and unwilling to commune with the Earthen Ring. Help this world heal, friend. Southeast of Shadowmoon Village - in the heart of Shadowmoon Valley - you will find an area known as the Altar of Damnation. Make your way there and speak with Earthmender Torlok." },
 			npcs = {
-				{ npc = "Earthmender Splinthoof", id = "x99" },
+				{ npc = "Earthmender Splinthoof", id = 21938 },
 			},
 			[1] = {
-				description = "Turn in the quest to Earthmender Torlok at The Altar of Damnation, Shadowmoon Valley.",
+				description = "Turn in the quest to {npc:21024:Earthmender Torlok} at The Altar of Damnation, Shadowmoon Valley",
 				coordinateHotspots = {
 					{ x = 42.18, y = 45.06, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 63.51, y = 80.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -986161,7 +986387,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Negotiate with Overseer Nuaar." },
 			descriptionQuestText = { "When we arrived in the Ruuan Weald, the wyrm cultists were keeping themselves to Blackwing Coven, through the tunnel to the west. But now, they are encroaching upon us here. I need you to find the wyrmcultists' overseer. He's known to make a regular patrol between their various camps in the Ruuan Weald. Negotiate with him. Let him know that there's room for compromise, but that we will not condone or allow the wholesale slaughter of the wildlife, nor the felling of all of the trees." },
 			npcs = {
-				{ npc = "Tree Warden Chawn", id = "x99" },
+				{ npc = "Tree Warden Chawn", id = 22007 },
 			},
 			[1] = {
 				description = "Speak with Overseer Nuaar (mob patrols area) at Ruuan Weald, Blade's Edge Mountains and select, \"Overseer, I am here to negotiate on behalf of the Cenarion Expedition.\"",
@@ -986179,7 +986405,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Tree Warden Chawn at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22007:Tree Warden Chawn} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.99, y = 39.47, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.01, y = 24.40, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -986594,7 +986820,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Larissa Sunstrike at the Sanctum of the Stars in Shadowmoon Valley. Completing quests for the Scryers will cause your Aldor reputation level to decrease." },
 			descriptionQuestText = { "This book... I could use it to increase my power tenfold... No! It would end up corrupting my very soul, this I am sure of. Return to those who sent you here, PLAYER. You now have the means to stop Varedis. Wait until he manifests his demonic form through metamorphosis, at that point you will need to burn the book in his presence. That will be the only way you can deprive him of his power." },
 			npcs = {
-				{ npc = "Altruis the Sufferer", id = "x99" },
+				{ npc = "Altruis the Sufferer", id = 18417 },
 			},
 			[1] = {
 				description = "Turn in the quest to Larissa Sunstrike at Sanctum of the Stars, Shadowmoon Valley.",
@@ -986763,7 +986989,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Overlord Or'barokh at Shadowmoon Village in Shadowmoon Valley wants you to kill 20 Shadowmoon Valley Wildlife. These creatures include Felboars, Vilewing Chimaera, and Scorchshell Pincer. Any combination will be sufficient." },
 			descriptionQuestText = { "All Horde forces in this region have been dispatched to handle the attacks from the Burning Legion. This means that we are short-handed for grunt work. Our supply caravans are in constant danger from the wildlife of the region. We can't veer 15 feet off the road without running into a chimaera, felboar, or abnormally large scorpion. Get out there and clear Shadowmoon Valley of its sadistic wildlife! Just kill 'em all!" },
 			npcs = {
-				{ npc = "Overlord Or'barokh", id = "x99" },
+				{ npc = "Overlord Or'barokh", id = 21769 },
 			},
 			[1] = {
 				description = "Kill 20 Shadowmoon Valley Wildlife, such as Felboars, Chimaeras and Pincers, in Shadowmoon Valley",
@@ -986788,7 +987014,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Overlord Or'barokh at Shadowmoon Village, Shadowmoon Valley.",
+				description = "Turn in the quest to {npc:21769:Overlord Or'barokh} at the Shadowmoon Village, Shadowmoon Valley.",
 				coordinateHotspots = {
 					{ x = 28.49, y = 26.46, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 59.19, y = 75.07, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -987263,7 +987489,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay 10 Wyrmcult Hewers." },
 			descriptionQuestText = { "We will not stand idly by while they decimate the Ruuan Weald around us. Our first priority must be to the trees. CLASS, I want you to go back out into the Weald and deliver a very different message for us. I want you to slay every one of their hewers that you come into contact with! If they will not listen to reason, perhaps they will listen to a more assertive method of persuasion!" },
 			npcs = {
-				{ npc = "Tree Warden Chawn", id = "x99" },
+				{ npc = "Tree Warden Chawn", id = 22007 },
 			},
 			[1] = {
 				description = "Kill 10 Wyrmcult Hewer at Ruuan Weald, Blade's Edge Mountains.",
@@ -987281,7 +987507,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Tree Warden Chawn at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22007:Tree Warden Chawn} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.99, y = 39.47, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.01, y = 24.40, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -987305,7 +987531,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Find a Bloodmaul Taskmaster and a Bloodmaul Soothsayer engaged in conversation, then use Rexxar's Whistle to summon Spirit to spy on them." },
 			descriptionQuestText = { "If the Mok'Nathal are tormented by the Bloodmaul ogres, then I will stop them and their followers. Ogres are simple creatures, and there is little profit they could gain from harassing the Mok'Nathal. There must be something more to this. PLAYER, take Spirit, my hawk, and spy upon the conversations of the Bloodmaul's leaders. He may go undetected where we cannot." },
 			npcs = {
-				{ npc = "Rexxar", id = "x99" },
+				{ npc = "Rexxar", id = 21984 },
 			},
 			[1] = {
 				description = "Use {item:31128:Rexxar's Whistle} to eavesdrop on a conversation between a {npc:22160:Bloodmaul Taskmaster} and a {npc:22384:Bloodmaul Soothsayer} at Daggermaw Canyon, Blade's Edge Mountains.",
@@ -987347,7 +987573,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 7 Crust Burster Venom Glands." },
 			descriptionQuestText = { "So, your Rexxar would have me fashion a poison for him? I'll give him what he desires, but there will be a price. Even for friends, there must be a price. Free things destroy friendships. First, you must venture a short distance to the southwest to the Churning Gulch. Therein mill some of the most poisonous creatures in all of Outland, or anywhere. I speak of the crust bursters, and this poison will require gathering their glands for me." },
 			npcs = {
-				{ npc = "Baron Sablemane", id = "x99" },
+				{ npc = "Baron Sablemane", id = 22103 },
 			},
 			[1] = {
 				description = "Kill {npc:21381:Young Crust Bursters} and loot |cFFffcc33{objectiveRemaining}|r {item:31132:Crust Burster Venom Gland}, from their bodies, at the Churning Gulch, Blade's Edge Mountains.\n\n|cFFFF3333Attack them in melee range (if ranged) to avoid stun (esp at higher level)|r",
@@ -987478,7 +987704,7 @@ RQEDatabase = {
 				{ npc = "Wyrmcult Poacher", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Tree Warden Chawn at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22007:Tree Warden Chawn} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.99, y = 39.47, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.01, y = 24.40, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -987502,7 +987728,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use the Kodohide Drum at the Marmot Den. While controlling the Marmot, poison the three kegs in the Bloodmaul Camp." },
 			descriptionQuestText = { "The ogres, simple as they are, would notice you dispersing this poison throughout their camp. Thus, I will teach you how to enlist the help of one of nature's smallest creatures to do this task. By playing a simple rhythm on this drum, you can coax a marmot to follow your commands. There is a den of marmots near the Bloodmaul camp, to the north, down in the Daggermaw Canyon past the Circle of Blood. Once you have a marmot's aid, use it to disperse the poison to the Bloodmaul's kegs." },
 			npcs = {
-				{ npc = "Rexxar", id = "x99" },
+				{ npc = "Rexxar", id = 21984 },
 			},
 			[1] = {
 				description = "Use the {item:31141:Kodohide Drum} at the {object:bm001:Marmot Den} near the Bloodmaul Camp, Blade's Edge Mountains.",
@@ -987518,10 +987744,10 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[2] = {
-				description = "Use Button |cFFffcc33#6:|r {spell:38629:Poison Keg} to poison the {object:185213:Ripe Moonshine Keg} at Bloodmaul Camp, Blade's Edge Mountains.",
+				description = "Use Button |cFFffcc33#4:|r {spell:38629:Poison Keg} to poison the {object:185213:Ripe Moonshine Keg} at Bloodmaul Camp, Blade's Edge Mountains.",
 				coordinateHotspots = {
-					{ x = 55.35, y = 28.18, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 40.96, y = 20.89, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 56.52, y = 29.32, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 41.32, y = 21.24, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 				},
 				check = { "10720" },
 				neededAmt = { "1" },
@@ -987530,7 +987756,7 @@ RQEDatabase = {
 					{ mod = "", check = { "Coax Marmot" }, neededAmt = { "1" }, funct = "CheckDBBuff", failedIndex = 1 },
 				},
 				macroArray = {
-					{ macro = "/click ExtraActionButton2", spellIDTooltip = 38629, iconFileID = "132621" },
+					{ macro = "/click ActionButton4", spellIDTooltip = 38629, iconFileID = "132621" },
 				},
 				objectiveIndex = 2,
 			},
@@ -987548,10 +987774,10 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Use Button |cFFffcc33#6:|r {spell:38629:Poison Keg} to poison the {object:185206:Green Spot Grog Keg} at Bloodmaul Camp, Blade's Edge Mountains.",
+				description = "Use Button |cFFffcc33#4:|r {spell:38629:Poison Keg} to poison the {object:185206:Green Spot Grog Keg} at Bloodmaul Camp, Blade's Edge Mountains.",
 				coordinateHotspots = {
-					{ x = 55.28, y = 26.00, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 40.93, y = 20.21, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 56.47, y = 29.28, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 41.30, y = 21.23, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 				},
 				check = { "10720" },
 				neededAmt = { "1" },
@@ -987560,7 +987786,7 @@ RQEDatabase = {
 					{ mod = "", check = { "Coax Marmot" }, neededAmt = { "1" }, funct = "CheckDBBuff", failedIndex = 3 },
 				},
 				macroArray = {
-					{ macro = "/click ExtraActionButton2", spellIDTooltip = 38629, iconFileID = "132621" },
+					{ macro = "/click ActionButton4", spellIDTooltip = 38629, iconFileID = "132621" },
 				},
 				objectiveIndex = 1,
 			},
@@ -987578,7 +987804,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[6] = {
-				description = "Use Button |cFFffcc33#6:|r {spell:38629:Poison Keg} to poison the {object:185214:Fermented Seed Beer Keg} at Bloodmaul Camp, Blade's Edge Mountains.",
+				description = "Use Button |cFFffcc33#4:|r {spell:38629:Poison Keg} to poison the {object:185214:Fermented Seed Beer Keg} at Bloodmaul Camp, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 55.98, y = 23.04, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 41.15, y = 19.29, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -987590,12 +987816,12 @@ RQEDatabase = {
 					{ mod = "", check = { "Coax Marmot" }, neededAmt = { "1" }, funct = "CheckDBBuff", failedIndex = 5 },
 				},
 				macroArray = {
-					{ macro = "/click ExtraActionButton2", spellIDTooltip = 38629, iconFileID = "132621" },
+					{ macro = "/click ActionButton4", spellIDTooltip = 38629, iconFileID = "132621" },
 				},
 				objectiveIndex = 3,
 			},
 			[7] = {
-				description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
+				description = "Leave the marmot and turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -987619,35 +987845,38 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect Grulloc's Sack." },
 			descriptionQuestText = { "PLAYER, I have a pet boar named Huffer. He wants to help you to have some fun with one of the nearby sons of Gruul. Grulloc inhabits a place known as the Cursed Hollow. When you get there, let Huffer loose. The gronn will have a fine time chasing him around, and you will retrieve the bag that he guards and deliver it to Baron Sablemane. To get to the Cursed Hollow, head down the northern ramp and east through Dragons' End. The hollow is on the eastern edge." },
 			npcs = {
-				{ npc = "Rexxar", id = "x99" },
+				{ npc = "Rexxar", id = 21984 },
 			},
-			-- [1] = {
-				-- description = "! Grulloc's Sack: 1/1 in Cursed Hollow, Blade's Edge Mountains.",
-				-- coordinates = { x = 60.89, y = 47.77, mapID = 105 },
-				-- check = { "10721" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:5830\n/tar Grulloc\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/use Huffer's Whistle" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "Turn in the quest to {npc:22103:Baron Sablemane} at Circle of Blood, Blade's Edge Mountains.",
-				-- coordinateHotspots = {
-					-- { x = 53.25, y = 41.18, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 40.30, y = 24.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "10721" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "Baron Sablemane", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:2554\n/tar Baron Sablemane\n/tm 6" },
-				-- objectiveIndex = 99,
-			-- },
+			[1] = {
+				description = "Use {item:31350:Huffer's Whistle} near {npc:20216:Grulloc} and collect {item:31349:Grulloc's Sack}, when he walks away, at Cursed Hollow, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 60.90, y = 47.79, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 42.68, y = 26.98, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10721" },
+				neededAmt = { "1" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Grulloc", marker = 7, mustBeAlive = true },
+				},
+				macro = { "#showtooltip\n/tar Grulloc\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/stopmacro [flying]\n/dismount [noflying]\n/use Huffer's Whistle" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Turn in the quest to {npc:22103:Baron Sablemane} at Circle of Blood, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 53.25, y = 41.18, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 40.30, y = 24.93, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10721" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				npcTargets = {
+					{ name = "Baron Sablemane", marker = 6, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:2554\n/tar Baron Sablemane\n/tm 6" },
+				objectiveIndex = 99,
+			},
 		},
 		[10722] = {
 			title = "Meeting at the Blackwing Coven", -- Objectives: Collect enough Costume Scraps from wyrmcultists to create an Overseer Disguise.  Use the disguise to attend the meeting with Kolphis Darkscale.
@@ -987803,7 +988032,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[9] = {
-				description = "Turn in the quest to Tree Warden Chawn at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22007:Tree Warden Chawn} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.99, y = 39.47, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.01, y = 24.40, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -987824,77 +988053,107 @@ RQEDatabase = {
 				{ x = 51.83, y = 58.35, mapID = 105 },
 				{ x = 39.86, y = 30.26, continentID = 101 },
 			},
-			objectivesQuestText = { "" },
-			descriptionQuestText = { "" },
+			objectivesQuestText = { "Collect 3 Grisly Totems from the Boulder'mok ogres. Then, use Sablemane's Trap at Gorgrom's Altar to set the trap and summon and kill Gorgrom the Dragon-Eater. When Gorgrom is dead, place the 3 Grisly Totems near his corpse." },
+			descriptionQuestText = { "The gronn we seek is Gorgrom the Dragon-Eater. With Sablemane's trap, you will make short work of the gronn. You will find him accepting sacrifices from the ogres of Boulder'mok. Follow the road north from the Circle of Blood, then west at Ruuan Weald. Go northwest through the tunnel. First, kill the ogres for their heads. We will send a message. Set the trap at his altar. When he is dead, plant the grisly totems near him - none can mistake that message. Take the bear. <Misha growls.>" },
 			npcs = {
-				{ npc = "Rexxar", id = "x99" },
+				{ npc = "Rexxar", id = 21984 },
 			},
-			-- [1] = {
-				-- description = "! Interact with Rexxar: Sablemane's Trap: 1/1 in Thunderlord Stronghold, Blade's Edge Mountains.",
-				-- coordinateHotspots = {
-					-- { x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "10723" },
-				-- neededAmt = { "3" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:5830\n/tar Rexxar\n/run RQE.SelectMultipleGossipOptions(\"Rexxar\", 0, 0)\n/tm 0\n/tm ~2" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "! Plant Grisly Totem: 1/3 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 30.59, y = 22.19, mapID = 105 },
-				-- check = { "10723" },
-				-- neededAmt = { "3" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:5830\n/tar Gorgrom the Dragon-Eater\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/use Sablemane's Trap" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [3] = {
-				-- description = "! Plant Grisly Totem: 2/3 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 30.59, y = 22.19, mapID = 105 },
-				-- check = { "10723" },
-				-- neededAmt = { "3" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [4] = {
-				-- description = "! Plant Grisly Totem: 3/3 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 30.59, y = 22.19, mapID = 105 },
-				-- check = { "10723" },
-				-- neededAmt = { "3" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [5] = {
-				-- description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
-				-- coordinateHotspots = {
-					-- { x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "10723" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "Rexxar", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:2554\n/tar Rexxar\n/tm 6" },
-				-- objectiveIndex = 99,
-			-- },
+			[1] = {
+				description = "Kill Boulder'mok ogres and loot |cFFffcc333|r {item:31754:Grisly Totems}, from their bodies, at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.96, y = 21.58, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.38, y = 18.84, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				checks = {
+					{ mod = "", logic = "AND", check = { "31754" }, neededAmt = { "1" }, funct = "CheckDBInventory" },
+					{ mod = "OR", logic = "AND", check = { "10723" }, neededAmt = { "1" }, funct = "CheckDBObjectiveStatus" },
+				},
+				npcTargets = {
+					{ name = "Boulder'mok Brute", marker = 8, mustBeAlive = true },
+					{ name = "Boulder'mok Shaman", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Boulder'mok\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Kill Boulder'mok ogres and loot |cFFffcc332|r {item:31754:Grisly Totems}, from their bodies, at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.96, y = 21.58, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.38, y = 18.84, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				checks = {
+					{ mod = "", logic = "AND", check = { "31754" }, neededAmt = { "2" }, funct = "CheckDBInventory" },
+					{ mod = "OR", logic = "AND", check = { "10723" }, neededAmt = { "1" }, funct = "CheckDBObjectiveStatus" },
+				},
+				npcTargets = {
+					{ name = "Boulder'mok Brute", marker = 8, mustBeAlive = true },
+					{ name = "Boulder'mok Shaman", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Boulder'mok\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[3] = {
+				description = "Kill Boulder'mok ogres and loot |cFFffcc331|r {item:31754:Grisly Totem}, from its body, at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.96, y = 21.58, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.38, y = 18.84, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				checks = {
+					{ mod = "", logic = "AND", check = { "31754" }, neededAmt = { "3" }, funct = "CheckDBInventory" },
+					{ mod = "OR", logic = "AND", check = { "10723" }, neededAmt = { "1" }, funct = "CheckDBObjectiveStatus" },
+				},
+				npcTargets = {
+					{ name = "Boulder'mok Brute", marker = 8, mustBeAlive = true },
+					{ name = "Boulder'mok Shaman", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Boulder'mok\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[4] = {
+				description = "Place the |cFFffcc33{objectiveRemaining}|r {item:31754:Grisly Totems} near {object:185234:Gorgrom's Altar} at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.60, y = 22.18, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.26, y = 19.03, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10723" },
+				neededAmt = { "2" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Gorgrom", marker = 2, mustBeAlive = false },
+				},
+				macro = { "#showtooltip\n/tar Gorgrom\n/cleartarget [nodead]\n/tm 0\n/tm ~2\n/stopmacro [flying]\n/dismount [noflying]\n/use Grisly Totem" },
+				objectiveIndex = 1,
+			},
+			[5] = {
+				description = "Place the |cFFffcc331|r {item:31754:Grisly Totem} near {object:185234:Gorgrom's Altar} at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.60, y = 22.18, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.26, y = 19.03, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10723" },
+				neededAmt = { "3" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Gorgrom", marker = 2, mustBeAlive = false },
+				},
+				macro = { "#showtooltip\n/tar Gorgrom\n/cleartarget [nodead]\n/tm 0\n/tm ~2\n/stopmacro [flying]\n/dismount [noflying]\n/use Grisly Totem" },
+				objectiveIndex = 1,
+			},
+			[6] = {
+				description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10723" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				npcTargets = {
+					{ name = "Rexxar", marker = 6, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:2554\n/tar Rexxar\n/tm 6" },
+				objectiveIndex = 99,
+			},
 		},
 		[10724] = {
 			title = "Prisoner of the Bladespire", -- Objectives: Slay Bladespire ogres to get the Wyvern Cage Key. Once you have it, go to the Wyvern Cage and use Spirit's Whistle to summon Spirit, who will unlock the cage to free Leokk.
@@ -987905,35 +988164,55 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay Bladespire ogres to get the Wyvern Cage Key. Once you have it, go to the Wyvern Cage and use Spirit's Whistle to summon Spirit, who will unlock the cage to free Leokk." },
 			descriptionQuestText = { "Shortly after my arrival in the mountains, I came under attack by a group of Bladespire ogres. Though I fought free of them, and slew many, they took my wyvern, Leokk, captive. Spirit has found him, locked in a cage in the heart of the Bladespire encampment outside of Gruul's lair. One of the ogres must carry his key. Find it and Spirit can use it to unlock Leokk's cage. You will find the encampment at the north end of the Daggermaw Canyon down below." },
 			npcs = {
-				{ npc = "Rexxar", id = "x99" },
+				{ npc = "Rexxar", id = 21984 },
 			},
-			-- [1] = {
-				-- description = "! Rescue Leokk: 1/1 in Gruul's Lair, Blade's Edge Mountains.",
-				-- coordinates = { x = 65.72, y = 20.25, mapID = 105 },
-				-- check = { "10724" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:5830\n/tar Bladespire Enforcer\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/use Spirit's Whistle" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
-				-- coordinateHotspots = {
-					-- { x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "10724" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "Rexxar", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:2554\n/tar Rexxar\n/tm 6" },
-				-- objectiveIndex = 99,
-			-- },
+			[1] = {
+				description = "Kill and loot {npc:19997:Bladespire Enforcers} or {npc:19996:Bladespire Battlemages} until you collect a {item:31755:Wyvern Cage Key} around Gruul's Lair, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 66.78, y = 23.87, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 44.51, y = 19.55, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				checks = {
+					{ mod = "", logic = "AND", check = { "31755" }, neededAmt = { "1" }, funct = "CheckDBInventory" },
+					{ mod = "OR", logic = "AND", check = { "10724" }, neededAmt = { "1" }, funct = "CheckDBObjectiveStatus" },
+				},
+				npcTargets = {
+					{ name = "Bladespire Enforcer", marker = 8, mustBeAlive = true },
+					{ name = "Bladespire Battlemage", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar [noexists][dead] Bladespire Enforcer\n/tar [noexists][dead] Bladespire Battlemage\n/cleartarget [dead]\n/tm 0\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Use the {item:31144:Spirit's Whistle} below {npc:22268:Leokk} (located in a cage in the air) at Gruul's Lair, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 65.73, y = 20.25, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 44.18, y = 18.42, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10724" },
+				neededAmt = { "1" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Leokk", marker = 7, mustBeAlive = true },
+				},
+				macro = { "#showtooltip\n/tar Leokk\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/stopmacro [flying]\n/dismount [noflying]\n/use Spirit's Whistle" },
+				objectiveIndex = 1,
+			},
+			[3] = {
+				description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10724" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				npcTargets = {
+					{ name = "Rexxar", marker = 6, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:2554\n/tar Rexxar\n/tm 6" },
+				objectiveIndex = 99,
+			},
 		},
 		[10742] = {
 			title = "Showdown", -- Objectives: Use Rexxar's Battle Horn at the Altar of Goc, then kill Goc.
@@ -987944,35 +988223,38 @@ RQEDatabase = {
 			objectivesQuestText = { "Use Rexxar's Battle Horn at the Altar of Goc, then kill Goc." },
 			descriptionQuestText = { "Now it comes to this. We will bring Goc forth from his lair, and we will destroy him. With Goc dead, the Bladespire ogres will threaten the Mok'Nathal no longer. Go to Goc's altar outside Gruul's Lair, then blow my horn. I will come, and we will face the son of Gruul together." },
 			npcs = {
-				{ npc = "Rexxar", id = "x99" },
+				{ npc = "Rexxar", id = 21984 },
 			},
-			-- [1] = {
-				-- description = "! Goc slain: 1/1 in Gruul's Lair, Blade's Edge Mountains.",
-				-- coordinates = { x = 63.94, y = 19.09, mapID = 105 },
-				-- check = { "10742" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:5830\n/tar Goc\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/use Rexxar's Battle Horn" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
-				-- coordinateHotspots = {
-					-- { x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "10742" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "Rexxar", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:2554\n/tar Rexxar\n/tm 6" },
-				-- objectiveIndex = 99,
-			-- },
+			[1] = {
+				description = "Use {item:31146:Rexxar's Battle Horn} at the {object:bm002:Altar of Goc} and then, after the RP, kill {npc:20555:Goc} at Gruul's Lair, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 64.16, y = 18.50, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 43.69, y = 17.88, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10742" },
+				neededAmt = { "1" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Goc", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip\n/tar Goc\n/cleartarget [dead]\n/tm 0\n/tm ~8\n/stopmacro [combat]\n/\n/stopmacro [flying]\n/dismount [noflying]\n/use Rexxar's Battle Horn" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10742" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				npcTargets = {
+					{ name = "Rexxar", marker = 6, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:2554\n/tar Rexxar\n/tm 6" },
+				objectiveIndex = 99,
+			},
 		},
 		[10744] = {
 			title = "News of Victory", -- Objectives: Return to Wildhammer Stronghold and speak with Kurdran Wildhammer.
@@ -988010,7 +988292,7 @@ RQEDatabase = {
 				{ npc = "Nakansi", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Overlord Or'barokh at Shadowmoon Village, Shadowmoon Valley.",
+				description = "Turn in the quest to {npc:21769:Overlord Or'barokh} at the Shadowmoon Village, Shadowmoon Valley.",
 				coordinateHotspots = {
 					{ x = 28.49, y = 26.46, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 59.19, y = 75.07, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -988224,7 +988506,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay Maxnar the Ashmaw." },
 			descriptionQuestText = { "They've left us no choice, PLAYER. It's time to put an end to the threat from the Blackwing Coven by taking out their leader, Maxnar the Ashmaw. I don't know if you caught a glimpse of him while you were in there, but he's one of the dragonkin, half-man, half-dragon. And he's tough, so don't underestimate him! Finish it quickly and with any luck you'll secure the safety of Evergrove and the Ruuan Weald." },
 			npcs = {
-				{ npc = "Tree Warden Chawn", id = "x99" },
+				{ npc = "Tree Warden Chawn", id = 22007 },
 			},
 			[1] = {
 				description = "|cFF00ff00(Enter the Blackwing Coven cave @|r {coords:32,33.7,105;waypointTitle:\"Enter the Blackwing Coven cave\"}). Kill Maxnar the Ashmaw at the Blackwing Coven, Blade's Edge Mountains.",
@@ -988242,7 +988524,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Tree Warden Chawn at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22007:Tree Warden Chawn} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.99, y = 39.47, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.01, y = 24.40, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -988266,7 +988548,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver Baron Sablemane's Poison to Rexxar at Thunderlord Stronghold in the Blade's Edge Mountains." },
 			descriptionQuestText = { "Here, take this to your master. I'm sure that whatever the reason, Rexxar will put it to good use. Oh, and do be certain to remind him that he owes me. He knows what I want, and I'm certain that however he intends to obtain it for me, I'll be seeing you again sooner than you think. Now, do be a good little girl and run this up to Rexxar." },
 			npcs = {
-				{ npc = "Baron Sablemane", id = "x99" },
+				{ npc = "Baron Sablemane", id = 22103 },
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
@@ -988293,7 +988575,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Travel to the Path of Conquest in Shadowmoon Valley." },
 			descriptionQuestText = { "Word has come from my wind riders, PLAYER. The Eclipsion blood elves are planning something big. They have begun forming their armies at the Path of Conquest, far to the southeast - adjacent to Eclipse Point. I want you to travel to the Path of Conquest and assess the situation. Once you have done so, use this flare gun to signal a wind rider. One will swoop down from the sky to meet you. Inform them of what you have discovered and they will give you your next set of orders." },
 			npcs = {
-				{ npc = "Overlord Or'barokh", id = "x99" },
+				{ npc = "Overlord Or'barokh", id = 21769 },
 			},
 			[1] = {
 				description = "Travel to The Path of Conquest, Shadowmoon Valley.",
@@ -988404,7 +988686,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay 4 Felsworn Scalewing, 4 Felsworn Daggermaw, and 2 Fel Corrupters." },
 			descriptionQuestText = { "The number of atrocities committed by the Burning Legion is countless. Even as we speak, they send their legion forces against the creatures of this land. Helpless to defend against their power, they fall one by one. PLAYER, help me stop these crimes of nature destroy all which they corrupt. Over the hill, east of here, you will see the corruption spreading across Bladed Gulch. Kill the ones causing the crime, the Fel Corrupters, and as many Felsworn as you can." },
 			npcs = {
-				{ npc = "Faradrella", id = "x99" },
+				{ npc = "Faradrella", id = 22133 },
 			},
 			[1] = {
 				description = "Kill 4 Felsworn Scalewings at the Bladed Gulch, Blade's Edge Mountains.",
@@ -988455,7 +988737,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[4] = {
-				description = "Turn in the quest to Faradrella at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22133:Faradrella} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 62.58, y = 38.25, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.20, y = 24.02, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -988482,7 +988764,7 @@ RQEDatabase = {
 				{ npc = "Gryphonrider Kieran", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Parshah on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
+				description = "Turn in the quest to {npc:22024:Parshah} on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
 				coordinateHotspots = {
 					{ x = 35.42, y = 42.41, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.38, y = 80.09, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -988587,7 +988869,7 @@ RQEDatabase = {
 				{ npc = "Sergeant Kargrul", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Parshah on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
+				description = "Turn in the quest to {npc:22024:Parshah} on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
 				coordinateHotspots = {
 					{ x = 35.42, y = 42.41, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.38, y = 80.09, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -988994,7 +989276,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [6] = {
-				-- description = "Turn in the quest to Overlord Or'barokh at Shadowmoon Village, Shadowmoon Valley.",
+				-- description = "Turn in the quest to {npc:21769:Overlord Or'barokh} at the Shadowmoon Village, Shadowmoon Valley.",
 				-- coordinateHotspots = {
 					-- { x = 28.49, y = 26.46, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 59.19, y = 75.07, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -989018,7 +989300,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Mosswood the Ancient wants you to kill 8 Scorch Imps and then return to him in Ruuan Weald." },
 			descriptionQuestText = { "Northeast of here, on the plateau above us lies the burnt ashes of my ancient home. A great wood flourished there before the Burning Legion sent their imps to burn us away. So many died that even centuries later my tired old heart hungers for revenge. There are too many of them for us to ever reclaim the land, but you could make them afraid. Surely you will help me?" },
 			npcs = {
-				{ npc = "Mosswood the Ancient", id = "x99" },
+				{ npc = "Mosswood the Ancient", id = 22053 },
 			},
 			[1] = {
 				description = "Kill 8 Scorch Imps at Skald, Blade's Edge Mountains.",
@@ -989036,7 +989318,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Mosswood the Ancient at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22053:Mosswood the Ancient} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.25, y = 38.44, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 42.79, y = 24.08, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -989060,7 +989342,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Mosswood the Ancient wants you to journey to Skald and plant Ironroot Seeds in three different mounds of Fertile Volcanic Soil and then return to him in Ruuan Weald." },
 			descriptionQuestText = { "If you follow the road east and up the side of the mountain, then turn north, you will come to my long lost home. Once there was a wood there. Its name is forgotten. Long ago the Burning Legion summoned scorched imps and other creatures of flame. My home was destroyed and my people fled. Now only I remain. I have saved some ironroot seeds that could be planted in fertile volcanic soil. Their magic is strong. Do this for me and I will share with you the treasures of a forgotten age." },
 			npcs = {
-				{ npc = "Mosswood the Ancient", id = "x99" },
+				{ npc = "Mosswood the Ancient", id = 22053 },
 			},
 			[1] = {
 				description = "Use {item:31300:Ironroot Seeds} on the (Southern) Fertile Volcanic Soil at Skald, Blade's Edge Mountains.",
@@ -989102,7 +989384,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[4] = {
-				description = "Turn in the quest to Mosswood the Ancient at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22053:Mosswood the Ancient} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.25, y = 38.44, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 42.79, y = 24.08, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -989565,7 +989847,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring the Sketh'lon War Totem to Parshah in the Magma Fields." },
 			descriptionQuestText = { "What you read in the commander's journal is true. While the orcish Horde massed under Gul'dan, my people sought to defend ourselves from the threat by striking against him. Gul'dan learned of their intentions and cast a mighty spell that destroyed our camps and twisted the spirits of my brothers. They must be stopped before they unleash a greater evil. In the Sketh'lon Wreckage to the north, seek out Asghar and bring me the totem he carries. With it, we can begin to thwart the dark conclave's plans." },
 			npcs = {
-				{ npc = "Parshah", id = "x99" },
+				{ npc = "Parshah", id = 22024 },
 			},
 			[1] = {
 				description = "Kill Asghar and loot the {item:31169:Sketh'lon War Totem}, from its corpse, at the Sketh'lon Wreckage, Shadowmoon Valley.",
@@ -989583,7 +989865,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Parshah on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
+				description = "Turn in the quest to {npc:22024:Parshah} on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
 				coordinateHotspots = {
 					{ x = 35.42, y = 42.41, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.38, y = 80.09, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -989607,7 +989889,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Obtain Lianthe's Key from any of the blood elves at Eclipse Point and use it to open Lianthe's Strongbox and claim the Rod of Lianthe. Return the rod to Parshah in the Magma Fields." },
 			descriptionQuestText = { "The totem alone is not strong enough to counteract the sinister magics of the dark conclave. We can combine it with other objects of power, forming a staff to focus the energies. We cannot rescue my brethren from the depths of their depravity, but we can stop them. One of the items I need for the staff is the Rod of Lianthe, held by the blood elves at Eclipse Point to the southeast. It is kept in a pavilion on the top tier of the ruins and will be heavily guarded. Use caution, PLAYER." },
 			npcs = {
-				{ npc = "Parshah", id = "x99" },
+				{ npc = "Parshah", id = 22024 },
 			},
 			[1] = {
 				description = "Kill Eclipsion blood elves and loot until you collect the {item:31316:Lianthe's Key}, from its body, at Eclipse Point, Shadowmoon Valley.\n\n|cFFFF3333The key won't drop from the Eclipsion Dragonhawks or Hawkstriders.|r",
@@ -989641,7 +989923,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Parshah on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
+				description = "Turn in the quest to {npc:22024:Parshah} on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
 				coordinateHotspots = {
 					{ x = 35.42, y = 42.41, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.38, y = 80.09, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -989665,7 +989947,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Gather 8 Sketh'lon Feathers and bring them to Parshah in the Magma Fields." },
 			descriptionQuestText = { "There is one last element missing from the staff. We must direct the staff's power toward the Dark Conclave spirits. We can do that by gathering feathers scattered on the ground at the Sketh'lon Base Camp and using them in the staff. The base camp is to the south, east of Wildhammer Stronghold. Gul'dan's magic utterly destroyed my brethren, leaving only their spirits, but it did not stop there. The magic fed on the spell the arakkoa were preparing, forging a sinister force that engulfed the spirits." },
 			npcs = {
-				{ npc = "Parshah", id = "x99" },
+				{ npc = "Parshah", id = 22024 },
 			},
 			[1] = {
 				description = "Collect 8 {item:31324:Sketh'lon Feathers}, from the ground, at Sketh'lon Base Camp, Shadowmoon Valley.",
@@ -989680,7 +989962,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Parshah on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
+				description = "Turn in the quest to {npc:22024:Parshah} on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
 				coordinateHotspots = {
 					{ x = 35.42, y = 42.41, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.38, y = 80.09, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -989740,7 +990022,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Travel to the Altar of Damnation, and use the Unfinished Headpiece while standing near Gul'dan. When the headpiece is energized, return to Parshah in the Magma Fields." },
 			descriptionQuestText = { "The staff is nearly finished! All that remains is to imbue the headpiece with power flowing from the echoes of Gul'dan in this accursed place. To the east, near the Fel Pits and south of the Deathforge, is the Altar of Damnation. There, fragments of Gul'dan's past are trapped. When you carry the unfinished headpiece of the staff into the area around the altar, don't be surprised if some of the entities react to it. You will be carrying a dangerous object with strong connections to the cataclysm." },
 			npcs = {
-				{ npc = "Parshah", id = "x99" },
+				{ npc = "Parshah", id = 22024 },
 			},
 			[1] = {
 				description = "Use the {item:31360:Unfinished Headpiece} near Gul'dan, at The Altar of Damnation, Shadowmoon Valley.",
@@ -989758,7 +990040,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Parshah on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
+				description = "Turn in the quest to {npc:22024:Parshah} on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
 				coordinateHotspots = {
 					{ x = 35.42, y = 42.41, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.38, y = 80.09, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -989782,7 +990064,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Baron Sablemane at the Circle of Blood in the Blade's Edge Mountains." },
 			descriptionQuestText = { "Here is my plan. We will poison the ogres and then destroy their gronn master. During my travels in these mountains, I met a man named Baron Sablemane. He is a master of the alchemical arts, and may be convinced to assist us. You will find him at the Circle of Blood, down in the canyon to the north of here. Whatever price he requires, I will leave it to your discretion to accept." },
 			npcs = {
-				{ npc = "Rexxar", id = "x99" },
+				{ npc = "Rexxar", id = 21984 },
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:22103:Baron Sablemane} at Circle of Blood, Blade's Edge Mountains.",
@@ -989809,203 +990091,85 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay 10 Bloodmaul Maulers and 5 Bloodmaul Warlocks." },
 			descriptionQuestText = { "<Tor'chunk leans in close to whisper.> PLAYER, you've done us more than proud in the fight against the ogres so far. And while I have every confidence in what Rexxar has planned, I would still ask that you crush the ogres at Bloodmaul Camp before returning. That way we'll be doubly certain of the outcome. To get there, head north down the ramp out of Thunderlord. Then, at the base of the ramp, head west across Dragons' End and north through the Churning Gulch and Daggermaw Canyon." },
 			npcs = {
-				{ npc = "Tor'chunk Twoclaws", id = "x99" },
+				{ npc = "Tor'chunk Twoclaws", id = 21147 },
 			},
-			-- [1] = {
-				-- description = "! Bloodmaul Mauler slain: 1/10 in Daggermaw Canyon, Blade's Edge Mountains.",
-				-- coordinates = { x = 58.86, y = 31.63, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "! Bloodmaul Mauler slain: 2/10 in Daggermaw Canyon, Blade's Edge Mountains.",
-				-- coordinates = { x = 57.91, y = 30.03, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [3] = {
-				-- description = "! Bloodmaul Mauler slain: 3/10 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 56.97, y = 28.38, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [4] = {
-				-- description = "! Bloodmaul Mauler slain: 4/10 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 56.84, y = 27.71, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [5] = {
-				-- description = "! Bloodmaul Warlock slain: 1/5 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 56.88, y = 27.69, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Warlock\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [6] = {
-				-- description = "! Bloodmaul Warlock slain: 2/5 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 56.39, y = 25.67, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Warlock\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 2,
-			-- },
-			-- [7] = {
-				-- description = "! Bloodmaul Mauler slain: 5/10 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 56.07, y = 24.18, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [8] = {
-				-- description = "! Bloodmaul Mauler slain: 6/10 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 55.73, y = 25.82, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Brewmaster\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [9] = {
-				-- description = "! Bloodmaul Warlock slain: 3/5 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 55.47, y = 26.99, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Warlock\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 2,
-			-- },
-			-- [10] = {
-				-- description = "! Bloodmaul Mauler slain: 7/10 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 55.95, y = 27.51, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [11] = {
-				-- description = "! Bloodmaul Mauler slain: 8/10 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 55.82, y = 28.70, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [12] = {
-				-- description = "! Bloodmaul Mauler slain: 9/10 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 56.50, y = 26.83, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [13] = {
-				-- description = "! Bloodmaul Warlock slain: 4/5 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 56.01, y = 25.02, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Warlock\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 2,
-			-- },
-			-- [14] = {
-				-- description = "! Bloodmaul Mauler slain: 10/10 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 56.47, y = 24.00, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 2,
-			-- },
-			-- [15] = {
-				-- description = "! Bloodmaul Warlock slain: 5/5 in Bloodmaul Camp, Blade's Edge Mountains.",
-				-- coordinates = { x = 55.41, y = 24.31, mapID = 105 },
-				-- check = { "10784" },
-				-- neededAmt = { "10" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Imp Minion\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 2,
-			-- },
-			-- [16] = {
-				-- description = "Turn in the quest to {npc:21147:Tor'chunk Twoclaws} at Thunderlord Stronghold, Blade's Edge Mountains.",
-				-- coordinateHotspots = {
-					-- { x = 51.94, y = 58.41, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 39.90, y = 30.28, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "10784" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "Tor'chunk Twoclaws", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:2554\n/tar Tor'chunk Twoclaws\n/tm 6" },
-				-- objectiveIndex = 99,
-			-- },
+			[1] = {
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Bloodmaul Maulers at Daggermaw Canyon, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 55.76, y = 30.42, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 41.08, y = 21.59, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10784" },
+				neededAmt = { "9" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Bloodmaul Mauler", marker = 8, mustBeAlive = true },
+					{ name = "Bloodmaul Warlock", marker = 7, mustBeAlive = true, obj = 2 },
+				},
+				macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Kill |cFFffcc331|r Bloodmaul Maulers at Daggermaw Canyon, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 55.76, y = 30.42, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 41.08, y = 21.59, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10784" },
+				neededAmt = { "10" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Bloodmaul Mauler", marker = 8, mustBeAlive = true },
+					{ name = "Bloodmaul Warlock", marker = 7, mustBeAlive = true, obj = 2 },
+				},
+				macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[3] = {
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Bloodmaul Warlocks at Daggermaw Canyon, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 55.48, y = 31.34, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 40.99, y = 21.86, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10784" },
+				neededAmt = { "4" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Bloodmaul Warlock", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Bloodmaul Warlock\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 2,
+			},
+			[4] = {
+				description = "Kill |cFFffcc331|r Bloodmaul Warlocks at Daggermaw Canyon, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 55.48, y = 31.34, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 40.99, y = 21.86, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10784" },
+				neededAmt = { "5" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Bloodmaul Warlock", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Bloodmaul Warlock\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 2,
+			},
+			[5] = {
+				description = "Turn in the quest to {npc:21147:Tor'chunk Twoclaws} at Thunderlord Stronghold, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 51.94, y = 58.41, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 39.90, y = 30.28, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10784" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				npcTargets = {
+					{ name = "Tor'chunk Twoclaws", marker = 6, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:2554\n/tar Tor'chunk Twoclaws\n/tm 6" },
+				objectiveIndex = 99,
+			},
 		},
 		[10785] = {
 			title = "It's a Trap!", -- Objectives: Deliver the Dragonfire Trap to Rexxar at Thunderlord Stronghold in the Blade's Edge Mountains.
@@ -990013,38 +990177,26 @@ RQEDatabase = {
 				{ x = 53.25, y = 41.18, mapID = 105 },
 				{ x = 40.30, y = 24.93, continentID = 101 },
 			},
-			objectivesQuestText = { "" },
-			descriptionQuestText = { "" },
+			objectivesQuestText = { "Deliver the Dragonfire Trap to Rexxar at Thunderlord Stronghold in the Blade's Edge Mountains." },
+			descriptionQuestText = { "There's is no cause of fury greater in this world than that of Gruul and his sons. They slaughtered my people - my children - and now I will have revenge. I have fashioned a trap from dragon fire, and if you're clever enough, you can use it to kill even a gronn. Just hurry, take the trap to Rexxar. My thirst for revenge must be quenched." },
 			npcs = {
-				{ npc = "Baron Sablemane", id = "x99" },
+				{ npc = "Baron Sablemane", id = 22103 },
 			},
-			-- [1] = {
-				-- description = "! Interact with Baron Sablemane: Dragonfire Trap: 1/1 in Circle of Blood, Blade's Edge Mountains.",
-				-- coordinates = { x = 53.25, y = 41.17, mapID = 105 },
-				-- check = { "10785" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:5830\n/tar Baron Sablemane\n/run RQE.SelectMultipleGossipOptions(\"Baron Sablemane\", 0, 0)\n/tm 0\n/tm ~2" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
-				-- coordinateHotspots = {
-					-- { x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "10785" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "Rexxar", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:2554\n/tar Rexxar\n/tm 6" },
-				-- objectiveIndex = 99,
-			-- },
+			[1] = {
+				description = "Turn in the quest to {npc:21984:Rexxar} at the Thunderlord Stronghold, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 51.83, y = 58.35, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 39.86, y = 30.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10785" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				npcTargets = {
+					{ name = "Rexxar", marker = 6, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:2554\n/tar Rexxar\n/tm 6" },
+				objectiveIndex = 99,
+			},
 		},
 		[10786] = {
 			title = "Slaughter at Boulder'mok", -- Objectives: Slay 5 Boulder'mok Brutes and 3 Boulder'mok Shaman, and then return to Tor'chunk Twoclaws at Thunderlord Stronghold in the Blade's Edge Mountains.
@@ -990055,107 +990207,85 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay 5 Boulder'mok Brutes and 3 Boulder'mok Shaman, and then return to Tor'chunk Twoclaws at Thunderlord Stronghold in the Blade's Edge Mountains." },
 			descriptionQuestText = { "I know that Rexxar has plans for you to head to Boulder'mok. I have something that I want you to do while you are there. We must take any chance we can get to strike down the ogres of these mountains, or they will overrun us, and all that we have bled and died for will be for nothing! Boulder'mok lies far to the northwest. Travel north to Ruuan Weald, and from there head west through the tunnel and past the Raven's Wood. PLAYER, I want you to kill the Bladespire ogres of Boulder'mok. Wipe them out!" },
 			npcs = {
-				{ npc = "Tor'chunk Twoclaws", id = "x99" },
+				{ npc = "Tor'chunk Twoclaws", id = 21147 },
 			},
-			-- [1] = {
-				-- description = "! Boulder'mok Brute slain: 1/5 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 30.60, y = 22.57, mapID = 105 },
-				-- check = { "10786" },
-				-- neededAmt = { "5" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:5830\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/use Sablemane's Trap" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "! Boulder'mok Shaman slain: 1/3 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 30.50, y = 22.80, mapID = 105 },
-				-- check = { "10786" },
-				-- neededAmt = { "5" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Boulder'mok Shaman\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 2,
-			-- },
-			-- [3] = {
-				-- description = "! Boulder'mok Shaman slain: 2/3 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 30.21, y = 22.60, mapID = 105 },
-				-- check = { "10786" },
-				-- neededAmt = { "5" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Boulder'mok Shaman\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 3,
-			-- },
-			-- [4] = {
-				-- description = "! Boulder'mok Brute slain: 2/5 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 30.10, y = 22.16, mapID = 105 },
-				-- check = { "10786" },
-				-- neededAmt = { "5" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [5] = {
-				-- description = "! Boulder'mok Brute slain: 3/5 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 29.96, y = 22.61, mapID = 105 },
-				-- check = { "10786" },
-				-- neededAmt = { "5" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [6] = {
-				-- description = "! Boulder'mok Brute slain: 4/5 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 29.71, y = 23.18, mapID = 105 },
-				-- check = { "10786" },
-				-- neededAmt = { "5" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [7] = {
-				-- description = "! Boulder'mok Brute slain: 5/5 in Boulder'mok, Blade's Edge Mountains.",
-				-- coordinates = { x = 30.01, y = 24.08, mapID = 105 },
-				-- check = { "10786" },
-				-- neededAmt = { "5" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [8] = {
-				-- description = "Turn in the quest to {npc:21147:Tor'chunk Twoclaws} at Thunderlord Stronghold, Blade's Edge Mountains.",
-				-- coordinateHotspots = {
-					-- { x = 51.94, y = 58.41, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					-- { x = 39.90, y = 30.28, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				-- },
-				-- check = { "10786" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "Tor'chunk Twoclaws", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "#showtooltip item:2554\n/tar Tor'chunk Twoclaws\n/tm 6" },
-				-- objectiveIndex = 99,
-			-- },
+			[1] = {
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Boulder'mok Brutes at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.56, y = 22.57, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.26, y = 19.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10786" },
+				neededAmt = { "4" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Boulder'mok Brute", marker = 8, mustBeAlive = true },
+					{ name = "Boulder'mok Shaman", marker = 7, mustBeAlive = true, obj = 2 },
+				},
+				macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Kill |cFFffcc331|r Boulder'mok Brute at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.56, y = 22.57, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.26, y = 19.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10786" },
+				neededAmt = { "5" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Boulder'mok Brute", marker = 8, mustBeAlive = true },
+					{ name = "Boulder'mok Shaman", marker = 7, mustBeAlive = true, obj = 2 },
+				},
+				macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[3] = {
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Boulder'mok Shamans at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.98, y = 22.60, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.39, y = 19.16, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10786" },
+				neededAmt = { "2" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Boulder'mok Shaman", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Boulder'mok Shaman\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 2,
+			},
+			[4] = {
+				description = "Kill |cFFffcc331|r Boulder'mok Shaman at Boulder'mok, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 30.98, y = 22.60, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 33.39, y = 19.16, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10786" },
+				neededAmt = { "3" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Boulder'mok Shaman", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Boulder'mok Shaman\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 2,
+			},
+			[5] = {
+				description = "Turn in the quest to {npc:21147:Tor'chunk Twoclaws} at Thunderlord Stronghold, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 51.94, y = 58.41, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 39.90, y = 30.28, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10786" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				npcTargets = {
+					{ name = "Tor'chunk Twoclaws", marker = 6, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:2554\n/tar Tor'chunk Twoclaws\n/tm 6" },
+				objectiveIndex = 99,
+			},
 		},
 		[10791] = {
 			title = "Welcoming the Wolf Spirit", -- Objectives: Use the Ceremonial Incense near the candles in Malukaz's hut and observe the ceremony. When the ceremony is complete, speak with Malukaz again.
@@ -990471,7 +990601,23 @@ RQEDatabase = {
 				{ npc = "Lieutenant Fairweather", id = "x99" },
 			},
 			[1] = {
-				description = "Kill 10 Bloodmaul Maulers at Daggermaw Canyon, Blade's Edge Mountains.",
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Bloodmaul Maulers at Daggermaw Canyon, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 55.76, y = 30.42, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 41.08, y = 21.59, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10796" },
+				neededAmt = { "9" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Bloodmaul Mauler", marker = 8, mustBeAlive = true },
+					{ name = "Bloodmaul Warlock", marker = 7, mustBeAlive = true, obj = 2 },
+				},
+				macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Kill |cFFffcc331|r Bloodmaul Maulers at Daggermaw Canyon, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 55.76, y = 30.42, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 41.08, y = 21.59, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990486,8 +990632,23 @@ RQEDatabase = {
 				macro = { "#showtooltip item:4588\n/tar Bloodmaul Mauler\n/cleartarget [dead]\n/tm ~8" },
 				objectiveIndex = 1,
 			},
-			[2] = {
-				description = "Kill 5 Bloodmaul Warlocks at Daggermaw Canyon, Blade's Edge Mountains.",
+			[3] = {
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Bloodmaul Warlocks at Daggermaw Canyon, Blade's Edge Mountains.",
+				coordinateHotspots = {
+					{ x = 55.48, y = 31.34, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 40.99, y = 21.86, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "10796" },
+				neededAmt = { "4" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Bloodmaul Warlock", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Bloodmaul Warlock\n/cleartarget [dead]\n/tm ~8" },
+				objectiveIndex = 2,
+			},
+			[4] = {
+				description = "Kill |cFFffcc331|r Bloodmaul Warlocks at Daggermaw Canyon, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 55.48, y = 31.34, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 40.99, y = 21.86, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990501,7 +990662,7 @@ RQEDatabase = {
 				macro = { "#showtooltip item:4588\n/tar Bloodmaul Warlock\n/cleartarget [dead]\n/tm ~8" },
 				objectiveIndex = 2,
 			},
-			[3] = {
+			[5] = {
 				description = "Turn in the quest to Lieutenant Fairweather at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.99, y = 37.94, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990580,7 +990741,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 7 Crust Burster Venom Glands." },
 			descriptionQuestText = { "Very well, I'll create this trap, but first I want something in return. There happens to be a nearby gronn that is in possession of an item that I want, but you can't face him, not yet anyway. So, you and I are going to fashion a sleeping powder from the poison of the nearby crust bursters. You'll find them in the Churning Gulch to the southwest. Bring me a number of their glands, and be quick about it!" },
 			npcs = {
-				{ npc = "Baron Sablemane", id = "x99" },
+				{ npc = "Baron Sablemane", id = 22103 },
 			},
 			[1] = {
 				description = "Kill {npc:21381:Young Crust Bursters} and loot |cFFffcc33{objectiveRemaining}|r {item:31132:Crust Burster Venom Gland}, from their bodies, at the Churning Gulch, Blade's Edge Mountains.\n\n|cFFFF3333Attack them in melee range (if ranged) to avoid stun (esp at higher level)|r",
@@ -990639,10 +990800,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect Grulloc's Sack." },
 			descriptionQuestText = { "I've outdone myself again. I've fashioned a sleeping powder for you to use on Grulloc, the gronn I spoke of who is guarding what I want. Grulloc keeps himself at the Cursed Hollow, an area at the eastern edge of Dragons' End on the other side of the Circle of Blood. If I were you, I wouldn't tarry long once you have his sack. The effects of the dust won't last long." },
 			npcs = {
-				{ npc = "Baron Sablemane", id = "x99" },
+				{ npc = "Baron Sablemane", id = 22103 },
 			},
 			[1] = {
-				description = "Use {item:31403:Sablemane's Sleeping Powder} on Grulloc and collect {item:31349:Grulloc's Sack} (near his sleeping body) at Cursed Hollow, Blade's Edge Mountains.",
+				description = "Use {item:31403:Sablemane's Sleeping Powder} on {npc:20216:Grulloc} and collect {item:31349:Grulloc's Sack} (near his sleeping body) at Cursed Hollow, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 60.90, y = 47.79, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 42.68, y = 26.98, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990653,7 +990814,7 @@ RQEDatabase = {
 				npcTargets = {
 					{ name = "Grulloc", marker = 7, mustBeAlive = true },
 				},
-				macro = { "#showtooltip item:5830\n/tar Grulloc\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/stopmacro [flying]\n/dismount [noflying]\n/use Sablemane's Sleeping Powder" },
+				macro = { "#showtooltip\n/tar Grulloc\n/cleartarget [dead]\n/tm 0\n/tm ~7\n/stopmacro [flying]\n/dismount [noflying]\n/use Sablemane's Sleeping Powder" },
 				objectiveIndex = 1,
 			},
 			[2] = {
@@ -990681,7 +990842,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver the Dragonfire Trap to Commander Haephus Stonewall at Evergrove in the Blade's Edge Mountains." },
 			descriptionQuestText = { "There's nothing more that I hate in this world than the sons of Gruul and their father! They slaughtered my people, and my children, and now I will have a taste of revenge! I have fashioned a trap from some dragon fire, and if you're clever enough, you might just be able to use it to kill a gronn. I'm sure that you have a particular gronn in mind; it matters not to me which one you kill. Just hurry, take the trap to your Commander Stonewall. My thirst for revenge must be quenched!" },
 			npcs = {
-				{ npc = "Baron Sablemane", id = "x99" },
+				{ npc = "Baron Sablemane", id = 22103 },
 			},
 			[1] = {
 				description = "Turn in the quest to Commander Haephus Stonewall at Evergrove, Blade's Edge Mountains.",
@@ -990762,9 +990923,9 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[4] = {
-				description = "Interact with Gorgrom's Altar to use your {item:31827:Sablemane's Trap}, which will summon Gorgrom, and then place the 3 {item:31754:Grisly Totems} near its body.",
+				description = "Interact with {object:185234:Gorgrom's Altar} to use your {item:31827:Sablemane's Trap}, which will summon Gorgrom, and then place the 3 {item:31754:Grisly Totems} near its body.",
 				coordinateHotspots = {
-					{ x = 30.59, y = 22.19, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 30.60, y = 22.18, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 33.26, y = 19.03, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 				},
 				check = { "10802" },
@@ -990773,7 +990934,7 @@ RQEDatabase = {
 				npcTargets = {
 					{ name = "Gorgrom", marker = 2, mustBeAlive = false },
 				},
-				macro = { "#showtooltip item:5830\n/tar Gorgrom\n/cleartarget [nodead]\n/tm 0\n/tm ~2\n/stopmacro [flying]\n/dismount [noflying]\n/use Grisly Totem" },
+				macro = { "#showtooltip\n/tar Gorgrom\n/cleartarget [nodead]\n/tm 0\n/tm ~2\n/stopmacro [flying]\n/dismount [noflying]\n/use Grisly Totem" },
 				objectiveIndex = 1,
 			},
 			[5] = {
@@ -990804,55 +990965,7 @@ RQEDatabase = {
 				{ npc = "Lieutenant Fairweather", id = "x99" },
 			},
 			[1] = {
-				description = "Kill |cFFffcc335|r Boulder'mok Brutes at Boulder'mok, Blade's Edge Mountains.",
-				coordinateHotspots = {
-					{ x = 30.56, y = 22.57, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 33.26, y = 19.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				},
-				check = { "10803" },
-				neededAmt = { "1" },
-				funct = "CheckDBObjectiveStatus",
-				npcTargets = {
-					{ name = "Boulder'mok Brute", marker = 8, mustBeAlive = true },
-					{ name = "Boulder'mok Shaman", marker = 7, mustBeAlive = true, obj = 2 },
-				},
-				macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
-				objectiveIndex = 1,
-			},
-			[2] = {
-				description = "Kill |cFFffcc334|r Boulder'mok Brutes at Boulder'mok, Blade's Edge Mountains.",
-				coordinateHotspots = {
-					{ x = 30.56, y = 22.57, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 33.26, y = 19.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				},
-				check = { "10803" },
-				neededAmt = { "2" },
-				funct = "CheckDBObjectiveStatus",
-				npcTargets = {
-					{ name = "Boulder'mok Brute", marker = 8, mustBeAlive = true },
-					{ name = "Boulder'mok Shaman", marker = 7, mustBeAlive = true, obj = 2 },
-				},
-				macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
-				objectiveIndex = 1,
-			},
-			[3] = {
-				description = "Kill |cFFffcc333|r Boulder'mok Brutes at Boulder'mok, Blade's Edge Mountains.",
-				coordinateHotspots = {
-					{ x = 30.56, y = 22.57, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 33.26, y = 19.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				},
-				check = { "10803" },
-				neededAmt = { "3" },
-				funct = "CheckDBObjectiveStatus",
-				npcTargets = {
-					{ name = "Boulder'mok Brute", marker = 8, mustBeAlive = true },
-					{ name = "Boulder'mok Shaman", marker = 7, mustBeAlive = true, obj = 2 },
-				},
-				macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
-				objectiveIndex = 1,
-			},
-			[4] = {
-				description = "Kill |cFFffcc332|r Boulder'mok Brutes at Boulder'mok, Blade's Edge Mountains.",
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Boulder'mok Brutes at Boulder'mok, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 30.56, y = 22.57, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 33.26, y = 19.14, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990867,7 +990980,7 @@ RQEDatabase = {
 				macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
 				objectiveIndex = 1,
 			},
-			[5] = {
+			[2] = {
 				description = "Kill |cFFffcc331|r Boulder'mok Brute at Boulder'mok, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 30.56, y = 22.57, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990883,23 +990996,8 @@ RQEDatabase = {
 				macro = { "#showtooltip item:4588\n/tar Boulder'mok Brute\n/cleartarget [dead]\n/tm ~8" },
 				objectiveIndex = 1,
 			},
-			[6] = {
-				description = "Kill |cFFffcc333|r Boulder'mok Shamans at Boulder'mok, Blade's Edge Mountains.",
-				coordinateHotspots = {
-					{ x = 30.98, y = 22.60, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 33.39, y = 19.16, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				},
-				check = { "10803" },
-				neededAmt = { "1" },
-				funct = "CheckDBObjectiveStatus",
-				npcTargets = {
-					{ name = "Boulder'mok Shaman", marker = 8, mustBeAlive = true },
-				},
-				macro = { "#showtooltip item:4588\n/tar Boulder'mok Shaman\n/cleartarget [dead]\n/tm ~8" },
-				objectiveIndex = 2,
-			},
-			[7] = {
-				description = "Kill |cFFffcc332|r Boulder'mok Shamans at Boulder'mok, Blade's Edge Mountains.",
+			[3] = {
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Boulder'mok Shamans at Boulder'mok, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 30.98, y = 22.60, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 33.39, y = 19.16, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990913,7 +991011,7 @@ RQEDatabase = {
 				macro = { "#showtooltip item:4588\n/tar Boulder'mok Shaman\n/cleartarget [dead]\n/tm ~8" },
 				objectiveIndex = 2,
 			},
-			[8] = {
+			[4] = {
 				description = "Kill |cFFffcc331|r Boulder'mok Shaman at Boulder'mok, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 30.98, y = 22.60, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990928,7 +991026,7 @@ RQEDatabase = {
 				macro = { "#showtooltip item:4588\n/tar Boulder'mok Shaman\n/cleartarget [dead]\n/tm ~8" },
 				objectiveIndex = 2,
 			},
-			[9] = {
+			[5] = {
 				description = "Turn in the quest to Lieutenant Fairweather at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.99, y = 37.94, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -990953,7 +991051,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Mordenai at Netherwing Fields in Shadowmoon Valley wants you to feed 8 Mature Netherwing Drakes." },
 			descriptionQuestText = { "Something has them spooked, blood elf. <Mordenai points to the nether drakes flying overhead.> They won't even come down to feed. I have seen several fall to the earth, dead from exhaustion before their bodies hit the ground. We must save them! The Rocknail flayers that are found near the crystals are their natural prey. Kill flayers and take their carcasses. Place a carcass in the field and stand extremely still. As long as you do not make any aggressive motions, they will not attack you." },
 			npcs = {
-				{ npc = "Mordenai", id = "x99" },
+				{ npc = "Mordenai", id = 22113 },
 			},
 			[1] = {
 				description = "Kill Rocknail Flayers, and loot up to |cFFffcc338|r {item:31372:Rocknail Flayer Carcasses} (the big ones are the best) You can also attack the smaller ones for the {item:31373:Rocknail Flayer Giblets} and combine 5 of these to make 1 {item:31372:Rocknail Flayer Carcass}. You will need 8 of the Flayer Carcasses.",
@@ -991188,7 +991286,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[17] = {
-				description = "Turn in the quest to Mordenai (if he is fighting a mob, you won't be able to turn in quest until mob is dead).",
+				description = "Turn in the quest to {npc:22113:Mordenai} at the Netherwing Fields, Shadowmoon Valley.\n\n|cFFFF3333If he is fighting a mob, you won't be able to turn in quest until mob is dead.|r",
 				coordinateHotspots = {
 					{ x = 59.05, y = 58.69, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 68.81, y = 85.22, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -991211,7 +991309,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay 10 Bladespire Enforcers, 5 Bladespire Battlemages, 5 Bladespire Ravagers and their leader, Fingrom." },
 			descriptionQuestText = { "You've proven yourself resourceful, and now I think I'm going to put you to personal use in my own fight against Gruul and his sons. The Bladespire clan are the favored of the gronn, and while you may have thinned out their numbers elsewhere, you haven't yet dealt with their strongest. Gruul protects the exterior of his lair with only the toughest of ogres, and it is those that you must kill. Head north through the Daggermaw Canyon and you will find Gruul's Lair at the end." },
 			npcs = {
-				{ npc = "Baron Sablemane", id = "x99" },
+				{ npc = "Baron Sablemane", id = 22103 },
 			},
 			-- [1] = {
 				-- description = "! Bladespire Enforcer slain: 1/10 in Daggermaw Canyon, Blade's Edge Mountains.",
@@ -991298,7 +991396,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use Sablemane's Signet at the Altar of Goc, then kill Goc." },
 			descriptionQuestText = { "The time has come for us to face Goc, the master of the Bladespire ogres. It is also time that I take a hand in events, to see the last of the gronn's life. Take my signet ring. When you come to the Altar of Goc, use it, and I will come to join you. Together we will destroy Goc." },
 			npcs = {
-				{ npc = "Baron Sablemane", id = "x99" },
+				{ npc = "Baron Sablemane", id = 22103 },
 			},
 			-- [1] = {
 				-- description = "! Goc slain: 1/1 in Gruul's Lair, Blade's Edge Mountains.",
@@ -991415,7 +991513,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay the Dark Conclave Ritualists and use the Staff of Parshah to end the Dark Conclave's summoning ritual, then return to Parshah in the Magma Fields." },
 			descriptionQuestText = { "The spirits of the dark conclave seek to summon an ancient and powerful evil through a ritual conducted at the lava pits to the south of the Sketh'lon Base Camp. Gul'dan's magic mingled with their own, empowering them to aid this creature in manifesting in our world! We must not allow this to happen, PLAYER. The death and destruction it would bring are unimaginable! Carry the staff with you to the site of the summoning and use its magics to stop the dark conclave once and for all!" },
 			npcs = {
-				{ npc = "Parshah", id = "x99" },
+				{ npc = "Parshah", id = 22024 },
 			},
 			[1] = {
 				description = "Use the {item:31386:Staff of Parshah} near the \"Old God-like\" mob to end the Dark Conclave Summoning Ritual in Shadowmoon Valley\n\n|cFFFF3333You will need to kill any channeling Dark Conclave Ritualists first!|r",
@@ -991430,7 +991528,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Parshah on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
+				description = "Turn in the quest to {npc:22024:Parshah} on the road to the west of The Deathforge, Shadowmoon Valley.\n\n|cFFFF3333Parshah patrols the road north to south and back again.|r",
 				coordinateHotspots = {
 					{ x = 35.42, y = 42.41, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 61.38, y = 80.09, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -991523,7 +991621,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Seek out Neltharaku, patron of the Netherwing Dragonflight." },
 			descriptionQuestText = { "Their patron soars high above, PLAYER. Perhaps the kindness that you showed his children has moved his heart. Seek Neltharaku out and enlist his aid. Together, you may be able to solve the plight of the Netherwing drakes. <Mordenai points to the sky.> Fly high, friend..." },
 			npcs = {
-				{ npc = "Mordenai", id = "x99" },
+				{ npc = "Mordenai", id = 22113 },
 			},
 			[1] = {
 				description = "Turn in the quest to Neltharaku (large drake that flies around Netherwing Fields between Dragonmaw Fortress and Sanctum of the Stars).\n\n|cFFFF3333If it is on the ground wait for it to fly away and despawn before locating it again for turn-in!|r",
@@ -992151,7 +992249,7 @@ RQEDatabase = {
 				{ npc = "Grishna Harbinger", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Tree Warden Chawn at Evergrove, Blade's Edge Mountains.",
+				description = "Turn in the quest to {npc:22007:Tree Warden Chawn} at Evergrove, Blade's Edge Mountains.",
 				coordinateHotspots = {
 					{ x = 61.99, y = 39.47, mapID = 105, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.01, y = 24.40, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -992213,7 +992311,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Treebole, an ancient of lore who lives in the Raven's Wood of the Blade's Edge Mountains." },
 			descriptionQuestText = { "This is troubling! The arakkoa are causing the ancients and protectors to become possessed by evil spirits! But, there is one ancient that could not possibly have been affected. His name is Treebole, and you must go to him at once if we're to save the trees of the Raven's Wood! Go back to the Raven's Wood. You will find him at the fork in the path just past Grishnath." },
 			npcs = {
-				{ npc = "Tree Warden Chawn", id = "x99" },
+				{ npc = "Tree Warden Chawn", id = 22007 },
 			},
 			[1] = {
 				description = "Turn in the quest to Treebole at Raven's Wood, Blade's Edge Mountains.",
@@ -992758,7 +992856,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use the Rod of Purification on the Darkstone of Terokk in Veil Skith and return to Kirrik the Awakened at the Refugee Caravan in the Bone Wastes." },
 			descriptionQuestText = { "Veil Skith lies to the northwest of the caravan and to the south of Shattrath in a secluded grove of the forest. It is rumored that the colony of Skettis has constructed a maligned altar of worship. This Darkstone of Terokk must be purified if the arakkoa of Skith are ever to be redeemed. Take this Rod of Purification and cast it upon the Darkstone. Blessed by A'dal, the rod's purity might be enough to bring clarity to the Darkstone. Go now and may the light shine upon thee." },
 			npcs = {
-				{ npc = "Kirrik the Awakened", id = "x99" },
+				{ npc = "Kirrik the Awakened", id = 22272 },
 			},
 			[1] = {
 				description = "Use {item:31610:Rod of Purification} on the Darkstone of Terrok at Veil Skith, Terokkar Forest.",
@@ -992773,7 +992871,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Kirrik the Awakened at Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22272:Kirrik the Awakened} at Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.38, y = 50.83, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.41, y = 74.31, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -993411,7 +993509,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring the Eye of Reskk and the Eye of Shienor to Rilak the Redeemed in the Lower City section of Shattrath City." },
 			descriptionQuestText = { "Doom harkens from the cliffs of Skettis. My people, the arakkoa, face a fate shrouded in unspeakable evil. Too often have we abused dark magic for wrongdoing. Through A'dal I have learned of the Light and of redemption. Terokk watches his colonies from Skettis through orbs enchanted by the black art. Steal these Eyes from Veil Reskk and Veil Shienor in northern Terokkar. Let me see what Terokk sees. Let me look through the eyes of Skettis." },
 			npcs = {
-				{ npc = "Rilak the Redeemed", id = "x99" },
+				{ npc = "Rilak the Redeemed", id = 22292 },
 			},
 			[1] = {
 				description = "Collect the {item:25638:Eye of Veil Reskk} (white sphere above at an Arakkoan tree house) at Veil Reskk, Terokkar Forest.",
@@ -993464,7 +993562,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kill 4 Deathtalon Spirits, 4 Screeching Spirits and 2 Spirit Ravens and return to Kirrik the Awakened at the Refugee Caravan." },
 			descriptionQuestText = { "Veil Rhaze was a particularly wicked colony of Skettis. Despite the village's eradication by the Auchindoun disaster, Terokk's influence remained in the maligned spirits there. Travel west to Veil Rhaze and slay those murderous wretches. You'll find them to the west of the Shadow Tomb, on the border of Bone Wastes and Terokkar Forest. This will be our first blow against Terokk and the guardians of Skettis." },
 			npcs = {
-				{ npc = "Kirrik the Awakened", id = "x99" },
+				{ npc = "Kirrik the Awakened", id = 22272 },
 			},
 			[1] = {
 				description = "Kill |cFFffcc334|r Deathtalon Spirits at Veil Rhaze, Terokkar Forest.",
@@ -993629,7 +993727,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[11] = {
-				description = "Turn in the quest to Kirrik the Awakened at Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22272:Kirrik the Awakened} at Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.38, y = 50.83, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.41, y = 74.31, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -993654,10 +993752,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Take Rilak's Missive to Kirrik the Awakened at the Refugee Caravan in the Bone Wastes." },
 			descriptionQuestText = { "Other arakkoa took part in the betrayal of Terokk. Kirrik recognized Terokk as a charlatan, not a prophet. The only prophecy Terokk envisioned was the doom borne of his own bidding. It was Kirrik who led us bravely from Skettis. After our pilgrimage to Shattrath, Kirrik traveled to the colonies in search of others. This missive tells of what the Eyes have seen. Kirrik must be told! Follow the road south out of Shattrath to the Bone Wastes and look for the caravan." },
 			npcs = {
-				{ npc = "Rilak the Redeemed", id = "x99" },
+				{ npc = "Rilak the Redeemed", id = 22292 },
 			},
 			[1] = {
-				description = "Turn in the quest to Kirrik the Awakened in The Bone Wastes, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22272:Kirrik the Awakened} at Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.38, y = 50.83, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.41, y = 74.31, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -994641,7 +994739,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 3 Raptor Ribs and 3 Serpent Flesh." },
 			descriptionQuestText = { "Hungry, blood elf? The Great Spirit helps those that help themselves. If you want to earn a meal, I suggest that you listen up, because Braagor there isn't going to give you anything for free, nor as tasty! The raptors and scalewings of Razor Ridge and the Scalewing Shelf have everything that's needed for two of the most delicious dishes you'll ever taste. Bring me their raptor ribs and serpent flesh, and I'll make some of each for you. I may even teach you how to cook them up for yourself, if you hurry." },
 			npcs = {
-				{ npc = "Matron Varah", id = "x99" },
+				{ npc = "Matron Varah", id = 21088 },
 			},
 			-- [1] = {
 				-- description = "! Serpent Flesh: 3/3 in Mok'Nathal Village, Blade's Edge Mountains.",
@@ -994656,13 +994754,13 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Matron Varah at Mok'Nathal Village, Blade's Edge Mountains.",
+				-- description = "Turn in the quest to {npc:21088:Matron Varah} at Mok'Nathal Village, Blade's Edge Mountains.",
 				-- coordinates = { x = 76.08, y = 60.30, mapID = 105 },
 				-- check = { "10860" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
 				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
+					-- { name = "Matron Varah", marker = 6, mustBeAlive = true },
 				-- },
 				-- macro = { "#showtooltip item:2554\n/tar Matron Varah\n/tm 6" },
 				-- objectiveIndex = 99,
@@ -994677,7 +994775,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Break the cursed eggs in Veil Lithic. Redeem 3 Hatchlings and slay 3 Malevolent Hatchlings before returning to Kirrik the Awakened at the Refugee Caravan." },
 			descriptionQuestText = { "In the wretched colony to the southwest known as Veil Lithic, Terokk's minions are attempting to befoul their avian brethren before they hatch. The dark sorcerers of Lithic encase eggs in a shadowy curse. When the hatchlings emerge, they mindlessly serve Terrok. Travel to Veil Lithic and prematurely break the eggs before the curse has time to seep in. Even if you are too late, you can put down the tainted ones. Remember, the Light shines brightest in the darkness." },
 			npcs = {
-				{ npc = "Kirrik the Awakened", id = "x99" },
+				{ npc = "Kirrik the Awakened", id = 22272 },
 			},
 			[1] = {
 				description = "Interact with/break the Cursed Eggs in Veil Lithic to redeem |cFFffcc333|r Hatchlings (automatic) or kill 3 Malevolent Hatchling at Veil Lithic, Terokkar Forest.",
@@ -994770,7 +994868,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[7] = {
-				description = "Turn in the quest to Kirrik the Awakened at Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22272:Kirrik the Awakened} at Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.38, y = 50.83, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.41, y = 74.31, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -995233,7 +995331,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Scout Navrin wants you to travel to the Netherweb Ridge and free 6 Webbed Sha'tar Warriors and then return to him at Sha'tari Base Camp." },
 			descriptionQuestText = { "Our small outpost is under constant attack. Several nights ago, we were raided by the spiders of Netherweb Ridge, on the southeastern edge of the Bone Wastes. They poisoned many of our people, wrapped them in webs and carried them away. Some of our warriors took up arms and with little preparation pursued the spiders. We have not seen the captives or our hunting parties since. We hope that some may still be alive, perhaps imprisoned by the spiders. Our numbers are few. Will you search for our people? " },
 			npcs = {
-				{ npc = "Scout Navrin", id = "x99" },
+				{ npc = "Scout Navrin", id = 22364 },
 			},
 			[1] = {
 				description = "Free the Netherweb Victims by attacking the webbing to free |cFFffcc336|r Sha'tar Warriors at Netherweb Ridge, Terokkar Forest.\n\n|cFFFF3333It's not 100% guarenteed that all of the Netherweb Victims are the Sha'tar Warriors.|r",
@@ -995332,7 +995430,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[7] = {
-				description = "Turn in the quest to Scout Navrin at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22364:Scout Navrin} at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 31.43, y = 75.67, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.58, y = 81.99, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -995356,7 +995454,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kirrik the Awakened at the Refugee Caravan wants you to extinguish the four signal fires of Veil Shalas." },
 			descriptionQuestText = { "Terokk's perch, Skettis, looms above the Bone Wastes to the east. At the base of Skettis lies Veil Shalas, the most formidable of Terokk's colonies. It is through the stronghold of Veil Shalas that Terokk's forward sages wage war against the Light. The evil-doers of Shalas communicate with their master using a complex system of magical signal fires. Travel to the east, blood elf, and extinguish the fires. Once Veil Shalas is silenced, we can begin to plot the fall of Skettis. But I get ahead of myself." },
 			npcs = {
-				{ npc = "Kirrik the Awakened", id = "x99" },
+				{ npc = "Kirrik the Awakened", id = 22272 },
 			},
 			[1] = {
 				description = "Extinguish the Sapphire Signal Fire at The Bone Wastes, Terokkar Forest.",
@@ -995413,7 +995511,7 @@ RQEDatabase = {
 				objectiveIndex = 4,
 			},
 			[5] = {
-				description = "Turn in the quest to Kirrik the Awakened at Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22272:Kirrik the Awakened} at Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.38, y = 50.83, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.41, y = 74.31, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -995508,7 +995606,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Oakun wants you to travel east to the Derelict Caravan to recover the Dread Relic. Return to Oakun when the task is complete." },
 			descriptionQuestText = { "Long ago a caravan went to Auchindoun with a mission to take a Dread Relic from the ancient tombs beneath the necropolis. They fled, but the relic was their undoing. The relic is evil and it summons evil when touched. Their caravan was destroyed somewhere to the east. This dark artifact is the key to a terrible plan to defeat Teribus the Cursed, a creature that flies over the Bone Wastes. Help me if you wish, but your life and even your soul will be at risk." },
 			npcs = {
-				{ npc = "Oakun", id = "x99" },
+				{ npc = "Oakun", id = 22456 },
 			},
 			[1] = {
 				description = "Use the {item:31705:Derelict Caravan Chest Key} on the \"Massive Treasure Chest\" to collect the {item:31697:Dread Relic} at the Derelict Caravan, Terokkar Forest.",
@@ -995523,7 +995621,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Oakun at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22456:Oakun} at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 31.06, y = 76.53, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.46, y = 82.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -995544,7 +995642,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Mekeda at the Refugee Caravan wants you to kill 8 Cabal Skirmishers, 4 Cabal Spell-Weavers and 2 Cabal Initiates." },
 			descriptionQuestText = { "After our caravan fell prey to an attack by Shadow Council cabal cultists, scouts were sent to Shattrath to call for help. The guards think we're safe for now, but they underestimate these madmen. I, for one, am not looking forward to having my throat slit by some cabal initiate in the middle of the night. Do us all a favor and take the fight to them, before they come to us. You will find our attackers south of here, at Auchindoun's northern entrance." },
 			npcs = {
-				{ npc = "Mekeda", id = "x99" },
+				{ npc = "Mekeda", id = 22370 },
 			},
 			[1] = {
 				description = "Kill |cFFffcc338|r Cabal Skirmishers around Auchindoun, Terokkar Forest.",
@@ -995593,7 +995691,7 @@ RQEDatabase = {
 				objectiveIndex = 3,
 			},
 			[4] = {
-				description = "Turn in the quest to Mekeda at Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22370:Mekeda} at the Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.58, y = 51.39, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.48, y = 74.49, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -995665,7 +995763,7 @@ RQEDatabase = {
 				{ npc = "Cabal Initiate", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Mekeda at Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22370:Mekeda} at the Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.58, y = 51.39, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.48, y = 74.49, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -995689,7 +995787,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Go into the Shadow Tomb, west of the Refugee Caravan and retrieve the Drape of Arunen, the Gavel of K'alen and the Scroll of Atalor. Return to Mekeda at the Refugee Caravan after you've completed this task." },
 			descriptionQuestText = { "Many believe it was the Shadow Council that caused the explosion that tore Auchindoun apart. It is rumored they awoke a great evil inside. If that is true, then that evil must have turned against them. According to these orders, part of the Shadow Council is fleeing Auchindoun. They are using the Shadow Tomb to store powerful artifacts from Auchindoun. Three of these are sacred, for they belonged to the powerful patriarchs Arunen, K'alen and Atalor. I must ask you to retrieve them." },
 			npcs = {
-				{ npc = "Mekeda", id = "x99" },
+				{ npc = "Mekeda", id = 22370 },
 			},
 			[1] = {
 				description = "Travel to the Shadow Tomb (in the Bone Wastes), Terokkar Forest and go underground.",
@@ -995782,7 +995880,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[8] = {
-				description = "Turn in the quest to Mekeda at the Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22370:Mekeda} at the Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.58, y = 51.39, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.48, y = 74.49, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -996074,7 +996172,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Mekeda at Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22370:Mekeda} at the Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.58, y = 51.39, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.48, y = 74.49, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -996098,7 +996196,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Travel to Shattrath City and speak with Rilak the Redeemed in the Lower City." },
 			descriptionQuestText = { "Your actions, while brave, will surely rouse a vindictive response from Terokk. Hurry to Shattrath. Send word to Rilak!" },
 			npcs = {
-				{ npc = "Kirrik the Awakened", id = "x99" },
+				{ npc = "Kirrik the Awakened", id = 22272 },
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:22292:Rilak the Redeemed} in the Lower City, Shattrath City.",
@@ -996168,7 +996266,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Deliver the Meeting Note to Watcher Moonshade at the entrance of the Wyrmskull Tunnel in the Blade's Edge Mountains." },
 			descriptionQuestText = { "Hmm, I'm not certain what we should do. I'm not much of a military planner. Watcher Moonshade will know what to do. He's heading up our defensive efforts at the Wyrmskull Tunnel to the west at the end of Wyrmskull Bridge. We have a force out there just in case the cultists try anything funny. Please, take the note to him with all due haste." },
 			npcs = {
-				{ npc = "Tree Warden Chawn", id = "x99" },
+				{ npc = "Tree Warden Chawn", id = 22007 },
 			},
 			[1] = {
 				description = "Turn in the quest to Watcher Moonshade at Wyrmskull Tunnel, Blade's Edge Mountains.",
@@ -996276,7 +996374,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Lakotae wants you to kill 25 Wood Mites and then return to him at the Refugee Caravan. The mites can be found living inside the bodies of Rotting Forest-Ragers and Infested Root-Walkers." },
 			descriptionQuestText = { "The trees of this land are ravaged by the power that was unleashed from Auchindoun. The foul magic that was unleashed blasted the land into the wastes you see all around. The trees that survived are now infested with wretched wood mites that crawl under their bark and gnaw at their flesh. Rotting forest-ragers and infested root-walkers are breeding grounds for the mites. They are found along the edge of the wood to the east. Destroy these creatures and then kill the mites that flee their husks." },
 			npcs = {
-				{ npc = "Lakotae", id = "x99" },
+				{ npc = "Lakotae", id = 22420 },
 			},
 			[1] = {
 				description = "Kill Infested Root-Walker and Rotting Forest-Rager and then the Wood Mites that come out of them in The Bone Wastes, Terokkar Forest.",
@@ -996296,7 +996394,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Lakotae at Refugee Caravan, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22420:Lakotae} at Refugee Caravan, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 37.86, y = 51.69, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 45.56, y = 74.57, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -996454,7 +996552,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Kirrik the Awakened wants you to speak with Rilak the Redeemed in the Lower City section of Shattrath City." },
 			descriptionQuestText = { "You look surprised to be talking to me. I do not blame you. My people, the arakkoa, deserve to be feared. Speak with Rilak the Redeemed in Shattrath City if you wish to know more. He can be found in the northern part of the Lower City, with the other outcasts of Skettis. And, PLAYER, we will speak again." },
 			npcs = {
-				{ npc = "Kirrik the Awakened", id = "x99" },
+				{ npc = "Kirrik the Awakened", id = 22272 },
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:22292:Rilak the Redeemed} in the Lower City, Shattrath City.",
@@ -996653,7 +996751,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Ra'vaj at the Sha'tari Base Camp in the Bone Wastes of Terokkar Forest wants you to burn 8 Slain Auchenai Warriors and 8 Slain Sha'tar Vindicators." },
 			descriptionQuestText = { "Is there nothing that can be done to stem the tide of corruption? My soldiers have been battling the Auchenai for days now with no end in sight. Each casualty, whether Auchenai or Sha'tar, is snatched from the battlefield - their souls lifted and taken to parts unknown. I will not have it! A proper burial is out of the question but those fiends will not have their souls! Take this torch and travel to the field of battle, directly east of here. Burn every corpse you see! We will not fuel their rituals." },
 			npcs = {
-				{ npc = "Commander Ra'vaj", id = "x99" },
+				{ npc = "Commander Ra'vaj", id = 22446 },
 			},
 			[1] = {
 				description = "Use {item:31769:Sha'tari Torch} on |cFFffcc338|r Slain Sha'tar Vindicators in The Bone Wastes, Terokkar Forest.",
@@ -996687,7 +996785,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[3] = {
-				description = "Turn in the quest to Commander Ra'vaj at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22446:Commander Ra'vaj} at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 31.01, y = 76.11, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.44, y = 82.12, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -996711,7 +996809,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Ra'vaj at the Sha'tari Base Camp in the Bone Wastes of Terokkar Forest wants you to slay 12 Auchenai Initiates and 5 Auchenai Doomsayers." },
 			descriptionQuestText = { "It is not enough. A hero is needed. Our forces are overwhelmed as the Auchenai continue to grow in number. <Commander Ra'vaj looks at you.> Will you be the hero? Return to the field of battle and strike at their soldiers. Keep them occupied so that my scouts can get behind their lines and see what they are creating." },
 			npcs = {
-				{ npc = "Commander Ra'vaj", id = "x99" },
+				{ npc = "Commander Ra'vaj", id = 22446 },
 			},
 			[1] = {
 				description = "Kill |cFFffcc3312|r Auchenai Initiates at the Auchenai Grounds, Terokkar Forest.",
@@ -996998,7 +997096,7 @@ RQEDatabase = {
 				objectiveIndex = 2,
 			},
 			[18] = {
-				description = "Turn in the quest to Commander Ra'vaj at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22446:Commander Ra'vaj} at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 31.01, y = 76.11, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.44, y = 82.12, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -997022,7 +997120,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Ra'vaj at the Sha'tari Base Camp in the Bone Wastes of Terokkar Forest wants you to destroy the contents of the Auchenai Coffin." },
 			descriptionQuestText = { "They are feeding the souls they steal to a coffin that they have dragged out from the Auchenai Crypts. My scouts believe the contents of the coffin to contain the first exarch of the crypts. They seek to resurrect the ancient one! You must battle your way to the western side of Auchindoun and disturb the contents of that coffin before they feed it enough souls. Should you lose your way, follow the walking souls. Destroy whatever is inside that coffin!" },
 			npcs = {
-				{ npc = "Commander Ra'vaj", id = "x99" },
+				{ npc = "Commander Ra'vaj", id = 22446 },
 			},
 			[1] = {
 				description = "Kill the 4 Auchenai Death-Speaker (if they are present) around the coffin BEFORE you click on it. Once you click on it, kill the Reanimated Exarch at Auchindoun, Terokkar Forest.\n\n|cFFFF3333If the Death-Speakers are still alive around the coffin when you click it, you will die!|r",
@@ -997041,7 +997139,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Commander Ra'vaj at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22446:Commander Ra'vaj} at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 31.01, y = 76.11, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.44, y = 82.12, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -997167,7 +997265,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Vindicator Haylen wants you to slay 20 Dreadfang Widows and then return to him just west of Netherweb Ridge." },
 			descriptionQuestText = { "When the dreadfang widows attacked our outpost we heard the voice of the naaru calling us to battle. We pursued the creatures into the night. Some of our people we found dead in the dark, others we could hear struggling against their captors. By morning we had come to this place and we fought a fierce battle but we were beaten. Dreadfang poison will soon take my companions and I cannot last long. Before I die I must know that the dreadfang widows were beaten." },
 			npcs = {
-				{ npc = "Vindicator Haylen", id = "x99" },
+				{ npc = "Vindicator Haylen", id = 22462 },
 			},
 			-- [1] = {
 				-- description = "! Dreadfang Widow slain: 1/20 in Netherweb Ridge, Terokkar Forest.",
@@ -997410,13 +997508,13 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [21] = {
-				-- description = "Turn in the quest to Vindicator Haylen at The Bone Wastes, Terokkar Forest.",
+				-- description = "Turn in the quest to {npc:22462:Vindicator Haylen} in The Bone Wastes, Terokkar Forest.",
 				-- coordinates = { x = 49.72, y = 76.17, mapID = 108 },
 				-- check = { "10920" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
 				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
+					-- { name = "Vindicator Haylen", marker = 6, mustBeAlive = true },
 				-- },
 				-- macro = { "#showtooltip item:2554\n/tar Vindicator Haylen\n/tm 6" },
 				-- objectiveIndex = 99,
@@ -997428,7 +997526,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Vindicator Haylen wants you to kill the Terokkarantula and then return to him west of Netherweb Ridge." },
 			descriptionQuestText = { "You have slain many of the dreadfang widows but they will continue to spawn and soon they will strike at us again. Deep within Netherweb Ridge is the lair of the Terokkarantula, the brood-mother of these gruesome creatures. If we are to be safe, she must die." },
 			npcs = {
-				{ npc = "Vindicator Haylen", id = "x99" },
+				{ npc = "Vindicator Haylen", id = 22462 },
 			},
 			-- [1] = {
 				-- description = "! Terokkarantula slain: 1/1 in Netherweb Ridge, Terokkar Forest.",
@@ -997443,13 +997541,13 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Vindicator Haylen at The Bone Wastes, Terokkar Forest.",
+				-- description = "Turn in the quest to {npc:22462:Vindicator Haylen} in The Bone Wastes, Terokkar Forest.",
 				-- coordinates = { x = 49.72, y = 76.19, mapID = 108 },
 				-- check = { "10921" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
 				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
+					-- { name = "Vindicator Haylen", marker = 6, mustBeAlive = true },
 				-- },
 				-- macro = { "#showtooltip item:2554\n/tar Vindicator Haylen\n/tm 6" },
 				-- objectiveIndex = 99,
@@ -997464,7 +997562,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Escort Letoll and his crew and protect them while they make their dig. Return to Dwarfowitz at the Sha'tari Base Camp if you succeed." },
 			descriptionQuestText = { "Oy! You look like you can take care of yerself, blood elf. Me and the crew here are looking for a bodyguard to watch over us while we hit a dig site to the north. The pay is pretty good and all you gotta do is make sure no nasty creatures kill me or any of my employees. If you successfully make it back without any casualties, Dwarfowitz over there will pay ya." },
 			npcs = {
-				{ npc = "Chief Archaeologist Letoll", id = "x99" },
+				{ npc = "Chief Archaeologist Letoll", id = 22458 },
 			},
 			[1] = {
 				description = "Protect/Escort the Explorers into The Bone Wastes, Terokkar Forest (you will be killing a Bone Sifter).\n\n|cFFFF3333With RP this quest takes ~ 3 min and 40 seconds.|r",
@@ -997483,7 +997581,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Dwarfowitz at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to Dwarfowitz at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 30.99, y = 76.19, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.43, y = 82.15, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -997507,7 +997605,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Oakun wants you to take the Dread Relic to the Writhing Mound. Once there, kill Auchenai Death-Speakers and Auchenai Doomsayers to collect 20 Doom Skulls. Then find the Writhing Mound Summoning Circle and use the Dread Relic to summon and destroy Teribus the Cursed. Return to Oakun when the deed is done." },
 			descriptionQuestText = { "Now you must use the Dread Relic in a foul necromantic ritual if you wish to challenge Teribus the Cursed. To the northeast, beyond Auchindoun, is the Writhing Mound, a place where necromancers gather. The auchenai death-speakers and doomsayers carry doom skulls that are laced with powerful necro-enchantments. If you collect enough skulls you can use their power along with the power of the Dread Relic to command Teribus to face you." },
 			npcs = {
-				{ npc = "Oakun", id = "x99" },
+				{ npc = "Oakun", id = 22456 },
 			},
 			[1] = {
 				description = "Kill Auchenai Doomsayers and Death-Speakers, and loot |cFFffcc3320|r {item:31812:Doom Skulls}, from their bodies, at the Writhing Mound, Terokkar Forest.",
@@ -997865,7 +997963,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[22] = {
-				description = "Turn in the quest to Oakun at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22456:Oakun} at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 31.06, y = 76.53, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.46, y = 82.26, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -997886,10 +997984,10 @@ RQEDatabase = {
 			objectivesQuestText = { "Vindicator Haylen wants you to return to the Sha'tari Base Camp in the Bone Wastes and speak with Scout Navrin." },
 			descriptionQuestText = { "We will not make it back on our own. The dreadfang poison is too strong. You must return to Sha'tari Base Camp for us. Scout Navrin will send a rescue party out to find us." },
 			npcs = {
-				{ npc = "Vindicator Haylen", id = "x99" },
+				{ npc = "Vindicator Haylen", id = 22462 },
 			},
 			[1] = {
-				description = "Turn in the quest to Scout Navrin at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to {npc:22364:Scout Navrin} at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 31.43, y = 75.67, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.58, y = 81.99, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -998115,7 +998213,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[9] = {
-				description = "Turn in the quest to Dwarfowitz at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to Dwarfowitz at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 30.99, y = 76.19, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.43, y = 82.15, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -998157,7 +998255,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Dwarfowitz at Sha'tari Base Camp, Terokkar Forest.",
+				description = "Turn in the quest to Dwarfowitz at the Sha'tari Base Camp, Terokkar Forest.",
 				coordinateHotspots = {
 					{ x = 30.99, y = 76.19, mapID = 108, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 43.43, y = 82.15, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -999058,7 +999156,7 @@ RQEDatabase = {
 				{ npc = "Protectorate Advisor Rahim", id = "x99" },
 			},
 			[1] = {
-				description = "Turn in the quest to Commander Ameer at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20448:Commander Ameer} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 59.50, y = 32.37, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.01, y = 13.47, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -999082,7 +999180,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Recover the Salvaged Ethereum Prison Key for Commander Ameer at the Protectorate Watch Post in Netherstorm." },
 			descriptionQuestText = { "We salvaged this prison orb on our last scouting mission into Ethereum territory. We'd have never found it had it not been for the distress signal that it was faintly emitting. We think one of our own might be locked up in there but we have no way of opening the orb up without harming whatever is inside. What we know about the Ethereum is that any of their members could - at any given time - be carrying a key to unlock an orb. Retrieve one and return so that we may uncover the mysteries of this orb." },
 			npcs = {
-				{ npc = "Commander Ameer", id = "x99" },
+				{ npc = "Commander Ameer", id = 20448 },
 			},
 			[1] = {
 				description = "Kill Ethereum mobs, and loot the mobs until you collect the {item:31956:Salvaged Ethereum Prison Key}, from its body, at the Ethereum Staging Grounds, Netherstorm.",
@@ -999106,7 +999204,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Commander Ameer at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20448:Commander Ameer} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 59.50, y = 32.37, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.01, y = 13.47, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -999130,7 +999228,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Commander Ameer at the Protectorate Watch Post in Netherstorm wants you to bring him an Ethereum Prisoner I.D. Tag." },
 			descriptionQuestText = { "<Ameer holds up a tag.> I found this prisoner I.D. tag with the remains of the fallen vanguard. I can only assume that all of their prisoners are tagged in the same manner. I'm going to start cataloguing the tags in hopes of making sense of their penal system. If in your adventures you find more Ethereum prison keys, you can use them to open the Ethereum prisons at the Ethereum Staging Grounds - directly south of here. Bring me back any and all I.D. tags that you find." },
 			npcs = {
-				{ npc = "Commander Ameer", id = "x99" },
+				{ npc = "Commander Ameer", id = 20448 },
 			},
 			[1] = {
 				description = "Kill an Ethereum Jailor and collect an {item:29460:Ethereum Prison Key}, from its body, at the Ethereum Staging Grounds, Netherstorm.\n\n|cFFFF3333These can also be purchased from the Auction House.|r",
@@ -999161,7 +999259,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Commander Ameer at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20448:Commander Ameer} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 59.50, y = 32.37, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.01, y = 13.47, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -999185,7 +999283,7 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "I am in need of more I.D tags, <name>. What I've discovered thus far is that this is not just a way to catalogue prisoners but it also documents locations! Once this code is broken we'll be able to pinpoint exactly where all of our allies are held and free them with minimal hostile action received." },
 			npcs = {
-				{ npc = "Commander Ameer", id = "x99" },
+				{ npc = "Commander Ameer", id = 20448 },
 			},
 			[1] = {
 				description = "Kill an Ethereum Jailor and collect an {item:29460:Ethereum Prison Key}, from its body, at the Ethereum Staging Grounds, Netherstorm.\n\n|cFFFF3333These can also be purchased from the Auction House.|r",
@@ -999216,7 +999314,7 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[3] = {
-				description = "Turn in the quest to Commander Ameer at Protectorate Watch Post, Netherstorm.",
+				description = "Turn in the quest to {npc:20448:Commander Ameer} at Protectorate Watch Post, Netherstorm.",
 				coordinateHotspots = {
 					{ x = 59.50, y = 32.37, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 62.01, y = 13.47, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -999253,7 +999351,7 @@ RQEDatabase = {
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
-				-- description = "Turn in the quest to Commander Ameer at Protectorate Watch Post, Netherstorm.",
+				-- description = "Turn in the quest to {npc:20448:Commander Ameer} at Protectorate Watch Post, Netherstorm.",
 				-- coordinateHotspots = {
 					-- { x = 59.50, y = 32.37, mapID = 109, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					-- { x = 62.01, y = 13.47, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -999853,10 +999951,10 @@ RQEDatabase = {
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
 			npcs = {
-				{ npc = "Mordenai", id = "x99" },
+				{ npc = "Mordenai", id = 22113 },
 			},
 			[1] = {
-				description = "Turn in the quest to Mordenai at Netherwing Fields, Shadowmoon Valley.",
+				description = "Turn in the quest to {npc:22113:Mordenai} at the Netherwing Fields, Shadowmoon Valley.\n\n|cFFFF3333If he is fighting a mob, you won't be able to turn in quest until mob is dead.|r",
 				coordinateHotspots = {
 					{ x = 59.32, y = 58.69, mapID = 104, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 68.90, y = 85.22, continentID = 101, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
@@ -999880,7 +999978,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Travel to Netherwing Ledge and deliver the Illidari Service Papers to Overlord Mor'ghor at Dragonmaw Base Camp." },
 			descriptionQuestText = { "Netherwing Ledge... What was once a bastion of sanctuary for the Netherwing is now home to the Dragonmaw. While the orcs may have control of our territory, our magic there is still strong. Strong enough to cloak your true identity and allow you to infiltrate the ranks of Dragonmaw. I have prepared this letter for you to present to their leader, Overlord Mor'ghor. Fly headlong into the maw of our enemy and seek out Dragonmaw Base Camp to start your new life as a fel orc of Illidan Stormrage." },
 			npcs = {
-				{ npc = "Mordenai", id = "x99" },
+				{ npc = "Mordenai", id = 22113 },
 			},
 			[1] = {
 				description = "Turn in the quest to Overlord Mor'ghor, in a building, within Dragonmaw Base Camp, Shadowmoon Valley.",
@@ -1001897,7 +1001995,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Slay any 20 Gordunni Ogres in the Barrier Hills and return to Yuula in Shattrath City." },
 			descriptionQuestText = { "So you want to join the Skyguard? Well, I know you can fly... but can you fight? The Skyguard is sworn to protect Shattrath from the dangers that loom above us, both near and far. The Gordunni ogres who dwell in the Barrier Hills to the north are an immediate threat to us. Reaching the ogres has been problematic for Shattrath's ground units. That's where we come in. See what you can do to help contain them." },
 			npcs = {
-				{ npc = "Yuula", id = "x99" },
+				{ npc = "Yuula", id = 23449 },
 			},
 			-- [1] = {
 				-- description = "! Interact with Gordunni Back-Breaker: Gordunni Ogre: 1/20 in The Barrier Hills, Terokkar Forest.",
@@ -1002128,13 +1002226,13 @@ RQEDatabase = {
 				-- objectiveIndex = 19,
 			-- },
 			-- [20] = {
-				-- description = "Turn in the quest to Yuula",
+				-- description = "Turn in the quest to {npc:23449:Yuula} at the Terrace of Light, Shattrath City.",
 				-- coordinates = { x = 64.36, y = 42.25, mapID = 111 },
 				-- check = { "11096" },
 				-- neededAmt = { "1" },
 				-- funct = "CheckDBComplete",
 				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
+					-- { name = "Yuula", marker = 6, mustBeAlive = true },
 				-- },
 				-- macro = { "#showtooltip item:2554\n/tar Yuula\n/tm 6" },
 				-- objectiveIndex = 99,
@@ -1003136,7 +1003234,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Harbinger Haronem in Shattrath City wants you to use the Multiphase Spectrographic Goggles to take 6 Multiphase Readings." },
 			descriptionQuestText = { "I'm sure that 'gnomish inventor' is a crackpot. He was babbling about some dark distortions that have begun to appear in the Spirit Fields around Oshu'gun in Nagrand. According to him, these, uh, multiphase... um, spectro-goggles will allow the wearer to see the distortions and take readings from them. He insisted that recording this data was fundamental to our campaign at the Sunwell. I think he's nuts, but I'm under orders to investigate anything that might help. Would you mind taking some readings?" },
 			npcs = {
-				{ npc = "Harbinger Haronem", id = "x99" },
+				{ npc = "Harbinger Haronem", id = 19475 },
 			},
 			[1] = {
 				description = "Take 6 Multiphase Readings in Spirit Fields, Nagrand after equipping the Multiphase Spectrographic Goggles.",
@@ -1003151,14 +1003249,14 @@ RQEDatabase = {
 				objectiveIndex = 1,
 			},
 			[2] = {
-				description = "Turn in the quest to Harbinger Haronem at Terrace of Light, Shattrath City.",
+				description = "Turn in the quest to {npc:19475:Harbinger Haronem} at Terrace of Light, Shattrath City.",
 				coordinates = { x = 61.65, y = 52.15, mapID = 111 },
 				check = { "11880" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
-				-- },
+				npcTargets = {
+					{ name = "Harbinger Haronem", marker = 6, mustBeAlive = true },
+				},
 				macro = { "#showtooltip item:2554\n/tar Harbinger Haronem\n/tm 6" },
 				objectiveIndex = 99,
 			},
@@ -1003530,7 +1003628,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Commander Duron at the Stair of Destiny in Hellfire Peninsula. The Honor Hold Mage in the Mage District can help you get there." },
 			descriptionQuestText = { "By order of his royal highness, King Anduin Wrynn, all able-bodied citizens of the Alliance are to report to Commander Duron in Hellfire Peninsula. The expeditionary forces require your help to overcome the demonic armies of the Burning Legion! Talk to the Honor Hold Mage in the tall tower in the Mage District to travel to Blasted Lands, then walk through the Dark Portal to arrive at the Stair of Destiny. For the glory and honor of the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Travel to the tower in Stormwind Mage District and speak with the {npc:150122:Honor Hold Mage} and select, \"I must report to the Dark Portal.\"",
@@ -1003688,7 +1003786,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Watcher Jhang in the Underbog." },
 			descriptionQuestText = { "The Earthen Ring often finds itself working closely with the druids of the Cenarion Circle. Now is one such time. Travel north to the Underbog and speak with Watcher Jhang. She is in charge of an expedition in the Coilfang Reservoir to stop the naga there and save Zangarmarsh." },
 			npcs = {
-				{ npc = "Elementalist Morgh", id = "x99" },
+				{ npc = "Elementalist Morgh", id = 18074 },
 			},
 			[1] = {
 				description = "Travel to the Coilfang Reservoir, at the center of Serpent Lake, Zangarmarsh.",
@@ -1003847,7 +1003945,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Field Commander Mahfuun inside the Shadow Labyrinth at Auchindoun in Terokkar Forest." },
 			descriptionQuestText = { "I have spies within Auchindoun and they have been sending me disturbing reports. That place has been nothing but trouble ever since it exploded a couple of years ago. Something in there has gone horribly wrong - again - and the Shadow Council is now on a war footing. Though the reports were lacking on details, their preparations appear to be directed inward. You must make your way to the Shadow Labyrinth. My field commander, Mahfuun, will fill you in on what needs to be done." },
 			npcs = {
-				{ npc = "Spymistress Mehlisah Highcrown", id = "x99" },
+				{ npc = "Spymistress Mehlisah Highcrown", id = 18893 },
 			},
 			[1] = {
 				description = "Travel to the entrance of the Shadow Labyrinth, from the Ring of Observance, Auchindoun.",
@@ -1004591,7 +1004689,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak to Ysiel Windsinger at the Cenarion Refuge in Zangarmarsh." },
 			descriptionQuestText = { "The Cenarion Circle's main expeditionary force in Outland is known as the Cenarion Expedition. Though it began as a small venture controlled directly by the Cenarion Circle, it's become a large and fairly autonomous body. The expedition's leader, Ysiel Windsinger, has asked us to direct volunteers to her outpost. Report to her at the Cenarion Refuge in eastern Zangarmarsh. Take the main path to the west and it will lead you directly there." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Ysiel Windsinger at Cenarion Refuge, Zangarmarsh.",
@@ -1004646,7 +1004744,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with one of the druids at the Cenarion Thicket in Terokkar Forest." },
 			descriptionQuestText = { "We have lost contact with the druids of the Cenarion Thicket The King has commanded any able bodies of the Alliance to venture into Terokkar Forest and discover what has happened. The thicket can be found by heading northwest through Terokkar Forest from Zangarmarsh." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:18446:Earthbinder Tavgren} at Cenarion Thicket, Terokkar Forest.",
@@ -1004700,7 +1004798,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Warden Moi'bff Jill at Telaar in Nagrand on Outland." },
 			descriptionQuestText = { "The King has requested you represent him with the Kurenai settlement of Telaar in Nagrand. Seek out Warden Moi'bff Jill upon arrival." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = { 
 				description = "Turn in the quest to Warden Moi'bff Jill in Telaar, Nagrand.",
@@ -1004754,7 +1004852,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Rina Moonspring at Sylvanaar in the Blade's Edge Mountains." },
 			descriptionQuestText = { "The Alliance forces of Sylvanaar in the Blade's Edge Mountains require reinforcements. The King has asked for any able bodied members of the Alliance to journey to the mountains along the northern border of Zangarmarsh." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = {
 				description = "Turn in the quest to Rina Moonspring at Sylvanaar, Blade's Edge Mountains.",
@@ -1004809,7 +1004907,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Report to Rocket-Chief Fuselage at Area 52." },
 			descriptionQuestText = { "The goblins of Area 52 in Netherstorm have called for assistance from any able bodied champions willing to provide them the support they need in their endevours. The King feels their position and aid in the region will provide a tactical advantage against the nearby forces of Kael'thas. Area 52 can be reached by following the northeastern road of Blade's Edge Mountains until you see the world crumbling away into the Twisting Nether." },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = { 
 				description = "Turn in the quest to {npc:19570:Rocket-Chief Fuselage} at Area 52, Netherstorm.",
@@ -1004864,7 +1004962,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Speak with Wing Commander Nuainn in Shadowmoon Valley on Outland." },
 			descriptionQuestText = { "All able-bodied citizens of the Alliance are to report to Wing Commander Nuainn in Shadowmoon Valley on Outland. The Burning Legion are laying siege to Wildhammer Stronghold, endagering our people and threatening their lives. We need to reinforce the stronghold and stop the Burning Legion's relentless assault! Glory to the Alliance!" },
 			npcs = {
-				{ object = "Hero's Call Board", id = "x99" },
+				{ object = "Hero's Call Board", id = 206111 },
 			},
 			[1] = { 
 				description = "Turn in the quest to Wing Commander Nuainn at Wildhammer Stronghold, Shadowmoon Valley (Outland)",
@@ -1005535,11 +1005633,16 @@ RQEDatabase = {
 		},
 		[7926] = {
 			title = "The Darkmoon Faire",
-			location = { x = 48.22, y = 62.16, mapID = 85 },
+			locations = {
+				{ x = 48.22, y = 62.16, mapID = 85 },
+				{ x = 58.18, y = 42.97, continentID = 12 },
+				{ x = 51.79, y = 29.23, mapID = 111 },
+				{ x = 50.29, y = 50.40, mapID = 125 },
+			},
 			objectivesQuestText = { "Deliver the Free Ticket Voucher to Gelvas Grimegate, located inside the Darkmoon Faire." },
 			descriptionQuestText = { "The Darkmoon Faire is coming! Experience our thrilling games, win fabulous prizes, have your fortune told! If you act right now, you can redeem this voucher for free prize tickets and a copy of the world-famous Darkmoon Adventurer's Guide to help you identify treasures in your travels! Just hand your voucher to Gelvas Grimegate located inside the Faire. Right now, the entrance to the Faire is outside Thunder Bluff in Mulgore!" },
 			npcs = {
-				{ npc = "Darkmoon Faire Mystic Mage", id = "x99" },
+				{ npc = "Darkmoon Faire Mystic Mage", id = 55382 },
 			},
 			[1] = {
 				description = "Interact with Darkmoon Faire Mystic Mage in Orgrimmar and select, \"Take me to the staging area.\"",
@@ -1062693,11 +1062796,16 @@ RQEDatabase = {
 		},
 		[7926] = {
 			title = "The Darkmoon Faire",
-			location = { x = 48.22, y = 62.16, mapID = 85 },
+			locations = {
+				{ x = 48.22, y = 62.16, mapID = 85 },
+				{ x = 58.18, y = 42.97, continentID = 12 },
+				{ x = 51.79, y = 29.23, mapID = 111 },
+				{ x = 50.29, y = 50.40, mapID = 125 },
+			},
 			objectivesQuestText = { "Deliver the Free Ticket Voucher to Gelvas Grimegate, located inside the Darkmoon Faire." },
 			descriptionQuestText = { "The Darkmoon Faire is coming! Experience our thrilling games, win fabulous prizes, have your fortune told! If you act right now, you can redeem this voucher for free prize tickets and a copy of the world-famous Darkmoon Adventurer's Guide to help you identify treasures in your travels! Just hand your voucher to Gelvas Grimegate located inside the Faire. Right now, the entrance to the Faire is outside Thunder Bluff in Mulgore!" },
 			npcs = {
-				{ npc = "Darkmoon Faire Mystic Mage", id = "x99" },
+				{ npc = "Darkmoon Faire Mystic Mage", id = 55382 },
 			},
 			[1] = {
 				description = "Interact with Darkmoon Faire Mystic Mage in Orgrimmar and select, \"Take me to the staging area.\"",
