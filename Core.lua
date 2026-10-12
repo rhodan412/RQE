@@ -1582,6 +1582,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			-- Tracking and focus are restored; normal persistence can resume.
 			RQE.PendingTrackerStateRestore = false
+			if RQE.ResumeTrackerSync then RQE:ResumeTrackerSync() end
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
 			RQE.API.Client.C_Timer.After(0.1, function()
