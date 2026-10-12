@@ -16,6 +16,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Initialize RQE global table
 	RQE = RQE or {}
+	RQE.TrackerSyncLegacySources = true
 	RQE.modules = RQE.modules or {}
 	RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 	RQE.TrackedQuests = RQE.TrackedQuests or {}
@@ -2905,6 +2906,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Function used to clear the Questing Frame
 	function RQE:ClearRQEQuestFrame()
+		RQE:InvalidateTrackerSyncRows("normal")
 		-- Clearing regular quest buttons
 		for i, QuestLogIndexButton in pairs(RQE.QuestLogIndexButtons or {}) do
 			if QuestLogIndexButton then
@@ -3239,6 +3241,8 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Function used to clear the World Quest Frame
 	function RQE:ClearRQEWorldQuestFrame()
+		RQE:InvalidateTrackerSyncRows("world")
+		RQE:ClearOwnedTrackerWorldRows()
 		-- Ensure that RQE.WorldQuestsFrame exists and is a table
 		if RQE.WorldQuestsFrame and type(RQE.WorldQuestsFrame) == "table" then
 			-- Iterate over all elements in RQE.WorldQuestsFrame
@@ -3914,7 +3918,13 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			-- return
 		-- end
 
+		RQE:BeginTrackerSyncRender("normal")
 		RQE:SortWatchedQuestsByProximity()
+		local expectedQuestIDs = {}
+		for _, watchedQuest in ipairs(RQE.SortedWatchedQuests or {}) do
+			if watchedQuest.questID then expectedQuestIDs[watchedQuest.questID] = true end
+		end
+		RQE:SetTrackerSyncExpectedQuests("normal", expectedQuestIDs)
 		RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
 
 		-- if RQE.SortOnly then
@@ -4885,6 +4895,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 					local elementHeight = QuestLogIndexButton:GetHeight()
 					totalHeight = totalHeight + elementHeight + spacingBetweenElements
+					RQE:RegisterTrackerSyncRow("normal", questID, QuestLogIndexButton, parentFrame)
 				end
 			end
 		end
@@ -4971,6 +4982,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		UpdateRQEWorldQuestFrame()
 		UpdateRQETaskQuestFrame()
 		--UpdateRQEBonusQuestFrame(questID)
+		RQE:CommitTrackerSyncRender("normal")
 	end
 
 
@@ -4984,6 +4996,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			RQE.RunUpdateRQEWorldQuestFrame = true
 			return
 		end
+		RQE:BeginTrackerSyncRender("world")
 
 		-- Define padding value
 		local padding = GetQuestSectionBottomPadding()
@@ -4997,6 +5010,15 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 		-- Gather and sort World Quests by proximity
 		local sortedWorldQuests = GatherAndSortWorldQuestsByProximity()
+		local expectedQuestIDs = {}
+		for _, questInfo in ipairs(sortedWorldQuests) do
+			if questInfo.type == "WQ" and questInfo.questID then
+				expectedQuestIDs[questInfo.questID] = true
+			end
+		end
+		RQE:SetTrackerSyncExpectedQuests("world", expectedQuestIDs)
+
+		RQE:ClearOwnedTrackerWorldRows()
 
 		-- Hide all existing World Quest buttons first
 		for i = 1, 50 do -- Assuming player won't have more than 50 World Quests tracked at once
@@ -5030,6 +5052,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			RQE.WorldQuestsFrame:Show()
 		else
 			RQE.WorldQuestsFrame:Hide()
+			RQE:CommitTrackerSyncRender("world")
 			return -- Exit early if no quests to display
 		end
 
@@ -5044,6 +5067,11 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 				-- Retrieve or initialize the WQuestLogIndexButton for the current questID
 				local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)	-- TAINT?: possibly source if run in combat
 				RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
+				WQuestLogIndexButton.questID = questID
+				if WQuestLogIndexButton:GetParent() ~= RQE.WorldQuestsFrame then
+					WQuestLogIndexButton:SetParent(RQE.WorldQuestsFrame)
+				end
+				RQE:OwnTrackerWorldRow(WQuestLogIndexButton)
 				WQuestLogIndexButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
 
 				-- Ensure the button always has the correct background texture based on its tracking state
@@ -5389,7 +5417,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 				-- Party Members' Quest Progress
 				if IsInGroup() then
-					if IsInRaid() then return end
+					if IsInRaid() then
+						RQE:AbortTrackerSyncRender("world")
+						return
+					end
 					GameTooltip:AddLine(" ")
 					-- GetQuestPartyProgress is unavailable in Classic Era.
 					local tooltipData = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress and C_TooltipInfo.GetQuestPartyProgress(questID)
@@ -5445,8 +5476,12 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						end
 					end
 				end
+				if questInfo.type == "WQ" then
+					RQE:RegisterTrackerSyncRow("world", questID, WQuestLogIndexButton, RQE.WorldQuestsFrame)
+				end
 			end
 		end
+		RQE:CommitTrackerSyncRender("world")
 	end
 
 
@@ -5987,50 +6022,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	-- #11o. Watch-List Synchronization
 	-------------------------------------------------------
 
-	-- Function that checks the watch list and compares that with the quests displayed in the RQEQuestFrame
-	function RQE:CheckWatchedQuestsSync()
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("~~~ Running RQE:CheckWatchedQuestsSync() ~~~")
-		end
-
-		local watchedQuests = {}
-		local displayedQuests = {}
-
-		-- Build list of all watched normal quests
-		for i = 1, RQE.API.GetNumQuestWatches() do
-			local qID = RQE.API.GetQuestIDForQuestWatchIndex(i)
-			if qID then
-				watchedQuests[qID] = true
-			end
-		end
-
-		-- Build list of all watched world quests
-		for i = 1, RQE.API.GetNumWorldQuestWatches() do
-			local qID = RQE.API.GetQuestIDForWorldQuestWatchIndex(i)
-			if qID then
-				watchedQuests[qID] = true
-			end
-		end
-
-		-- Populate displayedQuests from your RQEQuestFrame (update as per your actual tracking structure)
-		if RQE.RQEQuestFrame and RQE.RQEQuestFrame.QuestBlocks then
-			for questID in pairs(RQE.RQEQuestFrame.QuestBlocks) do
-				displayedQuests[questID] = true
-			end
-		end
-
-		-- Compare sets
-		for qID in pairs(watchedQuests) do
-			if not displayedQuests[qID] then
-				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-					DEFAULT_CHAT_FRAME:AddMessage("WatchListSync: Missing questID " .. qID .. " from RQEQuestFrame. Refreshing...", 1, 0.75, 0.79)
-				end
-				RQE:QuestType() -- Refresh layout
-				return
-			end
-		end
-	end
-
+	-- Rendered-row reconciliation is provided by TrackerSync.lua.
 
 	-- Frequent checking to enforce the visibility of quests being tracked to be displayed in RQEQuestFrame
 	-- C_Timer.NewTicker(1, function()
