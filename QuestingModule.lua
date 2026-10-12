@@ -4550,6 +4550,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function used to clear the Questing Frame
 	function RQE:ClearRQEQuestFrame()
+		RQE:InvalidateTrackerSyncRows("normal")
 		-- Clearing regular quest buttons
 		for i, QuestLogIndexButton in pairs(RQE.QuestLogIndexButtons or {}) do
 			if QuestLogIndexButton then
@@ -4876,6 +4877,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function used to clear the World Quest Frame
 	function RQE:ClearRQEWorldQuestFrame()
+		RQE:InvalidateTrackerSyncRows("world")
+		RQE:ClearOwnedTrackerWorldRows()
 		-- Ensure that RQE.WorldQuestsFrame exists and is a table
 		if RQE.WorldQuestsFrame and type(RQE.WorldQuestsFrame) == "table" then
 			-- Iterate over all elements in RQE.WorldQuestsFrame
@@ -5600,10 +5603,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Updates the RQEQuestFrame
 	function UpdateRQEQuestFrame()
+		RQE:BeginTrackerSyncRender("normal")
 		RQE.LastTrackerStepCacheMapID = RQE.LastTrackerStepCacheMapID
 			-- Previous Blizzard call changed 2026.09.25: or C_Map.GetBestMapForUnit("player")
 			or RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		RQE:SortWatchedQuestsByProximity()
+		local expectedQuestIDs = {}
+		for _, watchedQuest in ipairs(RQE.SortedWatchedQuests or {}) do
+			if watchedQuest.questID then expectedQuestIDs[watchedQuest.questID] = true end
+		end
+		RQE:SetTrackerSyncExpectedQuests("normal", expectedQuestIDs)
 		RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
 
 		local campaignQuestCount, regularQuestCount, worldQuestCount, bonusQuestCount = 0, 0, 0, 0
@@ -6470,6 +6479,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 					local elementHeight = QuestLogIndexButton:GetHeight()
 					totalHeight = totalHeight + elementHeight + spacingBetweenElements
+					RQE:RegisterTrackerSyncRow("normal", questID, QuestLogIndexButton, parentFrame)
 				end
 			end
 		end
@@ -6541,6 +6551,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.RefreshQuestTrackerScrollRange()
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, RQE.RefreshQuestTrackerScrollRange)
 		RQE.API.Client.C_Timer.After(0, RQE.RefreshQuestTrackerScrollRange)
+		RQE:CommitTrackerSyncRender("normal")
 	end
 
 
@@ -6555,6 +6566,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.RunUpdateRQEWorldQuestFrame = true
 			return
 		end
+		RQE:BeginTrackerSyncRender("world")
 
 		-- Define padding value
 		local padding = GetQuestSectionBottomPadding()
@@ -6566,8 +6578,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Gather and sort World Quests by proximity
 		local sortedWorldQuests = GatherAndSortWorldQuestsByProximity()
+		local expectedQuestIDs = {}
+		for _, questInfo in ipairs(sortedWorldQuests) do
+			if questInfo.type == "WQ" and questInfo.questID then expectedQuestIDs[questInfo.questID] = true end
+		end
+		RQE:SetTrackerSyncExpectedQuests("world", expectedQuestIDs)
 
 		-- Hide all existing World Quest buttons first
+		RQE:ClearOwnedTrackerWorldRows()
 		for i = 1, 50 do -- Assuming player won't have more than 50 World Quests tracked at once
 			local button = RQE.WorldQuestsFrame["WQButton" .. i]
 			if button then
@@ -6602,6 +6620,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		else
 			RQE.WorldQuestsFrame:Hide()
 			RQE.RefreshQuestTrackerScrollRange()
+			RQE:CommitTrackerSyncRender("world")
 			return -- Exit early if no quests to display
 		end
 
@@ -6616,6 +6635,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				-- Retrieve or initialize the WQuestLogIndexButton for the current questID
 				local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)	-- TAINT?: possibly source if run in combat
 				RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
+				WQuestLogIndexButton.questID = questID
+				if WQuestLogIndexButton:GetParent() ~= RQE.WorldQuestsFrame then
+					WQuestLogIndexButton:SetParent(RQE.WorldQuestsFrame)
+				end
+				RQE:OwnTrackerWorldRow(WQuestLogIndexButton)
 				WQuestLogIndexButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
 
 				-- Ensure the button always has the correct background texture based on its tracking state
@@ -6963,7 +6987,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				-- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
 				if RQE.API.Client.IsInGroup() then
 					-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
-					if RQE.API.Client.IsInRaid() then return end
+					if RQE.API.Client.IsInRaid() then
+						RQE:AbortTrackerSyncRender("world")
+						return
+					end
 					GameTooltip:AddLine(" ")
 					-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
 					local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
@@ -7008,6 +7035,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				-- Save the button in a table for future reference
 				RQE.WorldQuestsFrame["WQButton" .. i] = WQuestLogIndexButton
+				if questInfo.type == "WQ" then
+					RQE:RegisterTrackerSyncRow("world", questID, WQuestLogIndexButton, RQE.WorldQuestsFrame)
+				end
 
 			end
 		end
@@ -7039,6 +7069,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, ResizeWorldQuestSection)
 		RQE.API.Client.C_Timer.After(0, ResizeWorldQuestSection)
 		RQE.RefreshQuestTrackerScrollRange()
+		RQE:CommitTrackerSyncRender("world")
 	end
 
 
@@ -7590,49 +7621,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- #11o. Watch-List Synchronization
 	-------------------------------------------------------
 
-	-- Function that checks the watch list and compares that with the quests displayed in the RQEQuestFrame
-	function RQE:CheckWatchedQuestsSync()
-		local watchedQuests = {}
-		local displayedQuests = {}
-
-		-- Build list of all watched normal quests
-		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
-		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
-			-- Previous Blizzard call changed 2026.09.25: local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-			local qID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-			if qID then
-				watchedQuests[qID] = true
-			end
-		end
-
-		-- Build list of all watched world quests
-		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
-			-- Previous Blizzard call changed 2026.09.25: local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-			local qID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-			if qID then
-				watchedQuests[qID] = true
-			end
-		end
-
-		-- Populate displayedQuests from your RQEQuestFrame (update as per your actual tracking structure)
-		if RQE.RQEQuestFrame and RQE.RQEQuestFrame.QuestBlocks then
-			for questID in pairs(RQE.RQEQuestFrame.QuestBlocks) do
-				displayedQuests[questID] = true
-			end
-		end
-
-		-- Compare sets
-		for qID in pairs(watchedQuests) do
-			if not displayedQuests[qID] then
-				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-					DEFAULT_CHAT_FRAME:AddMessage("WatchListSync: Missing questID " .. qID .. " from RQEQuestFrame. Refreshing...", 1, 0.75, 0.79)
-				end
-				RQE:QuestType() -- Refresh layout
-				return
-			end
-		end
-	end
+	-- Rendered-row reconciliation is provided by TrackerSync.lua.
 
 
 	-- Frequent checking to enforce the visibility of quests being tracked to be displayed in RQEQuestFrame
