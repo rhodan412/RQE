@@ -3,7 +3,9 @@
 !/.github/**
 AGENTS.md
 Duplicates.txt
+StepCoordsFlag.txt
 find_duplicate_quests.py
+sync_tbc_anniversary.py
 /.pkgmeta
 .vscode/
 /Tests/
