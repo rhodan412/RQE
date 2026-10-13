@@ -1,8 +1,8 @@
 """Copy BurningCrusade quests into BurningCrusadeAnniversary.
 
 The Retail BurningCrusade table is read only. Existing Anniversary-only quests
-remain in place; a copied quest replaces an Anniversary quest with the same ID.
-Coordinate tags in Anniversary step descriptions receive the same zone ID map;
+remain byte for byte unchanged; a copied quest replaces an Anniversary quest
+with the same ID. Coordinate tags in copied step descriptions receive the zone ID map;
 the count of Anniversary quests with coordOrder routes is printed.
 Run with --dry-run to inspect counts without changing RQEDatabase.lua.
 """
@@ -138,7 +138,7 @@ def merge_tables(data):
     for quest_id, start, end in target_entries:
         pieces.append(target_body[cursor:start])
         if quest_id not in source_ids:
-            pieces.append(remap_fields(target_body[start:end]))
+            pieces.append(target_body[start:end])
         cursor = end
     pieces.append(target_body[cursor:])
     pieces.extend(remap_fields(source_body[start:end]) for _, start, end in source_entries)
