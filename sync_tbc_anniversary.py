@@ -2,7 +2,8 @@
 
 The Retail BurningCrusade table is read only. Existing Anniversary-only quests
 remain byte for byte unchanged; a copied quest replaces an Anniversary quest
-with the same ID. Coordinate tags in copied step descriptions receive the zone ID map;
+with the same ID and receives an inline BurningCrusadeAnniversary comment.
+Coordinate tags in copied step descriptions receive the zone ID map;
 the count of Anniversary quests with coordOrder routes is printed.
 Run with --dry-run to inspect counts without changing RQEDatabase.lua.
 """
@@ -118,6 +119,14 @@ def remap_fields(entry):
     return b"".join(lines)
 
 
+def mark_anniversary_entry(entry):
+    opening = QUEST_OPEN.match(entry)
+    if opening is None:
+        raise ValueError("Copied quest has no two-tab opening line")
+    brace_end = entry.index(b"{", 0, opening.end()) + 1
+    return entry[:brace_end] + b"\t-- BurningCrusadeAnniversary" + entry[brace_end:]
+
+
 def merge_tables(data):
     source_start, source_end = table_body_bounds(data, SOURCE_TABLE)
     target_start, target_end = table_body_bounds(data, TARGET_TABLE)
@@ -141,7 +150,10 @@ def merge_tables(data):
             pieces.append(target_body[start:end])
         cursor = end
     pieces.append(target_body[cursor:])
-    pieces.extend(remap_fields(source_body[start:end]) for _, start, end in source_entries)
+    pieces.extend(
+        mark_anniversary_entry(remap_fields(source_body[start:end]))
+        for _, start, end in source_entries
+    )
     merged_body = b"".join(pieces)
 
     merged_entries = quest_entries(merged_body, TARGET_TABLE)
