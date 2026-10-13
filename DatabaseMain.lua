@@ -190,11 +190,11 @@ Cross-client quest database selection, sandbox precedence, and lookup control
 		if majorVersion >= 4 then
 			databaseOrder = GetRetailDatabaseOrder()
 		elseif majorVersion == 3 and (minorVersion > 5 or (minorVersion == 5 and patchVersion > 0)) then
-			databaseOrder = { "WrathAnniversary", "BurningCrusadeAnniversary", "VanillaSoD" }
+			databaseOrder = { "WrathAnniversaryPerm", "WrathAnniversary", "BurningCrusadeAnniversaryPerm", "BurningCrusadeAnniversary", "VanillaSoD" }
 		elseif majorVersion == 3 then
 			databaseOrder = { "Wrath", "BurningCrusade", "Vanilla" }
 		elseif majorVersion == 2 and minorVersion >= 5 then
-			databaseOrder = { "BurningCrusadeAnniversary", "VanillaSoD" }
+			databaseOrder = { "BurningCrusadeAnniversaryPerm", "BurningCrusadeAnniversary", "VanillaSoD" }
 		elseif majorVersion == 2 then
 			databaseOrder = { "BurningCrusade", "Vanilla" }
 		elseif majorVersion == 1 and minorVersion == 60 then
