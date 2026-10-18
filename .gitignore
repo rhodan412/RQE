@@ -3,8 +3,10 @@
 !/.github/**
 AGENTS.md
 Duplicates.txt
+QuestSortReport.txt
 StepCoordsFlag.txt
 find_duplicate_quests.py
+sort_rqe_database.py
 sync_tbc_anniversary.py
 /.pkgmeta
 .vscode/
