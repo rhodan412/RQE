@@ -1146,6 +1146,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		local used = { framePosition = true, QuestFramePosition = true, trackerSectionOrder = true, useModernTheme = true }
 		local behavior = createOptionGroup("ShowAll", "Display Behavior", 1)
 		placeOption(behavior.args, source, used, "toggleBlizzObjectiveTracker", "Blizzard Objective Tracker", 1, 1.5)
+		placeOption(behavior.args, source, used, "enableDugiGuidesCompatibility", "Dugi Guides compatibility", 1.5, 1.85)
 		placeOption(behavior.args, source, used, "mythicScenarioMode", "Use Blizzard tracker in scenarios", 2, 1.85)
 		placeOption(behavior.args, source, used, "enableStepControls", "Manual step navigation", 3, 1.5)
 		placeOption(behavior.args, source, used, "creatureObjectPreview", "Creature and object previews", 5, "full")
