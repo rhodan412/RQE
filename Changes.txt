@@ -1,3 +1,228 @@
+12.1.5.1 (2026.10.31)
+
+	**HIGHLIGHTS**
+		- Burning Crusade Anniversary now includes Burning Crusade quest guidance with Anniversary map and continent coordinates.
+		- Retail quest tracking now offers Meta and Meta / Daily / Weekly selections, including Meta quests that use a different reset frequency.
+		- Quest Tracker can now automatically keep selected quest categories tracked as quests enter or leave the log; category tracking and current-zone tracking are mutually exclusive.
+		- Fixed a Retail tooltip Lua error when its size becomes protected during combat after RQE's themed tooltip artwork was cleared.
+		- The RQE Macro button tooltip now shows complete long commands across wrapped lines.
+		- Dugi Guides compatibility now keeps Blizzard's objective tracker and attached guide visible when RQE's Quest Tracker is hidden, even without tracked quests.
+		- With Dugi compatibility enabled, showing RQE's Quest Tracker hides Blizzard's tracker and the attached Dugi guide.
+		- Fixed the main RQE frame no longer updating until a reload when an automatically skipped quest step had no other quest on the map to switch to; the skipped quest is also returned to the watch list correctly.
+		- Fixed Classic Forever's Quest Tracker failing to draw with a Lua error because a tracker file was not loaded.
+		- Multi-step NPC gossip automation now waits for each new dialogue page before choosing the next option, so steps are no longer skipped or selected on the wrong page.
+		- Reduced RQE's CPU use while moving, and stopped bonus objective, task quest, and achievement rows in the Quest Tracker from building up in memory over a long play session.
+		- Reduced RQE's CPU use in groups, raids, and combat by ignoring other units' aura, spell, vehicle, and quest-log events, and made quest data lookups faster.
+		- With TomTom compatibility enabled, RQE now replaces only its own TomTom arrows, so waypoints you or other addons created in TomTom are no longer deleted when RQE updates its waypoint.
+		- Fixed the World Quests section showing only the first world quest while in a raid; hovering a world quest in a party now shows party members' progress instead of adding it to an unrelated tooltip.
+		- Quest Tracker updates from a kill, loot, or several watch changes at once are now combined into one refresh after the last update, reducing stutter.
+		- "Set Waypoint to Closest Flight Master" now keeps its arrow at the flight master until you land from the flight. Landing removes only that arrow; pressing the W button, clicking a quest, or choosing a coordinate replaces it sooner.
+		- SHIFT-clicking the Remove Waypoints button now removes all waypoints, including your own TomTom waypoints and the flight master arrow; a normal click removes only RQE's quest waypoints.
+
+	Buttons.lua
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing or replacing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous calls remain commented out. (2026.10.30.2139)
+		- Made a physical left press of the "W" button (OnMouseDown) call ReleaseManualFlightMasterWaypoint before its OnClick runs, so a manual W press replaces the nearest-flight-master arrow with the quest waypoint, while automated :Click() calls leave the flight master waypoint in place. (2026.10.30.2203)
+		- Made a SHIFT-click on the Remove Waypoints (RW) button release the flight master waypoint and reset TomTom's whole waypoint profile (falling back to TomTom:ClearAllWaypoints), removing every waypoint; a plain click still removes only RQE-tagged waypoints. Changed its tooltip to "Remove RQE Waypoints (SHIFT to remove all)"; the previous tooltip remains commented out. (2026.10.30.2203)
+
+	Client_Classic/Config.lua
+		- Added a Dugi-only, default-on compatibility checkbox to the Classic configuration frame and Blizzard AddOn Settings, with immediate tracker visibility refresh when changed. (2026.10.21.1230)
+		- Clarified in both Classic settings descriptions that Dugi compatibility hides Blizzard's tracker when RQE's Quest Tracker is shown. (2026.10.21.1235)
+
+	Client_Classic/Core.lua
+		- Routed manual player-continent position requests to the Contribution copy dialog while keeping quest acceptance and turn-in coordinate diagnostics on their existing path for Classic/SoD and Forever. (2026.10.20.1138)
+		- Defaulted the Dugi Guides compatibility preference on for Classic profiles so its guide can remain attached when RQE's Quest Tracker is hidden. (2026.10.21.1230)
+		- Preserved the Blizzard Objective Tracker during Classic Forever's post-scenario visibility update when Dugi compatibility is active and RQE's Quest Tracker is hidden. (2026.10.21.1230)
+		- Used the Dugi visibility rule during tracker initialization and post-scenario updates so Classic Forever does not show both trackers when RQE's Quest Tracker is visible. (2026.10.21.1232)
+		- Made CheckSuperTrackedQuestAndStep look up the replacement quest before removing the blacklisted quest's watch and leave the quest untouched when none exists, so BlacklistUnderway can no longer stay set and stop every later UpdateFrame; the 2.5-second re-watch now restores a captured quest ID instead of the shared RQE.BlackListedQuestID, which each later call overwrote. (2026.10.30.2030)
+		- Kept the previous CheckSuperTrackedQuestAndStep body as commented-out code beneath its replacement so the original blacklist logic stays available for reference. (2026.10.30.2107)
+		- Limited OnPlayerMoving's UpdateMapIDDisplay and UpdateStepDistance calls to once every 0.1 seconds through the RQE.MovingDisplayElapsed accumulator instead of every rendered frame, reducing per-frame database and distance work while moving; the 0.25-second waypoint and coordinate-condition checks are unchanged. (2026.10.30.2107)
+		- Made ProcessNextGossipOption wait for the next GOSSIP_SHOW through selectedGossipOption.awaitingPage instead of rescheduling itself every 0.5 seconds, so a queued gossip chain advances once per new page rather than also selecting the next orderIndex on a page that has not refreshed; the single-option handler now skips an NPC whose multiple-option queue is active so one page cannot receive two selections. (2026.10.30.2107)
+		- Replaced the TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous call remains commented out. (2026.10.30.2139)
+		- Rewrote IsManualFlightMasterWaypointProtected so the nearest-flight-master waypoint stays until the player lands: quest step changes no longer release it, a map change releases it only when the player is not on a taxi, and a missing pin is detected with TomTom:WaypointExists instead of comparing RQE._currentTomTomUID; a release calls ReleaseManualFlightMasterWaypoint. The previous function remains commented out. (2026.10.30.2203)
+		- Made SetTomTomWaypointToClosestFlightMaster release any previous flight master waypoint first and pass cleardistance = 0 to Waypoints:Replace so TomTom keeps the arrow at the flight master instead of clearing it on arrival; SetActiveCoordblock now also calls ReleaseManualFlightMasterWaypoint so a manual coordinate-block click removes the flight master arrow. (2026.10.30.2203)
+
+	Client_Classic/EventManager.lua
+		- Installed RQE quest-frame visibility hooks at login and reapplied Dugi tracker visibility after combat for Classic clients. (2026.10.21.1230)
+		- Cached HandleEvents' event-to-handler table in RQE.EventHandlerMap on the first event instead of rebuilding it for every event, and passed the event payload straight through instead of copying it with unpack({...}). (2026.10.30.2126)
+		- Registered UNIT_AURA, UNIT_ENTERING_VEHICLE, UNIT_EXITING_VEHICLE, UNIT_INVENTORY_CHANGED, UNIT_MODEL_CHANGED, UNIT_QUEST_LOG_CHANGED, and UNIT_SPELLCAST_SUCCEEDED with RegisterUnitEvent for "player" only, so the client no longer delivers these events for targets, nameplates, party members, or raid members that the handlers ignore or should not act on. (2026.10.30.2126)
+		- Changed handleQuestStatusUpdate's always-true mount condition to RQE.PlayerMountStatus ~= "Taxi", so the delayed main-frame refresh after quest log updates is skipped only while on a taxi; the previous condition remains commented out. (2026.10.30.2139)
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous calls remain commented out. (2026.10.30.2139)
+		- Replaced the direct or timed UpdateRQEQuestFrame calls in ZONE_CHANGED/ZONE_CHANGED_INDOORS, UNIT_QUEST_LOG_CHANGED, QUEST_WATCH_UPDATE, and QUEST_WATCH_LIST_CHANGED with RQE:RequestQuestTrackerRefresh(), so a burst of these events rebuilds the Quest Tracker once after the last event instead of once per event; the previous calls remain commented out. (2026.10.30.2203)
+		- Replaced handleQuestStatusUpdate's per-event 0.7-second C_Timer.After with one cancellable RQE.QuestStatusUpdateTimer that restarts on each QUEST_LOG_UPDATE, so UpdateFrame runs once with the last event's quest data, at most 2 seconds after a continuous burst begins. (2026.10.30.2203)
+		- Set RQE.TaxiFlightInProgress when PLAYER_CONTROL_LOST finds the player on a taxi, and made handlePlayerControlGained call ReleaseManualFlightMasterWaypoint once the player has landed, removing only the nearest-flight-master waypoint and leaving RQE-tagged quest waypoints. (2026.10.30.2203)
+
+	Client_Classic/QuestingModule.lua
+		- Showed the Blizzard Objective Tracker outside combat when Dugi compatibility is active and RQE's Quest Tracker is hidden; checked the protected legacy frame on the existing timer without hooking its scripts, including when only virtual quests or no quests are tracked. (2026.10.21.1230)
+		- Made Dugi mode hide Blizzard's tracker when RQE's Quest Tracker is shown, with the legacy timer enforcing both sides of the visibility rule outside combat. (2026.10.21.1232)
+		- Hid Dugi's separate objective backdrop when RQE's Quest Tracker is shown so the attached guide artwork does not remain on screen after Blizzard's tracker hides. (2026.10.21.1236)
+		- Used the shared backdrop synchronizer to restore Dugi's prior objective border when RQE's Quest Tracker hides again. (2026.10.21.1237)
+		- Reused bonus objective rows (RQE.BonusQuestRowPool), task quest rows (RQE.TaskQuestRowPool), and achievement header and criteria font strings (RQE.AchievementHeaderPool, RQE.AchievementCriteriaPool) by position instead of creating new widgets on every tracker update; the clear functions now hide and unanchor rows without detaching them, so frames no longer accumulate for the rest of the session. (2026.10.30.2107)
+		- Moved the world quest party-progress block into the WQuestLevelAndName OnEnter tooltip handler behind an IsInGroup and not IsInRaid check; it previously ran during UpdateRQEWorldQuestFrame's render, writing party lines into whatever tooltip was open and, in a raid, aborting the render after the first world quest. The previous block remains commented out. (2026.10.30.2139)
+		- Replaced the TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE"; the previous call remains commented out. (2026.10.30.2139)
+		- Made the physical quest-row press call ReleaseManualFlightMasterWaypoint, so choosing a quest removes a nearest-flight-master arrow that quest waypoint clears no longer remove. (2026.10.30.2203)
+
+	Client_Classic/RQEFrame.lua
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous calls remain commented out. (2026.10.30.2139)
+
+	Client_Classic/WaypointManager.lua
+		- Made CreateWaypoint call RQE:ClearRQETomTomWaypoints() before adding its TomTom waypoint and tag it from = "RQE", so a coordinate hotspot switch replaces the previous RQE arrow instead of leaving it, and later clears can find RQE's waypoints without changing the title shown under the arrow. (2026.10.30.2139)
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE"; the previous calls remain commented out. (2026.10.30.2139)
+
+	Client_TBC/Config.lua
+		- Added a Dugi-only, default-on compatibility checkbox to the TBC configuration frame and Blizzard AddOn Settings, with immediate tracker visibility refresh when changed. (2026.10.21.1230)
+		- Clarified in both TBC settings descriptions that Dugi compatibility hides Blizzard's tracker when RQE's Quest Tracker is shown. (2026.10.21.1235)
+
+	Client_TBC/Core.lua
+		- Routed manual player-continent position requests to the Contribution copy dialog while keeping quest acceptance and turn-in coordinate diagnostics on their existing path for TBC Anniversary. (2026.10.20.1138)
+		- Defaulted the Dugi Guides compatibility preference on for TBC profiles so its guide can remain attached when RQE's Quest Tracker is hidden. (2026.10.21.1230)
+		- Kept the post-scenario tracker handoff consistent with Dugi compatibility whenever Blizzard tracker management is available on the client. (2026.10.21.1230)
+		- Applied the Dugi visibility rule during tracker initialization and post-scenario updates so TBC uses one tracker at a time when Blizzard frame management is available. (2026.10.21.1232)
+		- Made CheckSuperTrackedQuestAndStep look up the replacement quest before removing the blacklisted quest's watch and leave the quest untouched when none exists, so BlacklistUnderway can no longer stay set and stop every later UpdateFrame; the 2.5-second re-watch now restores a captured quest ID instead of the shared RQE.BlackListedQuestID, which each later call overwrote. (2026.10.30.2030)
+		- Kept the previous CheckSuperTrackedQuestAndStep body as commented-out code beneath its replacement so the original blacklist logic stays available for reference. (2026.10.30.2107)
+		- Limited OnPlayerMoving's UpdateMapIDDisplay and UpdateStepDistance calls to once every 0.1 seconds through the RQE.MovingDisplayElapsed accumulator instead of every rendered frame, reducing per-frame database and distance work while moving; the 0.25-second waypoint and coordinate-condition checks are unchanged. (2026.10.30.2107)
+		- Made ProcessNextGossipOption wait for the next GOSSIP_SHOW through selectedGossipOption.awaitingPage instead of rescheduling itself every 0.5 seconds, so a queued gossip chain advances once per new page rather than also selecting the next orderIndex on a page that has not refreshed; the single-option handler now skips an NPC whose multiple-option queue is active so one page cannot receive two selections. (2026.10.30.2107)
+		- Replaced the TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous call remains commented out. (2026.10.30.2139)
+		- Rewrote IsManualFlightMasterWaypointProtected so the nearest-flight-master waypoint stays until the player lands: quest step changes no longer release it, a map change releases it only when the player is not on a taxi, and a missing pin is detected with TomTom:WaypointExists instead of comparing RQE._currentTomTomUID; a release calls ReleaseManualFlightMasterWaypoint. The previous function remains commented out. (2026.10.30.2203)
+		- Made SetTomTomWaypointToClosestFlightMaster release any previous flight master waypoint first and pass cleardistance = 0 to Waypoints:Replace so TomTom keeps the arrow at the flight master instead of clearing it on arrival; SetActiveCoordblock now also calls ReleaseManualFlightMasterWaypoint so a manual coordinate-block click removes the flight master arrow. (2026.10.30.2203)
+
+	Client_TBC/EventManager.lua
+		- Installed RQE quest-frame visibility hooks at login and reapplied Dugi tracker visibility after combat for TBC Anniversary. (2026.10.21.1230)
+		- Cached HandleEvents' event-to-handler table in RQE.EventHandlerMap on the first event instead of rebuilding it for every event, and passed the event payload straight through instead of copying it with unpack({...}). (2026.10.30.2126)
+		- Registered UNIT_AURA, UNIT_ENTERING_VEHICLE, UNIT_EXITING_VEHICLE, UNIT_INVENTORY_CHANGED, UNIT_MODEL_CHANGED, UNIT_QUEST_LOG_CHANGED, and UNIT_SPELLCAST_SUCCEEDED with RegisterUnitEvent for "player" only, so the client no longer delivers these events for targets, nameplates, party members, or raid members that the handlers ignore or should not act on. (2026.10.30.2126)
+		- Changed handleQuestStatusUpdate's always-true mount condition to RQE.PlayerMountStatus ~= "Taxi", so the delayed main-frame refresh after quest log updates is skipped only while on a taxi; the previous condition remains commented out. (2026.10.30.2139)
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous calls remain commented out. (2026.10.30.2139)
+		- Replaced the direct or timed UpdateRQEQuestFrame calls in ZONE_CHANGED/ZONE_CHANGED_INDOORS, UNIT_QUEST_LOG_CHANGED, QUEST_WATCH_UPDATE, and QUEST_WATCH_LIST_CHANGED with RQE:RequestQuestTrackerRefresh(), so a burst of these events rebuilds the Quest Tracker once after the last event instead of once per event; the previous calls remain commented out. (2026.10.30.2203)
+		- Replaced handleQuestStatusUpdate's per-event 0.7-second C_Timer.After with one cancellable RQE.QuestStatusUpdateTimer that restarts on each QUEST_LOG_UPDATE, so UpdateFrame runs once with the last event's quest data, at most 2 seconds after a continuous burst begins. (2026.10.30.2203)
+		- Set RQE.TaxiFlightInProgress when PLAYER_CONTROL_LOST finds the player on a taxi, and made handlePlayerControlGained call ReleaseManualFlightMasterWaypoint once the player has landed, removing only the nearest-flight-master waypoint and leaving RQE-tagged quest waypoints. (2026.10.30.2203)
+
+	Client_TBC/QuestingModule.lua
+		- Showed the Blizzard Objective Tracker outside combat when Dugi compatibility is active and RQE's Quest Tracker is hidden; checked the protected legacy frame on the existing timer without hooking its scripts, including when only virtual quests or no quests are tracked. (2026.10.21.1230)
+		- Made Dugi mode hide Blizzard's tracker when RQE's Quest Tracker is shown, with the legacy timer enforcing both sides of the visibility rule outside combat. (2026.10.21.1232)
+		- Hid Dugi's separate objective backdrop when RQE's Quest Tracker is shown so the attached guide artwork does not remain on screen after Blizzard's tracker hides. (2026.10.21.1236)
+		- Used the shared backdrop synchronizer to restore Dugi's prior objective border when RQE's Quest Tracker hides again. (2026.10.21.1237)
+		- Reused bonus objective rows (RQE.BonusQuestRowPool), task quest rows (RQE.TaskQuestRowPool), and achievement header and criteria font strings (RQE.AchievementHeaderPool, RQE.AchievementCriteriaPool) by position instead of creating new widgets on every tracker update; the clear functions now hide and unanchor rows without detaching them, so frames no longer accumulate for the rest of the session. (2026.10.30.2107)
+		- Moved the world quest party-progress block into the WQuestLevelAndName OnEnter tooltip handler behind an IsInGroup and not IsInRaid check; it previously ran during UpdateRQEWorldQuestFrame's render, writing party lines into whatever tooltip was open and, in a raid, aborting the render after the first world quest. The previous block remains commented out. (2026.10.30.2139)
+		- Replaced the TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE"; the previous call remains commented out. (2026.10.30.2139)
+		- Made the physical quest-row press call ReleaseManualFlightMasterWaypoint, so choosing a quest removes a nearest-flight-master arrow that quest waypoint clears no longer remove. (2026.10.30.2203)
+
+	Client_TBC/RQEFrame.lua
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous calls remain commented out. (2026.10.30.2139)
+
+	Client_TBC/WaypointManager.lua
+		- Made CreateWaypoint call RQE:ClearRQETomTomWaypoints() before adding its TomTom waypoint and tag it from = "RQE", so a coordinate hotspot switch replaces the previous RQE arrow instead of leaving it, and later clears can find RQE's waypoints without changing the title shown under the arrow. (2026.10.30.2139)
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE"; the previous calls remain commented out. (2026.10.30.2139)
+
+	Config.lua
+		- Routed both Retail Auto Track Zone Quests settings controls through the shared zone setter so toggling that mode clears automatic category choices. (2026.10.16.1105)
+		- Added a Dugi-only, default-on compatibility checkbox to Retail's configuration frame and Blizzard AddOn Settings, applying visibility changes immediately. (2026.10.21.1230)
+		- Clarified in both Retail settings descriptions that Dugi compatibility hides Blizzard's tracker when RQE's Quest Tracker is shown. (2026.10.21.1235)
+
+	ConfigTheme.lua
+		- Placed the conditional Dugi Guides compatibility option alongside Blizzard tracker behavior in the themed Retail AddOn Settings page. (2026.10.21.1230)
+
+	Core.lua
+		- Routed the Retail legacy filter dropdown's zone toggle through the shared zone setter so it follows the same mutually exclusive category behavior. (2026.10.16.1105)
+		- Routed manual player-continent position requests to the Contribution copy dialog while preserving quest acceptance and turn-in coordinate diagnostics on Retail. (2026.10.20.1138)
+		- Defaulted Dugi compatibility on and routed scenario tracker handoffs through the shared visibility rule so a hidden RQE Quest Tracker does not hide Dugi's parent tracker. (2026.10.21.1230)
+		- Made CheckSuperTrackedQuestAndStep look up the replacement quest before removing the blacklisted quest's watch and leave the quest untouched when none exists, so BlacklistUnderway can no longer stay set and stop every later UpdateFrame; the 2.5-second re-watch now restores a captured quest ID instead of the shared RQE.BlackListedQuestID, which each later call overwrote. (2026.10.30.2030)
+		- Kept the previous CheckSuperTrackedQuestAndStep body as commented-out code beneath its replacement so the original blacklist logic stays available for reference. (2026.10.30.2107)
+		- Limited OnPlayerMoving's UpdateMapIDDisplay, UpdateStepDistance, and RefreshTrackedQuestDistances calls to once every 0.1 seconds through the RQE.MovingDisplayElapsed accumulator instead of every rendered frame, reducing per-frame database and distance work while moving; the 0.25-second waypoint and coordinate-condition checks are unchanged. (2026.10.30.2107)
+		- Made ProcessNextGossipOption wait for the next GOSSIP_SHOW through selectedGossipOption.awaitingPage instead of rescheduling itself every 0.5 seconds, so a queued gossip chain advances once per new page rather than also selecting the next orderIndex on a page that has not refreshed; the single-option handler now skips an NPC whose multiple-option queue is active so one page cannot receive two selections. (2026.10.30.2107)
+		- Replaced the TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous call remains commented out. (2026.10.30.2139)
+		- Rewrote IsManualFlightMasterWaypointProtected so the nearest-flight-master waypoint stays until the player lands: quest step changes no longer release it, a map change releases it only when the player is not on a taxi, and a missing pin is detected with TomTom:WaypointExists instead of comparing RQE._currentTomTomUID; a release calls ReleaseManualFlightMasterWaypoint. The previous function remains commented out. (2026.10.30.2203)
+		- Made SetTomTomWaypointToClosestFlightMaster release any previous flight master waypoint first and pass cleardistance = 0 to Waypoints:Replace so TomTom keeps the arrow at the flight master instead of clearing it on arrival; SetActiveCoordblock now also calls ReleaseManualFlightMasterWaypoint so a manual coordinate-block click removes the flight master arrow. (2026.10.30.2203)
+
+	DatabaseMain.lua
+		- Added WrathAnniversaryPerm and BurningCrusadeAnniversaryPerm tables for purposes of preserving changes after data is pasted and map information updated from BurningCrusade to BurningCrusadeAnniversary (2026.10.13.1739)
+		- Moved the database section order into BuildQuestDatabaseOrder and cached it through GetQuestDatabaseOrder, so getQuestData no longer reads GetBuildInfo, parses the version, rebuilds the order tables, and queries the Warlords of Draenor garrison on every lookup; PLAYER_ENTERING_WORLD and GARRISON_UPDATE clear the cache so a garrison level change still selects the matching section. (2026.10.30.2126)
+		
+	EventManager.lua
+		- Installed the Retail quest-frame visibility hooks at login and respected the Dugi compatibility rule when reopening RQE frames, preventing a direct Blizzard tracker hide. (2026.10.21.1230)
+		- Made handleUnitAura return when the supertracked quest ID is 0, which Retail's C_SuperTrack returns when nothing is supertracked, so player aura changes no longer look up quest 0. (2026.10.30.2126)
+		- Cached HandleEvents' event-to-handler table in RQE.EventHandlerMap on the first event instead of rebuilding it for every event, and passed the event payload straight through instead of copying it with unpack({...}). (2026.10.30.2126)
+		- Registered UNIT_AURA, UNIT_ENTERING_VEHICLE, UNIT_EXITING_VEHICLE, UNIT_INVENTORY_CHANGED, UNIT_MODEL_CHANGED, UNIT_QUEST_LOG_CHANGED, and UNIT_SPELLCAST_SUCCEEDED with RegisterUnitEvent for "player" only, so the client no longer delivers these events for targets, nameplates, party members, or raid members that the handlers ignore or should not act on. (2026.10.30.2126)
+		- Changed handleQuestStatusUpdate's always-true mount condition to RQE.PlayerMountStatus ~= "Taxi", so the delayed main-frame refresh after quest log updates is skipped only while on a taxi; the previous condition remains commented out. (2026.10.30.2139)
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous calls remain commented out. (2026.10.30.2139)
+		- Replaced the direct or timed UpdateRQEQuestFrame calls in ZONE_CHANGED/ZONE_CHANGED_INDOORS, UNIT_QUEST_LOG_CHANGED, QUEST_WATCH_UPDATE, and QUEST_WATCH_LIST_CHANGED with RQE:RequestQuestTrackerRefresh(), so a burst of these events rebuilds the Quest Tracker once after the last event instead of once per event; the previous calls remain commented out. (2026.10.30.2203)
+		- Replaced handleQuestStatusUpdate's per-event 0.7-second C_Timer.After with one cancellable RQE.QuestStatusUpdateTimer that restarts on each QUEST_LOG_UPDATE, so UpdateFrame runs once with the last event's quest data, at most 2 seconds after a continuous burst begins. (2026.10.30.2203)
+		- Set RQE.TaxiFlightInProgress when PLAYER_CONTROL_LOST finds the player on a taxi, and made handlePlayerControlGained call ReleaseManualFlightMasterWaypoint once the player has landed, removing only the nearest-flight-master waypoint and leaving RQE-tagged quest waypoints. (2026.10.30.2203)
+
+	QuestingModule.lua
+		- Included Dugi compatibility in Retail's tracker and combat-alpha visibility decision, and restored the Blizzard tracker after unexpected hides while RQE's Quest Tracker is hidden. (2026.10.21.1230)
+		- Prioritized Dugi mode's RQE Quest Tracker visibility over manual and scenario handoffs so showing RQE's tracker hides Blizzard's tracker and the attached guide. (2026.10.21.1232)
+		- Hid Dugi's UIParent-backed objective backdrop when RQE's Quest Tracker is shown, preventing its border from lingering after the Blizzard Objective Tracker is hidden. (2026.10.21.1236)
+		- Used the shared backdrop synchronizer to restore Dugi's prior objective border when RQE's Quest Tracker hides again. (2026.10.21.1237)
+		- Reused bonus objective rows (RQE.BonusQuestRowPool), task quest rows (RQE.TaskQuestRowPool), and achievement header and criteria font strings (RQE.AchievementHeaderPool, RQE.AchievementCriteriaPool) by position instead of creating new widgets on every tracker update; the clear functions now hide and unanchor rows without detaching them, and each pooled button keeps its objective progress bar, so frames no longer accumulate for the rest of the session. (2026.10.30.2107)
+		- Moved the world quest party-progress block into the WQuestLevelAndName OnEnter tooltip handler behind an IsInGroup and not IsInRaid check; it previously ran during UpdateRQEWorldQuestFrame's render, writing party lines into whatever tooltip was open and, in a raid, aborting the render after the first world quest. The previous block remains commented out. (2026.10.30.2139)
+		- Replaced the TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE"; the previous call remains commented out. (2026.10.30.2139)
+		- Made the physical quest-row press call ReleaseManualFlightMasterWaypoint, so choosing a quest removes a nearest-flight-master arrow that quest waypoint clears no longer remove. (2026.10.30.2203)
+
+	QuestTools.lua
+		- Added Retail-only Meta and Meta / Daily / Weekly quest-log selections between Campaign and Daily / Weekly; used Blizzard's Meta flag alongside the existing frequency check so scheduler-reset Meta quests can be tracked and overlapping matches count once without changing the TBC or Classic menus. (2026.10.16.1048)
+		- Added profile-saved automatic Campaign and Meta checkboxes for Retail plus Daily / Weekly and Instance checkboxes across supported clients; combined their quest-log matches, preserved one-time restoration, and made category choices mutually exclusive with current-zone automation. (2026.10.16.1105)
+		- Reconciled category tracking after quest acceptance, removal, turn-in, and login with coalesced watch diffs and a post-accept repair check; avoided frequent quest-log and watch-list update events so ordinary quest tracking stays current without a refresh loop. (2026.10.16.1105)
+		- Kept an explicit empty virtual selection on legacy clients and removed only previously category-selected Retail watches whose quests have left the log, preventing stale ordinary quest rows without clearing World Quests or bonus objectives. (2026.10.16.1107)
+		- Added Contribution-only menu actions beneath Macros that sample the player's current map and usable continent position and format tab-indented locations or coordinate hotspots, falling back to singular location or coordinates when continent positioning is unavailable. (2026.10.20.1138)
+		- Expanded the shared reference copy dialog for multiline coordinate snippets while retaining its selected, copy-ready single-line NPC and quest references. (2026.10.20.1138)
+		- Added a Contribution-only subzone/zone copy action that combines the live minimap label with the current map's name in the shared copy dialog, with a zone-text fallback when map metadata is unavailable. (2026.10.20.1145)
+		- Replaced the single Speak macro flyout row with alphabetically sorted Step Editor macro templates and a Cancel Aura entry, showing each template's multiline tooltip and client-specific icon while keeping all copy actions Contribution-gated. (2026.10.20.1203)
+		- Generated each copied macro as an escaped Lua macro entry, substituting a readable current NPC target into the primary NPC placeholder and retaining secondary NPC, item, spell, and quantity placeholders when they need author input. (2026.10.20.1203)
+		- Filled both primary and secondary NPC placeholders from the current target when copying a dual-NPC macro, including quoted gossip arguments, while retaining both placeholders when no NPC is targeted. (2026.10.20.1213)
+		- Added an alphabetically sorted Descriptions flyout above Macros, with the Step Editor's template previews and copyable description lines gated on RQE Contribution loading. (2026.10.20.1223)
+		- Shared minimap/map zone formatting between the zone copy action and description output; filled targeted NPC IDs and names, retained author placeholders when the target or zone is unavailable, and used the requested near-body ITEMNAME/ITEM labels in copied text. (2026.10.20.1223)
+		- Added conditional item or spell ID input and an update button to the macro copy dialog when command lines contain matching placeholders; resolved item and spell names through existing client helpers and reselected updated text for copying. (2026.10.20.1242)
+		- Kept both NPC placeholders in dual-target macros until their separate buttons capture the current target, while single-target macros continue to fill the initial target automatically. (2026.10.20.1242)
+		- Added a quantity input and update button for macros with NUMBER, including auction house and both merchant purchase templates; each update preserves the selected item ID and NPC name. (2026.10.20.1255)
+		- Added an object-name input and update button for object gossip templates, accepting names with or without surrounding quotes and escaping embedded quotes in the copyable Lua macro. (2026.10.20.1255)
+		- Inset the shared copy edit box and macro item/spell ID, quantity, and object-name inputs so their text and carets no longer overlap themed borders. (2026.10.20.1322)
+		- Reused the copy dialog's conditional input rows for description templates, adding labeled NPC capture buttons and item/spell ID, count, or object fields only when their placeholders occur. (2026.10.20.1335)
+		- Rebuilt copied descriptions from their templates after each update, resolving item and spell names, replacing ## and highlighted numeric counts, preserving the sampled zone and other field values, and ignoring stale item callbacks. (2026.10.20.1335)
+		- Added a gossip-options input only for speaking macros, validating comma-separated indices and updating their gossip call independently of item, quantity, object, and NPC substitutions. (2026.10.20.1408)
+		- Hid the redundant NPC button for the multiple-mob loot description while keeping its initial target reference, and recognized the turn-in description's NPC placeholder for targeted and untargeted copies. (2026.10.20.1408)
+
+	RQE-Camelot.TOC
+		- Listed TrackerSync.lua above QuestingModule.lua so Classic Forever defines the TrackerSync render methods that the root QuestingModule.lua calls on every tracker update. (2026.10.30.2107)
+
+	RQE.toc
+		- Updated version#. (2026.10.13.1739)
+
+	RQEDatabase.lua
+		- Removed duplicates from several DB tables (2026.10.13.1739) 
+		- Copied Burning Crusade quest entries into Burning Crusade Anniversary while preserving its existing quests and remapping Outland zone and continent IDs for Anniversary coordinates. (2026.10.12.1739)
+		- Added commented out lines following a questID in BurningCrusadeAnniversary to denote that it was associated with the Anniversary or Classic version of the game. (2026.10.13.1739)
+		- Added additional quests for the 12.1 intro and campaign quests in Coiled Isle to the DB (2026.10.31.0105)
+
+	RQEFrame.lua
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous calls remain commented out. (2026.10.30.2139)
+
+	RQEMacro.lua
+		- Split long macro hover-tooltip commands at readable boundaries before adding tooltip lines so function calls and arguments remain visible on the Magic button across supported clients. (2026.10.20.1408)
+
+	RQEMinimap.lua
+		- Replaced the TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous call remains commented out. (2026.10.30.2139)
+
+	RQE_API.lua
+		- Added shared loaded-Dugi detection and a setting plus RQE quest-frame visibility check for all clients, independent of native or virtual quest watch counts. (2026.10.21.1230)
+		- Exposed the active Dugi compatibility state separately from the hidden-frame check so tracker enforcement can also hide Blizzard's tracker when RQE's Quest Tracker is visible. (2026.10.21.1232)
+		- Saved and restored Dugi's separately parented objective border across RQE Quest Tracker visibility changes so hiding Blizzard's tracker does not leave the border behind or lose it on return. (2026.10.21.1237)
+
+	TrackerSync.lua
+		- Added RQE:RequestQuestTrackerRefresh(), a shared trailing debounce that restarts one C_Timer.NewTimer on each request and calls UpdateRQEQuestFrame 0.3 seconds after the last one (at most 1 second after the first), so event bursts rebuild the Quest Tracker once with the final quest-log state on every client. (2026.10.30.2203)
+
+	UITheme.lua
+		- Skipped tooltip artwork layout after its RQE tooltip kind was cleared, and used uncropped artwork when an active tooltip reports secret dimensions so combat size changes cannot enter aspect-ratio arithmetic. (2026.10.18.1107)
+
+	WaypointManager.lua
+		- Made CreateWaypoint call RQE:ClearRQETomTomWaypoints() before adding its TomTom waypoint and tag it from = "RQE", so a coordinate hotspot switch replaces the previous RQE arrow instead of leaving it, and later clears can find RQE's waypoints without changing the title shown under the arrow. (2026.10.30.2139)
+		- Replaced each TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE"; the previous calls remain commented out. (2026.10.30.2139)
+
+	WPUtil.lua
+		- Added RQE:ClearRQETomTomWaypoints(), which collects TomTom waypoints whose separate from field is "RQE" (plus RQE._currentTomTomUID) and removes each with TomTom:RemoveWaypoint, so RQE can replace its own arrows without resetting TomTom's whole waypoint profile and deleting the player's or other addons' waypoints. (2026.10.30.2139)
+		- Replaced the TomTom.waydb:ResetProfile() calls in Waypoints:Replace and SelectCoordblockWaypoint with RQE:ClearRQETomTomWaypoints(); the previous calls remain commented out. (2026.10.30.2139)
+		- Added RQE.TomTomFlightMasterTag ("RQE_FlightMaster"); Waypoints:Replace now tags the waypoint with it while _settingManualFlightMasterWaypoint is set, so the nearest-flight-master arrow is kept apart from "RQE" quest waypoints. ClearRQETomTomWaypoints now skips RQE._currentTomTomUID when it is the flight master waypoint. The previous lines remain commented out. (2026.10.30.2203)
+		- Added RQE:ReleaseManualFlightMasterWaypoint(), which removes TomTom waypoints tagged with the flight master tag (plus ManualFlightMasterWaypointUID), clears a matching Blizzard user pin, and resets the manual flight master state; landing after a taxi and explicit destination choices call it, including SelectCoordOrderFocusPoint when the player picks a route point. (2026.10.30.2203)
+
+
 12.1.5.0 (2026.10.12)
 
 	**HIGHLIGHTS**
