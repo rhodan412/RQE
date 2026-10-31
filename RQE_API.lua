@@ -4940,6 +4940,39 @@ if isLegacyClient then
 	end
 end
 
+-- Dugi attaches its guide display to Blizzard's Objective Tracker. Check the
+-- loaded addon at use time so load order does not affect the setting.
+function RQE.API.IsDugiGuidesLoaded()
+	return RQE.API.IsAddOnLoaded and RQE.API.IsAddOnLoaded("DugisGuideViewerZ") == true
+end
+
+function RQE.API.IsDugiGuidesCompatibilityActive()
+	return RQE.db and RQE.db.profile
+		and RQE.db.profile.enableDugiGuidesCompatibility ~= false
+		and RQE.API.IsDugiGuidesLoaded()
+end
+
+function RQE.API.ShouldKeepDugiObjectiveTrackerShown()
+	return RQE.API.IsDugiGuidesCompatibilityActive()
+		and RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown()
+end
+
+-- Dugi's optional objective border is parented to UIParent, not the tracker.
+-- Preserve its previous state while RQE temporarily hides the tracker.
+function RQE.API.SyncDugiObjectiveBackdrop()
+	if not RQE.API.IsDugiGuidesCompatibilityActive() or not RQE.RQEQuestFrame
+		or not DugisObjectiveBackground then return end
+	if RQE.RQEQuestFrame:IsShown() then
+		if DugisObjectiveBackground:IsShown() then
+			RQE._dugiObjectiveBackgroundWasShown = true
+			DugisObjectiveBackground:Hide()
+		end
+	elseif RQE._dugiObjectiveBackgroundWasShown then
+		RQE._dugiObjectiveBackgroundWasShown = nil
+		DugisObjectiveBackground:Show()
+	end
+end
+
 -------------------------------------------------
 -- Unified client API surface (Retail / SoD / Anniversary / Forever)
 -------------------------------------------------
