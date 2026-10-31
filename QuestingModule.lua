@@ -526,9 +526,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if RQE.API.Client.InCombatLockdown() then
 			-- Blizzard can show or change the alpha of its protected tracker during
 			-- combat. Keep it visually suppressed until a real Hide is legal.
-			local useBlizzard = RQE.manualBlizzardTrackerOverride
-				or (RQE.db.profile.mythicScenarioMode
-					and RQE.API.Client.C_Scenario.IsInScenario())
+			local useBlizzard = RQE.API.ShouldKeepDugiObjectiveTrackerShown()
+			if not RQE.API.IsDugiGuidesCompatibilityActive() then
+				useBlizzard = RQE.manualBlizzardTrackerOverride
+					or (RQE.db.profile.mythicScenarioMode
+						and RQE.API.Client.C_Scenario.IsInScenario())
+			end
 			if not useBlizzard and ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown()
 				and ObjectiveTrackerFrame:GetAlpha() ~= 0 then
 				RQE:EnforceObjectiveTrackerVisibility()
@@ -545,9 +548,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	function RQE:EnforceObjectiveTrackerVisibility()
 		if not ObjectiveTrackerFrame or not RQE.db then return end
-		local useBlizzard = RQE.manualBlizzardTrackerOverride
-			or (RQE.db.profile.mythicScenarioMode
-				and RQE.API.Client.C_Scenario.IsInScenario())
+		RQE.API.SyncDugiObjectiveBackdrop()
+		local useBlizzard = RQE.API.ShouldKeepDugiObjectiveTrackerShown()
+		if not RQE.API.IsDugiGuidesCompatibilityActive() then
+			useBlizzard = RQE.manualBlizzardTrackerOverride
+				or (RQE.db.profile.mythicScenarioMode
+					and RQE.API.Client.C_Scenario.IsInScenario())
+		end
 		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
 		if RQE.API.Client.InCombatLockdown() then
 			RQE.UpdateTrackerVisibilityAfterCombat = true
@@ -586,6 +593,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		ObjectiveTrackerFrame:HookScript("OnShow", function()
 			RQE:EnforceObjectiveTrackerVisibility()
+		end)
+
+		ObjectiveTrackerFrame:HookScript("OnHide", function()
+			if not RQE.API.ShouldKeepDugiObjectiveTrackerShown()
+				or RQE._dugiObjectiveTrackerReshowQueued then return end
+			RQE._dugiObjectiveTrackerReshowQueued = true
+			RQE.API.Client.C_Timer.After(0, function()
+				RQE._dugiObjectiveTrackerReshowQueued = nil
+				if RQE.API.ShouldKeepDugiObjectiveTrackerShown() then
+					RQE:EnforceObjectiveTrackerVisibility()
+				end
+			end)
 		end)
 
 		RQEFrame:HookScript("OnShow", function()
@@ -4204,23 +4223,47 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Clears the Bonus Quest Elements in order to refresh them when changes occur to tracking or objectives completed
 	function RQE.ClearBonusQuestElements()
+		-- Pooled bonus rows restart at the first position on every render
+		RQE.BonusQuestRowIndex = 0
+
 		-- Ensure RQE.bonusQuestElements exists and iterate through it to clear all elements
 		if not RQE.bonusQuestElements then
 			RQE.bonusQuestElements = {}
 			return
 		end
 
+		-- Hide rendered elements but keep their parent so AddBonusQuestToFrame can
+		-- reuse them from RQE.BonusQuestRowPool on the next render.
 		for _, element in ipairs(RQE.bonusQuestElements) do
 			if element then
 				element:Hide() -- Hide the element
 				element:ClearAllPoints() -- Clear its anchor points
-				element:SetParent(nil) -- Remove it from the parent frame
 			end
 		end
 
 		-- Reset the bonus quest elements table
 		RQE.bonusQuestElements = {}
 	end
+
+	-- Previous code (commented out 2026.10.30): detached every element because each render created new widgets
+	-- function RQE.ClearBonusQuestElements()
+	-- 	-- Ensure RQE.bonusQuestElements exists and iterate through it to clear all elements
+	-- 	if not RQE.bonusQuestElements then
+	-- 		RQE.bonusQuestElements = {}
+	-- 		return
+	-- 	end
+	--
+	-- 	for _, element in ipairs(RQE.bonusQuestElements) do
+	-- 		if element then
+	-- 			element:Hide() -- Hide the element
+	-- 			element:ClearAllPoints() -- Clear its anchor points
+	-- 			element:SetParent(nil) -- Remove it from the parent frame
+	-- 		end
+	-- 	end
+	--
+	-- 	-- Reset the bonus quest elements table
+	-- 	RQE.bonusQuestElements = {}
+	-- end
 
 
 	-- Helper for Bonus Quests Frame
@@ -4288,17 +4331,40 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			return lastElement
 		end
 
-		-- Create the BQ supertrack button
-		local bonusQuestButton = CreateFrame("Button", nil, parentFrame)
-		bonusQuestButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
+		-- Reuse this row position's widgets. Creating new ones on every tracker rebuild
+		-- leaked frames and font strings, because WoW never frees a created frame.
+		-- The pooled button also keeps its objective progress bar (owner.RQEProgressBar).
+		RQE.BonusQuestRowPool = RQE.BonusQuestRowPool or {}
+		RQE.BonusQuestRowIndex = (RQE.BonusQuestRowIndex or 0) + 1
+		local bonusQuestRow = RQE.BonusQuestRowPool[RQE.BonusQuestRowIndex]
+		if not bonusQuestRow then
+			bonusQuestRow = {}
+			bonusQuestRow.button = CreateFrame("Button", nil, parentFrame)
+			bonusQuestRow.buttonText = bonusQuestRow.button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+			bonusQuestRow.buttonTexture = bonusQuestRow.button:CreateTexture(nil, "BACKGROUND")
+			bonusQuestRow.label = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			bonusQuestRow.objectives = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			RQE.BonusQuestRowPool[RQE.BonusQuestRowIndex] = bonusQuestRow
+		end
 
-		local buttonText = bonusQuestButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		-- Create the BQ supertrack button
+		local bonusQuestButton = bonusQuestRow.button
+		-- Previous code (commented out 2026.10.30): created a new button on every tracker rebuild
+		-- local bonusQuestButton = CreateFrame("Button", nil, parentFrame)
+		bonusQuestButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
+		bonusQuestButton:Show()
+
+		local buttonText = bonusQuestRow.buttonText
+		-- Previous code (commented out 2026.10.30): created a new font string on every tracker rebuild
+		-- local buttonText = bonusQuestButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 		buttonText:SetPoint("CENTER", bonusQuestButton, "CENTER", 0, 0)
 		buttonText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 		buttonText:SetTextColor(1, 0.82, 0)
 		buttonText:SetText("BQ")
 
-		local buttonTexture = bonusQuestButton:CreateTexture(nil, "BACKGROUND")
+		local buttonTexture = bonusQuestRow.buttonTexture
+		-- Previous code (commented out 2026.10.30): created a new texture on every tracker rebuild
+		-- local buttonTexture = bonusQuestButton:CreateTexture(nil, "BACKGROUND")
 		buttonTexture:SetAllPoints(bonusQuestButton)
 		if RQE.API.GetSuperTrackedQuestID() == questID then
 			buttonTexture:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
@@ -4313,7 +4379,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		-- Create a FontString for the quest title
-		local bonusQuestLabel = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		local bonusQuestLabel = bonusQuestRow.label
+		-- Previous code (commented out 2026.10.30): created a new font string on every tracker rebuild
+		-- local bonusQuestLabel = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		bonusQuestLabel:ClearAllPoints()
+		bonusQuestLabel:Show()
 		bonusQuestLabel:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
 		bonusQuestLabel:SetTextColor(137/255, 95/255, 221/255)
 		bonusQuestLabel:SetText(questTitle)
@@ -4403,7 +4473,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		objectivesText = RQE.colorizeObjectives(questID)
 
 		-- Create a FontString for the objectives
-		local bonusQuestObjectives = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		local bonusQuestObjectives = bonusQuestRow.objectives
+		-- Previous code (commented out 2026.10.30): created a new font string on every tracker rebuild
+		-- local bonusQuestObjectives = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		bonusQuestObjectives:ClearAllPoints()
+		bonusQuestObjectives:Show()
 		bonusQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 		bonusQuestObjectives:SetTextColor(1, 1, 1)
 		bonusQuestObjectives:SetWordWrap(true)
@@ -5872,6 +5946,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						-- A physical quest-row press explicitly returns waypoint ownership
 						-- to the normal DB/Blizzard selector, even for the same quest.
 						RQE:ReleaseActiveCoordblockWaypoint()
+						-- Quest waypoint clears no longer remove the flight master arrow, so
+						-- this physical quest-row press removes it here
+						RQE:ReleaseManualFlightMasterWaypoint()
 						RQE.ManualFlightMasterWaypointMapID = nil
 						RQE.ManualFlightMasterWaypointQuestID = nil
 						RQE.ManualFlightMasterWaypointStepIndex = nil
@@ -5887,7 +5964,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							end
 						end
 
-						if RQE.db.profile.debugLevel == "INFO" then
+						if RQE.db.profile.debugLevel == "INFO+" then
 							RQE:CheckCoordHotspotsInSteps(questID)
 						end
 
@@ -5996,7 +6073,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							-- Check if TomTom is loaded and compatibility is enabled
 							-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 							if RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
-								TomTom.waydb:ResetProfile()
+								RQE:ClearRQETomTomWaypoints()
+								-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+								-- TomTom.waydb:ResetProfile()
 								RQE._currentTomTomUID = nil
 							end
 
@@ -6976,6 +7055,49 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						GameTooltip:AddLine(" ")  -- Blank line
 					end
 
+					-- Party Members' Quest Progress
+					-- Built when the row is hovered, like the normal quest rows. This block
+					-- used to sit after this OnEnter handler, so it ran during the tracker
+					-- render: it wrote party lines into whatever tooltip was open and, in a
+					-- raid, stopped the render after the first world quest. Party progress
+					-- is only available outside raid groups.
+					if RQE.API.Client.IsInGroup() and not RQE.API.Client.IsInRaid() then
+						GameTooltip:AddLine(" ")
+						local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
+						if tooltipData and tooltipData.lines then
+							local player_name = RQE.API.Client.UnitName("player")
+							local isFirstPartyMember = true
+							local skipPlayerLines = false
+							local skipQuestNameLine = false  -- Flag to skip quest name lines
+
+							for _, line in ipairs(tooltipData.lines) do
+								if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
+									skipQuestNameLine = true
+								end
+
+								if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
+									skipPlayerLines = true
+									isFirstPartyMember = false
+								end
+
+								if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
+									skipPlayerLines = false
+									skipQuestNameLine = false  -- Reset for the next quest
+									if isFirstPartyMember then
+										GameTooltip:AddLine(" ")
+										isFirstPartyMember = false
+									end
+								end
+
+								if not skipPlayerLines and not skipQuestNameLine then
+									local text = line.leftText
+									local r, g, b = line.leftColor:GetRGB()
+									GameTooltip:AddLine(text, r, g, b, true)
+								end
+							end
+						end
+					end
+
 					-- Add the quest ID
 					GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)  -- Aquamarine color
 
@@ -6983,51 +7105,52 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					RQE.UI:ApplyTooltipBackground("questName")
 				end)
 
-				-- Party Members' Quest Progress
-				-- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
-				if RQE.API.Client.IsInGroup() then
-					-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
-					if RQE.API.Client.IsInRaid() then
-						RQE:AbortTrackerSyncRender("world")
-						return
-					end
-					GameTooltip:AddLine(" ")
-					-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
-					local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
-					if tooltipData and tooltipData.lines then
-						-- Previous Blizzard call changed 2026.09.25: local player_name = UnitName("player")
-						local player_name = RQE.API.Client.UnitName("player")
-						local isFirstPartyMember = true
-						local skipPlayerLines = false
-						local skipQuestNameLine = false  -- Flag to skip quest name lines
-
-						for _, line in ipairs(tooltipData.lines) do
-							if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
-								skipQuestNameLine = true
-							end
-
-							if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
-								skipPlayerLines = true
-								isFirstPartyMember = false
-							end
-
-							if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
-								skipPlayerLines = false
-								skipQuestNameLine = false  -- Reset for the next quest
-								if isFirstPartyMember then
-									GameTooltip:AddLine(" ")
-									isFirstPartyMember = false
-								end
-							end
-
-							if not skipPlayerLines and not skipQuestNameLine then
-								local text = line.leftText
-								local r, g, b = line.leftColor:GetRGB()
-								GameTooltip:AddLine(text, r, g, b, true)
-							end
-						end
-					end
-				end
+				-- Previous code (commented out 2026.10.30): ran during the render instead of on hover; moved into the OnEnter handler above
+				-- -- Party Members' Quest Progress
+				-- -- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
+				-- if RQE.API.Client.IsInGroup() then
+				-- 	-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
+				-- 	if RQE.API.Client.IsInRaid() then
+				-- 		RQE:AbortTrackerSyncRender("world")
+				-- 		return
+				-- 	end
+				-- 	GameTooltip:AddLine(" ")
+				-- 	-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+				-- 	local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
+				-- 	if tooltipData and tooltipData.lines then
+				-- 		-- Previous Blizzard call changed 2026.09.25: local player_name = UnitName("player")
+				-- 		local player_name = RQE.API.Client.UnitName("player")
+				-- 		local isFirstPartyMember = true
+				-- 		local skipPlayerLines = false
+				-- 		local skipQuestNameLine = false  -- Flag to skip quest name lines
+				--
+				-- 		for _, line in ipairs(tooltipData.lines) do
+				-- 			if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
+				-- 				skipQuestNameLine = true
+				-- 			end
+				--
+				-- 			if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
+				-- 				skipPlayerLines = true
+				-- 				isFirstPartyMember = false
+				-- 			end
+				--
+				-- 			if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
+				-- 				skipPlayerLines = false
+				-- 				skipQuestNameLine = false  -- Reset for the next quest
+				-- 				if isFirstPartyMember then
+				-- 					GameTooltip:AddLine(" ")
+				-- 					isFirstPartyMember = false
+				-- 				end
+				-- 			end
+				--
+				-- 			if not skipPlayerLines and not skipQuestNameLine then
+				-- 				local text = line.leftText
+				-- 				local r, g, b = line.leftColor:GetRGB()
+				-- 				GameTooltip:AddLine(text, r, g, b, true)
+				-- 			end
+				-- 		end
+				-- 	end
+				-- end
 
 				WQuestLevelAndName:SetScript("OnLeave", function(self)
 					GameTooltip:Hide()  -- Hide the tooltip when the mouse leaves the button
@@ -7078,16 +7201,29 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-------------------------------------------------------
 
 	-- Clears only rows created for the Task Quests section.
+	-- Elements keep their parent so UpdateRQETaskQuestFrame can reuse them from
+	-- RQE.TaskQuestRowPool on the next render.
 	function RQE:ClearTaskQuestElements()
 		for _, element in ipairs(RQE.TaskQuestElements or {}) do
 			if element then
 				element:Hide()
 				element:ClearAllPoints()
-				element:SetParent(nil)
 			end
 		end
 		RQE.TaskQuestElements = {}
 	end
+
+	-- Previous code (commented out 2026.10.30): detached every element because each render created new widgets
+	-- function RQE:ClearTaskQuestElements()
+	-- 	for _, element in ipairs(RQE.TaskQuestElements or {}) do
+	-- 		if element then
+	-- 			element:Hide()
+	-- 			element:ClearAllPoints()
+	-- 			element:SetParent(nil)
+	-- 		end
+	-- 	end
+	-- 	RQE.TaskQuestElements = {}
+	-- end
 
 	-- Shows a dedicated Task Quests section without reusing Bonus Quest or World Quest UI.
 	function UpdateRQETaskQuestFrame()
@@ -7137,22 +7273,50 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		local lastElement
+		-- Reuse each row position's widgets. Creating new ones on every render leaked
+		-- frames and font strings, because WoW never frees a created frame. The
+		-- pooled button also keeps its objective progress bar (owner.RQEProgressBar).
+		RQE.TaskQuestRowPool = RQE.TaskQuestRowPool or {}
+		local taskRowIndex = 0
 		for _, taskQuest in ipairs(taskQuests) do
 			local questID = taskQuest.questID
-			local button = CreateFrame("Button", nil, taskFrame)
-			button:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
+			taskRowIndex = taskRowIndex + 1
+			local taskRow = RQE.TaskQuestRowPool[taskRowIndex]
+			if not taskRow then
+				taskRow = {}
+				taskRow.button = CreateFrame("Button", nil, taskFrame)
+				taskRow.background = taskRow.button:CreateTexture(nil, "BACKGROUND")
+				taskRow.buttonText = taskRow.button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+				taskRow.title = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				taskRow.objectives = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				RQE.TaskQuestRowPool[taskRowIndex] = taskRow
+			end
 
-			local background = button:CreateTexture(nil, "BACKGROUND")
+			local button = taskRow.button
+			-- Previous code (commented out 2026.10.30): created a new button on every render
+			-- local button = CreateFrame("Button", nil, taskFrame)
+			button:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
+			button:Show()
+
+			local background = taskRow.background
+			-- Previous code (commented out 2026.10.30): created a new texture on every render
+			-- local background = button:CreateTexture(nil, "BACKGROUND")
 			background:SetAllPoints()
 			background:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
 
-			local buttonText = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+			local buttonText = taskRow.buttonText
+			-- Previous code (commented out 2026.10.30): created a new font string on every render
+			-- local buttonText = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 			buttonText:SetPoint("CENTER")
 			buttonText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 			buttonText:SetTextColor(1, 0.82, 0)
 			buttonText:SetText("TQ")
 
-			local title = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			local title = taskRow.title
+			-- Previous code (commented out 2026.10.30): created a new font string on every render
+			-- local title = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			title:ClearAllPoints()
+			title:Show()
 			title:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
 			title:SetTextColor(137 / 255, 95 / 255, 221 / 255)
 			title:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
@@ -7167,7 +7331,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 			AnchorTrackerQuestButton(button, title)
 
-			local objectives = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			local objectives = taskRow.objectives
+			-- Previous code (commented out 2026.10.30): created a new font string on every render
+			-- local objectives = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			objectives:ClearAllPoints()
+			objectives:Show()
 			objectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			objectives:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
 			objectives:SetJustifyH("LEFT")
@@ -7492,6 +7660,25 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local textPadding = 55 -- Adjust this value to control word wrap width
 		local availableWidth = RQE.AchievementsFrame:GetWidth() - textPadding
 
+		-- Reuse header and criteria font strings by position. ClearAchievementFrame
+		-- hides them; creating new ones on every update leaked them for the session.
+		-- Headers and criteria use separate pools because only headers take mouse
+		-- scripts and the GameFontHighlight template.
+		RQE.AchievementHeaderPool = RQE.AchievementHeaderPool or {}
+		RQE.AchievementCriteriaPool = RQE.AchievementCriteriaPool or {}
+		local headerCount, criteriaCount = 0, 0
+		local function AcquireAchievementCriteriaText()
+			criteriaCount = criteriaCount + 1
+			local criteriaText = RQE.AchievementCriteriaPool[criteriaCount]
+			if not criteriaText then
+				criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				RQE.AchievementCriteriaPool[criteriaCount] = criteriaText
+			end
+			criteriaText:ClearAllPoints()
+			criteriaText:Show()
+			return criteriaText
+		end
+
 		-- Loop through each tracked achievement ID and display it along with the description
 		for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
 			-- Previous Blizzard call changed 2026.09.25: local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(achievementID)
@@ -7500,7 +7687,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 			if id then
 				-- Create the header for each achievement
-				local achievementHeader = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+				headerCount = headerCount + 1
+				local achievementHeader = RQE.AchievementHeaderPool[headerCount]
+				if not achievementHeader then
+					achievementHeader = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+					RQE.AchievementHeaderPool[headerCount] = achievementHeader
+				end
+				achievementHeader:ClearAllPoints()
+				achievementHeader:Show()
+				-- Previous code (commented out 2026.10.30): created a new header font string on every update
+				-- local achievementHeader = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 				achievementHeader:SetWidth(math.max(1, availableWidth))
 				achievementHeader:SetWordWrap(true)
 				achievementHeader:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
@@ -7548,7 +7744,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				-- Previous Blizzard call changed 2026.09.25: local numCriteria = GetAchievementNumCriteria(id)
 				local numCriteria = RQE.API.Client.GetAchievementNumCriteria(id)
 				if numCriteria == 0 and description and description ~= "" then
-					local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+					local criteriaText = AcquireAchievementCriteriaText()
+					-- Previous code (commented out 2026.10.30): created a new font string on every update
+					-- local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 					criteriaText:SetWidth(math.max(1, availableWidth))
 					criteriaText:SetJustifyH("LEFT")
 					criteriaText:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
@@ -7561,7 +7759,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					local criteriaString, criteriaCompleted = GetTrackedAchievementCriteriaText(id, criteriaIndex, description)
 
 					-- Create a FontString for each criteria
-					local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+					local criteriaText = AcquireAchievementCriteriaText()
+					-- Previous code (commented out 2026.10.30): created a new font string on every update
+					-- local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 					criteriaText:SetWidth(math.max(1, availableWidth))
 					criteriaText:SetJustifyH("LEFT")
 					criteriaText:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
