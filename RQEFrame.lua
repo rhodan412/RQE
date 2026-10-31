@@ -2156,7 +2156,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					-- Check if TomTom is loaded and compatibility is enabled
 					-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 					if RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
-						TomTom.waydb:ResetProfile()
+						RQE:ClearRQETomTomWaypoints()
+						-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+						-- TomTom.waydb:ResetProfile()
 						RQE._currentTomTomUID = nil
 					end
 
@@ -3402,7 +3404,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 						local markedActive = coordblockData and RQE:SetActiveCoordblock(coordblockData)
 						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
 						if markedActive and TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
-							TomTom.waydb:ResetProfile()
+							RQE:ClearRQETomTomWaypoints()
+							-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+							-- TomTom.waydb:ResetProfile()
 							RQE._currentTomTomUID = nil
 						end
 						RQE:CreateWaypoint(
