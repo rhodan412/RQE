@@ -664,12 +664,38 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			GameTooltip:AddLine(" ", 1, 1, 1, true)
 		end
 
-		for line in tostring(macroBody or ""):gmatch("([^\n]*)\n?") do
+		-- GameTooltip can elide a long unbroken command even with wrapText set.
+		-- Split at command punctuation or spaces, keeping UTF-8 bytes intact.
+		local function addMacroLine(line)
 			if line == "" then
 				GameTooltip:AddLine(" ", 1, 1, 1, true)
-			else
-				GameTooltip:AddLine(line, yellowR, yellowG, yellowB, true)
+				return
 			end
+			while #line > 30 do
+				local cut
+				for index = 30, 1, -1 do
+					local char = line:sub(index, index)
+					if char == " " or char == "," or char == "." or char == "(" or char == ")" then
+						cut = index
+						break
+					end
+				end
+				if not cut then
+					cut = 30
+					while cut > 1 do
+						local nextByte = line:byte(cut + 1)
+						if not nextByte or nextByte < 128 or nextByte >= 192 then break end
+						cut = cut - 1
+					end
+				end
+				GameTooltip:AddLine(line:sub(1, cut), yellowR, yellowG, yellowB, true)
+				line = line:sub(cut + 1)
+			end
+			if line ~= "" then GameTooltip:AddLine(line, yellowR, yellowG, yellowB, true) end
+		end
+
+		for line in tostring(macroBody or ""):gmatch("([^\n]*)\n?") do
+			addMacroLine(line)
 		end
 
 		GameTooltip:Show()
