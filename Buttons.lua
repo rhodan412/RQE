@@ -481,9 +481,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
-		RQE.API.Client.C_Timer.After(1.2, function()
-			RQE:CheckCoordHotspotsInSteps(questID)
-		end)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			RQE.API.Client.C_Timer.After(1.2, function()
+				RQE:CheckCoordHotspotsInSteps(questID)
+			end)
+		end
 	end
 
 	-- Function that handles the alert/sound when the coords do not between DB and Blizz
@@ -519,9 +521,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
-		RQE.API.Client.C_Timer.After(1.2, function()
-			RQE:CheckCoordHotspotsInSteps(questID)
-		end)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			RQE.API.Client.C_Timer.After(1.2, function()
+				RQE:CheckCoordHotspotsInSteps(questID)
+			end)
+		end
 	end
 
 	-- Function that handles the alert when the DB entry contains legacy "coordinates" in any stepIndex
@@ -614,6 +618,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	RQE.UnknownQuestButtonMouseDown = function()
 		RQE.UnknownQuestButton:SetScript("OnMouseDown", function(self, button)
 			if button ~= "LeftButton" then return end
+
+			-- A physical "W" press is an explicit destination choice: remove the
+			-- nearest-flight-master waypoint so the OnClick handler can create the
+			-- quest waypoint. OnMouseDown does not fire for automated :Click() calls,
+			-- so automatic W clicks keep the flight master waypoint until landing.
+			if RQE.ReleaseManualFlightMasterWaypoint then
+				RQE:ReleaseManualFlightMasterWaypoint()
+			end
 
 			RQE.bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 
@@ -977,7 +989,9 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 				local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-					TomTom.waydb:ResetProfile()
+					RQE:ClearRQETomTomWaypoints()
+					-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+					-- TomTom.waydb:ResetProfile()
 					RQE._currentTomTomUID = nil
 				end
 			end)
@@ -1039,7 +1053,9 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			TomTom.waydb:ResetProfile()
+			RQE:ClearRQETomTomWaypoints()
+			-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+			-- TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 		end
 
@@ -1095,16 +1111,40 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			-- Code for RWButton functionality here
 			-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
 			RQE.API.Client.C_Map.ClearUserWaypoint()
-			-- Check if TomTom is loaded and compatibility is enabled
 			-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 			local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
+
+			-- SHIFT-click removes every waypoint: all TomTom waypoints (the player's
+			-- own, other addons', the nearest flight master, and RQE's) plus the
+			-- Blizzard map pin cleared above
+			if RQE.API.Client.IsShiftKeyDown() then
+				RQE:ReleaseManualFlightMasterWaypoint()
+				if isTomTomLoaded and TomTom then
+					if TomTom.waydb and TomTom.waydb.ResetProfile then
+						TomTom.waydb:ResetProfile()
+					elseif TomTom.ClearAllWaypoints then
+						TomTom:ClearAllWaypoints()
+					end
+				end
+				RQE._currentTomTomUID = nil
+				RQE._lastWP = nil
+				return
+			end
+
+			-- A plain click removes only RQE's quest waypoints (tagged "RQE"); the
+			-- player's own TomTom waypoints and a nearest-flight-master waypoint stay
+			-- Check if TomTom is loaded and compatibility is enabled
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-				TomTom.waydb:ResetProfile()
+				RQE:ClearRQETomTomWaypoints()
+				-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+				-- TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
 			end
 		end)
 
-		CreateTooltip(RWButton, "Remove Waypoints")
+		CreateTooltip(RWButton, "Remove RQE Waypoints (SHIFT to remove all)")
+		-- Previous code (commented out 2026.10.30): tooltip before the SHIFT-click option existed
+		-- CreateTooltip(RWButton, "Remove Waypoints")
 		CreateBorder(RWButton)
 		if RQE.UI then RQE.UI:StyleIconButton(RWButton, "RemoveWaypoint") end
 
