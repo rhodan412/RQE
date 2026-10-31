@@ -659,10 +659,19 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 	end
 
 	function UI:LayoutTooltipBackground(tooltip)
-		local picture = tooltip and tooltip.RQEThemeTooltipPicture
+		-- GameTooltip reuses this hook after RQE's artwork has been cleared.
+		if not tooltip or not tooltip.RQEThemeTooltipKind then return end
+		local picture = tooltip.RQEThemeTooltipPicture
 		if not picture then return end
-		local width = math.max(1, tooltip:GetWidth() - 12)
-		local height = math.max(1, tooltip:GetHeight() - 12)
+		local width, height = tooltip:GetWidth(), tooltip:GetHeight()
+		if (issecretvalue and (issecretvalue(width) or issecretvalue(height)))
+			or type(width) ~= "number" or type(height) ~= "number" then
+			-- A secret tooltip size cannot be used for aspect-ratio arithmetic.
+			picture:SetTexCoord(0, 1, 0, 1)
+			return
+		end
+		width = math.max(1, width - 12)
+		height = math.max(1, height - 12)
 		if width > height then
 			local inset = (1 - height / width) / 2
 			picture:SetTexCoord(0, 1, inset, 1 - inset)
