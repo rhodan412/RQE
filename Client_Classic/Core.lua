@@ -433,6 +433,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			displayRQEmemUsage = false,
 			enableAutoSuperTrackSwap = false,
 			enableCarboniteCompatibility = true,
+			enableDugiGuidesCompatibility = true,
 			enableFrame = true,
 			enableGossipModeAutomation = true,
 			enableMouseOverMarking = true,
@@ -3048,6 +3049,10 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 	-- Function to initialize the objective tracker state based on the checkbox and frames visibility
 	function RQE:InitializeObjectiveTracker()
+		if RQE.API.IsDugiGuidesCompatibilityActive() then
+			self:EnforceObjectiveTrackerVisibility()
+			return
+		end
 		if RQE.API and not RQE.API.CanManageBlizzardObjectiveTracker() then
 			return
 		end
@@ -3171,7 +3176,9 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- Outside a scenario, follow the normal Quest Tracker visibility rule.
 		-- The previous code always hid Blizzard's tracker in this branch.
 		if canManageObjectiveTracker and ObjectiveTrackerFrame then
-			if configWantsQuestFrame then
+			if RQE.API.IsDugiGuidesCompatibilityActive() then
+				self:EnforceObjectiveTrackerVisibility()
+			elseif configWantsQuestFrame then
 				ObjectiveTrackerFrame:Hide()
 			else
 				ObjectiveTrackerFrame:Show()
@@ -7686,21 +7693,23 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	-- changes maps, changes its originating quest step, or explicitly selects
 	-- another destination.  Quest automation
 	-- uses the same early-return guard as an Active coordblock.
+	-- The nearest-flight-master waypoint stays in place until the player lands
+	-- after the taxi ride; handlePlayerControlGained releases it then. Quest step
+	-- changes no longer release it. A map change counts only when the player is
+	-- not on a taxi (for example a portal or hearthstone), and a pin the player
+	-- removed (for example with /cway) also releases it.
 	function RQE:IsManualFlightMasterWaypointProtected()
 		local ownerMapID = self.ManualFlightMasterWaypointMapID
 		if not ownerMapID then return false end
 		local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
-		local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
-		local currentStep = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
-		local ownerStepChanged = trackedQuestID == self.ManualFlightMasterWaypointQuestID
-			and self.ManualFlightMasterWaypointStepIndex and currentStep
-			and self.ManualFlightMasterWaypointStepIndex ~= currentStep
-		-- A TomTom profile reset or another explicit waypoint can remove the
-		-- selected flight master while leaving its owner flag behind. Only a
-		-- still-live pin may block same-map quest routes and portal fallbacks.
+		local onTaxi = UnitOnTaxi("player") or self.TaxiFlightInProgress
+		local leftMapOnFoot = playerMapID and playerMapID ~= ownerMapID and not onTaxi
+
+		-- Check the pin itself: quest waypoint clears no longer remove the flight
+		-- master arrow, so _currentTomTomUID is not compared here
 		local uid = self.ManualFlightMasterWaypointUID
-		local missingPin = uid and self._currentTomTomUID ~= uid
-		if uid and not missingPin and TomTom and TomTom.WaypointExists
+		local missingPin = false
+		if uid and TomTom and TomTom.WaypointExists
 			and self.ManualFlightMasterWaypointX and self.ManualFlightMasterWaypointY then
 			missingPin = not TomTom:WaypointExists(ownerMapID,
 				self.ManualFlightMasterWaypointX, self.ManualFlightMasterWaypointY,
@@ -7719,17 +7728,58 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				and math.abs(x - self.ManualFlightMasterWaypointX) < 1e-4
 				and math.abs(y - self.ManualFlightMasterWaypointY) < 1e-4)
 		end
-		if (playerMapID and playerMapID ~= ownerMapID) or ownerStepChanged or missingPin then
-			self.ManualFlightMasterWaypointMapID = nil
-			self.ManualFlightMasterWaypointQuestID = nil
-			self.ManualFlightMasterWaypointStepIndex = nil
-			self.ManualFlightMasterWaypointUID = nil
-			self.ManualFlightMasterWaypointUsesBlizzard = nil
-			self.NearestFlightMasterSet = false
+		if leftMapOnFoot or missingPin then
+			self:ReleaseManualFlightMasterWaypoint()
 			return false
 		end
 		return true
 	end
+
+	-- Previous code (commented out 2026.10.30): released the flight master waypoint on any map or quest-step change, and treated it as missing whenever _currentTomTomUID changed
+	-- function RQE:IsManualFlightMasterWaypointProtected()
+	-- 	local ownerMapID = self.ManualFlightMasterWaypointMapID
+	-- 	if not ownerMapID then return false end
+	-- 	local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	-- 	local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
+	-- 	local currentStep = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	-- 	local ownerStepChanged = trackedQuestID == self.ManualFlightMasterWaypointQuestID
+	-- 		and self.ManualFlightMasterWaypointStepIndex and currentStep
+	-- 		and self.ManualFlightMasterWaypointStepIndex ~= currentStep
+	-- 	-- A TomTom profile reset or another explicit waypoint can remove the
+	-- 	-- selected flight master while leaving its owner flag behind. Only a
+	-- 	-- still-live pin may block same-map quest routes and portal fallbacks.
+	-- 	local uid = self.ManualFlightMasterWaypointUID
+	-- 	local missingPin = uid and self._currentTomTomUID ~= uid
+	-- 	if uid and not missingPin and TomTom and TomTom.WaypointExists
+	-- 		and self.ManualFlightMasterWaypointX and self.ManualFlightMasterWaypointY then
+	-- 		missingPin = not TomTom:WaypointExists(ownerMapID,
+	-- 			self.ManualFlightMasterWaypointX, self.ManualFlightMasterWaypointY,
+	-- 			self.ManualFlightMasterWaypointTitle)
+	-- 	end
+	-- 	if self.ManualFlightMasterWaypointUsesBlizzard and C_Map
+	-- 		and C_Map.GetUserWaypoint then
+	-- 		local wp = C_Map.GetUserWaypoint()
+	-- 		local pos = wp and wp.position
+	-- 		local x, y
+	-- 		if pos then
+	-- 			if pos.GetXY then x, y = pos:GetXY()
+	-- 			else x, y = pos.x, pos.y end
+	-- 		end
+	-- 		missingPin = not (wp and wp.uiMapID == ownerMapID and x and y
+	-- 			and math.abs(x - self.ManualFlightMasterWaypointX) < 1e-4
+	-- 			and math.abs(y - self.ManualFlightMasterWaypointY) < 1e-4)
+	-- 	end
+	-- 	if (playerMapID and playerMapID ~= ownerMapID) or ownerStepChanged or missingPin then
+	-- 		self.ManualFlightMasterWaypointMapID = nil
+	-- 		self.ManualFlightMasterWaypointQuestID = nil
+	-- 		self.ManualFlightMasterWaypointStepIndex = nil
+	-- 		self.ManualFlightMasterWaypointUID = nil
+	-- 		self.ManualFlightMasterWaypointUsesBlizzard = nil
+	-- 		self.NearestFlightMasterSet = false
+	-- 		return false
+	-- 	end
+	-- 	return true
+	-- end
 
 	-- Release the active coordinate block and refresh its interactive link state.
 	function RQE:ReleaseActiveCoordblockWaypoint()
@@ -7748,6 +7798,9 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- manually selected flight-master destination.
 		self._lastWP = nil
 		if self._coordOrderState then self._coordOrderState.currentIdx = nil end
+		-- Quest waypoint clears no longer remove the flight master arrow, so this
+		-- explicit click removes it here
+		self:ReleaseManualFlightMasterWaypoint()
 		self.ManualFlightMasterWaypointMapID = nil
 		self.ManualFlightMasterWaypointQuestID = nil
 		self.ManualFlightMasterWaypointStepIndex = nil
@@ -15476,8 +15529,19 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	local function OnPlayerMoving(self, elapsed)
 		-- RQE:UpdateCoordinates()
 		-- The visible coordinate header is refreshed independently while RQEFrame is shown.
-		RQE:UpdateMapIDDisplay()
-		RQE:UpdateStepDistance()
+		-- Refresh the map ID and step distance labels at most every 0.1 seconds instead
+		-- of on every rendered frame. A field holds the elapsed time so this file does
+		-- not gain another top-level local.
+		RQE.MovingDisplayElapsed = (RQE.MovingDisplayElapsed or 0.1) + (elapsed or 0)
+		if RQE.MovingDisplayElapsed >= 0.1 then
+			RQE.MovingDisplayElapsed = 0
+			RQE:UpdateMapIDDisplay()
+			RQE:UpdateStepDistance()
+		end
+
+		-- Previous code (commented out 2026.10.30): refreshed these labels on every rendered frame while moving
+		-- RQE:UpdateMapIDDisplay()
+		-- RQE:UpdateStepDistance()
 		--RQE:MaybeUpdateWaypointOnSnap(elapsed)
 
 		-- Throttle: ~4x/sec while moving
@@ -17532,41 +17596,84 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 		-- Get the currently super-tracked quest ID
 		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-		RQE.BlackListedQuestID = superTrackedQuestID
 
 		-- Get the current step index from the addon
 		local currentStepIndex = RQE.AddonSetStepIndex or 1  -- Default to 1 if AddonSetStepIndex is nil
 
 		-- Check if the super-tracked quest is in the questConditions array and matches the stepIndex
 		if RQE.questConditions[superTrackedQuestID] and RQE.questConditions[superTrackedQuestID] == currentStepIndex then
+			-- Find the replacement before touching the watch list. Without one, keep the
+			-- blacklisted quest watched and displayed: leaving BlacklistUnderway set would
+			-- make every later UpdateFrame return early until a reload.
+			local nextClosestQuestID = RQE:GetClosestNonBlacklistedQuest()
+			RQE.ClosestSafeQuestID = nextClosestQuestID
+			if not nextClosestQuestID then return end
+
+			-- Capture this quest for the delayed re-watch. UpdateFrame calls this function
+			-- again within 2.5 seconds, so the timer must not read a shared field.
+			local blacklistedQuestID = superTrackedQuestID
+			RQE.BlackListedQuestID = blacklistedQuestID
+
 			-- If the condition matches, clear the RQEFrame and blacklist the quest
 			RQE.BlacklistUnderway = true
 
 			-- Temporarily remove the quest from the watch list
 			-- print("~~~ Remove Quest Watch: 9462 ~~~")
-			C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
+			C_QuestLog.RemoveQuestWatch(blacklistedQuestID)
 			RQE.Buttons.ClearButtonPressed()
 
-			-- Supertrack the next closest non-blacklisted quest
-			local nextClosestQuestID = RQE:GetClosestNonBlacklistedQuest()
-			RQE.ClosestSafeQuestID = nextClosestQuestID
+			-- Set the supertracked quest to the next closest non-blacklisted quest
+			-- print("~~~ SetSuperTrack: 9332~~~")
+			-- C_SuperTrack.SetSuperTrackedQuestID(nextClosestQuestID)
+			RQE.API.SetSuperTrackedQuestID(nextClosestQuestID)
+			RQE:SaveSuperTrackedQuestToCharacter()
 
-			if nextClosestQuestID then
-				-- Set the supertracked quest to the next closest non-blacklisted quest
-				-- print("~~~ SetSuperTrack: 9332~~~")
-				-- C_SuperTrack.SetSuperTrackedQuestID(nextClosestQuestID)
-				RQE.API.SetSuperTrackedQuestID(nextClosestQuestID)
-				RQE:SaveSuperTrackedQuestToCharacter()
+			-- Ensure the blacklisted quest is not re-added prematurely
+			RQE.BlacklistUnderway = false
 
-				-- Ensure the blacklisted quest is not re-added prematurely
-				RQE.BlacklistUnderway = false
-
-				-- After a delay, re-add the blacklisted quest to the watch list, but do not re-supertrack it
-				C_Timer.After(2.5, function()
-					C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)	--C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1)
-				end)
-			end
+			-- After a delay, re-add the blacklisted quest to the watch list, but do not re-supertrack it
+			C_Timer.After(2.5, function()
+				C_QuestLog.AddQuestWatch(blacklistedQuestID)	--C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1)
+			end)
 		end
+
+		-- Previous code (commented out 2026.10.30): set BlacklistUnderway before a replacement was known, and re-watched the shared RQE.BlackListedQuestID
+		-- local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		-- RQE.BlackListedQuestID = superTrackedQuestID
+		--
+		-- -- Get the current step index from the addon
+		-- local currentStepIndex = RQE.AddonSetStepIndex or 1  -- Default to 1 if AddonSetStepIndex is nil
+		--
+		-- -- Check if the super-tracked quest is in the questConditions array and matches the stepIndex
+		-- if RQE.questConditions[superTrackedQuestID] and RQE.questConditions[superTrackedQuestID] == currentStepIndex then
+		-- 	-- If the condition matches, clear the RQEFrame and blacklist the quest
+		-- 	RQE.BlacklistUnderway = true
+		--
+		-- 	-- Temporarily remove the quest from the watch list
+		-- 	-- print("~~~ Remove Quest Watch: 9462 ~~~")
+		-- 	C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
+		-- 	RQE.Buttons.ClearButtonPressed()
+		--
+		-- 	-- Supertrack the next closest non-blacklisted quest
+		-- 	local nextClosestQuestID = RQE:GetClosestNonBlacklistedQuest()
+		-- 	RQE.ClosestSafeQuestID = nextClosestQuestID
+		--
+		-- 	if nextClosestQuestID then
+		-- 		-- Set the supertracked quest to the next closest non-blacklisted quest
+		-- 		-- print("~~~ SetSuperTrack: 9332~~~")
+		-- 		-- C_SuperTrack.SetSuperTrackedQuestID(nextClosestQuestID)
+		-- 		RQE.API.SetSuperTrackedQuestID(nextClosestQuestID)
+		-- 		RQE:SaveSuperTrackedQuestToCharacter()
+		--
+		-- 		-- Ensure the blacklisted quest is not re-added prematurely
+		-- 		RQE.BlacklistUnderway = false
+		--
+		-- 		-- After a delay, re-add the blacklisted quest to the watch list, but do not re-supertrack it
+		-- 		C_Timer.After(2.5, function()
+		-- 			C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)	--C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1)
+		-- 		end)
+		-- 	end
+		-- end
 	end
 
 
@@ -17687,7 +17794,13 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	-------------------------------------------------------
 
 	-- Function to process the next gossip selection in queue
+	-- Each selection waits for the next GOSSIP_SHOW. The previous 0.5-second retry
+	-- also advanced the queue, so one step could fire twice and select the next
+	-- orderIndex on a page that had not refreshed yet.
 	local function ProcessNextGossipOption()
+		-- A selection is already waiting for its new page
+		if selectedGossipOption.awaitingPage then return end
+
 		local options = C_GossipInfo.GetOptions()
 
 		-- If no options are available, stop processing
@@ -17717,16 +17830,56 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					-- Select the option
 					C_GossipInfo.SelectOptionByIndex(option.orderIndex)
 
-					-- Move to the next option
+					-- Move to the next option, which the next GOSSIP_SHOW processes
 					selectedGossipOption.currentIndex = selectedGossipOption.currentIndex + 1
-
-					-- Schedule next selection
-					C_Timer.After(0.5, ProcessNextGossipOption) -- Add a slight delay to process sequentially
+					selectedGossipOption.awaitingPage = true
 					break
 				end
 			end
 		end
 	end
+
+	-- Previous code (commented out 2026.10.30): advanced the queue from both GOSSIP_SHOW and a 0.5-second timer
+	-- local function ProcessNextGossipOption()
+	-- 	local options = C_GossipInfo.GetOptions()
+	--
+	-- 	-- If no options are available, stop processing
+	-- 	if not options or #options == 0 then
+	-- 		return
+	-- 	end
+	--
+	-- 	-- Ensure we are interacting with the correct NPC
+	-- 	local isInInstance, instanceType = IsInInstance()
+	-- 	if isInInstance then return end
+	--
+	-- 	local currentNPCName = UnitName("npc")
+	-- 	if not currentNPCName or currentNPCName ~= selectedGossipOption.npcName then
+	-- 		return
+	-- 	end
+	--
+	-- 	-- If we have an option left to process
+	-- 	if selectedGossipOption.currentIndex <= #selectedGossipOption.optionIndexes then
+	-- 		local targetOption = selectedGossipOption.optionIndexes[selectedGossipOption.currentIndex]
+	--
+	-- 		for _, option in ipairs(options) do
+	-- 			if option.orderIndex == targetOption then
+	-- 				if RQE.db.profile.debugLevel == "INFO+" then
+	-- 					print("Selecting gossip option:", option.orderIndex, "for NPC:", selectedGossipOption.npcName)
+	-- 				end
+	--
+	-- 				-- Select the option
+	-- 				C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+	--
+	-- 				-- Move to the next option
+	-- 				selectedGossipOption.currentIndex = selectedGossipOption.currentIndex + 1
+	--
+	-- 				-- Schedule next selection
+	-- 				C_Timer.After(0.5, ProcessNextGossipOption) -- Add a slight delay to process sequentially
+	-- 				break
+	-- 			end
+	-- 		end
+	-- 	end
+	-- end
 
 
 	-- Function to set a single gossip option
@@ -17769,10 +17922,11 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 		end
 
-		-- Reset previous queue
+		-- Reset previous queue, including a selection still waiting for its page
 		selectedGossipOption.npcName = npcName
 		selectedGossipOption.optionIndexes = { ... }
 		selectedGossipOption.currentIndex = 1
+		selectedGossipOption.awaitingPage = false
 
 		-- Debug logging
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -17832,6 +17986,9 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	-- Securely hook event handler to process gossip
 	RQEGossipFrame:SetScript("OnEvent", function(self, event)
 		if event == "GOSSIP_SHOW" then
+			-- A new page has arrived, so the queued selection may continue
+			selectedGossipOption.awaitingPage = false
+
 			-- If selectedGossipOption has active selections, start processing
 			if selectedGossipOption.npcName then
 				ProcessNextGossipOption()
@@ -17841,8 +17998,24 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			selectedGossipOption.npcName = nil
 			selectedGossipOption.optionIndexes = {}
 			selectedGossipOption.currentIndex = 1
+			selectedGossipOption.awaitingPage = false
 		end
 	end)
+
+	-- Previous code (commented out 2026.10.30): did not track whether a selection was waiting for its page
+	-- RQEGossipFrame:SetScript("OnEvent", function(self, event)
+	-- 	if event == "GOSSIP_SHOW" then
+	-- 		-- If selectedGossipOption has active selections, start processing
+	-- 		if selectedGossipOption.npcName then
+	-- 			ProcessNextGossipOption()
+	-- 		end
+	-- 	elseif event == "GOSSIP_CLOSED" then
+	-- 		-- Reset queue when gossip window closes
+	-- 		selectedGossipOption.npcName = nil
+	-- 		selectedGossipOption.optionIndexes = {}
+	-- 		selectedGossipOption.currentIndex = 1
+	-- 	end
+	-- end)
 
 
 	-- Securely hook the frame's event handler for single gossip
@@ -17858,6 +18031,12 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 			-- Get the current NPC name
 			local currentNPCName = UnitName("npc")
+
+			-- A multiple-option queue for this NPC owns the page; selecting here too
+			-- would send a second selection on the same GOSSIP_SHOW.
+			if selectedGossipOption.npcName and currentNPCName == selectedGossipOption.npcName then
+				return
+			end
 
 			-- Check if the selection criteria match the current NPC
 			if selectedGossipSingle.npcName and currentNPCName == selectedGossipSingle.npcName then
@@ -18387,6 +18566,8 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- coordblock before Replace, then protect the flight-master waypoint from
 		-- a later automatic quest/hotspot refresh (even if supertracking changes).
 		self:ReleaseActiveCoordblockWaypoint()
+		-- Remove a previous flight master waypoint before installing the new one
+		self:ReleaseManualFlightMasterWaypoint()
 		self.ManualFlightMasterWaypointMapID = nil
 		self.ManualFlightMasterWaypointQuestID = nil
 		self.ManualFlightMasterWaypointStepIndex = nil
@@ -18400,10 +18581,16 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableTomTomCompatibility then
 			if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
-				TomTom.waydb:ResetProfile()
+				RQE:ClearRQETomTomWaypoints()
+				-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+				-- TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
 			end
-			RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
+			-- cleardistance 0 keeps TomTom from removing the arrow on arrival, so it
+			-- stays at the flight master until the player lands after the taxi ride
+			RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, xNorm, yNorm, title, { cleardistance = 0 })
+			-- Previous code (commented out 2026.10.30): TomTom removed the arrow within its default clear distance of the flight master
+			-- RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
 
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print(string.format(">> TomTom waypoint => %s (%.2f, %.2f, mapID %d)", title, xPct, yPct, mapID))
@@ -18519,7 +18706,14 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	-- end
 
 	-- Fetches the player's position in relation to their current continent
-	function RQE.DebugPrintPlayerContinentPosition(questID)
+	function RQE.DebugPrintPlayerContinentPosition(questID, copyMode)
+		-- Manual calls use the Contribution copy dialog; quest event calls retain their diagnostics.
+		if copyMode or not questID then
+			if RQE.ShowPlayerCoordinatesCopy then
+				return RQE:ShowPlayerCoordinatesCopy(copyMode or "coordinateHotspots")
+			end
+			return
+		end
 		if not RQEFrame:IsShown() then return end
 
 		-- local mapID = C_Map.GetBestMapForUnit("player")
