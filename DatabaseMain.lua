@@ -53,6 +53,111 @@ Cross-client quest database selection, sandbox precedence, and lookup control
 	-- #2a. Cross-Client Quest Record Resolution
 	-------------------------------------------------------
 
+	-- getQuestData runs many times per second (movement distance labels, step text,
+	-- UNIT_AURA, tracker rebuilds). Its database section order depends only on the
+	-- client build and, on Retail, the Warlords of Draenor garrison level, so build
+	-- it once and rebuild it only after PLAYER_ENTERING_WORLD or GARRISON_UPDATE
+	-- instead of on every lookup.
+	local cachedDatabaseOrder
+
+	-- Function to build the ordered database section list for the active client
+	local function BuildQuestDatabaseOrder()
+		-- Shared client-aware selector. Retail uses only its Retail-era expansion
+		-- sections, so generated data retains Retail map IDs and coordinates.
+		local version = RQE.API.Client.GetBuildInfo()
+		local majorText, minorText, patchText = tostring(version):match("^(%d+)%.(%d+)%.?(%d*)")
+		local majorVersion = tonumber(majorText) or 0
+		local minorVersion = tonumber(minorText) or 0
+		local patchVersion = tonumber(patchText) or 0
+
+		if majorVersion >= 4 then
+			local databaseOrder = {}
+			local addedSections = {}
+
+			-- Adds each database section once while preserving its lookup priority
+			local function AddDatabaseSection(name)
+				if addedSections[name] then return end
+				addedSections[name] = true
+				databaseOrder[#databaseOrder + 1] = name
+			end
+
+			if majorVersion >= 13 then AddDatabaseSection("LastTitan") end
+			if majorVersion >= 12 then AddDatabaseSection("Midnight") end
+			if majorVersion >= 11 then AddDatabaseSection("WarWithin") end
+			if majorVersion >= 10 then AddDatabaseSection("Dragonflight") end
+			if majorVersion >= 9 then AddDatabaseSection("Shadowlands") end
+			if majorVersion >= 8 then AddDatabaseSection("BattleForAzeroth") end
+			if majorVersion >= 7 then AddDatabaseSection("Legion") end
+
+			if majorVersion >= 6 then
+				local garrisonInfo = C_Garrison and RQE.API.ResolveClientAPI("C_Garrison.GetGarrisonInfo") and RQE.API.Client.C_Garrison.GetGarrisonInfo(2)
+				local wodGarrisonLevel = type(garrisonInfo) == "table" and garrisonInfo.level or tonumber(garrisonInfo)
+				if wodGarrisonLevel == 3 then
+					AddDatabaseSection("WarlordsOfDraenor03")
+				elseif wodGarrisonLevel == 2 then
+					AddDatabaseSection("WarlordsOfDraenor02")
+				else
+					AddDatabaseSection("WarlordsOfDraenor")
+				end
+			end
+
+			if majorVersion >= 5 then AddDatabaseSection("MistsOfPandaria") end
+			if majorVersion >= 4 then AddDatabaseSection("Cataclysm") end
+			if majorVersion >= 3 then AddDatabaseSection("Wrath") end
+			if majorVersion >= 2 then AddDatabaseSection("BurningCrusade") end
+			-- Vanilla is the final Retail-era fallback.  Do not include Anniversary or
+			-- Season of Discovery sections here: matching quest IDs can use different
+			-- map IDs and coordinates from their Retail equivalents.
+			AddDatabaseSection("Vanilla")
+
+			-- Include only Retail-era tables as fallbacks. AddDatabaseSection keeps the
+			-- version-appropriate order above intact and prevents duplicates.
+			for _, databaseName in ipairs({
+				"LastTitan", "Midnight", "WarWithin", "Dragonflight", "Shadowlands",
+				"BattleForAzeroth", "Legion", "WarlordsOfDraenor03",
+				"WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria",
+				"Cataclysm", "Wrath", "BurningCrusade", "Vanilla",
+			}) do
+				AddDatabaseSection(databaseName)
+			end
+			return databaseOrder
+		elseif majorVersion == 3 and (minorVersion > 5 or (minorVersion == 5 and patchVersion > 0)) then
+			return { "WrathAnniversaryPerm", "WrathAnniversary", "BurningCrusadeAnniversaryPerm", "BurningCrusadeAnniversary", "VanillaSoD" }
+		elseif majorVersion == 3 then
+			return { "Wrath", "BurningCrusade", "Vanilla" }
+		elseif majorVersion == 2 and minorVersion >= 5 then
+			return { "BurningCrusadeAnniversaryPerm", "BurningCrusadeAnniversary", "VanillaSoD" }
+		elseif majorVersion == 2 then
+			return { "BurningCrusade", "Vanilla" }
+		elseif majorVersion == 1 and minorVersion == 60 then
+			-- Forever-specific quests override shared SoD entries; SoD supplies the
+			-- existing Vanilla quest data until a Forever entry is authored.
+			return { "ForeverClassic", "VanillaSoD" }
+		elseif majorVersion == 1 and minorVersion >= 15 then
+			return { "VanillaSoD" }
+		end
+		return { "Vanilla" }
+	end
+
+	-- Function to return the cached database section order, building it on first use
+	local function GetQuestDatabaseOrder()
+		if not cachedDatabaseOrder then
+			cachedDatabaseOrder = BuildQuestDatabaseOrder()
+		end
+		return cachedDatabaseOrder
+	end
+
+	-- Garrison data may be unavailable before the world loads, so rebuild after each
+	-- loading screen and garrison change. pcall skips GARRISON_UPDATE on clients
+	-- that do not have it.
+	local databaseOrderFrame = CreateFrame("Frame")
+	for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "GARRISON_UPDATE" }) do
+		pcall(databaseOrderFrame.RegisterEvent, databaseOrderFrame, event)
+	end
+	databaseOrderFrame:SetScript("OnEvent", function()
+		cachedDatabaseOrder = nil
+	end)
+
 	-- Function to fetch quest data from the applicable expansion
 	function RQE.getQuestData(questID)
 		-------------------------------------------------------
@@ -114,98 +219,106 @@ Cross-client quest database selection, sandbox precedence, and lookup control
 			return nil
 		end
 
-		-- Shared client-aware selector. Retail uses only its Retail-era expansion
-		-- sections, so generated data retains Retail map IDs and coordinates.
-		-- Previous Blizzard call changed 2026.09.25: local version = GetBuildInfo()
-		local version = RQE.API.Client.GetBuildInfo()
-		local majorText, minorText, patchText = tostring(version):match("^(%d+)%.(%d+)%.?(%d*)")
-		local majorVersion = tonumber(majorText) or 0
-		local minorVersion = tonumber(minorText) or 0
-		local patchVersion = tonumber(patchText) or 0
-
 		-------------------------------------------------------
-		-- #2a.iv. Retail Expansion Database Ordering
+		-- #2a.iv. Client-Specific Database Ordering
 		-------------------------------------------------------
 
-		-- Function to build the ordered Retail database fallback list for the active client version
-		local function GetRetailDatabaseOrder()
-			local databaseOrder = {}
-			local addedSections = {}
+		-- The order is built once by BuildQuestDatabaseOrder above and reused here
+		local databaseOrder = GetQuestDatabaseOrder()
 
-			-- Adds each database section once while preserving its lookup priority
-			local function AddDatabaseSection(name)
-				if addedSections[name] then return end
-				addedSections[name] = true
-				databaseOrder[#databaseOrder + 1] = name
-			end
-
-			if majorVersion >= 13 then AddDatabaseSection("LastTitan") end
-			if majorVersion >= 12 then AddDatabaseSection("Midnight") end
-			if majorVersion >= 11 then AddDatabaseSection("WarWithin") end
-			if majorVersion >= 10 then AddDatabaseSection("Dragonflight") end
-			if majorVersion >= 9 then AddDatabaseSection("Shadowlands") end
-			if majorVersion >= 8 then AddDatabaseSection("BattleForAzeroth") end
-			if majorVersion >= 7 then AddDatabaseSection("Legion") end
-
-			if majorVersion >= 6 then
-				-- Previous Blizzard call changed 2026.09.25: local garrisonInfo = C_Garrison and C_Garrison.GetGarrisonInfo and C_Garrison.GetGarrisonInfo(2)
-				local garrisonInfo = C_Garrison and RQE.API.ResolveClientAPI("C_Garrison.GetGarrisonInfo") and RQE.API.Client.C_Garrison.GetGarrisonInfo(2)
-				local wodGarrisonLevel = type(garrisonInfo) == "table" and garrisonInfo.level or tonumber(garrisonInfo)
-				if wodGarrisonLevel == 3 then
-					AddDatabaseSection("WarlordsOfDraenor03")
-				elseif wodGarrisonLevel == 2 then
-					AddDatabaseSection("WarlordsOfDraenor02")
-				else
-					AddDatabaseSection("WarlordsOfDraenor")
-				end
-			end
-
-			if majorVersion >= 5 then AddDatabaseSection("MistsOfPandaria") end
-			if majorVersion >= 4 then AddDatabaseSection("Cataclysm") end
-			if majorVersion >= 3 then AddDatabaseSection("Wrath") end
-			if majorVersion >= 2 then AddDatabaseSection("BurningCrusade") end
-			-- Vanilla is the final Retail-era fallback.  Do not include Anniversary or
-			-- Season of Discovery sections here: matching quest IDs can use different
-			-- map IDs and coordinates from their Retail equivalents.
-			AddDatabaseSection("Vanilla")
-
-			-- Include only Retail-era tables as fallbacks. AddDatabaseSection keeps the
-			-- version-appropriate order above intact and prevents duplicates.
-			for _, databaseName in ipairs({
-				"LastTitan", "Midnight", "WarWithin", "Dragonflight", "Shadowlands",
-				"BattleForAzeroth", "Legion", "WarlordsOfDraenor03",
-				"WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria",
-				"Cataclysm", "Wrath", "BurningCrusade", "Vanilla",
-			}) do
-				AddDatabaseSection(databaseName)
-			end
-			return databaseOrder
-		end
-
-		-------------------------------------------------------
-		-- #2a.v. Client-Specific Database Ordering
-		-------------------------------------------------------
-
-		local databaseOrder
-		if majorVersion >= 4 then
-			databaseOrder = GetRetailDatabaseOrder()
-		elseif majorVersion == 3 and (minorVersion > 5 or (minorVersion == 5 and patchVersion > 0)) then
-			databaseOrder = { "WrathAnniversaryPerm", "WrathAnniversary", "BurningCrusadeAnniversaryPerm", "BurningCrusadeAnniversary", "VanillaSoD" }
-		elseif majorVersion == 3 then
-			databaseOrder = { "Wrath", "BurningCrusade", "Vanilla" }
-		elseif majorVersion == 2 and minorVersion >= 5 then
-			databaseOrder = { "BurningCrusadeAnniversaryPerm", "BurningCrusadeAnniversary", "VanillaSoD" }
-		elseif majorVersion == 2 then
-			databaseOrder = { "BurningCrusade", "Vanilla" }
-		elseif majorVersion == 1 and minorVersion == 60 then
-			-- Forever-specific quests override shared SoD entries; SoD supplies the
-			-- existing Vanilla quest data until a Forever entry is authored.
-			databaseOrder = { "ForeverClassic", "VanillaSoD" }
-		elseif majorVersion == 1 and minorVersion >= 15 then
-			databaseOrder = { "VanillaSoD" }
-		else
-			databaseOrder = { "Vanilla" }
-		end
+		-- Previous code (commented out 2026.10.30): rebuilt the section order, read GetBuildInfo, and queried the garrison on every lookup
+		-- -- Shared client-aware selector. Retail uses only its Retail-era expansion
+		-- -- sections, so generated data retains Retail map IDs and coordinates.
+		-- -- Previous Blizzard call changed 2026.09.25: local version = GetBuildInfo()
+		-- local version = RQE.API.Client.GetBuildInfo()
+		-- local majorText, minorText, patchText = tostring(version):match("^(%d+)%.(%d+)%.?(%d*)")
+		-- local majorVersion = tonumber(majorText) or 0
+		-- local minorVersion = tonumber(minorText) or 0
+		-- local patchVersion = tonumber(patchText) or 0
+		--
+		-- -------------------------------------------------------
+		-- -- #2a.iv. Retail Expansion Database Ordering
+		-- -------------------------------------------------------
+		--
+		-- -- Function to build the ordered Retail database fallback list for the active client version
+		-- local function GetRetailDatabaseOrder()
+		-- 	local databaseOrder = {}
+		-- 	local addedSections = {}
+		--
+		-- 	-- Adds each database section once while preserving its lookup priority
+		-- 	local function AddDatabaseSection(name)
+		-- 		if addedSections[name] then return end
+		-- 		addedSections[name] = true
+		-- 		databaseOrder[#databaseOrder + 1] = name
+		-- 	end
+		--
+		-- 	if majorVersion >= 13 then AddDatabaseSection("LastTitan") end
+		-- 	if majorVersion >= 12 then AddDatabaseSection("Midnight") end
+		-- 	if majorVersion >= 11 then AddDatabaseSection("WarWithin") end
+		-- 	if majorVersion >= 10 then AddDatabaseSection("Dragonflight") end
+		-- 	if majorVersion >= 9 then AddDatabaseSection("Shadowlands") end
+		-- 	if majorVersion >= 8 then AddDatabaseSection("BattleForAzeroth") end
+		-- 	if majorVersion >= 7 then AddDatabaseSection("Legion") end
+		--
+		-- 	if majorVersion >= 6 then
+		-- 		-- Previous Blizzard call changed 2026.09.25: local garrisonInfo = C_Garrison and C_Garrison.GetGarrisonInfo and C_Garrison.GetGarrisonInfo(2)
+		-- 		local garrisonInfo = C_Garrison and RQE.API.ResolveClientAPI("C_Garrison.GetGarrisonInfo") and RQE.API.Client.C_Garrison.GetGarrisonInfo(2)
+		-- 		local wodGarrisonLevel = type(garrisonInfo) == "table" and garrisonInfo.level or tonumber(garrisonInfo)
+		-- 		if wodGarrisonLevel == 3 then
+		-- 			AddDatabaseSection("WarlordsOfDraenor03")
+		-- 		elseif wodGarrisonLevel == 2 then
+		-- 			AddDatabaseSection("WarlordsOfDraenor02")
+		-- 		else
+		-- 			AddDatabaseSection("WarlordsOfDraenor")
+		-- 		end
+		-- 	end
+		--
+		-- 	if majorVersion >= 5 then AddDatabaseSection("MistsOfPandaria") end
+		-- 	if majorVersion >= 4 then AddDatabaseSection("Cataclysm") end
+		-- 	if majorVersion >= 3 then AddDatabaseSection("Wrath") end
+		-- 	if majorVersion >= 2 then AddDatabaseSection("BurningCrusade") end
+		-- 	-- Vanilla is the final Retail-era fallback.  Do not include Anniversary or
+		-- 	-- Season of Discovery sections here: matching quest IDs can use different
+		-- 	-- map IDs and coordinates from their Retail equivalents.
+		-- 	AddDatabaseSection("Vanilla")
+		--
+		-- 	-- Include only Retail-era tables as fallbacks. AddDatabaseSection keeps the
+		-- 	-- version-appropriate order above intact and prevents duplicates.
+		-- 	for _, databaseName in ipairs({
+		-- 		"LastTitan", "Midnight", "WarWithin", "Dragonflight", "Shadowlands",
+		-- 		"BattleForAzeroth", "Legion", "WarlordsOfDraenor03",
+		-- 		"WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria",
+		-- 		"Cataclysm", "Wrath", "BurningCrusade", "Vanilla",
+		-- 	}) do
+		-- 		AddDatabaseSection(databaseName)
+		-- 	end
+		-- 	return databaseOrder
+		-- end
+		--
+		-- -------------------------------------------------------
+		-- -- #2a.v. Client-Specific Database Ordering
+		-- -------------------------------------------------------
+		--
+		-- local databaseOrder
+		-- if majorVersion >= 4 then
+		-- 	databaseOrder = GetRetailDatabaseOrder()
+		-- elseif majorVersion == 3 and (minorVersion > 5 or (minorVersion == 5 and patchVersion > 0)) then
+		-- 	databaseOrder = { "WrathAnniversaryPerm", "WrathAnniversary", "BurningCrusadeAnniversaryPerm", "BurningCrusadeAnniversary", "VanillaSoD" }
+		-- elseif majorVersion == 3 then
+		-- 	databaseOrder = { "Wrath", "BurningCrusade", "Vanilla" }
+		-- elseif majorVersion == 2 and minorVersion >= 5 then
+		-- 	databaseOrder = { "BurningCrusadeAnniversaryPerm", "BurningCrusadeAnniversary", "VanillaSoD" }
+		-- elseif majorVersion == 2 then
+		-- 	databaseOrder = { "BurningCrusade", "Vanilla" }
+		-- elseif majorVersion == 1 and minorVersion == 60 then
+		-- 	-- Forever-specific quests override shared SoD entries; SoD supplies the
+		-- 	-- existing Vanilla quest data until a Forever entry is authored.
+		-- 	databaseOrder = { "ForeverClassic", "VanillaSoD" }
+		-- elseif majorVersion == 1 and minorVersion >= 15 then
+		-- 	databaseOrder = { "VanillaSoD" }
+		-- else
+		-- 	databaseOrder = { "Vanilla" }
+		-- end
 
 		-------------------------------------------------------
 		-- #2a.vi. Ordered Lookup & Missing-Quest Fallback
