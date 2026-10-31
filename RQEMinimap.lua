@@ -183,7 +183,9 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 			-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 			local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-				TomTom.waydb:ResetProfile()
+				RQE:ClearRQETomTomWaypoints()
+				-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+				-- TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
 			end
 
