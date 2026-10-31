@@ -317,6 +317,33 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		if state.pending then self:CheckWatchedQuestsSync() end
 	end
 
+	-------------------------------------------------------
+	-- #4d. Debounced Quest Tracker Refresh
+	-------------------------------------------------------
+
+	-- One kill or loot fires QUEST_LOG_UPDATE, QUEST_WATCH_UPDATE,
+	-- UNIT_QUEST_LOG_CHANGED, and QUEST_WATCH_LIST_CHANGED in a burst, and each
+	-- used to schedule its own full UpdateRQEQuestFrame. Every request now restarts
+	-- one shared timer, so the rebuild runs once, 0.3 seconds after the last event
+	-- in the burst, with the final quest-log state. A burst that never pauses still
+	-- rebuilds within 1 second of its first request.
+	local TRACKER_REFRESH_DELAY = 0.3
+	local TRACKER_REFRESH_MAX_WAIT = 1.0
+	local trackerRefresh = { timer = nil, firstRequestAt = nil }
+
+	function RQE:RequestQuestTrackerRefresh()
+		local client = self.API.Client
+		local now = client.GetTime()
+		trackerRefresh.firstRequestAt = trackerRefresh.firstRequestAt or now
+		if trackerRefresh.timer then trackerRefresh.timer:Cancel() end
+		local delay = math.min(TRACKER_REFRESH_DELAY,
+			math.max(0, trackerRefresh.firstRequestAt + TRACKER_REFRESH_MAX_WAIT - now))
+		trackerRefresh.timer = client.C_Timer.NewTimer(delay, function()
+			trackerRefresh.timer, trackerRefresh.firstRequestAt = nil, nil
+			if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+		end)
+	end
+
 
 
 --------------------------------------------------
