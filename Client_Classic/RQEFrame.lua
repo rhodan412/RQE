@@ -2153,7 +2153,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 					and not RQE:IsCoordblockWaypointProtected(questID) then
 					-- Check if TomTom is loaded and compatibility is enabled
 					if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
-						TomTom.waydb:ResetProfile()
+						RQE:ClearRQETomTomWaypoints()
+						-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+						-- TomTom.waydb:ResetProfile()
 						RQE._currentTomTomUID = nil
 					end
 
@@ -3445,7 +3447,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 						local markedActive = coordblockData and RQE:SetActiveCoordblock(coordblockData)
 						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
 						if markedActive and TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
-							TomTom.waydb:ResetProfile()
+							RQE:ClearRQETomTomWaypoints()
+							-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+							-- TomTom.waydb:ResetProfile()
 							RQE._currentTomTomUID = nil
 						end
 						RQE:CreateWaypoint(
