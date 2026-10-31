@@ -377,7 +377,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		local handlers = {
+		-- Build the handler map on the first event and reuse it. Rebuilding this
+		-- ~95-entry table on every event, including every UNIT_AURA, was wasted work.
+		-- Every handler is defined at file level before any event fires and nothing
+		-- replaces them afterwards, so the cached map stays current.
+		local handlers = RQE.EventHandlerMap or {
+			-- Previous code (commented out 2026.10.30): rebuilt this table on every event
+			-- local handlers = {
 			ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
 			AREA_POIS_UPDATED = RQE.handleAreaPOI,
 			ADDON_LOADED = RQE.handleAddonLoaded,
@@ -473,9 +479,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			ZONE_CHANGED_INDOORS = RQE.handleZoneChange,
 			ZONE_CHANGED_NEW_AREA = RQE.handleZoneNewAreaChange
 		}
+		RQE.EventHandlerMap = handlers
 
 		if handlers[event] then
-			handlers[event](frame, event, unpack({...}))
+			-- Pass the payload straight through. This avoids a new table per event, and
+			-- unlike unpack({...}) it never drops arguments that follow a nil.
+			handlers[event](frame, event, ...)
+			-- Previous code (commented out 2026.10.30): copied the payload into a new table on every event
+			-- handlers[event](frame, event, unpack({...}))
 		else
 			RQE.debugLog("Unhandled event:", event)
 		end
@@ -1476,6 +1487,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Initialize other components of your AddOn
 		RQE:InitializeAddon()
 		RQE:InitializeFrame()
+		RQE:InitializeObjectiveTrackerHooks()
 
 		-- ProfileManager schedules character-state restoration after world entry,
 		-- independently of errors in these gameplay initialization calls.
@@ -2349,6 +2361,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handles PLAYER_CONTROL_GAINED event
 	-- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
 	function RQE.handlePlayerControlGained()
+		-- Landing after a taxi ride ends the nearest-flight-master waypoint. Only the
+		-- flight master waypoint is removed; quest waypoints tagged "RQE" stay.
+		if RQE.TaxiFlightInProgress and not RQE.API.Client.UnitOnTaxi("player") then
+			RQE.TaxiFlightInProgress = false
+			if RQE.ReleaseManualFlightMasterWaypoint then
+				RQE:ReleaseManualFlightMasterWaypoint()
+			end
+		end
+
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
 		RQE.API.Client.C_Timer.After(1.5, function()
 			RQE:UpdateMapIDDisplay()
@@ -2409,6 +2430,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			-- Previous Blizzard call changed 2026.09.25: if UnitOnTaxi("player") then
 			if RQE.API.Client.UnitOnTaxi("player") then
 				RQE.NearestFlightMasterSet = false
+				-- Remember the taxi ride so PLAYER_CONTROL_GAINED can recognize the landing
+				RQE.TaxiFlightInProgress = true
 			end
 		end)
 	end
@@ -2873,7 +2896,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			TomTom.waydb:ResetProfile()
+			RQE:ClearRQETomTomWaypoints()
+			-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+			-- TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 		end
 
@@ -2977,7 +3002,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 				local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-					TomTom.waydb:ResetProfile()
+					RQE:ClearRQETomTomWaypoints()
+					-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+					-- TomTom.waydb:ResetProfile()
 					RQE._currentTomTomUID = nil
 				end
 
@@ -3359,7 +3386,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility
 				and not reselectPending
 				and not RQE:IsCoordblockWaypointProtected() then
-				TomTom.waydb:ResetProfile()
+				RQE:ClearRQETomTomWaypoints()
+				-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+				-- TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
 			end
 
@@ -4149,7 +4178,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				if not OnTaxi and not isResting then
 					if not RQE.hoveringOnFrame then
 						RQE.SortOnly = true
-						UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
+						-- Collapse indoor/outdoor subzone bursts into one tracker rebuild
+						RQE:RequestQuestTrackerRefresh()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
+						-- Previous code (commented out 2026.10.30): rebuilt the tracker on every ZONE_CHANGED event
+						-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
 						RQE.API.Client.C_Timer.After(0.5, function()
 							RQE.SortOnly = false
@@ -4794,9 +4826,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- fields, including in a debug branch, causes a secret-value error.  Decide
 		-- from the local quest data instead and queue a normal re-evaluation.
 		local questID = RQE.API.GetSuperTrackedQuestID()
-		if not questID then
+		-- Retail's C_SuperTrack returns 0, not nil, when nothing is supertracked;
+		-- return before looking up quest 0 on every player aura change.
+		if not questID or questID == 0 then
 			return
 		end
+		-- Previous code (commented out 2026.10.30): did not exit for questID 0
+		-- if not questID then
+		-- 	return
+		-- end
 
 		local questData = RQE.getQuestData(questID)
 		if not questData then
@@ -5226,13 +5264,19 @@ local function StepUsesAuraCheck(step)
 		-----------------------------------------
 		-- ALWAYS RUN: UpdateQuestFrame refresh
 		-----------------------------------------
-		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.45, function()
-		RQE.API.Client.C_Timer.After(0.45, function()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Running UpdateRQEQuestFrame")
-			end
-			UpdateRQEQuestFrame()
-		end)
+		-- One shared, debounced rebuild runs after the last event in the burst
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Requesting UpdateRQEQuestFrame")
+		end
+		RQE:RequestQuestTrackerRefresh()
+		-- Previous code (commented out 2026.10.30): scheduled its own rebuild 0.45 seconds after every event
+		-- -- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.45, function()
+		-- RQE.API.Client.C_Timer.After(0.45, function()
+		-- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- 		print("Running UpdateRQEQuestFrame")
+		-- 	end
+		-- 	UpdateRQEQuestFrame()
+		-- end)
 	end
 
 
@@ -5536,9 +5580,23 @@ local function StepUsesAuraCheck(step)
 		local questInfo = RQE.getQuestData(questID)
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
-		if RQE.PlayerMountStatus == "Flying" or RQE.PlayerMountStatus ~= "Taxi" or RQE.PlayerMountStatus ~= "Dragonriding" then
-			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
-			RQE.API.Client.C_Timer.After(0.7, function()
+		-- Skip the delayed main-frame refresh only while on a taxi. The previous
+		-- condition was always true because the mount states are mutually exclusive.
+		if RQE.PlayerMountStatus ~= "Taxi" then
+		-- Previous code (commented out 2026.10.30): always true, so the refresh never skipped a taxi ride
+		-- if RQE.PlayerMountStatus == "Flying" or RQE.PlayerMountStatus ~= "Taxi" or RQE.PlayerMountStatus ~= "Dragonriding" then
+			-- Each QUEST_LOG_UPDATE restarts one shared timer, so the main-frame refresh
+			-- runs once, 0.7 seconds after the last event, using that event's quest data.
+			-- A burst that never pauses still refreshes within 2 seconds.
+			local now = RQE.API.Client.GetTime()
+			RQE.QuestStatusUpdateFirstAt = RQE.QuestStatusUpdateFirstAt or now
+			if RQE.QuestStatusUpdateTimer then RQE.QuestStatusUpdateTimer:Cancel() end
+			local refreshDelay = math.min(0.7, math.max(0, RQE.QuestStatusUpdateFirstAt + 2 - now))
+			RQE.QuestStatusUpdateTimer = RQE.API.Client.C_Timer.NewTimer(refreshDelay, function()
+				RQE.QuestStatusUpdateTimer, RQE.QuestStatusUpdateFirstAt = nil, nil
+			-- Previous code (commented out 2026.10.30): every event scheduled its own refresh 0.7 seconds later
+			-- -- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+			-- RQE.API.Client.C_Timer.After(0.7, function()
 				if questID then
 					if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then
 						RQE:AutoSetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
@@ -6134,10 +6192,13 @@ local function StepUsesAuraCheck(step)
 		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		if isSuperTracking and RQE.currentSuperTrackedQuestID and RQE.currentSuperTrackedQuestID ~= questID then
-			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
-			RQE.API.Client.C_Timer.After(0.7, function()
-				UpdateRQEQuestFrame()
-			end)
+			-- One shared, debounced rebuild runs after the last event in the burst
+			RQE:RequestQuestTrackerRefresh()
+			-- Previous code (commented out 2026.10.30): scheduled its own rebuild 0.7 seconds after every event
+			-- -- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+			-- RQE.API.Client.C_Timer.After(0.7, function()
+			-- 	UpdateRQEQuestFrame()
+			-- end)
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.1, function()
 			RQE.API.Client.C_Timer.After(1.1, function()
 				AdjustRQEFrameWidths()
@@ -6334,10 +6395,13 @@ local function StepUsesAuraCheck(step)
 			end)
 		end
 
-		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
-		RQE.API.Client.C_Timer.After(0.7, function()
-			UpdateRQEQuestFrame()
-		end)
+		-- One shared, debounced rebuild runs after the last event in the burst
+		RQE:RequestQuestTrackerRefresh()
+		-- Previous code (commented out 2026.10.30): scheduled its own rebuild 0.7 seconds after every event
+		-- -- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+		-- RQE.API.Client.C_Timer.After(0.7, function()
+		-- 	UpdateRQEQuestFrame()
+		-- end)
 	end
 
 
@@ -6377,15 +6441,21 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Checks to see if a quest was added or removed (true/false) in order to call this event
+		-- Auto-tracking adds or removes several watches at once; one shared,
+		-- debounced tracker rebuild runs after the last change in the burst
 		if added == true then
 			RQE.QuestAddedForWatchListChanged = true
 			-- print("Frame updating with questID " .. questID)
-			UpdateRQEQuestFrame()
+			RQE:RequestQuestTrackerRefresh()
+			-- Previous code (commented out 2026.10.30): rebuilt the tracker immediately on every watch change
+			-- UpdateRQEQuestFrame()
 			UpdateRQEWorldQuestFrame()
 		else
 			RQE.QuestAddedForWatchListChanged = false
 			-- print("Frame updating with removal of questID " .. questID)
-			UpdateRQEQuestFrame()
+			RQE:RequestQuestTrackerRefresh()
+			-- Previous code (commented out 2026.10.30): rebuilt the tracker immediately on every watch change
+			-- UpdateRQEQuestFrame()
 			UpdateRQEWorldQuestFrame()
 		end
 
@@ -6440,7 +6510,9 @@ local function StepUsesAuraCheck(step)
 					DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2206).", 1, 0.75, 0.79)		-- Pink
 				end
 			else
-				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
+				RQE:RequestQuestTrackerRefresh()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires, collapsed with the request above
+				-- Previous code (commented out 2026.10.30): a second immediate rebuild for the same event
+				-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 					DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2209).", 1, 0.75, 0.79)		-- Pink
 				end
@@ -6543,7 +6615,9 @@ local function StepUsesAuraCheck(step)
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
 				RQE.API.Client.C_Timer.After(0.15, function()
 					RQE.updateScenarioUI()
-					UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires
+					RQE:RequestQuestTrackerRefresh()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires
+					-- Previous code (commented out 2026.10.30): a third rebuild 1.35 seconds after every watch change
+					-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires
 				end)
 			end)
 		end
@@ -6656,7 +6730,9 @@ local function StepUsesAuraCheck(step)
 				local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility
 					and not RQE:IsCoordblockWaypointProtected() then
-					TomTom.waydb:ResetProfile()
+					RQE:ClearRQETomTomWaypoints()
+					-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+					-- TomTom.waydb:ResetProfile()
 					RQE._currentTomTomUID = nil
 				end
 
@@ -6920,10 +6996,32 @@ local function StepUsesAuraCheck(step)
 	Frame:SetScript("OnEvent", HandleEvents)
 
 
+	-- Unit events registered with RegisterEvent fire for every unit the client
+	-- tracks (target, focus, nameplates, party and raid members). RQE only acts on
+	-- the player for these, so the client delivers only the player's events.
+	local playerOnlyUnitEvents = {
+		UNIT_AURA = true,
+		UNIT_ENTERING_VEHICLE = true,
+		UNIT_EXITING_VEHICLE = true,
+		UNIT_INVENTORY_CHANGED = true,
+		UNIT_MODEL_CHANGED = true,
+		UNIT_QUEST_LOG_CHANGED = true,
+		UNIT_SPELLCAST_SUCCEEDED = true,
+	}
+
 	-- Loop through the list and register each event
 	for _, eventName in ipairs(eventsToRegister) do
-		Frame:RegisterEvent(eventName)
+		if playerOnlyUnitEvents[eventName] then
+			Frame:RegisterUnitEvent(eventName, "player")
+		else
+			Frame:RegisterEvent(eventName)
+		end
 	end
+
+	-- Previous code (commented out 2026.10.30): registered unit events for every unit
+	-- for _, eventName in ipairs(eventsToRegister) do
+	-- 	Frame:RegisterEvent(eventName)
+	-- end
 
 
 --------------------------------------------------
@@ -7079,7 +7177,9 @@ local function StepUsesAuraCheck(step)
 			-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 			local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-				TomTom.waydb:ResetProfile()
+				RQE:ClearRQETomTomWaypoints()
+				-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+				-- TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
 			end
 
@@ -7118,7 +7218,7 @@ local function StepUsesAuraCheck(step)
 			RQE.isRQEFrameManuallyClosed = false
 			RQE.isRQEQuestFrameManuallyClosed = false
 
-			ObjectiveTrackerFrame:Hide()
+			RQE:EnforceObjectiveTrackerVisibility()
 
 			-- Check if MagicButton should be visible based on macro body
 			RQE.Buttons.UpdateMagicButtonVisibility()
