@@ -81,6 +81,24 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 
 	local instanceTags = { [62] = true, [81] = true, [85] = true,
 		[88] = true, [89] = true, [98] = true, [288] = true }
+	local autoCategoryChoices = {
+		{ key = "campaign", text = "Auto-track Campaign", kind = "campaign", retailOnly = true },
+		{ key = "meta", text = "Auto-track Meta", kind = "meta", retailOnly = true },
+		{ key = "frequency", text = "Auto-track Daily / Weekly", kind = "frequency" },
+		{ key = "instance", text = "Auto-track Instance", kind = "instance" },
+	}
+
+	-- Retail meta quests have their own classification, independent of daily/weekly frequency.
+	local function IsRetailMetaQuest(questID)
+		return RQE.IsRetail and ClientCall("C_QuestLog.IsMetaQuest", questID) == true
+	end
+
+	local function IsDailyOrWeeklyQuest(info)
+		local frequency = info.frequency
+		local daily = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Daily or 1
+		local weekly = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Weekly or 2
+		return frequency == daily or frequency == weekly
+	end
 
 
 
@@ -110,11 +128,10 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			elseif kind == "zone" then matches = zoneSet[id] == true
 			elseif kind == "ready" then matches = ReadyForTurnIn(info)
 			elseif kind == "incomplete" then matches = not ReadyForTurnIn(info)
-			elseif kind == "frequency" then
-				local frequency = info.frequency
-				local daily = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Daily or 1
-				local weekly = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Weekly or 2
-				matches = frequency == daily or frequency == weekly
+			elseif kind == "frequency" then matches = IsDailyOrWeeklyQuest(info)
+			elseif kind == "meta" then matches = IsRetailMetaQuest(id)
+			elseif kind == "meta-frequency" then
+				matches = RQE.IsRetail and (IsDailyOrWeeklyQuest(info) or IsRetailMetaQuest(id))
 			elseif kind == "campaign" then
 				local campaignID = ClientCall("C_CampaignInfo.GetCampaignID", id) or info.campaignID
 				matches = value and campaignID == value or (not value
@@ -143,6 +160,32 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return count
 	end
 
+	-- Auto categories are profile choices; unsupported Retail categories never activate on legacy clients.
+	function RQE:HasAutoQuestCategories()
+		local enabled = self.db and self.db.profile and self.db.profile.autoTrackQuestCategories or {}
+		for _, choice in ipairs(autoCategoryChoices) do
+			if (not choice.retailOnly or self.IsRetail) and enabled[choice.key] then return true end
+		end
+		return false
+	end
+
+	function RQE:GetAutoQuestCategoryMatches()
+		local selected = {}
+		local enabled = self.db.profile.autoTrackQuestCategories or {}
+		for _, choice in ipairs(autoCategoryChoices) do
+			if (not choice.retailOnly or self.IsRetail) and enabled[choice.key] then
+				for questID in pairs(self:GetQuestMenuMatches(choice.kind)) do selected[questID] = true end
+			end
+		end
+		return selected
+	end
+
+	local function SameSet(a, b)
+		for id in pairs(a or {}) do if not b[id] then return false end end
+		for id in pairs(b or {}) do if not a or not a[id] then return false end end
+		return true
+	end
+
 	-------------------------------------------------------
 	-- #2b. Native & Legacy Watch Synchronization
 	-------------------------------------------------------
@@ -158,15 +201,37 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	end
 
 	-- Diffs the desired selection against native watches without disturbing unrelated tracker sources.
-	local function SetNativeWatches(selected)
+	local function SetNativeWatches(selected, previousSelection)
 		local watched = NativeWatches()
+		local inLog = {}
 		-- Only player-log quests belong to this menu; other tracker sources retain
 		-- their watches. Apply a diff so unchanged watches do not generate events.
 		for _, info in ipairs(QuestLogEntries()) do
 			local id = info.questID
+			inLog[id] = true
 			if watched[id] and not selected[id] then ClientCall("C_QuestLog.RemoveQuestWatch", id)
 			elseif selected[id] and not watched[id] then ClientCall("C_QuestLog.AddQuestWatch", id) end
 		end
+		-- A removed quest may linger in Blizzard's watched list briefly. Only
+		-- clean up IDs previously selected by this automatic category mode.
+		for id in pairs(previousSelection or {}) do
+			if not inLog[id] and not RQE.API.IsOnQuest(id)
+				and watched[id] and not selected[id] then
+				ClientCall("C_QuestLog.RemoveQuestWatch", id)
+			end
+		end
+	end
+
+	local function NativeSelectionMatches(selected, previousSelection)
+		local watched = NativeWatches()
+		for _, info in ipairs(QuestLogEntries()) do
+			local id = info.questID
+			if (watched[id] == true) ~= (selected[id] == true) then return false end
+		end
+		for id in pairs(previousSelection or {}) do
+			if watched[id] and not selected[id] and not RQE.API.IsOnQuest(id) then return false end
+		end
+		return true
 	end
 
 	-- Saves the explicit virtual-watch selection after legacy restoration has completed.
@@ -199,6 +264,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	function RQE:CaptureQuestMenuTracking()
 		local snapshot = { nativeWatches = NativeWatches(),
 			autoTrackZoneQuests = self.db.profile.autoTrackZoneQuests,
+			autoTrackQuestCategories = Copy(self.db.profile.autoTrackQuestCategories),
 			lastAction = self.QuestMenuLastAction }
 		for _, key in ipairs(stateKeys) do snapshot[key] = Copy(self[key]) end
 		self.QuestMenuRestoreState = snapshot
@@ -208,6 +274,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	local function RestoreSnapshotFields(snapshot)
 		for _, key in ipairs(stateKeys) do RQE[key] = Copy(snapshot[key]) end
 		RQE.db.profile.autoTrackZoneQuests = snapshot.autoTrackZoneQuests
+		RQE.db.profile.autoTrackQuestCategories = Copy(snapshot.autoTrackQuestCategories) or {}
 		RQE.QuestMenuLastAction = snapshot.lastAction
 		if RQE.UpdateQuestTrackerSearchRestoreButton then RQE:UpdateQuestTrackerSearchRestoreButton() end
 	end
@@ -215,8 +282,88 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	-- Disables automatic and search-driven membership before applying an explicit selection.
 	local function PrepareManualSelection()
 		RQE.db.profile.autoTrackZoneQuests = false
+		RQE.db.profile.autoTrackQuestCategories = {}
+		RQE.AutoQuestCategorySelected = nil
 		RQE.QuestTrackerSearchResults, RQE.QuestTrackerSearchRestoreState = nil, nil
 		if RQE.UpdateQuestTrackerSearchRestoreButton then RQE:UpdateQuestTrackerSearchRestoreButton() end
+	end
+
+	-- Reconcile only ordinary quest-log membership; world quests and bonus objectives remain independent.
+	function RQE:ReconcileAutoQuestCategories(force)
+		if not self:HasAutoQuestCategories() or self.db.profile.autoTrackZoneQuests then return false end
+		if ClientCall("InCombatLockdown") then
+			self.AutoQuestCategoryRefreshPending = true
+			return false
+		end
+		self.AutoQuestCategoryRefreshPending = false
+		local selected = self:GetAutoQuestCategoryMatches()
+		local focused = self.API.GetSuperTrackedQuestID and self.API.GetSuperTrackedQuestID()
+		if LegacyTracker() then
+			-- An explicit empty selection must still replace nil, which otherwise
+			-- falls through to native and virtual quest watches on legacy clients.
+			if not force and self.QuestMenuSelection ~= nil
+				and SameSet(self.QuestMenuSelection, selected) then return false end
+			self.QuestMenuSelection = selected
+			self.ClassicVirtualQuestWatches = Copy(selected)
+			self.ClassicManualVirtualQuestWatches = Copy(selected)
+			self.AutoQuestProgressVirtualWatches, self.AutoQuestProgressWatchTokens = {}, {}
+			self.HiddenQuestLogQuests = {}
+			self.ShowAllQuestLogQuests, self.ZoneQuestFilterMapID = false, nil
+			self.ShowOnlyAllCompleteVirtualQuests = false
+		else
+			if not force and NativeSelectionMatches(selected, self.AutoQuestCategorySelected) then
+				self.AutoQuestCategorySelected = Copy(selected)
+				return false
+			end
+			SetNativeWatches(selected, self.AutoQuestCategorySelected)
+			self.AutoQuestCategorySelected = Copy(selected)
+		end
+		RefreshTracker(focused)
+		return true
+	end
+
+	function RQE:QueueAutoQuestCategoryRefresh(delay)
+		if not self:HasAutoQuestCategories() or self.db.profile.autoTrackZoneQuests
+			or self.AutoQuestCategoryRefreshQueued then return end
+		self.AutoQuestCategoryRefreshQueued = true
+		self.API.Client.C_Timer.After(delay or 0.4, function()
+			self.AutoQuestCategoryRefreshQueued = false
+			self:ReconcileAutoQuestCategories()
+		end)
+	end
+
+	function RQE:ToggleAutoQuestCategory(key)
+		if ClientCall("InCombatLockdown") then return false end
+		local choice
+		for _, candidate in ipairs(autoCategoryChoices) do
+			if candidate.key == key then choice = candidate; break end
+		end
+		if not choice or (choice.retailOnly and not self.IsRetail) then return false end
+		local profile = self.db.profile
+		local currentlyEnabled = profile.autoTrackQuestCategories
+			and profile.autoTrackQuestCategories[key] == true
+		if not currentlyEnabled and not self:HasAutoQuestCategories() then
+			self:CaptureQuestMenuTracking()
+		end
+		if profile.autoTrackZoneQuests then self:SetAutoTrackZoneQuestsEnabled(false) end
+		profile.autoTrackQuestCategories = profile.autoTrackQuestCategories or {}
+		profile.autoTrackQuestCategories[key] = not currentlyEnabled or nil
+		self.QuestMenuLastAction = choice.text
+		self.QuestTrackerSearchResults, self.QuestTrackerSearchRestoreState = nil, nil
+		if self.UpdateQuestTrackerSearchRestoreButton then self:UpdateQuestTrackerSearchRestoreButton() end
+		if self:HasAutoQuestCategories() then self:ReconcileAutoQuestCategories(true) end
+		if not self:HasAutoQuestCategories() then self.AutoQuestCategorySelected = nil end
+		return true
+	end
+
+	-- All zone controls, including settings panels, disable the category checkboxes on either toggle.
+	local originalZoneSetter = RQE.SetAutoTrackZoneQuestsEnabled
+	function RQE:SetAutoTrackZoneQuestsEnabled(enabled)
+		self.db.profile.autoTrackQuestCategories = {}
+		self.AutoQuestCategorySelected = nil
+		if originalZoneSetter then return originalZoneSetter(self, enabled) end
+		self.db.profile.autoTrackZoneQuests = enabled == true
+		if enabled then self.DisplayCurrentZoneQuests() end
 	end
 
 	-- Applies a filter result as the native or virtual quest selection and refreshes the tracker.
@@ -257,8 +404,11 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		SetNativeWatches(snapshot.nativeWatches)
 		RestoreSnapshotFields(snapshot)
 		self.QuestMenuRestoreState = nil
-		RefreshTracker(focused)
-		if self.db.profile.autoTrackZoneQuests then self.DisplayCurrentZoneQuests() end
+		if self:HasAutoQuestCategories() then self:ReconcileAutoQuestCategories(true)
+		else
+			RefreshTracker(focused)
+			if self.db.profile.autoTrackZoneQuests then self.DisplayCurrentZoneQuests() end
+		end
 		return true
 	end
 
@@ -281,6 +431,8 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		if type(original) == "function" then
 			RQE[name] = function(...)
 				RQE.QuestMenuSelection = nil
+				RQE.db.profile.autoTrackQuestCategories = {}
+				RQE.AutoQuestCategorySelected = nil
 				PersistLegacySelection()
 				return original(...)
 			end
@@ -522,7 +674,12 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				row:SetScript("OnEnter", function(self)
 					if self.tooltip then
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-						GameTooltip:SetText(self.tooltip)
+						if self.previewTooltip then
+							GameTooltip:SetText(self.item.text or "Template")
+							GameTooltip:AddLine(self.tooltip, 1, 0.82, 0, true)
+						else
+							GameTooltip:SetText(self.tooltip)
+						end
 						GameTooltip:Show()
 					end
 				end)
@@ -533,6 +690,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				menu.rows[index] = row
 			end
 			row.item, row.RQEMenuKind, row.disabled = item, item.kind, item.disabled
+			row.previewTooltip = item.previewTooltip
 			row.tooltip = item.tooltip
 			row.label:SetWidth(10000)
 			row.label:SetText(item.text or "")
@@ -728,6 +886,27 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			{ text = "Untrack quest-log quests",
 				action = function() RQE:ApplyQuestMenuSelection("none", nil, "Untrack quest-log quests") end },
 		}
+		if RQE.IsRetail then
+			-- Keep the Retail-only choices directly below Campaign and above Daily / Weekly.
+			table.insert(items, 5, SelectionRow("Meta", "meta"))
+			table.insert(items, 6, SelectionRow("Meta / Daily / Weekly", "meta-frequency"))
+		end
+		local sortingIndex
+		for index, item in ipairs(items) do
+			if item.text == "Sorting" then sortingIndex = index; break end
+		end
+		for _, choice in ipairs(autoCategoryChoices) do
+			if not choice.retailOnly or RQE.IsRetail then
+				local key = choice.key
+				table.insert(items, sortingIndex, {
+					text = choice.text, keepOpen = true,
+					checked = (RQE.db.profile.autoTrackQuestCategories or {})[key] == true,
+					tooltip = "Keep matching quests in your quest log tracked as quests are accepted or removed.",
+					action = function() RQE:ToggleAutoQuestCategory(key) end,
+				})
+				sortingIndex = sortingIndex + 1
+			end
+		end
 		if ContributionLoaded() then
 			items[#items + 1] = { text = "Contribution", submenu = "Contribution", build = function()
 				local contribution = {
@@ -776,10 +955,48 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			{ text = "Copy target NPC reference", action = function()
 				self:ShowTargetNPCCopy()
 			end },
+			{ text = "Descriptions", submenu = "TargetNPCDescriptions", build = function()
+				local templates = RQE_Contribution and RQE_Contribution.GetStepEditorDescriptionTemplates
+					and RQE_Contribution.GetStepEditorDescriptionTemplates() or {}
+				table.sort(templates, function(left, right) return left.name:lower() < right.name:lower() end)
+				local rows = {}
+				for _, template in ipairs(templates) do
+					local selectedTemplate = template
+					rows[#rows + 1] = {
+						text = selectedTemplate.name, tooltip = selectedTemplate.tooltip or selectedTemplate.text, previewTooltip = true,
+						action = function() self:ShowContributionDescriptionCopy(selectedTemplate) end,
+					}
+				end
+				return rows
+			end },
 			{ text = "Macros", submenu = "TargetNPCMacros", build = function()
-				return { { text = "Speak to NPC", action = function()
-					self:ShowSpeakToNPCMacroCopy()
-				end } }
+				local templates = RQE_Contribution and RQE_Contribution.GetStepEditorMacroTemplates
+					and RQE_Contribution.GetStepEditorMacroTemplates() or {
+						{ name = "Speak with Target Macro", body = "#showtooltip item:5830\n/tar NPCNAME\n/run RQE.SelectMultipleGossipOptions(\"NPCNAME\", 0)\n/tm 0\n/tm ~2", primaryNpcPlaceholder = "NPCNAME" },
+					}
+				templates[#templates + 1] = {
+					name = "Cancel Aura",
+					body = "#showtooltip item:" .. (RQE.IsRetail and "153541" or "54068") .. "\n/cancelaura SPELLNAME",
+				}
+				table.sort(templates, function(left, right) return left.name:lower() < right.name:lower() end)
+				local rows = {}
+				for _, template in ipairs(templates) do
+					local selectedTemplate = template
+					rows[#rows + 1] = {
+						text = selectedTemplate.name, tooltip = selectedTemplate.tooltip or selectedTemplate.body, previewTooltip = true,
+						action = function() self:ShowContributionMacroCopy(selectedTemplate) end,
+					}
+				end
+				return rows
+			end },
+			{ text = "Copy player locations", action = function()
+				RQE.DebugPrintPlayerContinentPosition(nil, "locations")
+			end },
+			{ text = "Copy player coordinate hotspots", action = function()
+				RQE.DebugPrintPlayerContinentPosition(nil, "coordinateHotspots")
+			end },
+			{ text = "Copy subzone and zone", action = function()
+				self:ShowPlayerZoneCopy()
 			end },
 		})
 		ShowMenu(menu, self.TargetNPCButton)
@@ -1014,7 +1231,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	-------------------------------------------------------
 
 	-- Creates or updates the movable copy dialog and selects the supplied text.
-	function RQE:ShowCopyableReferenceText(header, title, value)
+	function RQE:ShowCopyableReferenceText(header, title, value, options)
 		if type(header) ~= "string" or header == ""
 			or type(value) ~= "string" or value == "" then return end
 		self:CloseQuestFilterMenus()
@@ -1042,6 +1259,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.editBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
 			frame.editBox:SetAutoFocus(false)
 			frame.editBox:SetFontObject("GameFontHighlight")
+			frame.editBox:SetMaxLetters(0)
 			frame.editBox:SetHeight(24)
 			frame.editBox:SetPoint("TOPLEFT", frame.questTitle, "BOTTOMLEFT", 3, -14)
 			frame.editBox:SetPoint("TOPRIGHT", frame.questTitle, "BOTTOMRIGHT", 0, -14)
@@ -1059,6 +1277,127 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.hint = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 			frame.hint:SetPoint("TOPRIGHT", frame.editBox, "BOTTOMRIGHT", 0, -6)
 			frame.hint:SetText("Ctrl+C to copy  |  Esc to close")
+			frame.macroControls = CreateFrame("Frame", nil, frame)
+			frame.macroControls:SetPoint("TOPLEFT", frame.editBox, "BOTTOMLEFT", 0, -10)
+			frame.macroControls:SetPoint("TOPRIGHT", frame.editBox, "BOTTOMRIGHT", 0, -10)
+			frame.macroIDRow = CreateFrame("Frame", nil, frame.macroControls)
+			frame.macroIDRow:SetPoint("TOPLEFT", frame.macroControls, "TOPLEFT")
+			frame.macroIDRow:SetPoint("TOPRIGHT", frame.macroControls, "TOPRIGHT")
+			frame.macroIDRow:SetHeight(26)
+			frame.macroIDLabel = frame.macroIDRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			frame.macroIDLabel:SetSize(68, 22)
+			frame.macroIDLabel:SetPoint("LEFT", frame.macroIDRow, "LEFT", 0, 0)
+			frame.macroIDInput = CreateFrame("EditBox", nil, frame.macroIDRow, "InputBoxTemplate")
+			frame.macroIDInput:SetSize(120, 22)
+			frame.macroIDInput:SetPoint("LEFT", frame.macroIDLabel, "RIGHT", 8, 0)
+			frame.macroIDInput:SetAutoFocus(false)
+			frame.macroIDInput:SetMaxLetters(12)
+			frame.macroIDButton = CreateFrame("Button", nil, frame.macroIDRow, "UIPanelButtonTemplate")
+			frame.macroIDButton:SetSize(150, 24)
+			frame.macroIDButton:SetPoint("LEFT", frame.macroIDInput, "RIGHT", 14, 0)
+			frame.macroIDButton.label = frame.macroIDButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			frame.macroIDButton.label:SetPoint("CENTER")
+			frame.macroIDButton.label:SetText("Update macro")
+			frame.macroIDButton:SetScript("OnClick", function()
+				if frame.descriptionState then RQE:UpdateContributionDescriptionID(frame)
+				else RQE:UpdateContributionMacroID(frame) end
+			end)
+			frame.macroIDInput:SetScript("OnEnterPressed", function()
+				if frame.descriptionState then RQE:UpdateContributionDescriptionID(frame)
+				else RQE:UpdateContributionMacroID(frame) end
+			end)
+			frame.macroIDInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
+			frame.macroQuantityRow = CreateFrame("Frame", nil, frame.macroControls)
+			frame.macroQuantityRow:SetHeight(26)
+			frame.macroQuantityLabel = frame.macroQuantityRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			frame.macroQuantityLabel:SetSize(68, 22)
+			frame.macroQuantityLabel:SetPoint("LEFT", frame.macroQuantityRow, "LEFT", 0, 0)
+			frame.macroQuantityLabel:SetText("Quantity")
+			frame.macroQuantityInput = CreateFrame("EditBox", nil, frame.macroQuantityRow, "InputBoxTemplate")
+			frame.macroQuantityInput:SetSize(120, 22)
+			frame.macroQuantityInput:SetPoint("LEFT", frame.macroQuantityLabel, "RIGHT", 8, 0)
+			frame.macroQuantityInput:SetAutoFocus(false)
+			frame.macroQuantityInput:SetMaxLetters(12)
+			frame.macroQuantityButton = CreateFrame("Button", nil, frame.macroQuantityRow, "UIPanelButtonTemplate")
+			frame.macroQuantityButton:SetSize(150, 24)
+			frame.macroQuantityButton:SetPoint("LEFT", frame.macroQuantityInput, "RIGHT", 14, 0)
+			frame.macroQuantityButton.label = frame.macroQuantityButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			frame.macroQuantityButton.label:SetPoint("CENTER")
+			frame.macroQuantityButton.label:SetText("Update macro")
+			frame.macroQuantityButton:SetScript("OnClick", function()
+				if frame.descriptionState then RQE:UpdateContributionDescriptionQuantity(frame)
+				else RQE:UpdateContributionMacroQuantity(frame) end
+			end)
+			frame.macroQuantityInput:SetScript("OnEnterPressed", function()
+				if frame.descriptionState then RQE:UpdateContributionDescriptionQuantity(frame)
+				else RQE:UpdateContributionMacroQuantity(frame) end
+			end)
+			frame.macroQuantityInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
+			frame.macroObjectRow = CreateFrame("Frame", nil, frame.macroControls)
+			frame.macroObjectRow:SetHeight(26)
+			frame.macroObjectLabel = frame.macroObjectRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			frame.macroObjectLabel:SetSize(90, 22)
+			frame.macroObjectLabel:SetPoint("LEFT", frame.macroObjectRow, "LEFT", 0, 0)
+			frame.macroObjectLabel:SetText("Object name")
+			frame.macroObjectInput = CreateFrame("EditBox", nil, frame.macroObjectRow, "InputBoxTemplate")
+			frame.macroObjectInput:SetSize(208, 22)
+			frame.macroObjectInput:SetPoint("LEFT", frame.macroObjectLabel, "RIGHT", 8, 0)
+			frame.macroObjectInput:SetAutoFocus(false)
+			frame.macroObjectInput:SetMaxLetters(100)
+			frame.macroObjectButton = CreateFrame("Button", nil, frame.macroObjectRow, "UIPanelButtonTemplate")
+			frame.macroObjectButton:SetSize(150, 24)
+			frame.macroObjectButton:SetPoint("LEFT", frame.macroObjectInput, "RIGHT", 14, 0)
+			frame.macroObjectButton.label = frame.macroObjectButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			frame.macroObjectButton.label:SetPoint("CENTER")
+			frame.macroObjectButton.label:SetText("Update macro")
+			frame.macroObjectButton:SetScript("OnClick", function()
+				if frame.descriptionState then RQE:UpdateContributionDescriptionObject(frame)
+				else RQE:UpdateContributionMacroObject(frame) end
+			end)
+			frame.macroObjectInput:SetScript("OnEnterPressed", function()
+				if frame.descriptionState then RQE:UpdateContributionDescriptionObject(frame)
+				else RQE:UpdateContributionMacroObject(frame) end
+			end)
+			frame.macroObjectInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
+			frame.macroGossipRow = CreateFrame("Frame", nil, frame.macroControls)
+			frame.macroGossipRow:SetHeight(26)
+			frame.macroGossipLabel = frame.macroGossipRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			frame.macroGossipLabel:SetSize(90, 22)
+			frame.macroGossipLabel:SetPoint("LEFT", frame.macroGossipRow, "LEFT", 0, 0)
+			frame.macroGossipLabel:SetText("Gossip options")
+			frame.macroGossipInput = CreateFrame("EditBox", nil, frame.macroGossipRow, "InputBoxTemplate")
+			frame.macroGossipInput:SetSize(208, 22)
+			frame.macroGossipInput:SetPoint("LEFT", frame.macroGossipLabel, "RIGHT", 8, 0)
+			frame.macroGossipInput:SetAutoFocus(false)
+			frame.macroGossipInput:SetMaxLetters(100)
+			frame.macroGossipButton = CreateFrame("Button", nil, frame.macroGossipRow, "UIPanelButtonTemplate")
+			frame.macroGossipButton:SetSize(150, 24)
+			frame.macroGossipButton:SetPoint("LEFT", frame.macroGossipInput, "RIGHT", 14, 0)
+			frame.macroGossipButton.label = frame.macroGossipButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			frame.macroGossipButton.label:SetPoint("CENTER")
+			frame.macroGossipButton.label:SetText("Update macro")
+			frame.macroGossipButton:SetScript("OnClick", function() RQE:UpdateContributionMacroGossip(frame) end)
+			frame.macroGossipInput:SetScript("OnEnterPressed", function() RQE:UpdateContributionMacroGossip(frame) end)
+			frame.macroGossipInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
+			frame.macroNPCRow = CreateFrame("Frame", nil, frame.macroControls)
+			frame.macroNPCRow:SetPoint("TOPRIGHT", frame.macroControls, "TOPRIGHT")
+			frame.macroNPCRow:SetHeight(26)
+			for _, slot in ipairs({ "primary", "secondary" }) do
+				local button = CreateFrame("Button", nil, frame.macroNPCRow, "UIPanelButtonTemplate")
+				button:SetSize(150, 24)
+				button.label = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				button.label:SetPoint("CENTER")
+				button:SetScript("OnClick", function()
+					if frame.descriptionState then RQE:UpdateContributionDescriptionNPC(frame)
+					else RQE:UpdateContributionMacroNPC(frame, slot) end
+				end)
+				frame["macroNPC" .. slot] = button
+			end
+			frame.macroNPCprimary:SetPoint("LEFT", frame.macroNPCRow, "LEFT", 0, 0)
+			frame.macroNPCsecondary:SetPoint("LEFT", frame.macroNPCprimary, "RIGHT", 12, 0)
+			frame.macroStatus = frame.macroControls:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+			frame.macroStatus:SetPoint("LEFT", frame.macroControls, "LEFT", 0, 0)
+			frame.macroStatus:SetText("")
 			frame.closeButton = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
 			frame.closeButton:SetSize(22, 22)
 			frame.closeButton:SetPoint("TOPRIGHT", -7, -6)
@@ -1069,25 +1408,111 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				QueueReferenceSelection(frame)
 			end)
 			frame:SetScript("OnShow", function() QueueReferenceSelection(frame) end)
-			frame:SetScript("OnHide", function() frame:StopMovingOrSizing(); frame.editBox:ClearFocus() end)
+			frame:SetScript("OnHide", function()
+				frame:StopMovingOrSizing()
+				frame.editBox:ClearFocus()
+				frame.macroIDInput:ClearFocus()
+				frame.macroQuantityInput:ClearFocus()
+				frame.macroObjectInput:ClearFocus()
+				frame.macroGossipInput:ClearFocus()
+				frame.macroState = nil
+				frame.descriptionState = nil
+			end)
 			RegisterEscape(frame)
 			self.QuestReferenceLinkFrame = frame
 			if self.UI then
 				self.UI:StylePanel(frame, 0.98, "menu")
 				self.UI:StyleSearchBox(frame.editBox)
+				self.UI:StyleSearchBox(frame.macroIDInput)
+				self.UI:StyleSearchBox(frame.macroQuantityInput)
+				self.UI:StyleSearchBox(frame.macroObjectInput)
+				self.UI:StyleSearchBox(frame.macroGossipInput)
+				self.UI:StyleTextButton(frame.macroIDButton)
+				self.UI:StyleTextButton(frame.macroQuantityButton)
+				self.UI:StyleTextButton(frame.macroObjectButton)
+				self.UI:StyleTextButton(frame.macroGossipButton)
+				self.UI:StyleTextButton(frame.macroNPCprimary)
+				self.UI:StyleTextButton(frame.macroNPCsecondary)
 				self.UI:StyleIconButton(frame.closeButton, "Close", { size = 22 })
 			end
+			-- InputBoxTemplate and the themed border share the edit-box edge.
+			-- Keep the caret and selected copy text clear of that artwork.
+			for _, box in ipairs({ frame.editBox, frame.macroIDInput,
+				frame.macroQuantityInput, frame.macroObjectInput, frame.macroGossipInput }) do
+				box:SetTextInsets(12, 10, 0, 0)
+			end
 		end
-		frame:SetWidth(math.min(540, UIParent:GetWidth() - 40))
+		local multiline = value:find("\n", 1, true) ~= nil
+		frame:SetWidth(math.min(multiline and 960 or 540, UIParent:GetWidth() - 40))
 		frame.provider:SetText(header)
 		frame.questTitle:SetText(title or "")
 		frame.questTitle:SetHeight(frame.questTitle:GetStringHeight())
-		frame:SetHeight(106 + frame.questTitle:GetStringHeight())
+		frame.editBox:SetMultiLine(multiline)
+		frame.editBox:SetHeight(multiline and 170 or 24)
+		local macroState = options and options.macroState
+		local descriptionState = options and options.descriptionState
+		frame.macroState = macroState
+		frame.descriptionState = descriptionState
+		local idKind = (macroState and macroState.idKind) or (descriptionState and descriptionState.idKind)
+		local hasID = idKind ~= nil
+		local hasQuantity = (macroState and macroState.hasQuantity) or (descriptionState and descriptionState.hasQuantity)
+		local hasObject = (macroState and macroState.hasObject) or (descriptionState and descriptionState.hasObject)
+		local hasGossip = macroState and macroState.hasGossip
+		local hasDualNPC = macroState and macroState.dualNPC == true
+		local hasNPCButton = hasDualNPC or (descriptionState and descriptionState.hasNPCButton)
+		local controlsHeight = 0
+		frame.macroControls:SetShown(hasID or hasQuantity or hasObject or hasGossip or hasNPCButton or false)
+		frame.macroIDRow:SetShown(hasID or false)
+		frame.macroQuantityRow:SetShown(hasQuantity or false)
+		frame.macroObjectRow:SetShown(hasObject or false)
+		frame.macroGossipRow:SetShown(hasGossip or false)
+		frame.macroNPCRow:SetShown(hasNPCButton or false)
+		frame.macroNPCsecondary:SetShown(hasDualNPC or false)
+		frame.hint:ClearAllPoints()
+		if hasID or hasQuantity or hasObject or hasGossip or hasNPCButton then
+			local rowTop = 0
+			local function positionRow(row, visible)
+				if not visible then return end
+				row:ClearAllPoints()
+				row:SetPoint("TOPLEFT", frame.macroControls, "TOPLEFT", 0, rowTop)
+				row:SetPoint("TOPRIGHT", frame.macroControls, "TOPRIGHT", 0, rowTop)
+				rowTop = rowTop - 32
+			end
+			positionRow(frame.macroIDRow, hasID)
+			positionRow(frame.macroQuantityRow, hasQuantity)
+			positionRow(frame.macroObjectRow, hasObject)
+			positionRow(frame.macroGossipRow, hasGossip)
+			positionRow(frame.macroNPCRow, hasNPCButton)
+			controlsHeight = -rowTop + 18
+			frame.macroControls:SetHeight(controlsHeight)
+			frame.macroIDLabel:SetText(hasID and (idKind == "item" and "Item ID" or "Spell ID") or "")
+			frame.macroObjectLabel:SetText(descriptionState and descriptionState.objectPlaceholder == "OBJECT/NPC"
+				and "Object/NPC" or "Object name")
+			frame.macroIDInput:SetText("")
+			frame.macroQuantityInput:SetText("")
+			frame.macroObjectInput:SetText("")
+			frame.macroGossipInput:SetText(macroState and macroState.originalGossipOptions or "")
+			frame.macroNPCprimary.label:SetText(descriptionState and descriptionState.npcButtonLabel
+				or macroState and macroState.primaryLabel or "First NPC")
+			frame.macroNPCsecondary.label:SetText(macroState and macroState.secondaryLabel or "Second NPC")
+			local buttonText = descriptionState and "Update description" or "Update macro"
+			frame.macroIDButton.label:SetText(buttonText)
+			frame.macroQuantityButton.label:SetText(buttonText)
+			frame.macroObjectButton.label:SetText(buttonText)
+			frame.macroStatus:ClearAllPoints()
+			frame.macroStatus:SetPoint("TOPLEFT", frame.macroControls, "TOPLEFT", 0, -controlsHeight + 18)
+			frame.macroStatus:SetText("")
+			frame.hint:SetPoint("TOPRIGHT", frame.macroControls, "BOTTOMRIGHT", 0, -6)
+		else
+			frame.hint:SetPoint("TOPRIGHT", frame.editBox, "BOTTOMRIGHT", 0, -6)
+		end
+		frame:SetHeight((multiline and 252 or 106) + frame.questTitle:GetStringHeight() + (controlsHeight > 0 and controlsHeight + 10 or 0))
 		frame.copyValue = value
 		frame.editBox:SetText(value)
 		frame:Show()
 		SelectReferenceText(frame)
 		QueueReferenceSelection(frame)
+		return frame
 	end
 
 	-- Keeps existing quest-link callers on the shared copy dialog.
@@ -1130,16 +1555,481 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			string.format("{npc:%d:%s}", npcID, escapedName))
 	end
 
-	-- Produces an authored Lua macro entry while preserving the name inside /tar and /run.
-	function RQE:ShowSpeakToNPCMacroCopy()
-		if not ContributionLoaded() then return end
+	-- Ignores icon-only placeholders when deciding whether the macro needs an ID field.
+	local function MacroBodyIDKind(body)
+		local commands = body
+		if commands:find("#showtooltip", 1, true) == 1 then
+			commands = commands:match("\n(.*)") or ""
+		end
+		local hasItemID = commands:find("ITEMID", 1, true) ~= nil
+		local hasItemName = commands:find("ITEMNAME", 1, true) ~= nil
+		local hasSpellID = commands:find("SPELLID", 1, true) ~= nil
+		local hasSpellName = commands:find("SPELLNAME", 1, true) ~= nil
+		return (hasItemID or hasItemName) and "item" or (hasSpellID or hasSpellName) and "spell" or nil,
+			hasItemName, hasSpellName
+	end
+
+	-- Object gossip templates use a literal argument rather than an NPC placeholder.
+	local function MacroHasObjectName(body, primary, secondary)
+		local argument = body:match('RQE%.SelectMultipleGossipOptions%(%s*"(.-)"%s*,')
+		return argument ~= nil and argument ~= primary and argument ~= secondary
+	end
+
+	-- The Step Editor labels distinguish the two priority targets from ordinary Kill/Speak slots.
+	local function MacroNPCButtonLabel(placeholder, editorLabel)
+		local labels = { KILL = "Kill", SPEAK = "Speak", FIRST_KILL = "Kill #1", SECOND_KILL = "Kill #2" }
+		return labels[placeholder] or (editorLabel and (editorLabel:gsub("^Populate%s+", ""))) or placeholder
+	end
+
+	-- Rebuilds from untouched template text, keeping each authoring field independent.
+	local function RenderContributionMacro(state)
+		local macro, pending = state.body, {}
+		if state.gossipOptions then
+			local marker = "\001" .. (#pending + 1) .. "\002"
+			local replacements
+			macro, replacements = macro:gsub('(RQE%.SelectMultipleGossipOptions%(%s*".-"%s*,%s*)[^)]-(%))',
+				function(before, after) return before .. marker .. after end, 1)
+			if replacements > 0 then pending[#pending + 1] = { marker, state.gossipOptions } end
+		end
+		local function mask(pattern, value)
+			local marker = "\001" .. (#pending + 1) .. "\002"
+			macro = macro:gsub(pattern, marker)
+			pending[#pending + 1] = { marker, value }
+		end
+		local npcSlots = {}
+		if state.primary and state.npcValues.primary then
+			npcSlots[#npcSlots + 1] = { state.primary, state.npcValues.primary }
+		end
+		if state.secondary and state.npcValues.secondary then
+			npcSlots[#npcSlots + 1] = { state.secondary, state.npcValues.secondary }
+		end
+		table.sort(npcSlots, function(left, right) return #left[1] > #right[1] end)
+		for _, slot in ipairs(npcSlots) do
+			mask('"' .. slot[1] .. '"', '"' .. EscapeLuaString(slot[2]) .. '"')
+			mask(slot[1], slot[2])
+		end
+		if state.objectName then
+			local marker = "\001" .. (#pending + 1) .. "\002"
+			local replacements
+			macro, replacements = macro:gsub('(RQE%.SelectMultipleGossipOptions%(%s*")(.-)("%s*,)',
+				function(before, _, after) return before .. marker .. after end, 1)
+			if replacements > 0 then pending[#pending + 1] = { marker, EscapeLuaString(state.objectName) } end
+		end
+		if state.idKind == "item" then
+			if state.itemID then mask("ITEMID", tostring(state.itemID)) end
+			if state.itemName then mask("ITEMNAME", state.itemName) end
+		elseif state.idKind == "spell" then
+			if state.spellID then mask("SPELLID", tostring(state.spellID)) end
+			if state.spellName then mask("SPELLNAME", state.spellName) end
+		end
+		if state.quantity then mask("NUMBER", tostring(state.quantity)) end
+		for _, replacement in ipairs(pending) do
+			macro = macro:gsub(replacement[1], function() return replacement[2] end)
+		end
+		return 'macro = { "' .. EscapeLuaString(macro) .. '" },'
+	end
+
+	function RQE:RefreshContributionMacroCopy(frame)
+		local state = frame and frame.macroState
+		if not state or not frame:IsShown() then return end
+		frame.copyValue = RenderContributionMacro(state)
+		frame.editBox:SetText(frame.copyValue)
+		SelectReferenceText(frame)
+		QueueReferenceSelection(frame)
+	end
+
+	-- Dual-NPC macros start with separate placeholders; each button fills only its own slot.
+	function RQE:UpdateContributionMacroNPC(frame, slot)
+		local state = frame and frame.macroState
+		if not state or not state.dualNPC or (slot ~= "primary" and slot ~= "secondary") then return end
 		local name = TargetNPC()
-		if not name then print("RQE: Target an NPC to copy its macro."); return end
-		local macro = "#showtooltip item:5830\n/tar " .. name
-			.. "\n/run RQE.SelectMultipleGossipOptions(\"" .. EscapeLuaString(name)
-			.. "\", 0)\n/tm 0\n/tm ~2"
-		self:ShowCopyableReferenceText("Speak to NPC macro", name,
-			'macro = { "' .. EscapeLuaString(macro) .. '" },')
+		if not name then
+			frame.macroStatus:SetText("Target an NPC, then press its button.")
+			return
+		end
+		state.npcValues[slot] = name
+		frame.macroStatus:SetText((slot == "primary" and state.primaryLabel or state.secondaryLabel) .. ": " .. name)
+		self:RefreshContributionMacroCopy(frame)
+	end
+
+	-- One ID field updates item or spell placeholders, resolving display names when present.
+	function RQE:UpdateContributionMacroID(frame)
+		local state = frame and frame.macroState
+		if not state or not state.idKind then return end
+		local id = tonumber(frame.macroIDInput:GetText())
+		if not id or id < 1 or id % 1 ~= 0 then
+			frame.macroStatus:SetText("Enter a positive whole-number " .. state.idKind .. " ID.")
+			return
+		end
+		state.lookupSerial = (state.lookupSerial or 0) + 1
+		if state.idKind == "spell" then
+			state.spellID, state.spellName = id, nil
+			if state.hasSpellName and RQE.API.GetSpellPresentation then
+				local spellName = RQE.API.GetSpellPresentation(id)
+				if type(spellName) == "string" and spellName ~= "" then state.spellName = spellName end
+			end
+			frame.macroStatus:SetText(state.hasSpellName and not state.spellName
+				and "Spell name unavailable; the ID was updated." or ("Updated spell ID " .. id .. "."))
+			return self:RefreshContributionMacroCopy(frame)
+		end
+		state.itemID, state.itemName = id, nil
+		frame.macroStatus:SetText(state.hasItemName and "Loading item name..." or ("Updated item ID " .. id .. "."))
+		self:RefreshContributionMacroCopy(frame)
+		if not state.hasItemName then return end
+		local serial = state.lookupSerial
+		local function itemLoaded(resolvedID, itemName)
+			if frame.macroState ~= state or state.lookupSerial ~= serial or state.itemID ~= resolvedID
+				or not frame:IsShown() then return end
+			if type(itemName) == "string" and itemName ~= "" then
+				state.itemName = itemName
+				frame.macroStatus:SetText("Updated item: " .. itemName)
+			else
+				frame.macroStatus:SetText("Item name unavailable; the ID was updated.")
+			end
+			self:RefreshContributionMacroCopy(frame)
+		end
+		if RQE_Contribution and RQE_Contribution.GetItemName then
+			RQE_Contribution:GetItemName(id, itemLoaded)
+		else
+			itemLoaded(id, ClientCall("GetItemInfo", id))
+		end
+	end
+
+	-- Purchase templates share one count field, separate from the item ID.
+	function RQE:UpdateContributionMacroQuantity(frame)
+		local state = frame and frame.macroState
+		if not state or not state.hasQuantity then return end
+		local digits = (frame.macroQuantityInput:GetText() or ""):match("^%s*(%d+)%s*$")
+		local quantity = digits and tonumber(digits)
+		if not quantity or quantity < 1 then
+			frame.macroStatus:SetText("Enter a positive whole-number quantity.")
+			return
+		end
+		state.quantity = quantity
+		frame.macroStatus:SetText("Updated quantity to " .. quantity .. ".")
+		self:RefreshContributionMacroCopy(frame)
+	end
+
+	-- Accepts either a bare object name or one enclosed in quotes.
+	function RQE:UpdateContributionMacroObject(frame)
+		local state = frame and frame.macroState
+		if not state or not state.hasObject then return end
+		local objectName = (frame.macroObjectInput:GetText() or ""):match("^%s*(.-)%s*$")
+		objectName = objectName:match('^"(.*)"$') or objectName:match("^'(.*)'$") or objectName
+		if objectName == "" then
+			frame.macroStatus:SetText("Enter an object name.")
+			return
+		end
+		state.objectName = objectName
+		frame.macroStatus:SetText("Updated object name.")
+		self:RefreshContributionMacroCopy(frame)
+	end
+
+	-- Updates only the option indices in a gossip call, leaving its target and other author fields intact.
+	function RQE:UpdateContributionMacroGossip(frame)
+		local state = frame and frame.macroState
+		if not state or not state.hasGossip then return end
+		local compact = (frame.macroGossipInput:GetText() or ""):gsub("%s+", "")
+		if compact == "" or not compact:match("^%d+[%d,]*$")
+			or compact:find(",,", 1, true) or compact:sub(-1) == "," then
+			frame.macroStatus:SetText("Enter comma-separated gossip indices, such as 0, 2, 4.")
+			return
+		end
+		state.gossipOptions = compact:gsub(",", ", ")
+		frame.macroGossipInput:SetText(state.gossipOptions)
+		frame.macroStatus:SetText("Updated gossip options to " .. state.gossipOptions .. ".")
+		self:RefreshContributionMacroCopy(frame)
+	end
+
+	function RQE:ShowContributionMacroCopy(template)
+		if not ContributionLoaded() then return end
+		if type(template) ~= "table" or type(template.body) ~= "string" then return end
+		local primary, secondary = template.primaryNpcPlaceholder, template.secondaryNpcPlaceholder
+		local dualNPC = type(primary) == "string" and primary ~= ""
+			and type(secondary) == "string" and secondary ~= "" and secondary ~= primary
+		local name = not dualNPC and TargetNPC() or nil
+		local idKind, hasItemName, hasSpellName = MacroBodyIDKind(template.body)
+		local state = {
+			body = template.body, primary = primary, secondary = secondary, dualNPC = dualNPC,
+			npcValues = { primary = name }, idKind = idKind,
+			hasItemName = hasItemName, hasSpellName = hasSpellName,
+			hasQuantity = template.body:find("NUMBER", 1, true) ~= nil,
+			hasObject = MacroHasObjectName(template.body, primary, secondary),
+			hasGossip = template.body:find("RQE.SelectMultipleGossipOptions(", 1, true) ~= nil,
+			originalGossipOptions = template.body:match('RQE%.SelectMultipleGossipOptions%(%s*".-"%s*,%s*([^)]-)%)'),
+			primaryLabel = MacroNPCButtonLabel(primary, template.primaryButtonText),
+			secondaryLabel = MacroNPCButtonLabel(secondary, template.secondaryButtonText),
+		}
+		return self:ShowCopyableReferenceText(template.name,
+			dualNPC and "Choose NPC targets below" or (name or "Macro template"),
+			RenderContributionMacro(state), { macroState = state })
+	end
+
+	-- Retains the public shortcut for the original Speak macro.
+	function RQE:ShowSpeakToNPCMacroCopy()
+		local templates = RQE_Contribution and RQE_Contribution.GetStepEditorMacroTemplates
+			and RQE_Contribution.GetStepEditorMacroTemplates() or {}
+		for _, template in ipairs(templates) do
+			if template.name == "Speak with Target Macro" then
+				return self:ShowContributionMacroCopy(template)
+			end
+		end
+		return self:ShowContributionMacroCopy({
+			name = "Speak with Target Macro",
+			body = "#showtooltip item:5830\n/tar NPCNAME\n/run RQE.SelectMultipleGossipOptions(\"NPCNAME\", 0)\n/tm 0\n/tm ~2",
+			primaryNpcPlaceholder = "NPCNAME",
+		})
+	end
+
+	-- Formats the player's current map and usable continent positions as database-ready Lua.
+	function RQE:ShowPlayerCoordinatesCopy(mode)
+		if not ContributionLoaded() then return end
+		if mode ~= "locations" and mode ~= "coordinateHotspots" then return end
+		local header = mode == "locations" and "Player locations" or "Player coordinate hotspots"
+		local mapID, x, y = self:GetCurrentPlayerMapPosition()
+		if not mapID or not x or not y then
+			return self:ShowCopyableReferenceText(header, "Current position", "Unable to determine current map position.")
+		end
+
+		local continentID, map = nil, mapID
+		while map do
+			local info = ClientCall("C_Map.GetMapInfo", map)
+			if not info then break end
+			if info.mapType == 2 then
+				continentID = info.mapID
+				break
+			end
+			map = info.parentMapID
+		end
+		local cx, cy
+		if continentID and continentID ~= mapID then
+			local continentPosition = ClientCall("C_Map.GetPlayerMapPosition", continentID, "player")
+			if continentPosition then cx, cy = continentPosition:GetXY() end
+		end
+
+		local prefix = mode == "locations" and "\t\t\t" or "\t\t\t\t"
+		local value
+		if cx and cy then
+			local rowPrefix = prefix .. "\t"
+			if mode == "locations" then
+				value = prefix .. "locations = {\n"
+					.. string.format("%s{ x = %.2f, y = %.2f, mapID = %d },\n", rowPrefix, x * 100, y * 100, mapID)
+					.. string.format("%s{ x = %.2f, y = %.2f, continentID = %d },\n", rowPrefix, cx * 100, cy * 100, continentID)
+					.. prefix .. "},"
+			else
+				local suffix = ", priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },\n"
+				value = prefix .. "coordinateHotspots = {\n"
+					.. string.format("%s{ x = %.2f, y = %.2f, mapID = %d", rowPrefix, x * 100, y * 100, mapID) .. suffix
+					.. string.format("%s{ x = %.2f, y = %.2f, continentID = %d", rowPrefix, cx * 100, cy * 100, continentID) .. suffix
+					.. prefix .. "},"
+			end
+		elseif mode == "locations" then
+			value = prefix .. string.format("location = { x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID)
+		else
+			value = prefix .. string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID)
+		end
+		return self:ShowCopyableReferenceText(header, "Current position", value)
+	end
+
+	-- Resolves the same minimap subzone and map zone for both copy actions.
+	local function PlayerZoneText()
+		local subzone = ClientCall("GetMinimapZoneText")
+		local mapID = ClientCall("C_Map.GetBestMapForUnit", "player")
+		local mapInfo = mapID and ClientCall("C_Map.GetMapInfo", mapID)
+		local zone = mapInfo and mapInfo.name
+		if issecretvalue and issecretvalue(subzone) then subzone = nil end
+		if issecretvalue and issecretvalue(zone) then zone = nil end
+		if type(subzone) ~= "string" or subzone == "" then subzone = nil end
+		if type(zone) ~= "string" or zone == "" then
+			zone = ClientCall("GetZoneText")
+			if issecretvalue and issecretvalue(zone) then zone = nil end
+		end
+		if type(zone) ~= "string" or zone == "" then zone = nil end
+		if subzone and zone and subzone ~= zone then
+			return subzone .. ", " .. zone
+		end
+		return subzone or zone
+	end
+
+	-- Copies the minimap label followed by the current map's zone name.
+	function RQE:ShowPlayerZoneCopy()
+		if not ContributionLoaded() then return end
+		local value = PlayerZoneText() or "Unable to determine current subzone or zone."
+		return self:ShowCopyableReferenceText("Player subzone and zone", "Current position", value)
+	end
+
+	local function DescriptionNPCButtonLabel(name, objectPlaceholder)
+		if objectPlaceholder == "OBJECT/NPC" then return "Target NPC" end
+		if name:find("^Kill") then return "Kill target" end
+		if name:find("^Speak") then return "Speak target" end
+		if name:find("^Weaken") then return "Weaken target" end
+		if name:find("Interact") then return "Interact target" end
+		return "NPC target"
+	end
+
+	-- Rebuilds the description from its template so each field can be updated separately.
+	local function RenderContributionDescription(state)
+		local description = state.text
+		if state.npcPlaceholder then
+			local fallback = state.npcPlaceholder == "NPC" and "NPC" or "NPCNAME"
+			local npcReference = state.npcReference or "{npc:NPCID:" .. fallback .. "}"
+			description = description:gsub("{npc:NPCID:" .. state.npcPlaceholder .. "}",
+				function() return npcReference end)
+		end
+		description = description:gsub("SUBZONE, ZONE", function() return state.location end)
+			:gsub("{item:71967:item}", function()
+				return "{item:71967:" .. state.nearBodyItemLabel .. "}"
+			end)
+		if state.itemID or state.itemName then
+			description = description:gsub("{item:%d+:[^}]+}", function(reference)
+				local sourceID, sourceName = reference:match("{item:(%d+):([^}]+)}")
+				return "{item:" .. (state.itemID or sourceID) .. ":" .. (state.itemName or sourceName) .. "}"
+			end)
+		end
+		if state.spellID or state.spellName then
+			description = description:gsub("{spell:SPELLID:SPELL}", function()
+				return "{spell:" .. (state.spellID or "SPELLID") .. ":" .. (state.spellName or "SPELL") .. "}"
+			end)
+		end
+		if state.quantity then
+			description = description:gsub("##", tostring(state.quantity))
+			if state.fixedCount then
+				description = description:gsub("|cFFffcc33" .. state.fixedCount .. "|r", function()
+					return "|cFFffcc33" .. state.quantity .. "|r"
+				end, 1)
+			end
+		end
+		if state.objectValue and state.objectPlaceholder then
+			description = description:gsub(state.objectPlaceholder, function() return state.objectValue end)
+		end
+		return 'description = "' .. EscapeLuaString(description) .. '",'
+	end
+
+	function RQE:RefreshContributionDescriptionCopy(frame)
+		local state = frame and frame.descriptionState
+		if not state or not frame:IsShown() then return end
+		frame.copyValue = RenderContributionDescription(state)
+		frame.editBox:SetText(frame.copyValue)
+		SelectReferenceText(frame)
+		QueueReferenceSelection(frame)
+	end
+
+	function RQE:UpdateContributionDescriptionNPC(frame)
+		local state = frame and frame.descriptionState
+		if not state or not state.hasNPCButton then return end
+		local name, npcID = TargetNPC()
+		if not name then
+			frame.macroStatus:SetText("Target an NPC, then press its button.")
+			return
+		end
+		local reference = string.format("{npc:%d:%s}", npcID, name)
+		if state.hasNPC then state.npcReference = reference end
+		if state.objectPlaceholder == "OBJECT/NPC" then
+			state.objectValue = reference
+			frame.macroObjectInput:SetText("")
+		end
+		frame.questTitle:SetText(name)
+		frame.questTitle:SetHeight(frame.questTitle:GetStringHeight())
+		frame.macroStatus:SetText("Updated NPC: " .. name)
+		self:RefreshContributionDescriptionCopy(frame)
+	end
+
+	function RQE:UpdateContributionDescriptionID(frame)
+		local state = frame and frame.descriptionState
+		if not state or not state.idKind then return end
+		local id = tonumber(frame.macroIDInput:GetText())
+		if not id or id < 1 or id % 1 ~= 0 then
+			frame.macroStatus:SetText("Enter a positive whole-number " .. state.idKind .. " ID.")
+			return
+		end
+		state.lookupSerial = (state.lookupSerial or 0) + 1
+		if state.idKind == "spell" then
+			state.spellID, state.spellName = id, nil
+			if RQE.API.GetSpellPresentation then
+				local spellName = RQE.API.GetSpellPresentation(id)
+				if type(spellName) == "string" and spellName ~= "" then state.spellName = spellName end
+			end
+			frame.macroStatus:SetText(state.spellName and ("Updated spell: " .. state.spellName)
+				or "Spell name unavailable; the ID was updated.")
+			return self:RefreshContributionDescriptionCopy(frame)
+		end
+		state.itemID, state.itemName = id, nil
+		frame.macroStatus:SetText("Loading item name...")
+		self:RefreshContributionDescriptionCopy(frame)
+		local serial = state.lookupSerial
+		local function itemLoaded(resolvedID, itemName)
+			if frame.descriptionState ~= state or state.lookupSerial ~= serial or state.itemID ~= resolvedID
+				or not frame:IsShown() then return end
+			if type(itemName) == "string" and itemName ~= "" then
+				state.itemName = itemName
+				frame.macroStatus:SetText("Updated item: " .. itemName)
+			else
+				frame.macroStatus:SetText("Item name unavailable; the ID was updated.")
+			end
+			self:RefreshContributionDescriptionCopy(frame)
+		end
+		if RQE_Contribution and RQE_Contribution.GetItemName then
+			RQE_Contribution:GetItemName(id, itemLoaded)
+		else
+			itemLoaded(id, ClientCall("GetItemInfo", id))
+		end
+	end
+
+	function RQE:UpdateContributionDescriptionQuantity(frame)
+		local state = frame and frame.descriptionState
+		if not state or not state.hasQuantity then return end
+		local digits = (frame.macroQuantityInput:GetText() or ""):match("^%s*(%d+)%s*$")
+		local quantity = digits and tonumber(digits)
+		if not quantity or quantity < 1 then
+			frame.macroStatus:SetText("Enter a positive whole-number quantity.")
+			return
+		end
+		state.quantity = quantity
+		frame.macroStatus:SetText("Updated quantity to " .. quantity .. ".")
+		self:RefreshContributionDescriptionCopy(frame)
+	end
+
+	function RQE:UpdateContributionDescriptionObject(frame)
+		local state = frame and frame.descriptionState
+		if not state or not state.hasObject then return end
+		local objectName = (frame.macroObjectInput:GetText() or ""):match("^%s*(.-)%s*$")
+		objectName = objectName:match('^"(.*)"$') or objectName:match("^'(.*)'$") or objectName
+		if objectName == "" then
+			frame.macroStatus:SetText("Enter an object or NPC name.")
+			return
+		end
+		state.objectValue = objectName
+		frame.macroStatus:SetText("Updated object or NPC name.")
+		self:RefreshContributionDescriptionCopy(frame)
+	end
+
+	-- The current target and zone are captured on opening; controls can refine the text.
+	function RQE:ShowContributionDescriptionCopy(template)
+		if not ContributionLoaded() then return end
+		if type(template) ~= "table" or type(template.text) ~= "string" then return end
+		local name, npcID = TargetNPC()
+		local npcPlaceholder = template.text:match("{npc:NPCID:([%u_]+)}")
+		local hasNPC = npcPlaceholder ~= nil
+		local objectPlaceholder = template.text:find("OBJECT/NPC", 1, true) and "OBJECT/NPC"
+			or template.text:find("OBJECT", 1, true) and "OBJECT" or nil
+		local fixedCount = template.text:match("|cFFffcc33(%d+)|r")
+		local state = {
+			text = template.text, location = PlayerZoneText() or "SUBZONE, ZONE",
+			npcReference = hasNPC and name and string.format("{npc:%d:%s}", npcID, name) or nil,
+			npcPlaceholder = npcPlaceholder,
+			nearBodyItemLabel = name and "ITEMNAME" or "ITEM",
+			hasNPC = hasNPC,
+			hasNPCButton = (hasNPC and template.name ~= "Kill Multiple mobs and loot multiple items")
+				or objectPlaceholder == "OBJECT/NPC",
+			npcButtonLabel = DescriptionNPCButtonLabel(template.name, objectPlaceholder),
+			idKind = template.text:find("{spell:SPELLID:SPELL}", 1, true) and "spell"
+				or template.text:find("{item:%d+:[^}]+}") and "item" or nil,
+			hasQuantity = template.text:find("##", 1, true) ~= nil or fixedCount ~= nil,
+			fixedCount = fixedCount,
+			hasObject = objectPlaceholder ~= nil, objectPlaceholder = objectPlaceholder,
+		}
+		return self:ShowCopyableReferenceText(template.name, name or "Description template",
+			RenderContributionDescription(state), { descriptionState = state })
 	end
 
 	-------------------------------------------------------
@@ -1190,10 +2080,34 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	-------------------------------------------------------
 
 	local watcher = CreateFrame("Frame")
+	RQE.QuestToolEventWatcher = watcher
 	watcher:RegisterEvent("PLAYER_LOGIN")
 	watcher:RegisterEvent("ADDON_LOADED")
-	watcher:SetScript("OnEvent", function(_, event, addonName)
+	watcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+	watcher:RegisterEvent("PLAYER_REGEN_ENABLED")
+	watcher:RegisterEvent("QUEST_ACCEPTED")
+	watcher:RegisterEvent("QUEST_REMOVED")
+	watcher:RegisterEvent("QUEST_TURNED_IN")
+	watcher:SetScript("OnEvent", function(_, event, ...)
 		if event == "PLAYER_LOGIN" and LegacyTracker() and RQECharacterDB then
 			RQE.QuestMenuSelection = Copy(RQECharacterDB.rqeQuestMenuSelection)
-		elseif addonName == "RQE_Contribution" then RQE:CloseQuestFilterMenus() end
+		elseif event == "ADDON_LOADED" and select(1, ...) == "RQE_Contribution" then
+			RQE:CloseQuestFilterMenus()
+		elseif event == "PLAYER_ENTERING_WORLD" then
+			local isLogin, isReload = ...
+			if isLogin or isReload then RQE:QueueAutoQuestCategoryRefresh(1.5) end
+		elseif event == "QUEST_ACCEPTED" then
+			RQE:QueueAutoQuestCategoryRefresh(0.5)
+			-- RQE's rapid-accept watch repair runs four seconds later. Recheck once
+			-- afterward so it cannot leave an unmatched quest in the selected list.
+			if RQE:HasAutoQuestCategories() then
+				RQE.API.Client.C_Timer.After(4.2, function()
+					RQE:QueueAutoQuestCategoryRefresh(0)
+				end)
+			end
+		elseif event == "QUEST_REMOVED" or event == "QUEST_TURNED_IN" then
+			RQE:QueueAutoQuestCategoryRefresh(0.5)
+		elseif event == "PLAYER_REGEN_ENABLED" and RQE.AutoQuestCategoryRefreshPending then
+			RQE:QueueAutoQuestCategoryRefresh(0)
+		end
 	end)
