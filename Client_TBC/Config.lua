@@ -692,6 +692,19 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 						width = "full",
 						order = 1, -- Adjust the order as needed
 					},
+					enableDugiGuidesCompatibility = {
+						type = "toggle",
+						name = "Dugi Guides Compatibility",
+						desc = "When RQE's Quest Tracker is hidden, keep Blizzard's Objective Tracker and the attached Dugi guide visible even with no watched quests. Hide both when RQE's Quest Tracker is shown.",
+						hidden = function() return not RQE.API.IsDugiGuidesLoaded() end,
+						get = function() return RQE.db.profile.enableDugiGuidesCompatibility end,
+						set = function(_, value)
+							RQE.db.profile.enableDugiGuidesCompatibility = value
+							RQE:EnforceObjectiveTrackerVisibility()
+						end,
+						width = "full",
+						order = 1.5,
+					},
 					mythicScenarioMode = {
 						type = "toggle",
 						name = "Mythic/Scenario Mode",
@@ -2123,6 +2136,26 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 
 		-- Add the checkbox to the desired group (e.g., framePositionGroup)
 		framePositionGroup:AddChild(toggleBlizzObjectiveTrackerCheckbox)
+
+		if RQE.API.IsDugiGuidesLoaded() then
+			local dugiGuidesCompatibilityCheckbox = AceGUI:Create("CheckBox")
+			dugiGuidesCompatibilityCheckbox:SetLabel("Dugi Guides Compatibility")
+			dugiGuidesCompatibilityCheckbox:SetValue(RQE.db.profile.enableDugiGuidesCompatibility)
+			dugiGuidesCompatibilityCheckbox:SetFullWidth(true)
+			dugiGuidesCompatibilityCheckbox:SetCallback("OnValueChanged", function(_, _, value)
+				RQE.db.profile.enableDugiGuidesCompatibility = value
+				RQE:EnforceObjectiveTrackerVisibility()
+			end)
+			dugiGuidesCompatibilityCheckbox:SetCallback("OnEnter", function(widget)
+				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+				GameTooltip:SetText("When RQE's Quest Tracker is hidden, keep Blizzard's Objective Tracker and the attached Dugi guide visible even with no watched quests. Hide both when RQE's Quest Tracker is shown.", nil, nil, nil, nil, true)
+				GameTooltip:Show()
+			end)
+			dugiGuidesCompatibilityCheckbox:SetCallback("OnLeave", function()
+				GameTooltip:Hide()
+			end)
+			framePositionGroup:AddChild(dugiGuidesCompatibilityCheckbox)
+		end
 
 		-- Hide Quest Frame When Empty Checkbox
 		local mythicScenarioModeCheckbox = AceGUI:Create("CheckBox")
