@@ -214,7 +214,13 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 		-- Create with TomTom (if loaded)
 		if TomTom and TomTom.AddWaypoint then
-			return TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title or "Waypoint" })
+			-- Replace the previous RQE arrow (for example when a closer coordinate hotspot
+			-- is chosen) and tag the new one from = "RQE" so later clears remove only
+			-- RQE's waypoints. The tag is not part of the title shown under the arrow.
+			RQE:ClearRQETomTomWaypoints()
+			return TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title or "Waypoint", from = "RQE" })
+			-- Previous code (commented out 2026.10.30): added an untagged waypoint and left the previous RQE arrow in place
+			-- return TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title or "Waypoint" })
 		elseif Nx and Nx.WaypointAdd then
 			return Nx:WaypointAdd(mapID, xNorm, yNorm, title or "Waypoint")
 		end
@@ -937,7 +943,9 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 				local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-					TomTom.waydb:ResetProfile()
+					RQE:ClearRQETomTomWaypoints()
+					-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+					-- TomTom.waydb:ResetProfile()
 					RQE._currentTomTomUID = nil
 				end
 
@@ -1070,7 +1078,9 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 		-- Check if TomTom is loaded and compatibility is enabled
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			TomTom.waydb:ResetProfile()
+			RQE:ClearRQETomTomWaypoints()
+			-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+			-- TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 			C_Timer.After(0.5, function()
 				if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
@@ -1174,7 +1184,9 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 		-- Check if TomTom is loaded and compatibility is enabled
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			TomTom.waydb:ResetProfile()
+			RQE:ClearRQETomTomWaypoints()
+			-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+			-- TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 		end
 
