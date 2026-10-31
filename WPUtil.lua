@@ -390,6 +390,116 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			and math.abs(y - point.y) < 1e-4 or false
 	end
 
+	-- Removes only the TomTom waypoints that RQE created, replacing the previous
+	-- TomTom.waydb:ResetProfile() calls that deleted every TomTom waypoint (the
+	-- player's own and other addons'). RQE marks its waypoints with from = "RQE";
+	-- TomTom keeps that in a separate field from the title, so the arrow text is
+	-- unchanged and the tag shows only as "From: RQE" in TomTom's map pin tooltip.
+	function RQE:ClearRQETomTomWaypoints()
+		if not (TomTom and TomTom.RemoveWaypoint) then return end
+
+		-- Collect first: RemoveWaypoint edits TomTom.waypoints while it is iterated
+		local owned = {}
+		if type(TomTom.waypoints) == "table" then
+			for _, entries in pairs(TomTom.waypoints) do
+				if type(entries) == "table" then
+					for _, waypoint in pairs(entries) do
+						if type(waypoint) == "table" and waypoint.from == "RQE" then
+							owned[#owned + 1] = waypoint
+						end
+					end
+				end
+			end
+		end
+
+		-- The last RQE waypoint is also removed by its UID, in case this TomTom
+		-- version does not expose TomTom.waypoints. A nearest-flight-master
+		-- waypoint is skipped: it stays until the player lands after the taxi ride.
+		local current = RQE._currentTomTomUID
+		local removeCurrent = type(current) == "table" and current.from ~= RQE.TomTomFlightMasterTag
+		if removeCurrent then
+			owned[#owned + 1] = current
+		end
+		-- Previous code (commented out 2026.10.30): also removed the flight master waypoint when it was the current UID
+		-- if type(RQE._currentTomTomUID) == "table" then
+		-- 	owned[#owned + 1] = RQE._currentTomTomUID
+		-- end
+
+		for _, uid in ipairs(owned) do
+			pcall(TomTom.RemoveWaypoint, TomTom, uid)
+		end
+		if removeCurrent then RQE._currentTomTomUID = nil end
+		-- Previous code (commented out 2026.10.30): cleared the current UID even when it was the flight master waypoint
+		-- RQE._currentTomTomUID = nil
+	end
+
+	-- Tag for the "Set Waypoint to Closest Flight Master" waypoint. It is kept apart
+	-- from "RQE" so quest waypoint clears leave it alone; only
+	-- ReleaseManualFlightMasterWaypoint removes it.
+	RQE.TomTomFlightMasterTag = "RQE_FlightMaster"
+
+	-- Removes the nearest-flight-master waypoint and ends its protection, so quest
+	-- waypoints can be created again. Called when the player lands after a taxi
+	-- ride, and when the player explicitly picks another destination (the "W"
+	-- button, a quest row, a coordinate block, or a route point). Quest waypoints
+	-- tagged "RQE" are not touched.
+	function RQE:ReleaseManualFlightMasterWaypoint()
+		local hadFlightMaster = self.ManualFlightMasterWaypointMapID ~= nil
+			or self.ManualFlightMasterWaypointUID ~= nil
+
+		if TomTom and TomTom.RemoveWaypoint then
+			-- Collect first: RemoveWaypoint edits TomTom.waypoints while it is iterated
+			local owned = {}
+			if type(TomTom.waypoints) == "table" then
+				for _, entries in pairs(TomTom.waypoints) do
+					if type(entries) == "table" then
+						for _, waypoint in pairs(entries) do
+							if type(waypoint) == "table" and waypoint.from == self.TomTomFlightMasterTag then
+								owned[#owned + 1] = waypoint
+							end
+						end
+					end
+				end
+			end
+			if type(self.ManualFlightMasterWaypointUID) == "table" then
+				owned[#owned + 1] = self.ManualFlightMasterWaypointUID
+			end
+			for _, uid in ipairs(owned) do
+				pcall(TomTom.RemoveWaypoint, TomTom, uid)
+				if self._currentTomTomUID == uid then self._currentTomTomUID = nil end
+			end
+		end
+
+		-- Without TomTom the flight master used Blizzard's user waypoint; clear it
+		-- only when it is still the flight master pin
+		if self.ManualFlightMasterWaypointUsesBlizzard and self.ManualFlightMasterWaypointMapID then
+			local pin = C_Map and RQE.API.ResolveClientAPI("C_Map.GetUserWaypoint")
+				and RQE.API.Client.C_Map.GetUserWaypoint()
+			local pos = pin and pin.position
+			local x, y
+			if pos then
+				if pos.GetXY then x, y = pos:GetXY() else x, y = pos.x, pos.y end
+			end
+			if pin and pin.uiMapID == self.ManualFlightMasterWaypointMapID and x and y
+				and self.ManualFlightMasterWaypointX and self.ManualFlightMasterWaypointY
+				and math.abs(x - self.ManualFlightMasterWaypointX) < 1e-4
+				and math.abs(y - self.ManualFlightMasterWaypointY) < 1e-4 then
+				RQE.API.Client.C_Map.ClearUserWaypoint()
+			end
+		end
+
+		self.ManualFlightMasterWaypointMapID = nil
+		self.ManualFlightMasterWaypointQuestID = nil
+		self.ManualFlightMasterWaypointStepIndex = nil
+		self.ManualFlightMasterWaypointUID = nil
+		self.ManualFlightMasterWaypointUsesBlizzard = nil
+		self.ManualFlightMasterWaypointX = nil
+		self.ManualFlightMasterWaypointY = nil
+		self.ManualFlightMasterWaypointTitle = nil
+		self.NearestFlightMasterSet = false
+		if hadFlightMaster then self._lastWP = nil end
+	end
+
 	-- Centralized replace helper for TomTom/Blizzard pins
 	function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title, options)
 		-- A manually clicked coordblock owns the current quest waypoint until
@@ -439,11 +549,18 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		-- Add TomTom waypoint
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility and TomTom then
 			if TomTom.waydb and TomTom.waydb.ResetProfile then
-				TomTom.waydb:ResetProfile()
+				RQE:ClearRQETomTomWaypoints()
+				-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+				-- TomTom.waydb:ResetProfile()
 			end
 
 			if TomTom.AddWaypoint then
-				local waypointOptions = { title = title, from = "RQE", minimap = true, world = true }
+				-- The nearest-flight-master waypoint gets its own tag so quest waypoint
+				-- clears leave it in place until the player lands after the taxi ride
+				local waypointTag = RQE._settingManualFlightMasterWaypoint and RQE.TomTomFlightMasterTag or "RQE"
+				local waypointOptions = { title = title, from = waypointTag, minimap = true, world = true }
+				-- Previous code (commented out 2026.10.30): tagged every waypoint from = "RQE"
+				-- local waypointOptions = { title = title, from = "RQE", minimap = true, world = true }
 				if options then
 					-- Ordered routes are advanced by RQE at their own visitedRadius;
 					-- TomTom must not clear the current point at its larger default radius.
@@ -1486,7 +1603,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		if not (x and y and mapID) then return false end
 
 		if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
-			TomTom.waydb:ResetProfile()
+			RQE:ClearRQETomTomWaypoints()
+			-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
+			-- TomTom.waydb:ResetProfile()
 			self._currentTomTomUID = nil
 		end
 		self.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
@@ -1850,6 +1969,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		self._lastWP = nil
 		local hadActiveCoordblock = self.ActiveCoordblock ~= nil
 		self.ActiveCoordblock = nil
+		-- Quest waypoint clears no longer remove the flight master arrow, so this
+		-- explicit route-point choice removes it here
+		self:ReleaseManualFlightMasterWaypoint()
 		self.ManualFlightMasterWaypointMapID = nil
 		self.ManualFlightMasterWaypointQuestID = nil
 		self.ManualFlightMasterWaypointStepIndex = nil
