@@ -77,6 +77,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- Function to attach the waypoint button handler used to track searched or displayed quest coordinates
 	-- Assumes IsWorldMapOpen() reports map visibility and CloseWorldMap() closes it
 	RQE.UnknownQuestButtonCalcNTrack = function()
+		-- Creates the searched quest waypoint.
 		RQE.UnknownQuestButton:SetScript("OnClick", function()
 			if not RQEFrame:IsShown() then return end
 			if RQE.searchedQuestID
@@ -103,6 +104,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 					RQE:StartPeriodicChecks()		-- keeping this in place means that if player is manually tracking a step that differs from what is part of the "automatic" or true step the "W" button won't generate the waypoint for the manually set stepIndex
 				end
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				-- Clears the shared helper-and-button hover state after the pointer leaves.
 				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.hoveringOnRQEFrameAndButton = false
 				end)
@@ -135,6 +137,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 
 				RQEMacro:CreateMacroForCurrentStep()
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				-- Releases the macro-content inspection guard.
 				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
@@ -439,10 +442,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	RQE.TomTomFlightMasterTag = "RQE_FlightMaster"
 
 	-- Removes the nearest-flight-master waypoint and ends its protection, so quest
-	-- waypoints can be created again. Called when the player lands after a taxi
-	-- ride, and when the player explicitly picks another destination (the "W"
-	-- button, a quest row, a coordinate block, or a route point). Quest waypoints
-	-- tagged "RQE" are not touched.
+	-- waypoints can be created again. PLAYER_CONTROL_LOST clears it immediately;
+	-- landing/login cleanup remains a fallback. Explicitly choosing another
+	-- destination also releases it. Quest pins tagged "RQE" and user pins are preserved.
+	-- Previous comment (updated 2026.10.31): cleanup waited for landing after a taxi ride.
 	function RQE:ReleaseManualFlightMasterWaypoint()
 		local hadFlightMaster = self.ManualFlightMasterWaypointMapID ~= nil
 			or self.ManualFlightMasterWaypointUID ~= nil
@@ -461,9 +464,16 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 					end
 				end
 			end
-			if type(self.ManualFlightMasterWaypointUID) == "table" then
+			-- TomTom can return an existing pin for matching coordinates/title. Its tag,
+			-- not a cached reference or visible name, decides whether RQE owns this pin.
+			if type(self.ManualFlightMasterWaypointUID) == "table"
+				and self.ManualFlightMasterWaypointUID.from == self.TomTomFlightMasterTag then
 				owned[#owned + 1] = self.ManualFlightMasterWaypointUID
 			end
+			-- Previous code (commented out 2026.10.31): trusted the cached UID even when its tag belonged to another waypoint
+			-- if type(self.ManualFlightMasterWaypointUID) == "table" then
+				-- owned[#owned + 1] = self.ManualFlightMasterWaypointUID
+			-- end
 			for _, uid in ipairs(owned) do
 				pcall(TomTom.RemoveWaypoint, TomTom, uid)
 				if self._currentTomTomUID == uid then self._currentTomTomUID = nil end
@@ -556,7 +566,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 
 			if TomTom.AddWaypoint then
 				-- The nearest-flight-master waypoint gets its own tag so quest waypoint
-				-- clears leave it in place until the player lands after the taxi ride
+				-- clears leave it alone; PLAYER_CONTROL_LOST releases it by its hidden tag
 				local waypointTag = RQE._settingManualFlightMasterWaypoint and RQE.TomTomFlightMasterTag or "RQE"
 				local waypointOptions = { title = title, from = waypointTag, minimap = true, world = true }
 				-- Previous code (commented out 2026.10.30): tagged every waypoint from = "RQE"
@@ -1331,6 +1341,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 
 	-- Slash command to easier access the dump
 	SLASH_RQEDUMP1 = "/rqedump"
+	-- Prints waypoint-band diagnostics for the currently focused quest and step.
 	SlashCmdList.RQEDUMP = function()
 		local qid = RQE.API.GetSuperTrackedQuestID()
 		local sidx = RQE.AddonSetStepIndex or 1
@@ -1565,6 +1576,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			end
 		end
 		if #points == 0 then return nil end
+		-- Orders route points by entry number and then by author-defined position.
 		table.sort(points, function(a, b)
 			if a.entryNo ~= b.entryNo then return a.entryNo < b.entryNo end
 			return a.authorIndex < b.authorIndex
@@ -1614,6 +1626,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			title or "Custom Waypoint")
 		if markedActive then
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+			-- Refreshes the active coordblock links.
 			RQE.API.Client.C_Timer.After(0, function()
 				if not RQE.ActiveCoordblock or RQE.ActiveCoordblock.data ~= data then return end
 				RQE:RefreshActiveCoordblockLinks()
@@ -1868,16 +1881,19 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			label:SetFont("Fonts\\FRIZQT__.TTF", 12)
 			label:SetTextColor(202/255, 168/255, 1) -- pale lilac #CAA8FF
 			button.label = label
+			-- Selects the coord order focus point.
 			button:SetScript("OnClick", function(self)
 				RQE:SelectCoordOrderFocusPoint(self.questID, self.stepIndex,
 					self.index)
 			end)
+			-- Shows this control's tooltip while the pointer is over it.
 			button:SetScript("OnEnter", function(self)
 				GameTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 				GameTooltip:SetText("Click to follow this route waypoint", 1, 1, 1)
 				GameTooltip:Show()
 				RQE._coordblockTooltipOwner = self
 				RQE:AnchorCoordblockTooltip(self)
+				-- Anchors the coordblock tooltip.
 				self:SetScript("OnUpdate", function(frame)
 					if RQE._coordblockTooltipOwner ~= frame
 						or not GameTooltip:IsShown() then
@@ -1887,6 +1903,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 					RQE:AnchorCoordblockTooltip(frame)
 				end)
 			end)
+			-- Hides the tooltip when the pointer leaves this control.
 			button:SetScript("OnLeave", function(self)
 				if RQE._coordblockTooltipOwner == self then
 					RQE._coordblockTooltipOwner = nil
@@ -2209,6 +2226,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		RQE.DirectionTextFrame:SetText(text or "No direction available.")
 		if RQEFrame then RQEFrame.DirectionText = text end
 	end
+	-- Polls ordered-route progress and advances its active waypoint when appropriate.
 	coordOrderPoll:SetScript("OnUpdate", function(self, elapsed)
 		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
