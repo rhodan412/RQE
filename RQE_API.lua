@@ -33,6 +33,7 @@ local renderScripts = {
 	"OnHyperlinkEnter", "OnHyperlinkLeave", "OnHyperlinkClick", "OnMouseWheel",
 }
 
+-- Releases the pooled hover regions attached to this rich-text label.
 function RQE.API.ReleaseRichTextHovers(text)
 	if not text or not text._rqeSegments then return end
 	for _, hover in ipairs(text._rqeSegments) do
@@ -41,6 +42,7 @@ function RQE.API.ReleaseRichTextHovers(text)
 	wipe(text._rqeSegments)
 end
 
+-- Resets a rendered UI object and returns it to its owner's free pool.
 function RQE.API.ReleaseRenderObject(object)
 	if not object then return end
 	local pool = object._rqeRenderPool
@@ -75,12 +77,14 @@ function RQE.API.ReleaseRenderObject(object)
 	end
 end
 
+-- Releases every active render object in the owner's named group.
 function RQE.API.ReleaseRenderGroup(parent, group)
 	local pool = parent and parent._rqeRenderPools and parent._rqeRenderPools[group]
 	if not pool then return end
 	for object in pairs(pool.active) do RQE.API.ReleaseRenderObject(object) end
 end
 
+-- Acquires a reusable UI object from the owner's render pool.
 function RQE.API.AcquireRenderObject(parent, group, objectType, template, slot)
 	parent._rqeRenderPools = parent._rqeRenderPools or {}
 	local pool = parent._rqeRenderPools[group]
@@ -126,6 +130,7 @@ end
 -- immediately; their renderer cancels this pending redundant pass.
 function RQE:QueueSeparateFocusRefresh()
 	if self._focusRefreshTimer then return end
+	-- Updates the separate focus frame.
 	self._focusRefreshTimer = C_Timer.NewTimer(0.05, function()
 		self._focusRefreshTimer = nil
 		if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
@@ -155,10 +160,12 @@ function RQE.API.ConfigureScrollbarDrag(slider, wheelHandler)
 	handle:EnableMouse(true)
 	handle:EnableMouseWheel(true)
 
+	-- Stops tracking the cursor when the scrollbar drag ends.
 	local function stopDrag(self)
 		self.dragStartY = nil
 		self:SetScript("OnUpdate", nil)
 	end
+	-- Returns the scrollbar track bounds and thumb height for dragging.
 	local function geometry()
 		local minimum, maximum = slider:GetMinMaxValues()
 		local height = math.max(0, slider:GetHeight())
@@ -166,6 +173,7 @@ function RQE.API.ConfigureScrollbarDrag(slider, wheelHandler)
 		local thumbHeight = math.min(height, thumb and thumb:GetHeight() or 0)
 		return minimum, maximum, math.max(0, height - thumbHeight), thumbHeight
 	end
+	-- Maps the cursor's vertical position to the scrollbar value.
 	local function updateDrag(self)
 		if not IsMouseButtonDown("LeftButton") then stopDrag(self); return end
 		local minimum, maximum, travel = geometry()
@@ -176,6 +184,7 @@ function RQE.API.ConfigureScrollbarDrag(slider, wheelHandler)
 		local value = self.dragStartValue + delta / travel * (maximum - minimum)
 		slider:SetValue(math.max(minimum, math.min(maximum, value)))
 	end
+	-- Starts scrollbar dragging and maps the initial cursor position to a value.
 	handle:SetScript("OnMouseDown", function(self, button)
 		if button ~= "LeftButton" then return end
 		local minimum, maximum, travel, thumbHeight = geometry()
@@ -194,10 +203,12 @@ function RQE.API.ConfigureScrollbarDrag(slider, wheelHandler)
 		self.dragStartValue = slider:GetValue()
 		self:SetScript("OnUpdate", updateDrag)
 	end)
+	-- Ends scrollbar dragging when the primary mouse button is released.
 	handle:SetScript("OnMouseUp", function(self, button)
 		if button == "LeftButton" then stopDrag(self) end
 	end)
 	handle:SetScript("OnHide", stopDrag)
+	-- Stops any active drag and forwards wheel input to the owning control.
 	handle:SetScript("OnMouseWheel", function(self, delta)
 		stopDrag(self)
 		local handler = self.wheelHandler or slider:GetScript("OnMouseWheel")
@@ -250,6 +261,7 @@ RQE.API.GameVersion = {
 -- Forever omits the global helper expected by the bundled AceGUI checkbox.
 -- Keep the compatibility fallback local to this client family.
 if isForever and type(SetDesaturation) ~= "function" then
+	-- Provides texture desaturation through the texture object's method.
 	function SetDesaturation(texture, desaturated)
 		if texture and type(texture.SetDesaturated) == "function" then
 			texture:SetDesaturated(desaturated and true or false)
@@ -257,10 +269,12 @@ if isForever and type(SetDesaturation) ~= "function" then
 	end
 end
 
+-- Reports whether the client uses the legacy quest API path.
 function RQE.API.IsLegacyClient()
 	return RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLog == true
 end
 
+-- Checks whether this client exposes a supported objective tracker.
 function RQE.API.CanManageBlizzardObjectiveTracker()
 	return RQE.API.GameVersion and RQE.API.GameVersion.managesBlizzardObjectiveTracker == true
 end
@@ -285,6 +299,7 @@ local NativeScenario = SnapshotAPI(C_Scenario)
 local NativeTaskQuest = SnapshotAPI(C_TaskQuest)
 local NativeAddOns = SnapshotAPI(C_AddOns)
 
+-- Checks whether an API table supplies the requested method.
 local function Has(api, method)
 	return type(api) == "table" and type(api[method]) == "function"
 end
@@ -304,10 +319,12 @@ if isLegacyClient then
 		return firstText, secondText
 	end
 
+	-- Returns the quest description for the supplied quest-log index.
 	function RQE.API.GetQuestLogDescription(questLogIndex)
 		return RQE.API.GetQuestLogText(questLogIndex)
 	end
 
+	-- Returns the objective text for the supplied quest-log index.
 	function RQE.API.GetQuestLogObjectivesText(questLogIndex)
 		local _, objectives = RQE.API.GetQuestLogText(questLogIndex)
 		return objectives
@@ -363,6 +380,7 @@ if apiMajor >= 3 then
 		return RQE.AchievementInfo
 	end
 else
+	-- Returns the achievement info.
 	RQE.API.GetAchievementInfo = function(achievementID) return nil end
 end
 
@@ -404,6 +422,7 @@ if apiMajor >= 10 then
 		return RQE.MajorFactionInfo
 	end
 else
+	-- Returns the major faction data.
 	RQE.API.GetMajorFactionData = function(factionID) return nil end
 end
 
@@ -454,10 +473,12 @@ if apiMajor >= 9 then
 	-- Added in 10.0.7: Select by orderIndex
 	-- Use: RQE.API.SelectGossipOptionByIndex(index [, text, confirmed])
 	if C_GossipInfo and type(C_GossipInfo.SelectOptionByIndex) == "function" then
+		-- Selects the gossip option by index.
 		RQE.API.SelectGossipOptionByIndex = function(index, text, confirmed)
 			return C_GossipInfo.SelectOptionByIndex(index, text, confirmed)
 		end
 	else
+		-- Selects the gossip option by index.
 		RQE.API.SelectGossipOptionByIndex = function(index, text, confirmed)
 			return nil
 		end
@@ -569,6 +590,7 @@ if apiMajor >= 6 then
 else
 	-- Classic fallback (no LFGList APIs in <6)
 	RQE.API.CreateListing = function(...) return nil end
+	-- Searches the LFG list.
 	RQE.API.SearchLFGList = function(...) return {} end
 end
 
@@ -873,6 +895,7 @@ elseif apiMajor >= 1 then
 	-- Some Classic clients expose C_Map API, others only the old global.
 	local hasCMap = C_Map and C_Map.GetPlayerMapPosition
 
+	-- Returns the player map position.
 	RQE.API.GetPlayerMapPosition = function(mapID, unit)
 		local x, y, restricted
 		if hasCMap then
@@ -975,6 +998,7 @@ else
 		return RQE.AreaInfo
 	end
 
+	-- Returns the map info.
 	RQE.API.GetMapInfo = function(mapID)
 		local name = GetMapInfo(mapID)
 		RQE.MapInfo = {
@@ -1030,16 +1054,19 @@ end
 -- SoD and TBC expose different subsets of C_Map. These wrappers use only
 -- methods that existed when the API module loaded and supply legacy no-ops.
 if isLegacyClient then
+	-- Returns the best map for unit.
 	RQE.API.GetBestMapForUnit = function(unit)
 		return Has(NativeMap, "GetBestMapForUnit") and NativeMap.GetBestMapForUnit(unit) or nil
 	end
 
+	-- Returns the map info.
 	RQE.API.GetMapInfo = function(mapID)
 		if Has(NativeMap, "GetMapInfo") then return NativeMap.GetMapInfo(mapID) end
 		local name = type(GetMapInfo) == "function" and GetMapInfo(mapID) or nil
 		return name and { mapID = mapID, name = name } or nil
 	end
 
+	-- Returns the player map position.
 	RQE.API.GetPlayerMapPosition = function(mapID, unit)
 		if Has(NativeMap, "GetPlayerMapPosition") then
 			return NativeMap.GetPlayerMapPosition(mapID, unit)
@@ -1047,14 +1074,17 @@ if isLegacyClient then
 		return nil
 	end
 
+	-- Clears the user waypoint.
 	RQE.API.ClearUserWaypoint = function()
 		return Has(NativeMap, "ClearUserWaypoint") and NativeMap.ClearUserWaypoint() or nil
 	end
 
+	-- Sets the user waypoint.
 	RQE.API.SetUserWaypoint = function(point)
 		return Has(NativeMap, "SetUserWaypoint") and NativeMap.SetUserWaypoint(point) or false
 	end
 
+	-- Checks for user waypoint.
 	RQE.API.HasUserWaypoint = function()
 		return Has(NativeMap, "HasUserWaypoint") and NativeMap.HasUserWaypoint() or false
 	end
@@ -1376,6 +1406,7 @@ end
 -- Read the normalized Blizzard objective counts through the client adapter.
 -- A missing or protected count is unavailable, not a one-objective fallback.
 function RQE.API.GetQuestObjectiveCounts(questID, objectiveIndex)
+	-- Reads the selected objective's fulfilled and required counts under protection.
 	local ok, fulfilled, required = pcall(function()
 		local objective = (RQE.API.GetQuestObjectives(questID) or {})[tonumber(objectiveIndex) or 1]
 		return objective and tonumber(objective.numFulfilled), objective and tonumber(objective.numRequired)
@@ -1432,6 +1463,7 @@ end
 -- objective contracts. Keep their complete compatibility behavior in the
 -- quest API section, after Retail's normal definitions.
 if isLegacyClient then
+	-- Returns the super tracked quest ID.
 	RQE.API.GetSuperTrackedQuestID = function()
 		local questID
 		if Has(NativeSuperTrack, "GetSuperTrackedQuestID") then
@@ -1449,6 +1481,7 @@ if isLegacyClient then
 		return tonumber(RQE.ManualSuperTrackedQuestID) or tonumber(RQE.DisplayedQuestID)
 	end
 
+	-- Sets the super tracked quest ID.
 	RQE.API.SetSuperTrackedQuestID = function(questID)
 		questID = tonumber(questID)
 		RQE.ManualSuperTrackedQuestID = questID
@@ -1459,10 +1492,12 @@ if isLegacyClient then
 		return questID and questID > 0 or false
 	end
 
+	-- Reports whether the supertracked target is a quest.
 	RQE.API.IsSuperTrackingQuest = function()
 		return (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0
 	end
 
+	-- Returns the number of quest log entries.
 	RQE.API.GetNumQuestLogEntries = function()
 		if Has(NativeQuestLog, "GetNumQuestLogEntries") then
 			return NativeQuestLog.GetNumQuestLogEntries()
@@ -1474,6 +1509,7 @@ if isLegacyClient then
 		return 0, 0
 	end
 
+	-- Returns the quest objectives.
 	RQE.API.GetQuestObjectives = function(questID)
 		if Has(NativeQuestLog, "GetQuestObjectives") then
 			return NativeQuestLog.GetQuestObjectives(questID) or {}
@@ -1499,6 +1535,7 @@ if isLegacyClient then
 		return objectives
 	end
 
+	-- Returns the number of quest objectives.
 	RQE.API.GetNumQuestObjectives = function(questID)
 		if Has(NativeQuestLog, "GetNumQuestObjectives") then
 			return NativeQuestLog.GetNumQuestObjectives(questID)
@@ -1532,6 +1569,7 @@ RQE.API.GetQuestLineInfo = function(questID, uiMapID, displayableOnly)
 	return C_QuestLine.GetQuestLineInfo(questID, uiMapID)
 end
 
+-- Returns the available quest lines.
 RQE.API.GetAvailableQuestLines = function(uiMapID)
 	if C_QuestLine and type(C_QuestLine.GetAvailableQuestLines) == "function" then
 		return C_QuestLine.GetAvailableQuestLines(uiMapID) or {}
@@ -1539,6 +1577,7 @@ RQE.API.GetAvailableQuestLines = function(uiMapID)
 	return {}
 end
 
+-- Returns the force visible quests.
 RQE.API.GetForceVisibleQuests = function(uiMapID)
 	if C_QuestLine and type(C_QuestLine.GetForceVisibleQuests) == "function" then
 		return C_QuestLine.GetForceVisibleQuests(uiMapID) or {}
@@ -1546,6 +1585,7 @@ RQE.API.GetForceVisibleQuests = function(uiMapID)
 	return {}
 end
 
+-- Returns the quest line quests.
 RQE.API.GetQuestLineQuests = function(questLineID)
 	if C_QuestLine and type(C_QuestLine.GetQuestLineQuests) == "function" then
 		return C_QuestLine.GetQuestLineQuests(questLineID) or {}
@@ -1554,6 +1594,7 @@ RQE.API.GetQuestLineQuests = function(questLineID)
 end
 
 
+-- Reports whether the specified quest line is complete.
 RQE.API.IsQuestLineComplete = function(questLineID)
 	if C_QuestLine and type(C_QuestLine.IsComplete) == "function" then
 		return C_QuestLine.IsComplete(questLineID) == true
@@ -1562,6 +1603,7 @@ RQE.API.IsQuestLineComplete = function(questLineID)
 end
 
 
+-- Checks whether the quest line bypasses account-completion filtering.
 RQE.API.QuestLineIgnoresAccountCompletedFiltering = function(uiMapID, questLineID)
 	if C_QuestLine and type(C_QuestLine.QuestLineIgnoresAccountCompletedFiltering) == "function" then
 		return C_QuestLine.QuestLineIgnoresAccountCompletedFiltering(uiMapID, questLineID) == true
@@ -1570,6 +1612,7 @@ RQE.API.QuestLineIgnoresAccountCompletedFiltering = function(uiMapID, questLineI
 end
 
 
+-- Requests quest-line data for a map when the client supports that API.
 RQE.API.RequestQuestLinesForMap = function(uiMapID)
 	if C_QuestLine and type(C_QuestLine.RequestQuestLinesForMap) == "function" then
 		return C_QuestLine.RequestQuestLinesForMap(uiMapID)
@@ -1578,6 +1621,7 @@ RQE.API.RequestQuestLinesForMap = function(uiMapID)
 end
 
 
+-- Returns the quest progress bar info.
 RQE.API.GetQuestProgressBarInfo = function(questID)
 	if C_TaskQuest and type(C_TaskQuest.GetQuestProgressBarInfo) == "function" then
 		return C_TaskQuest.GetQuestProgressBarInfo(questID)
@@ -1893,6 +1937,7 @@ elseif apiMajor >= 9 then
 		return C_QuestLog.GetAbandonQuest()
 	end
 
+	-- Returns the IDs of quests recorded as completed.
 	RQE.API.GetAllCompletedQuestIDs = function()
 		return C_QuestLog.GetAllCompletedQuestIDs()
 	end
@@ -3310,6 +3355,7 @@ else
 		return RQE.ZoneStoryInfo
 	end
 
+	-- Checks for active threats.
 	RQE.API.HasActiveThreats = function()
 		RQE.HasActiveThreatsInfo = {
 			hasActiveThreats = false,
@@ -3318,6 +3364,7 @@ else
 		return RQE.HasActiveThreatsInfo
 	end
 
+	-- Reports whether the quest's current objectives are complete.
 	RQE.API.IsComplete = function(questID)
 		RQE.IsCompleteInfo = {
 			isComplete = false,
@@ -3326,6 +3373,7 @@ else
 		return RQE.IsCompleteInfo
 	end
 
+	-- Reports whether the specified quest has failed.
 	RQE.API.IsFailed = function(questID)
 		RQE.IsFailedInfo = {
 			isFailed = false,
@@ -3343,6 +3391,7 @@ else
 		return RQE.IsImportantQuestInfo
 	end
 
+	-- Checks whether the quest is a meta quest on the active client.
 	RQE.API.IsMetaQuest = function(questID)
 		RQE.IsMetaQuestInfo = {
 			isMeta = false,
@@ -3351,6 +3400,7 @@ else
 		return RQE.IsMetaQuestInfo
 	end
 
+	-- Reports whether the quest is trivial for the player's level.
 	RQE.API.IsQuestTrivial = function(questID)
 		RQE.IsQuestTrivialInfo = {
 			isTrivial = false,
@@ -3359,6 +3409,7 @@ else
 		return RQE.IsQuestTrivialInfo
 	end
 
+	-- Reports whether the specified quest can be repeated.
 	RQE.API.IsRepeatableQuest = function(questID)
 		RQE.IsRepeatableQuestInfo = {
 			isRepeatable = false,
@@ -3367,6 +3418,7 @@ else
 		return RQE.IsRepeatableQuestInfo
 	end
 
+	-- Returns the legacy fallback showing no active-quest relationship for a unit.
 	RQE.API.UnitIsRelatedToActiveQuest = function(unit)
 		RQE.UnitIsRelatedToActiveQuestInfo = {
 			unit = unit,
@@ -3422,6 +3474,7 @@ RQE.API.GetQuestLink = function(questID)
 		return nil
 	end
 
+	-- Returns the quest link only when it identifies the requested quest.
 	local function GetMatchingQuestLink(linkArgument)
 		local questLink = GetQuestLink(linkArgument)
 		local linkedQuestID = type(questLink) == "string"
@@ -3769,6 +3822,7 @@ end
 -- it replaces only the Retail quest-log calls that have different signatures
 -- or are absent on major 1/2 clients.
 if isLegacyClient then
+	-- Returns the log index for quest ID.
 	RQE.API.GetLogIndexForQuestID = function(questID)
 		if type(questID) == "table" then questID = questID.questID or questID.id end
 		questID = tonumber(questID)
@@ -3800,6 +3854,7 @@ if isLegacyClient then
 		return nil
 	end
 
+	-- Returns the quest log info.
 	RQE.API.GetQuestLogInfo = function(index)
 		if Has(NativeQuestLog, "GetInfo") then return NativeQuestLog.GetInfo(index) end
 		if type(GetQuestLogTitle) ~= "function" then return nil end
@@ -3810,6 +3865,7 @@ if isLegacyClient then
 			isComplete = isComplete, frequency = frequency }
 	end
 
+	-- Returns the title for quest ID.
 	RQE.API.GetTitleForQuestID = function(questID)
 		-- Forever's native method rejects quest IDs outside a signed 32-bit range.
 		-- Some quest sources use larger sentinel values during early startup.
@@ -3824,6 +3880,7 @@ if isLegacyClient then
 		return index and type(GetQuestLogTitle) == "function" and GetQuestLogTitle(index) or nil
 	end
 
+	-- Reports whether the quest is recorded as completed.
 	RQE.API.IsQuestFlaggedCompleted = function(questID)
 		if Has(NativeQuestLog, "IsQuestFlaggedCompleted") then
 			return NativeQuestLog.IsQuestFlaggedCompleted(questID) == true
@@ -3831,54 +3888,68 @@ if isLegacyClient then
 		return type(IsQuestFlaggedCompleted) == "function" and IsQuestFlaggedCompleted(questID) == true or false
 	end
 
+	-- Reports whether the player currently has the specified quest.
 	RQE.API.IsOnQuest = function(questID)
 		return (tonumber(RQE.API.GetLogIndexForQuestID(questID)) or 0) > 0
 	end
 
+	-- Reports whether the specified quest is a world quest.
 	RQE.API.IsWorldQuest = function(questID)
 		return Has(NativeQuestLog, "IsWorldQuest") and NativeQuestLog.IsWorldQuest(questID) == true or false
 	end
 
+	-- Returns the next waypoint.
 	RQE.API.GetNextWaypoint = function(questID)
 		if Has(NativeQuestLog, "GetNextWaypoint") then
 			return NativeQuestLog.GetNextWaypoint(questID)
 		end
 		return nil, nil, nil
 	end
+	-- Returns the next waypoint for map.
 	RQE.API.GetNextWaypointForMap = function(questID, mapID)
 		if Has(NativeQuestLog, "GetNextWaypointForMap") then
 			return NativeQuestLog.GetNextWaypointForMap(questID, mapID)
 		end
 		return nil, nil
 	end
+	-- Returns the next waypoint text.
 	RQE.API.GetNextWaypointText = function(questID)
 		return Has(NativeQuestLog, "GetNextWaypointText") and NativeQuestLog.GetNextWaypointText(questID) or nil
 	end
+	-- Returns the quest type.
 	RQE.API.GetQuestType = function(questID)
 		return Has(NativeQuestLog, "GetQuestType") and NativeQuestLog.GetQuestType(questID) or nil
 	end
+	-- Reports whether the specified quest is a task quest.
 	RQE.API.IsQuestTask = function(questID)
 		return Has(NativeQuestLog, "IsQuestTask") and NativeQuestLog.IsQuestTask(questID) == true or false
 	end
+	-- Checks whether the quest is a meta quest on the active client.
 	RQE.API.IsMetaQuest = function(questID)
 		return Has(NativeQuestLog, "IsMetaQuest") and NativeQuestLog.IsMetaQuest(questID) == true or false
 	end
+	-- Reports whether the specified quest belongs to a threat activity.
 	RQE.API.IsThreatQuest = function(questID)
 		return Has(NativeQuestLog, "IsThreatQuest") and NativeQuestLog.IsThreatQuest(questID) == true or false
 	end
+	-- Returns the quests on map.
 	RQE.API.GetQuestsOnMap = function(mapID)
 		return Has(NativeQuestLog, "GetQuestsOnMap") and NativeQuestLog.GetQuestsOnMap(mapID) or {}
 	end
 
+	-- Returns the number of quest watches.
 	RQE.API.GetNumQuestWatches = function()
 		return Has(NativeQuestLog, "GetNumQuestWatches") and NativeQuestLog.GetNumQuestWatches()
 			or (type(GetNumQuestWatches) == "function" and GetNumQuestWatches() or 0)
 	end
+	-- Returns the number of world quest watches.
 	RQE.API.GetNumWorldQuestWatches = function() return 0 end
+	-- Returns the quest watch type.
 	RQE.API.GetQuestWatchType = function(questID)
 		return Has(NativeQuestLog, "GetQuestWatchType") and NativeQuestLog.GetQuestWatchType(questID) or nil
 	end
 
+	-- Returns the quest ID for quest watch index.
 	RQE.API.GetQuestIDForQuestWatchIndex = function(index)
 		if Has(NativeQuestLog, "GetQuestIDForQuestWatchIndex") then
 			local questID = tonumber(NativeQuestLog.GetQuestIDForQuestWatchIndex(index))
@@ -3904,15 +3975,19 @@ if isLegacyClient then
 		return nil
 	end
 
+	-- Returns the quest ID for world quest watch index.
 	RQE.API.GetQuestIDForWorldQuestWatchIndex = function() return nil end
+	-- Returns the squared distance to quest.
 	RQE.API.GetDistanceSqToQuest = function(questID)
 		return Has(NativeQuestLog, "GetDistanceSqToQuest") and NativeQuestLog.GetDistanceSqToQuest(questID) or nil, false
 	end
+	-- Adds the quest watch.
 	RQE.API.AddQuestWatch = function(questID)
 		local index = RQE.API.GetLogIndexForQuestID(questID)
 		if index and type(AddQuestWatch) == "function" then AddQuestWatch(index); return true end
 		return false
 	end
+	-- Removes the quest watch.
 	RQE.API.RemoveQuestWatch = function(questID)
 		local index = RQE.API.GetLogIndexForQuestID(questID)
 		return index and type(RemoveQuestWatch) == "function" and RemoveQuestWatch(index) or false
@@ -3925,6 +4000,7 @@ if isLegacyClient then
 		local objective = RQE.API.GetQuestObjectives(questID)[tonumber(objectiveIndex)]
 		return objective and objective.finished == true or false
 	end
+	-- Reports whether the specified quest is currently watched.
 	RQE.API.IsQuestWatched = function(questID)
 		local count = tonumber(RQE.API.GetNumQuestWatches()) or 0
 		for index = 1, count do
@@ -3934,14 +4010,19 @@ if isLegacyClient then
 		end
 		return false
 	end
+	-- Removes the world quest watch.
 	RQE.API.RemoveWorldQuestWatch = function() return false end
+	-- Removes the world quest watch.
 	RQE.API.AddWorldQuestWatch = function() return false end
+	-- Removes the world quest watch.
 	RQE.API.IsPushableQuest = function() return false end
+	-- Returns the selected quest.
 	RQE.API.GetSelectedQuest = function()
 		local index = type(GetQuestLogSelection) == "function" and GetQuestLogSelection()
 		local info = index and RQE.API.GetQuestLogInfo(index)
 		return info and info.questID or nil
 	end
+	-- Sets the selected quest.
 	RQE.API.SetSelectedQuest = function(questID)
 		local index = RQE.API.GetLogIndexForQuestID(questID)
 		if index and type(SelectQuestLogEntry) == "function" then
@@ -3950,6 +4031,7 @@ if isLegacyClient then
 		end
 		return false
 	end
+	-- Selects the quest-log entry that the abandon action will affect.
 	RQE.API.SetAbandonQuest = function()
 		return type(SetAbandonQuest) == "function" and SetAbandonQuest() or false
 	end
@@ -3991,9 +4073,13 @@ if isLegacyClient then
 	if not C_QuestLog.GetSelectedQuest then C_QuestLog.GetSelectedQuest = RQE.API.GetSelectedQuest end
 	if not C_QuestLog.SetSelectedQuest then C_QuestLog.SetSelectedQuest = RQE.API.SetSelectedQuest end
 	if not C_QuestLog.SetAbandonQuest then C_QuestLog.SetAbandonQuest = RQE.API.SetAbandonQuest end
+	-- Provides an empty callback where no action is required.
 	if not C_QuestLog.SortQuestWatches then C_QuestLog.SortQuestWatches = function() end end
+	-- Removes the world quest watch.
 	if not C_QuestLog.IsComplete then C_QuestLog.IsComplete = function() return false end end
+	-- Removes the world quest watch.
 	if not C_QuestLog.ReadyForTurnIn then C_QuestLog.ReadyForTurnIn = function() return false end end
+	-- Removes the world quest watch.
 	if not C_QuestLog.IsQuestFlaggedCompletedOnAccount then C_QuestLog.IsQuestFlaggedCompletedOnAccount = function() return false end end
 end
 
@@ -4036,18 +4122,22 @@ else
 		return false
 	end
 
+	-- Removes the world quest watch.
 	RQE.API.QuestSessionExists = function()
 		return false
 	end
 
+	-- Removes the world quest watch.
 	RQE.API.QuestSessionHasJoined = function()
 		return false
 	end
 
+	-- Removes the world quest watch.
 	RQE.API.RequestSessionStart = function()
 		return false
 	end
 
+	-- Removes the world quest watch.
 	RQE.API.RequestSessionStop = function()
 		return false
 	end
@@ -4073,6 +4163,7 @@ RQE.API.GetQuestsOnMap_Task = function(uiMapID)
 end
 
 
+-- Returns the quest icon UI widget set.
 RQE.API.GetQuestIconUIWidgetSet = function(questID)
 	local widgetTypes = Enum and Enum.MapIconUIWidgetSetType
 	if C_TaskQuest and type(C_TaskQuest.GetQuestUIWidgetSetByType) == "function"
@@ -4087,6 +4178,7 @@ RQE.API.GetQuestIconUIWidgetSet = function(questID)
 end
 
 
+-- Returns the quest tooltip UI widget set.
 RQE.API.GetQuestTooltipUIWidgetSet = function(questID)
 	local widgetTypes = Enum and Enum.MapIconUIWidgetSetType
 	if C_TaskQuest and type(C_TaskQuest.GetQuestUIWidgetSetByType) == "function"
@@ -4104,6 +4196,7 @@ RQE.API.GetQuestTooltipUIWidgetSet = function(questID)
 end
 
 
+-- Returns the threat quests.
 RQE.API.GetThreatQuests = function()
 	if C_TaskQuest and type(C_TaskQuest.GetThreatQuests) == "function" then
 		return C_TaskQuest.GetThreatQuests() or {}
@@ -4112,6 +4205,7 @@ RQE.API.GetThreatQuests = function()
 end
 
 
+-- Returns the quest time left seconds.
 RQE.API.GetQuestTimeLeftSeconds = function(questID)
 	if C_TaskQuest and type(C_TaskQuest.GetQuestTimeLeftSeconds) == "function" then
 		return C_TaskQuest.GetQuestTimeLeftSeconds(questID)
@@ -4120,6 +4214,7 @@ RQE.API.GetQuestTimeLeftSeconds = function(questID)
 end
 
 
+-- Returns the quest time left minutes.
 RQE.API.GetQuestTimeLeftMinutes = function(questID)
 	if C_TaskQuest and type(C_TaskQuest.GetQuestTimeLeftMinutes) == "function" then
 		return C_TaskQuest.GetQuestTimeLeftMinutes(questID)
@@ -4128,6 +4223,7 @@ RQE.API.GetQuestTimeLeftMinutes = function(questID)
 end
 
 
+-- Checks whether the map displays task-quest objectives on this client.
 RQE.API.DoesMapShowTaskQuestObjectives = function(uiMapID)
 	if C_TaskQuest and type(C_TaskQuest.DoesMapShowTaskQuestObjectives) == "function" then
 		return C_TaskQuest.DoesMapShowTaskQuestObjectives(uiMapID) == true
@@ -4136,6 +4232,7 @@ RQE.API.DoesMapShowTaskQuestObjectives = function(uiMapID)
 end
 
 
+-- Reports whether the specified task quest is currently active.
 RQE.API.IsTaskQuestActive = function(questID)
 	if C_TaskQuest and type(C_TaskQuest.IsActive) == "function" then
 		return C_TaskQuest.IsActive(questID) == true
@@ -4154,6 +4251,7 @@ RQE.API.GetQuestInfoByQuestID = function(questID)
 end
 
 
+-- Returns the quest location.
 RQE.API.GetQuestLocation = function(questID, uiMapID)
 	if C_TaskQuest and type(C_TaskQuest.GetQuestLocation) == "function" then
 		return C_TaskQuest.GetQuestLocation(questID, uiMapID)
@@ -4162,6 +4260,7 @@ RQE.API.GetQuestLocation = function(questID, uiMapID)
 end
 
 
+-- Returns the quest zone ID.
 RQE.API.GetQuestZoneID = function(questID)
 	if C_TaskQuest and type(C_TaskQuest.GetQuestZoneID) == "function" then
 		return C_TaskQuest.GetQuestZoneID(questID)
@@ -4170,6 +4269,7 @@ RQE.API.GetQuestZoneID = function(questID)
 end
 
 
+-- Requests quest reward data in advance when the client API is available.
 RQE.API.RequestPreloadRewardData = function(questID)
 	if C_TaskQuest and type(C_TaskQuest.RequestPreloadRewardData) == "function" then
 		return C_TaskQuest.RequestPreloadRewardData(questID)
@@ -4180,11 +4280,13 @@ end
 -- Task/world quest APIs are Retail-only concepts. Supply the legacy methods
 -- used by the virtual tracker without exposing Retail quest categories.
 if isLegacyClient then
+	-- Returns the quests on map task.
 	RQE.API.GetQuestsOnMap_Task = function(mapID)
 		if Has(NativeTaskQuest, "GetQuestsOnMap") then return NativeTaskQuest.GetQuestsOnMap(mapID) end
 		if Has(NativeTaskQuest, "GetQuestsForPlayerByMapID") then return NativeTaskQuest.GetQuestsForPlayerByMapID(mapID) end
 		return {}
 	end
+	-- Returns the quest zone ID.
 	RQE.API.GetQuestZoneID = function(questID)
 		return Has(NativeTaskQuest, "GetQuestZoneID") and NativeTaskQuest.GetQuestZoneID(questID) or nil
 	end
@@ -4193,8 +4295,11 @@ if isLegacyClient then
 	if not C_TaskQuest.GetQuestsOnMap then C_TaskQuest.GetQuestsOnMap = RQE.API.GetQuestsOnMap_Task end
 	if not C_TaskQuest.GetQuestZoneID then C_TaskQuest.GetQuestZoneID = RQE.API.GetQuestZoneID end
 	if not C_CampaignInfo then C_CampaignInfo = {} end
+	-- Removes the world quest watch.
 	if not C_CampaignInfo.IsCampaignQuest then C_CampaignInfo.IsCampaignQuest = function() return false end end
+	-- Returns the quest ID for world quest watch index.
 	if not C_CampaignInfo.GetCampaignID then C_CampaignInfo.GetCampaignID = function() return nil end end
+	-- Returns the quest ID for world quest watch index.
 	if not C_CampaignInfo.GetCampaignInfo then C_CampaignInfo.GetCampaignInfo = function() return nil end end
 end
 
@@ -4401,9 +4506,11 @@ else
 end
 
 if isLegacyClient then
+	-- Reports whether the player is currently in a scenario.
 	RQE.API.IsInScenario = function()
 		return Has(NativeScenario, "IsInScenario") and NativeScenario.IsInScenario() == true or false
 	end
+	-- Returns the scenario info.
 	RQE.API.GetScenarioInfo = function()
 		return Has(NativeScenario, "GetInfo") and NativeScenario.GetInfo() or nil
 	end
@@ -4438,8 +4545,11 @@ if apiMajor >= 11 then
 		return isTracking
 	end
 else
+	-- Returns the quest ID for world quest watch index.
 	RQE.API.ClearAllSuperTracked = function() return nil end
+	-- Returns the quest ID for world quest watch index.
 	RQE.API.GetSuperTrackedItemName = function() return nil end
+	-- Removes the world quest watch.
 	RQE.API.IsSuperTrackingAnything = function() return false end
 end
 
@@ -4483,6 +4593,7 @@ elseif apiMajor >= 7 then
 	end
 
 else
+	-- Opens the recipe.
 	RQE.API.OpenRecipe = function(recipeID) return nil end
 
 	-- Use: RQE.API.CraftRecipe(index, count) instead of: DoTradeSkill(index, count)
@@ -4501,6 +4612,7 @@ function RQE.API.GetTrackedRecipeIDs(isRecraft)
 		and C_TradeSkillUI.GetRecipesTracked(isRecraft) or {}
 end
 
+-- Returns the tracked recipe schematic.
 function RQE.API.GetTrackedRecipeSchematic(recipeID, isRecraft, recipeLevel)
 	local schematic = ProfessionsUtil and ProfessionsUtil.GetRecipeSchematic
 		and ProfessionsUtil.GetRecipeSchematic(recipeID, isRecraft)
@@ -4508,6 +4620,7 @@ function RQE.API.GetTrackedRecipeSchematic(recipeID, isRecraft, recipeLevel)
 	return RQE.API.Client.C_TradeSkillUI.GetRecipeSchematic(recipeID, isRecraft, recipeLevel)
 end
 
+-- Checks whether a tracked recipe slot requires reagents.
 function RQE.API.IsTrackedRecipeSlotRequired(slot)
 	local required = ProfessionsUtil and ProfessionsUtil.IsReagentSlotRequired
 		and ProfessionsUtil.IsReagentSlotRequired(slot)
@@ -4516,15 +4629,18 @@ function RQE.API.IsTrackedRecipeSlotRequired(slot)
 		or (slot.reagentType == Enum.CraftingReagentType.Modifying and slot.required)
 end
 
+-- Returns the tracked recipe slot quantity.
 function RQE.API.GetTrackedRecipeSlotQuantity(slot, reagent)
 	return slot.GetQuantityRequired and slot:GetQuantityRequired(reagent) or slot.quantityRequired or 0
 end
 
+-- Returns the tracked recipe currency info.
 function RQE.API.GetTrackedRecipeCurrencyInfo(currencyID)
 	return currencyID and C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo
 		and C_CurrencyInfo.GetCurrencyInfo(currencyID) or nil
 end
 
+-- Returns the tracked recipe reagent count.
 function RQE.API.GetTrackedRecipeReagentCount(reagents)
 	local count, countedItems, countedCurrencies = 0, {}, {}
 	for _, reagent in ipairs(reagents or {}) do
@@ -4544,12 +4660,14 @@ function RQE.API.GetTrackedRecipeReagentCount(reagents)
 	return count
 end
 
+-- Sets the tracked recipe.
 function RQE.API.SetTrackedRecipe(recipeID, tracked, isRecraft)
 	if C_TradeSkillUI and C_TradeSkillUI.SetRecipeTracked then
 		return C_TradeSkillUI.SetRecipeTracked(recipeID, tracked, isRecraft)
 	end
 end
 
+-- Opens the tracked recipe.
 function RQE.API.OpenTrackedRecipe(recipeID)
 	if not ProfessionsFrame and ProfessionsFrame_LoadUI then ProfessionsFrame_LoadUI() end
 	if C_TradeSkillUI and C_TradeSkillUI.IsRecipeProfessionLearned
@@ -4561,6 +4679,7 @@ function RQE.API.OpenTrackedRecipe(recipeID)
 	end
 end
 
+-- Shows the tracked recipe tooltip.
 function RQE.API.ShowTrackedRecipeTooltip(row)
 	GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
 	if row.itemID then
@@ -4575,6 +4694,7 @@ function RQE.API.ShowTrackedRecipeTooltip(row)
 	GameTooltip:Show()
 end
 
+-- Shows the tracked achievement tooltip.
 function RQE.API.ShowTrackedAchievementTooltip(owner, achievementID, name, description)
 	GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
 	local link = GetAchievementLink and GetAchievementLink(achievementID)
@@ -4639,10 +4759,12 @@ function RQE.API.GetQuestReputationChoiceRewards(questID, choiceCount)
 	return rewards
 end
 
+-- Hides the tracked tooltip.
 function RQE.API.HideTrackedTooltip()
 	GameTooltip:Hide()
 end
 
+-- Removes the achievement from the tracked-achievement list.
 function RQE.API.StopTrackingAchievement(achievementID)
 	return C_ContentTracking.StopTracking(Enum.ContentTrackingType.Achievement,
 		achievementID, Enum.ContentTrackingStopType.Manual)
@@ -4809,6 +4931,7 @@ function RQE.API.CreateCreaturePreviewModel(parent)
 	return nil, nil, "This client did not provide a compatible model widget."
 end
 
+-- Clears the creature preview model.
 function RQE.API.ClearCreaturePreviewModel(model)
 	if not model then return end
 	if type(model.ClearModel) == "function" then
@@ -4818,6 +4941,7 @@ function RQE.API.ClearCreaturePreviewModel(model)
 	end
 end
 
+-- Applies the requested camera, position, and display options to a preview model.
 function RQE.API.ConfigureCreaturePreviewModel(model, options)
 	if not model then return end
 	options = type(options) == "table" and options or {}
@@ -4930,10 +5054,12 @@ end
 -- Never add missing methods to C_AddOns on legacy clients: Blizzard uses that
 -- table in protected Game Menu flows. Keep the compatibility behavior in RQE.
 if isLegacyClient then
+	-- Reports whether the named addon has finished loading.
 	RQE.API.IsAddOnLoaded = function(name)
 		if Has(NativeAddOns, "IsAddOnLoaded") then return NativeAddOns.IsAddOnLoaded(name) end
 		return type(IsAddOnLoaded) == "function" and IsAddOnLoaded(name) or false
 	end
+	-- Returns the add on metadata.
 	RQE.API.GetAddOnMetadata = function(name, field)
 		if Has(NativeAddOns, "GetAddOnMetadata") then return NativeAddOns.GetAddOnMetadata(name, field) end
 		return type(GetAddOnMetadata) == "function" and GetAddOnMetadata(name, field) or nil
@@ -4946,12 +5072,14 @@ function RQE.API.IsDugiGuidesLoaded()
 	return RQE.API.IsAddOnLoaded and RQE.API.IsAddOnLoaded("DugisGuideViewerZ") == true
 end
 
+-- Checks whether the Dugi Guides compatibility option is active.
 function RQE.API.IsDugiGuidesCompatibilityActive()
 	return RQE.db and RQE.db.profile
 		and RQE.db.profile.enableDugiGuidesCompatibility ~= false
 		and RQE.API.IsDugiGuidesLoaded()
 end
 
+-- Checks whether Dugi compatibility requires the native tracker to stay shown.
 function RQE.API.ShouldKeepDugiObjectiveTrackerShown()
 	return RQE.API.IsDugiGuidesCompatibilityActive()
 		and RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown()
@@ -4995,6 +5123,7 @@ do
 		C_TaskQuest = NativeTaskQuest, C_AddOns = NativeAddOns,
 	}
 
+	-- Resolves a dotted API path against the client's global tables.
 	local function native(path)
 		local namespace, method = path:match("^([^.]+)%.(.+)$")
 		local value
@@ -5007,15 +5136,18 @@ do
 		return type(value) == "function" and value or nil
 	end
 
+	-- Invokes the native API when that path is available on this client.
 	local function call(path, ...)
 		local fn = native(path)
 		if fn then return fn(...) end
 	end
 
+	-- Registers a compatibility fallback from one API path to another.
 	local function alias(a, b)
 		aliases[a] = aliases[a] or {}
 		table.insert(aliases[a], b)
 	end
+	-- Registers compatibility fallbacks between both API paths.
 	local function pair(a, b)
 		alias(a, b)
 		alias(b, a)
@@ -5045,11 +5177,13 @@ do
 	local function adapt(path, requirement, fn, force)
 		adapters[path], requirements[path], overrides[path] = fn, requirement, force
 	end
+	-- Checks whether a compatibility implementation's API requirement exists.
 	local function available(requirement)
 		if type(requirement) == "function" then return requirement() end
 		if type(requirement) == "string" then return native(requirement) ~= nil end
 		return requirement == true
 	end
+	-- Chooses the native API or a supported compatibility fallback.
 	local function implementation(path)
 		if overrides[path] and available(requirements[path]) then return adapters[path] end
 		local fn = native(path)
@@ -5060,31 +5194,40 @@ do
 		end
 		if adapters[path] and available(requirements[path]) then return adapters[path] end
 	end
+	-- Selects the player or pet spell-book bank for the active client.
 	local function spellBank(pet)
 		return Enum and Enum.SpellBookSpellBank and (pet and Enum.SpellBookSpellBank.Pet or Enum.SpellBookSpellBank.Player) or (pet and 1 or 0)
 	end
+	-- Checks whether the player knows the spell using the current spell-book API.
 	adapt("IsPlayerSpell", "C_SpellBook.IsSpellKnown", function(spellID)
 		return call("C_SpellBook.IsSpellKnown", spellID, spellBank(false))
 	end)
+	-- Checks spell knowledge in the appropriate player or pet spell-book bank.
 	adapt("IsSpellKnown", "C_SpellBook.IsSpellKnown", function(spellID, pet)
 		return call("C_SpellBook.IsSpellKnown", spellID, spellBank(pet))
 	end)
+	-- Checks known spells and their overrides through the current spell-book API.
 	adapt("IsSpellKnownOrOverridesKnown", "C_SpellBook.IsSpellKnownOrInSpellBook", function(spellID, pet)
 		return call("C_SpellBook.IsSpellKnownOrInSpellBook", spellID, spellBank(pet), true)
 	end)
 
+	-- Resolves an item identifier to the item name expected by legacy APIs.
 	local function itemName(item)
 		local fn = native("C_Item.GetItemInfo") or native("GetItemInfo")
 		if fn then return (fn(item)) end
 	end
+	-- Checks whether the required client APIs are available for this fallback.
 	adapt("C_Item.GetItemNameByID", function() return native("C_Item.GetItemInfo") or native("GetItemInfo") end, itemName)
+	-- Normalizes the legacy item's in-range result to a boolean when available.
 	adapt("C_Item.IsItemInRange", "IsItemInRange", function(item, unit)
 		local result = call("IsItemInRange", item, unit)
 		if result == nil then return nil end
 		return result == true or result == 1
 	end)
+	-- Requests item information so the client begins loading the item data.
 	adapt("C_Item.RequestLoadItemDataByID", "GetItemInfo", function(itemID) call("GetItemInfo", itemID) end)
 
+	-- Converts legacy container-item return values into a modern info table.
 	adapt("C_Container.GetContainerItemInfo", "GetContainerItemInfo", function(bag, slot)
 		local icon, count, locked, quality, readable, lootable, link, filtered, noValue, itemID, bound = call("GetContainerItemInfo", bag, slot)
 		if not icon then return nil end
@@ -5093,17 +5236,21 @@ do
 			isReadable = readable, hasLoot = lootable, hyperlink = link, isFiltered = filtered,
 			hasNoValue = noValue, itemID = itemID, isBound = bound }
 	end)
+	-- Converts modern container-item data into the legacy return-value tuple.
 	adapt("GetContainerItemInfo", "C_Container.GetContainerItemInfo", function(bag, slot)
 		local info = call("C_Container.GetContainerItemInfo", bag, slot)
 		if not info then return nil end
 		return info.iconFileID, info.stackCount, info.isLocked, info.quality, info.isReadable,
 			info.hasLoot, info.hyperlink, info.isFiltered, info.hasNoValue, info.itemID, info.isBound
 	end)
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Normalizes item cooldown data from the available client implementation.
 	adapt("C_Item.GetItemCooldown", function() return native("C_Container.GetItemCooldown") or native("GetItemCooldown") end, function(item)
 		local fn = native("C_Container.GetItemCooldown") or native("GetItemCooldown")
 		local start, duration, enabled = fn(item)
 		return start, duration, enabled == true or enabled == 1
 	end)
+	-- Reads an item's cooldown through the legacy container API.
 	local function legacyItemCooldown(item)
 		local start, duration, enabled = call("C_Item.GetItemCooldown", item)
 		return start, duration, (enabled == true or enabled == 1) and 1 or 0
@@ -5111,28 +5258,34 @@ do
 	adapt("GetItemCooldown", "C_Item.GetItemCooldown", legacyItemCooldown)
 	adapt("C_Container.GetItemCooldown", "C_Item.GetItemCooldown", legacyItemCooldown)
 
+	-- Converts legacy spell information into the modern spell-data table.
 	adapt("C_Spell.GetSpellInfo", "GetSpellInfo", function(spell)
 		local name, rank, icon, castTime, minRange, maxRange, spellID, originalIcon = call("GetSpellInfo", spell)
 		if not name then return nil end
 		return { name = name, iconID = icon, castTime = castTime, minRange = minRange,
 			maxRange = maxRange, spellID = spellID, originalIconID = originalIcon }
 	end)
+	-- Converts modern spell data into the legacy return-value tuple.
 	adapt("GetSpellInfo", "C_Spell.GetSpellInfo", function(spell)
 		local info = call("C_Spell.GetSpellInfo", spell)
 		if not info then return nil end
 		return info.name, nil, info.iconID, info.castTime, info.minRange, info.maxRange, info.spellID, info.originalIconID
 	end)
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Returns the spell name from the available spell-information implementation.
 	adapt("C_Spell.GetSpellName", function() return native("C_Spell.GetSpellInfo") or native("GetSpellInfo") end, function(spell)
 		local fn = implementation("C_Spell.GetSpellInfo")
 		local info = fn and fn(spell)
 		return info and info.name
 	end)
+	-- Converts legacy spell cooldown values into the modern cooldown-data table.
 	adapt("C_Spell.GetSpellCooldown", "GetSpellCooldown", function(spell)
 		local start, duration, enabled, rate = call("GetSpellCooldown", spell)
 		if start == nil then return nil end
 		return { startTime = start, duration = duration, isEnabled = enabled == true or enabled == 1, modRate = rate or 1 }
 	end)
 
+	-- Converts a legacy aura result into the shared aura-data format.
 	local function legacyAura(unit, index, filter)
 		local fn = native("UnitAura") or (filter == "HARMFUL" and native("UnitDebuff") or native("UnitBuff"))
 		if not fn then return nil end
@@ -5142,9 +5295,13 @@ do
 			duration = duration, expirationTime = expiration, sourceUnit = source,
 			isStealable = stealable, nameplateShowPersonal = personal, spellId = spellID }
 	end
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Reads a legacy buff by index and returns normalized aura data.
 	adapt("C_UnitAuras.GetBuffDataByIndex", function() return native("UnitAura") or native("UnitBuff") end, function(unit, index, filter)
 		return legacyAura(unit, index, filter or "HELPFUL")
 	end)
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Searches legacy auras for the requested spell name and returns its data.
 	adapt("C_UnitAuras.GetAuraDataBySpellName", function() return native("UnitAura") or native("UnitBuff") end, function(unit, name, filter)
 		for index = 1, 255 do
 			local aura = legacyAura(unit, index, filter or "HELPFUL")
@@ -5160,12 +5317,14 @@ do
 		return { name = name, texture = texture, price = price, stackCount = count,
 			numAvailable = stock, isUsable = usable, isPurchasable = stock ~= 0, hasExtendedCost = extended }
 	end)
+	-- Converts modern merchant-item data into the legacy return-value tuple.
 	adapt("GetMerchantItemInfo", "C_MerchantFrame.GetItemInfo", function(index)
 		local info = call("C_MerchantFrame.GetItemInfo", index)
 		if not info then return nil end
 		return info.name, info.texture, info.price, info.stackCount, info.numAvailable, info.isUsable, info.hasExtendedCost
 	end)
 
+	-- Converts the flat legacy gossip list into structured option records.
 	adapt("C_GossipInfo.GetOptions", "GetGossipOptions", function()
 		local flat, options = { call("GetGossipOptions") }, {}
 		for index = 1, #flat, 2 do
@@ -5173,6 +5332,7 @@ do
 		end
 		return options
 	end)
+	-- Converts the flat legacy quest list into structured available-quest records.
 	adapt("C_GossipInfo.GetAvailableQuests", "GetGossipAvailableQuests", function()
 		local flat, quests = { call("GetGossipAvailableQuests") }, {}
 		-- Classic/Anniversary return seven values per available quest.
@@ -5183,17 +5343,24 @@ do
 		return quests
 	end)
 
+	-- Resolves a quest ID to its current quest-log index.
 	local function logIndex(questID) return API.GetLogIndexForQuestID(questID) end
+	-- Reads quest-log metadata for the supplied quest ID.
 	local function logInfo(questID)
 		local index = logIndex(questID)
 		return index and API.GetQuestLogInfo(index)
 	end
+	-- Checks whether the legacy quest-log lookup APIs are available.
 	local function legacyQuestLogAvailable()
 		return native("GetQuestLogTitle") ~= nil and native("GetNumQuestLogEntries") ~= nil
 	end
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Returns the client level cap, with a legacy-era fallback.
 	adapt("GetMaxPlayerLevel", function() return isLegacyClient end, function()
 		return MAX_PLAYER_LEVEL or (major == 2 and 70 or 60)
 	end)
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Converts the selected objective's data into the legacy return-value tuple.
 	adapt("GetQuestObjectiveInfo", function() return native("C_QuestLog.GetQuestObjectives") or legacyQuestLogAvailable() end, function(questID, index)
 		local objective = (Client.C_QuestLog.GetQuestObjectives(questID) or {})[index]
 		if objective then return objective.text, objective.type, objective.finished, objective.numFulfilled, objective.numRequired end
@@ -5210,56 +5377,72 @@ do
 	}
 	for method, helper in pairs(questHelpers) do
 		local helperName = helper
+		-- Checks whether the required client APIs are available for this fallback.
 		adapt("C_QuestLog." .. method, function() return isLegacyClient and legacyQuestLogAvailable() end,
+			-- Forwards arguments to the selected shared API helper.
 			function(...) return API[helperName](...) end)
 	end
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Removes a legacy quest watch using the quest's current log index.
 	adapt("C_QuestLog.RemoveQuestWatch", function() return isLegacyClient and legacyQuestLogAvailable() and native("RemoveQuestWatch") end, function(questID)
 		local index = logIndex(questID)
 		if not index then return false end
 		call("RemoveQuestWatch", index)
 		return true
 	end)
+	-- Reads a quest's squared distance through its legacy quest-log index.
 	adapt("C_QuestLog.GetDistanceSqToQuest", "GetQuestLogDistanceSquared", function(questID)
 		local index = logIndex(questID)
 		if index then return call("GetQuestLogDistanceSquared", index) end
 		return nil, false
 	end)
+	-- Reports whether the quest can be found in the legacy quest log.
 	adapt("C_QuestLog.IsOnQuest", legacyQuestLogAvailable, function(questID) return logIndex(questID) ~= nil end)
+	-- Normalizes the legacy quest-log completion flag to a boolean.
 	adapt("C_QuestLog.IsComplete", legacyQuestLogAvailable, function(questID)
 		local info = logInfo(questID)
 		return info and (info.isComplete == true or info.isComplete == 1) or false
 	end)
+	-- Uses the quest-completion state as the fallback turn-in readiness result.
 	adapt("C_QuestLog.ReadyForTurnIn", legacyQuestLogAvailable, function(questID) return Client.C_QuestLog.IsComplete(questID) end)
+	-- Recognizes the legacy failed-quest completion flag.
 	adapt("C_QuestLog.IsFailed", legacyQuestLogAvailable, function(questID)
 		local info = logInfo(questID)
 		return info and info.isComplete == -1 or false
 	end)
+	-- Reports whether the specified quest objective is finished.
 	adapt("C_QuestLog.IsQuestObjectiveComplete", true, function(questID, objectiveIndex)
 		local objective = (Client.C_QuestLog.GetQuestObjectives(questID) or {})[objectiveIndex]
 		return objective and objective.finished == true or false
 	end)
+	-- Finds whether the quest ID is present in the native watch list.
 	adapt("C_QuestLog.IsQuestWatched", true, function(questID)
 		for index = 1, Client.C_QuestLog.GetNumQuestWatches() or 0 do
 			if Client.C_QuestLog.GetQuestIDForQuestWatchIndex(index) == questID then return true end
 		end
 		return false
 	end)
+	-- Returns the manual watch type for a watched legacy quest.
 	adapt("C_QuestLog.GetQuestWatchType", legacyQuestLogAvailable, function(questID)
 		if Client.C_QuestLog.IsQuestWatched(questID) then return Enum and Enum.QuestWatchType and Enum.QuestWatchType.Manual or 1 end
 	end)
+	-- Returns the suggested group size from legacy quest-log metadata.
 	adapt("C_QuestLog.GetSuggestedGroupSize", legacyQuestLogAvailable, function(questID)
 		local info = logInfo(questID)
 		return info and info.suggestedGroup or 0
 	end)
+	-- Converts legacy quest-tag return values into a structured tag record.
 	adapt("C_QuestLog.GetQuestTagInfo", "GetQuestTagInfo", function(questID)
 		local tagID, tagName, worldQuestType, quality, elite, expiry = call("GetQuestTagInfo", questID)
 		if not tagID then return nil end
 		return { tagID = tagID, tagName = tagName, worldQuestType = worldQuestType, quality = quality, isElite = elite, displayExpiration = expiry }
 	end)
+	-- Converts a modern quest-tag record into the legacy return-value tuple.
 	adapt("GetQuestTagInfo", "C_QuestLog.GetQuestTagInfo", function(questID)
 		local info = call("C_QuestLog.GetQuestTagInfo", questID)
 		if info then return info.tagID, info.tagName, info.worldQuestType, info.quality, info.isElite, info.displayExpiration end
 	end)
+	-- Converts the legacy completed-quest set into a list of completed quest IDs.
 	adapt("C_QuestLog.GetAllCompletedQuestIDs", "GetQuestsCompleted", function()
 		local completed, ids = {}, {}
 		call("GetQuestsCompleted", completed)
@@ -5269,20 +5452,31 @@ do
 	for _, method in ipairs({ "AbandonQuest", "SetAbandonQuest", "IsPushableQuest" }) do
 		alias("C_QuestLog." .. method, method)
 	end
+	-- Uses the selected quest as the legacy abandon-quest context.
 	adapt("C_QuestLog.GetAbandonQuest", legacyQuestLogAvailable, function() return Client.C_QuestLog.GetSelectedQuest() end)
+	-- Checks whether the legacy quest-log entry can be shared with the party.
 	adapt("C_QuestLog.IsPushableQuest", "GetQuestLogPushable", function(questID)
 		local index = logIndex(questID)
 		return index and call("GetQuestLogPushable", index) or false
 	end)
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Returns the quest-log capacity for the current legacy client.
 	adapt("C_QuestLog.GetMaxNumQuestsCanAccept", function() return isLegacyClient end, function() return MAX_QUESTLOG_QUESTS or (major == 2 and 25 or 20) end)
+	-- Collects the legacy abandon-quest item results into a table.
 	adapt("C_QuestLog.GetAbandonQuestItems", "GetAbandonQuestItems", function() return { call("GetAbandonQuestItems") } end)
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Returns the supertracked quest through RQE's client-compatible helper.
 	adapt("C_SuperTrack.GetSuperTrackedQuestID", function() return isLegacyClient end, function() return API.GetSuperTrackedQuestID() end)
+	-- Checks whether the required client APIs are available for this fallback.
+	-- Sets the supertracked quest through RQE's client-compatible helper.
 	adapt("C_SuperTrack.SetSuperTrackedQuestID", function() return isLegacyClient end, function(questID) return API.SetSuperTrackedQuestID(questID) end)
+	-- Normalizes legacy quest text ordering to description followed by objectives.
 	adapt("GetQuestLogQuestText", "GetQuestLogQuestText", function(index)
 		local first, second = call("GetQuestLogQuestText", tonumber(index) or index)
 		if isLegacyClient and major == 1 then return second, first end
 		return first, second
 	end, true)
+	-- Returns a quest link through RQE's client-compatible helper.
 	adapt("GetQuestLink", "GetQuestLink", function(questID) return API.GetQuestLink(questID) end, true)
 
 	-- Legacy reward globals inspect the selected quest, whereas modern callers
@@ -5290,6 +5484,7 @@ do
 	-- the lookup, restoring selection even if the native lookup raises an error.
 	local function pack(...) return { n = select("#", ...), ... } end
 	local unpackResults = unpack or table.unpack
+	-- Reads a quest reward while temporarily selecting its quest-log row.
 	local function selectedReward(path, questID, ...)
 		local fn = native(path)
 		if not fn then return nil end
@@ -5305,12 +5500,16 @@ do
 	end
 	for _, name in ipairs({ "GetNumQuestLogChoices", "GetNumQuestLogRewards", "GetQuestLogRewardMoney", "GetQuestLogRewardXP", "GetQuestLogRewardHonor", "GetQuestLogRewardArtifactXP", "GetQuestLogRewardSkillPoints", "GetQuestLogRewardTitle" }) do
 		local path = name
+		-- Checks whether the required client APIs are available for this fallback.
 		adapt(path, function() return isLegacyClient and native(path) and native("SelectQuestLogEntry") and native("GetQuestLogSelection") end,
+			-- Reads a quest reward while temporarily selecting its quest-log row.
 			function(questID) return selectedReward(path, questID) end, true)
 	end
 	for _, name in ipairs({ "GetQuestLogRewardInfo", "GetQuestLogChoiceInfo" }) do
 		local path = name
+		-- Checks whether the required client APIs are available for this fallback.
 		adapt(path, function() return isLegacyClient and native(path) and native("SelectQuestLogEntry") and native("GetQuestLogSelection") end,
+			-- Reads a quest reward while temporarily selecting its quest-log row.
 			function(index, questID) return selectedReward(path, questID, index) end, true)
 	end
 
@@ -5322,6 +5521,7 @@ do
 			totalQuantity = total, flags = flags, assetID = assetID, quantityString = progressText,
 			criteriaID = criteriaID, duration = duration, elapsed = elapsed, failed = failed, isWeightedProgress = weighted }
 	end)
+	-- Converts the legacy scenario return tuple into a structured scenario record.
 	adapt("C_ScenarioInfo.GetScenarioInfo", "C_Scenario.GetInfo", function()
 		local name, stage, stages, flags, bonus, bonusComplete, complete, xp, money, scenarioType, areaName, textureKit, scenarioID = call("C_Scenario.GetInfo")
 		if not name then return nil end
@@ -5329,16 +5529,19 @@ do
 			isBonusStepComplete = bonusComplete, isComplete = complete, xp = xp, money = money,
 			type = scenarioType, area = areaName, uiTextureKit = textureKit, scenarioID = scenarioID }
 	end)
+	-- Converts a structured scenario record into the legacy return-value tuple.
 	adapt("C_Scenario.GetInfo", "C_ScenarioInfo.GetScenarioInfo", function()
 		local info = call("C_ScenarioInfo.GetScenarioInfo")
 		if not info then return nil end
 		return info.name, info.currentStage, info.numStages, info.flags, info.hasBonusStep, info.isBonusStepComplete,
 			info.isComplete, info.xp, info.money, info.type, info.area, info.uiTextureKit, info.scenarioID
 	end)
+	-- Reports scenario presence from the available scenario-information record.
 	adapt("C_Scenario.IsInScenario", "C_ScenarioInfo.GetScenarioInfo", function()
 		local info = call("C_ScenarioInfo.GetScenarioInfo")
 		return info and (info.scenarioID or 0) > 0 or false
 	end)
+	-- Converts structured scenario-step data into the legacy return-value tuple.
 	adapt("C_Scenario.GetStepInfo", "C_ScenarioInfo.GetScenarioStepInfo", function(stepID)
 		local info = call("C_ScenarioInfo.GetScenarioStepInfo", stepID)
 		if not info then return nil, nil, 0 end
@@ -5352,15 +5555,25 @@ do
 	end)
 
 	local defaults = {
+		-- Returns the quest ID for world quest watch index.
 		none = function() return nil end,
+		-- Removes the world quest watch.
 		boolean = function() return false end,
+		-- Returns the number of world quest watches.
 		zero = function() return 0 end,
+		-- Returns an empty list when no compatible API result is available.
 		list = function() return {} end,
+		-- Reports that the requested action is unavailable on this client.
 		action = function() return false, "This API is unavailable on the current client." end,
+		-- Returns zero counts for an unavailable counting API.
 		counts = function() return 0, 0 end,
+		-- Returns an inactive cooldown tuple when the client lacks the API.
 		cooldown = function() return 0, 0, 0 end,
+		-- Returns an unavailable-role tuple for clients without role information.
 		roles = function() return false, false, false end,
+		-- Returns an empty scenario-step tuple for an unsupported API.
 		step = function() return nil, nil, 0 end,
+		-- Returns an empty scenario-step tuple for an unsupported API.
 		challenge = function() return nil, nil, 0 end,
 	}
 
@@ -5368,6 +5581,8 @@ do
 	-- remain in the untouched Classic/TBC folders. Defaults describe only the
 	-- unsupported case; native nils, false values and multiple returns survive.
 	local specifications = {
+		["AcceptQuest"] = "action",
+		["AcknowledgeAutoAcceptQuest"] = "action",
 		["BNGetInfo"] = "none",
 		["BuyMerchantItem"] = "action",
 		["C_AddOns.GetAddOnMetadata"] = "none",
@@ -5412,8 +5627,10 @@ do
 		["C_Garrison.GetGarrisonInfo"] = "none",
 		["C_Garrison.IsFollowerCollected"] = "boolean",
 		["C_GossipInfo.CloseGossip"] = "none",
+		["C_GossipInfo.GetActiveQuests"] = "list",
 		["C_GossipInfo.GetAvailableQuests"] = "list",
 		["C_GossipInfo.GetOptions"] = "list",
+		["C_GossipInfo.SelectActiveQuest"] = "action",
 		["C_GossipInfo.SelectOptionByIndex"] = "action",
 		["C_Item.GetItemCooldown"] = "none",
 		["C_Item.GetItemCount"] = "zero",
@@ -5538,6 +5755,7 @@ do
 		["C_VignetteInfo.GetVignettePosition"] = "none",
 		["ClearOverrideBindings"] = "action",
 		["CombatLogGetCurrentEventInfo"] = "none",
+		["CompleteQuest"] = "action",
 		["CreateMacro"] = "action",
 		["DeleteMacro"] = "action",
 		["EditMacro"] = "action",
@@ -5546,6 +5764,7 @@ do
 		["GetAchievementNumCriteria"] = "zero",
 		["GetAddOnCPUUsage"] = "zero",
 		["GetAddOnMemoryUsage"] = "zero",
+		["GetActiveTitle"] = "none",
 		["GetAuctionItemInfo"] = "none",
 		["GetAverageItemLevel"] = "counts",
 		["GetBuildInfo"] = "none",
@@ -5555,6 +5774,7 @@ do
 		["GetContainerItemInfo"] = "none",
 		["GetContainerNumSlots"] = "zero",
 		["GetCursorPosition"] = "none",
+		["GetGossipActiveQuests"] = "none",
 		["GetItemCooldown"] = "cooldown",
 		["GetItemCount"] = "zero",
 		["GetItemInfo"] = "none",
@@ -5573,10 +5793,13 @@ do
 		["GetMerchantNumItems"] = "zero",
 		["GetMinimapZoneText"] = "none",
 		["GetMouseButtonClicked"] = "none",
+		["GetNumActiveQuests"] = "zero",
 		["GetNumAuctionItems"] = "zero",
+		["GetNumGossipActiveQuests"] = "zero",
 		["GetNumGroupMembers"] = "zero",
 		["GetNumLootItems"] = "zero",
 		["GetNumMacros"] = "counts",
+		["GetNumQuestChoices"] = "zero",
 		["GetNumQuestLogChoices"] = "zero",
 		["GetNumQuestLogRewards"] = "zero",
 		["GetPhysicalScreenSize"] = "none",
@@ -5596,8 +5819,10 @@ do
 		["GetQuestLogSelection"] = "none",
 		["GetQuestLogSpecialItemCooldown"] = "cooldown",
 		["GetQuestLogSpecialItemInfo"] = "none",
+		["GetQuestMoneyToGet"] = "zero",
 		["GetQuestObjectiveInfo"] = "none",
 		["GetQuestProgressBarPercent"] = "zero",
+		["GetQuestReward"] = "action",
 		["GetQuestTagInfo"] = "none",
 		["GetQuestUiMapID"] = "none",
 		["GetRaidTargetIndex"] = "none",
@@ -5615,6 +5840,7 @@ do
 		["GetZoneText"] = "none",
 		["HaveQuestData"] = "boolean",
 		["InCombatLockdown"] = "boolean",
+		["IsQuestCompletable"] = "boolean",
 		["IsAltKeyDown"] = "boolean",
 		["IsCharacterNewlyBoosted"] = "boolean",
 		["IsControlKeyDown"] = "boolean",
@@ -5640,9 +5866,12 @@ do
 		["PlaceAuctionBid"] = "action",
 		["PlaySound"] = "action",
 		["QueryAuctionItems"] = "action",
+		["QuestGetAutoAccept"] = "boolean",
 		["QuestLogPushQuest"] = "action",
 		["ReloadUI"] = "action",
 		["SelectQuestLogEntry"] = "action",
+		["SelectActiveQuest"] = "action",
+		["SelectGossipActiveQuest"] = "action",
 		["SetAbandonQuest"] = "action",
 		["SetCVar"] = "action",
 		["SetLFGRoles"] = "action",
@@ -5680,6 +5909,7 @@ do
 	local wrappers = {}
 	for path, defaultName in pairs(specifications) do
 		local apiPath, missing = path, defaults[defaultName]
+		-- Chooses the native API or a supported compatibility fallback.
 		local wrapper = function(...)
 			local fn = implementation(apiPath)
 			if fn then return fn(...) end
@@ -5695,6 +5925,7 @@ do
 		end
 	end
 
+	-- Returns the available native or fallback implementation for an API path.
 	function API.ResolveClientAPI(path)
 		if wrappers[path] and implementation(path) then return wrappers[path] end
 		return nil
@@ -5720,12 +5951,16 @@ do
 		return info.name, info.iconID
 	end
 
+	-- Looks up a quest's log index and returns its description text.
 	function API.GetQuestDescriptionForQuestID(questID)
 		local index = Client.C_QuestLog.GetLogIndexForQuestID(questID)
 		if index then return Client.GetQuestLogQuestText(index) end
 	end
+	-- Returns the description and objective text for a quest-log index.
 	function API.GetQuestLogText(index) return Client.GetQuestLogQuestText(index) end
+	-- Returns the quest description for the supplied quest-log index.
 	function API.GetQuestLogDescription(index) return (Client.GetQuestLogQuestText(index)) end
+	-- Returns the objective text for the supplied quest-log index.
 	function API.GetQuestLogObjectivesText(index)
 		local _, objectives = Client.GetQuestLogQuestText(index)
 		return objectives
@@ -5746,6 +5981,7 @@ do
 
 	-- Reconcile the existing flat merchant helpers with the actual table API.
 	API.GetMerchantFrameItemInfo = Client.C_MerchantFrame.GetItemInfo
+	-- Returns the merchant item info.
 	API.GetMerchantItemInfo = function(index)
 		local info = Client.C_MerchantFrame.GetItemInfo(index)
 		if not info then return nil end
@@ -5756,5 +5992,162 @@ do
 			currencyID = info.currencyID, spellID = info.spellID }
 		return RQE.MerchantInfo
 	end
+end
+
+-- Quest turn-in automation delegates all client-dependent quest actions here.
+-- A macro press may precede gossip and reward frames by several ticks.
+local activeAutoCompleteTicker
+
+-- The optional Contribution companion owns contributor-only automation rules.
+local function contributionBlocksQuestAutomation(questID, displayedQuestID)
+	local check = RQE_Contribution and RQE_Contribution.ShouldBlockQuestAutomation
+	return type(check) == "function" and check(questID, displayedQuestID) or false
+end
+
+-- QUEST_DETAIL identifies the offered quest; its optional item payload is not
+-- needed to accept it. The client bridge uses the native API on each client.
+function RQE.API.AutoAcceptQuestDetail()
+	local getQuestID = RQE.API.ResolveClientAPI("GetQuestID")
+	if contributionBlocksQuestAutomation(getQuestID and getQuestID()) then return false end
+	if not (RQE.db and RQE.db.profile and RQE.db.profile.autoAcceptQuestDetail) then return false end
+	local isAutoAccept = RQE.API.ResolveClientAPI("QuestGetAutoAccept")
+	if isAutoAccept and isAutoAccept() then
+		local acknowledge = RQE.API.ResolveClientAPI("AcknowledgeAutoAcceptQuest")
+		if not acknowledge then return false end
+		acknowledge()
+		return true
+	end
+	local acceptQuest = RQE.API.ResolveClientAPI("AcceptQuest")
+	if not acceptQuest then return false end
+	acceptQuest()
+	return true
+end
+
+-- Returns a positive integer quest ID, rejecting secret or invalid values.
+local function readableTurnInID(value)
+	if issecretvalue and issecretvalue(value) then return nil end
+	local questID = tonumber(value)
+	return questID and questID > 0 and questID % 1 == 0 and questID or nil
+end
+
+-- Selects the matching turn-in quest from modern or legacy NPC quest lists.
+local function selectTurnInQuest(questID)
+	local resolve = RQE.API.ResolveClientAPI
+	local getGossipQuests = resolve("C_GossipInfo.GetActiveQuests")
+	local selectGossipQuest = resolve("C_GossipInfo.SelectActiveQuest")
+	-- Match modern gossip entries by quest ID before selecting a completed quest.
+	if getGossipQuests and selectGossipQuest and (not GossipFrame or GossipFrame:IsShown()) then
+		for _, quest in ipairs(getGossipQuests() or {}) do
+			if type(quest) == "table" and readableTurnInID(quest.questID) == questID
+				and not (issecretvalue and issecretvalue(quest.isComplete)) and quest.isComplete ~= false then
+				selectGossipQuest(questID)
+				return true
+			end
+		end
+	end
+	local questTitle = RQE.API.GetTitleForQuestID and RQE.API.GetTitleForQuestID(questID)
+
+	-- Older gossip lists select by row index, not quest ID. Match the localized
+	-- quest title before touching a row so a nearby quest cannot be turned in.
+	local getLegacyQuests = resolve("GetGossipActiveQuests")
+	local getLegacyCount = resolve("GetNumGossipActiveQuests")
+	local selectLegacyQuest = resolve("SelectGossipActiveQuest")
+	if questTitle and getLegacyQuests and getLegacyCount and selectLegacyQuest
+		and (not GossipFrame or GossipFrame:IsShown()) then
+		local count = getLegacyCount()
+		if count and count > 0 then
+			-- Packs varargs with their count so trailing nil values remain represented.
+			local function pack(...) return { n = select("#", ...), ... } end
+			local flat = pack(getLegacyQuests())
+			local stride = math.floor(flat.n / count)
+			for index = 1, count do
+				if flat[(index - 1) * stride + 1] == questTitle then
+					selectLegacyQuest(index)
+					return true
+				end
+			end
+		end
+	end
+
+	-- Match the older quest-greeting panel by localized title and completion state.
+	local getCount = resolve("GetNumActiveQuests")
+	local getTitle = resolve("GetActiveTitle")
+	local selectQuest = resolve("SelectActiveQuest")
+	if questTitle and getCount and getTitle and selectQuest
+		and QuestFrameGreetingPanel and QuestFrameGreetingPanel:IsShown() then
+		for index = 1, getCount() do
+			local title, isComplete = getTitle(index)
+			if title == questTitle and isComplete then
+				selectQuest(index)
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- QUEST_PROGRESS supplies the quest currently displayed by the giver. Macro
+-- callers omit the flag and retain their supertracked-quest selection behavior.
+function RQE.API.AutoComplete(useDisplayedQuest)
+	local resolve = RQE.API.ResolveClientAPI
+	local getQuestID = resolve("GetQuestID")
+	local displayedQuestID = readableTurnInID(getQuestID and getQuestID())
+	local questID
+	if useDisplayedQuest then
+		questID = displayedQuestID
+	else
+		questID = readableTurnInID(RQE.API.GetSuperTrackedQuestID and RQE.API.GetSuperTrackedQuestID())
+	end
+	if contributionBlocksQuestAutomation(questID, displayedQuestID) then return false end
+	if not (RQE.db and RQE.db.profile and RQE.db.profile.autoCompleteNoRewardChoices) then return false end
+	if not questID then return false end
+	local newTicker = resolve("C_Timer.NewTicker")
+	local getChoices = resolve("GetNumQuestChoices")
+	local getReward = resolve("GetQuestReward")
+	local completeQuest = resolve("CompleteQuest")
+	local getMoneyToGet = resolve("GetQuestMoneyToGet")
+	if not (newTicker and getQuestID and getChoices and getReward and completeQuest and getMoneyToGet) then return false end
+	if activeAutoCompleteTicker then activeAutoCompleteTicker:Cancel() end
+
+	local selected, continued = false, false
+	-- Advances the matching quest's turn-in flow until it finishes or times out.
+	local function advance(ticker)
+		if not (RQE.db and RQE.db.profile and RQE.db.profile.autoCompleteNoRewardChoices) then
+			ticker:Cancel()
+			return
+		end
+		local currentID = readableTurnInID(getQuestID())
+		if currentID == questID then
+			if QuestFrameRewardPanel and QuestFrameRewardPanel:IsShown() then
+				local choices = getChoices()
+				if issecretvalue and issecretvalue(choices) then return end
+				choices = tonumber(choices)
+				if not choices then return end
+				-- One offered item is fixed, not a player choice in Blizzard's UI.
+				if choices > 1 then ticker:Cancel(); return end
+				local cost = getMoneyToGet()
+				if issecretvalue and issecretvalue(cost) then return end
+				if (tonumber(cost) or 0) > 0 then ticker:Cancel(); return end
+				ticker:Cancel()
+				getReward(1)
+				return
+			end
+			if not continued and QuestFrameProgressPanel and QuestFrameProgressPanel:IsShown() then
+				local isCompletable = resolve("IsQuestCompletable")
+				if isCompletable and isCompletable() then
+					continued = true
+					completeQuest()
+				end
+			end
+		elseif useDisplayedQuest and currentID then
+			ticker:Cancel()
+		elseif not useDisplayedQuest and not selected and selectTurnInQuest(questID) then
+			selected = true
+		end
+	end
+
+	activeAutoCompleteTicker = newTicker(0.2, advance, 25)
+	advance(activeAutoCompleteTicker)
+	return true
 end
 
