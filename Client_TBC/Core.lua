@@ -5037,6 +5037,9 @@ end
 
 	-- UpdateFrame function
 	function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		-- Every UpdateFrame call, including ones that return early below, also saves
+		-- this character's supertracked or searched quest.
+		RQE:SaveSuperTrackedQuestToCharacter()
 		if RQE.DontUpdateFrame then return end
 
 		-- Check if the player is supertracking anything and if not it will run the function to check if the frame should be cleared
@@ -9851,9 +9854,19 @@ end
 
 		-- Fetch the macro data for the current step
 		local stepData = questData[stepIndex]
-		if not stepData or (not stepData.macro and not stepData.macroArray) then
+		-- Missing data must not erase a valid macro, but a known step without one must.
+		if not stepData then return end
+		if not stepData.macro and not stepData.macroArray then
+			-- Preserve the existing dungeon/raid behavior, including combat queues.
+			if isInInstance and (instanceType == "party" or instanceType == "raid") then return end
+			self:ClearMacroContentByName("RQE Macro")
+			RQE.Buttons.UpdateMagicButtonVisibility()
 			return
 		end
+		-- Previous code (commented out 2026.10.31): kept the previous macro on a known step without macro content
+		-- if not stepData or (not stepData.macro and not stepData.macroArray) then
+			-- return
+		-- end
 
 		-- ✅ Determine if we're using the new macroArray or legacy macro
 		local macroContent
@@ -17597,7 +17610,9 @@ end
 			-- Temporarily remove the quest from the watch list
 			-- print("~~~ Remove Quest Watch: 9462 ~~~")
 			C_QuestLog.RemoveQuestWatch(blacklistedQuestID)
-			RQE.Buttons.ClearButtonPressed()
+			-- Complete the clear before selecting a replacement; delayed clear-button
+			-- retries would otherwise remove the newly selected quest and its macro.
+			RQE.Buttons.ClearButtonPressed(true)
 
 			-- Set the supertracked quest to the next closest non-blacklisted quest
 			-- print("~~~ SetSuperTrack: 9332~~~")
