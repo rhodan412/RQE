@@ -269,6 +269,7 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		RQE.superMapID = nil
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Creates the searched quest waypoint.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if questID and tonumber(questID) ~= tonumber(RQE.searchedQuestID) then return end
@@ -581,6 +582,7 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- 4) Utility to accept either normalized (0..1) or percent (0..100)
 		local xPct, yPct
+		-- Stores resolved waypoint coordinates and their map ID.
 		local function setFrom(posX, posY, mid)
 			if not posX or not posY then return false end
 			posX, posY = tonumber(posX), tonumber(posY)
@@ -989,6 +991,7 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 				end
 
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+				-- Adds the delayed quest waypoint without replacing a protected coordinate route.
 				RQE.API.Client.C_Timer.After(0.5, function()
 					if RQE:IsCoordblockWaypointProtected() then return end
 					if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
@@ -1125,6 +1128,7 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			-- TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			-- Adds the delayed TomTom waypoint when its quest step still permits replacement.
 			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 				if mapID and x and y then
@@ -1143,6 +1147,7 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		local _, isCarboniteLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite")
 		if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			-- Adds the delayed Carbonite waypoint when its quest step permits replacement.
 			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 				if mapID and x and y then

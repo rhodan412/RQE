@@ -56,10 +56,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	-- Menu Definition
 	local frameMenu = {
 		{ text = "RQE Frame Options", isTitle = true, notCheckable = true },
+		-- Toggles the frame lock.
 		{ text = "Lock/Unlock Frames", notCheckable = true, func = function()
 			RQE.ToggleFrameLock()
 			UpdateMenuText()
 		end },
+		-- Toggles the objective tracker.
 		{ text = "Toggle Objective Tracker", func = function()
 			RQE:ToggleObjectiveTracker()
 			UpdateMenuText()  -- Update menu text after state change
@@ -103,6 +105,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		frameMenu[3].text = "Toggle Objective Tracker"
 	end
 
+	-- Updates the menu text.
 	menuFrame:SetScript("OnShow", function()
 		UpdateMenuText()
 	end)
@@ -118,6 +121,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdownRQEFrame(self, questID)
+		-- Builds the helper context menu's quest and contributor actions.
 		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			-- Previous Blizzard call changed 2026.09.25: local isPlayerInGroup = IsInGroup()
 			local isPlayerInGroup = RQE.API.Client.IsInGroup()
@@ -128,71 +132,100 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE_SandboxEditor then
+					-- Shows the associated frame or control.
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
+				-- Prints the supertracked quest.
 				rootDescription:CreateContributionButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+				-- Shows the print coords popup.
 				rootDescription:CreateContributionButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
 				if questLabel ~= "<Nothing Tracked>" then
+					-- Shows the print coords for displayed quest popup.
 					rootDescription:CreateContributionButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
 				end
+				-- Prints the current gossip options for contributor diagnostics.
 				rootDescription:CreateContributionButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+				-- Prints the player's current map coordinates for diagnostics.
 				rootDescription:CreateContributionButton("Debug Player Coordinates/TomTom Hotspots", function() RQE:Debug_PlayerCoordinates() end)
 			end
 
+			-- Sets the tom tom waypoint to closest flight master.
 			rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
+			-- Provides an empty callback where no action is required.
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 
 			if isPlayerInGroup and isQuestShareable then
 				-- Previous Blizzard call changed 2026.09.25: rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+				-- Selects the quest and opens the native quest-sharing action.
 				rootDescription:CreateButton("Share Quest", function() RQE.API.Client.C_QuestLog.SetSelectedQuest(questID); RQE.API.Client.QuestLogPushQuest(); end)
 			end
 
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE.db.profile.enableStepControls then
+					-- Toggles the auto click and step controls.
 					rootDescription:CreateContributionButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
+					-- Toggles the step controls.
 					rootDescription:CreateContributionButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
 				else
+					-- Toggles the auto click and step controls.
 					rootDescription:CreateContributionButton("|cffff0000Enable StepIndex Manual + Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Red color
+					-- Toggles the step controls.
 					rootDescription:CreateContributionButton("|cffffff00Enable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Yellow color
 				end
 
 				if RQE.db.profile.autoClickWaypointButton then
+					-- Toggles the auto click waypoint button.
 					rootDescription:CreateContributionButton("|cffffff00Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)	-- Yellow color
 				else
+					-- Toggles the auto click waypoint button.
 					rootDescription:CreateContributionButton("|cff00ff00Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)		-- Green color
 				end
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			end
 
 			-- Previous Blizzard call changed 2026.09.25: rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end)
+			-- Removes the quest watch.
 			rootDescription:CreateButton("Untrack Quest", function() RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end)
+			-- Abandons the quest selected in the context menu.
 			rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
+			-- Opens the quest log to quest details.
 			rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
 
 			-- uiMapID is optional.  Supplying the player's current map makes this
 			-- lookup fail when a tracked quest belongs to a questline on another map.
 			local questLineInfo = RQE.API.GetQuestLineInfo(questID)
 			if questLineInfo and questLineInfo.questLineID then
+				-- Prints the questline details.
 				rootDescription:CreateButton("Print Questline", function()
 					RQE.PrintQuestlineDetails(questLineInfo.questLineID, questID, questLineInfo)
 				end)
 			end
 
+			-- Shows the wowhead link.
 			rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
+			-- Shows the wow wiki link.
 			rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
 			rootDescription:AppendQuestContextActions(questID)
+			-- Provides an empty callback where no action is required.
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			-- Toggles the frame lock.
 			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
 				RQE.ToggleFrameLock()
 			end)
+			-- Temporarily changes the native objective tracker's visibility.
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 
+			-- Restores the login frame settings.
 			rootDescription:CreateButton("Restore frame settings from login", function() RQE:RestoreLoginFrameSettings() end)
 
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+				-- Resets the frame and size to default.
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
 			end
 		end)
@@ -201,58 +234,83 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowDropdownRQEFrame(self)
+		-- Builds the selected quest's context-menu actions.
 		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			local questLabel = questID and tostring(questID) or RQE.searchedQuestID or RQE.CurrentDisplayedQuestID or "<Nothing Tracked>"
 
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE_SandboxEditor then
+					-- Shows the associated frame or control.
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
+				-- Prints the supertracked quest.
 				rootDescription:CreateContributionButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+				-- Shows the print coords popup.
 				rootDescription:CreateContributionButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
 				if questLabel ~= "<Nothing Tracked>" then
+					-- Shows the print coords for displayed quest popup.
 					rootDescription:CreateContributionButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
 				end
+				-- Prints the current gossip options for contributor diagnostics.
 				rootDescription:CreateContributionButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 				if RQE.db.profile.enableStepControls then
+					-- Toggles the auto click and step controls.
 					rootDescription:CreateContributionButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
+					-- Toggles the step controls.
 					rootDescription:CreateContributionButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
 				else
+					-- Toggles the auto click and step controls.
 					rootDescription:CreateContributionButton("|cffff0000Enable StepIndex Manual + Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Red color
+					-- Toggles the step controls.
 					rootDescription:CreateContributionButton("|cffffff00Enable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Yellow color
 				end
 
 				if RQE.db.profile.autoClickWaypointButton then
+					-- Toggles the auto click waypoint button.
 					rootDescription:CreateContributionButton("|cffffff00Disable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)	-- Yellow color
 				else
+					-- Toggles the auto click waypoint button.
 					rootDescription:CreateContributionButton("|cff00ff00Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickWaypointButton(); end)		-- Green color
 				end
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+				-- Prints the player's current map coordinates for diagnostics.
 				rootDescription:CreateContributionButton("Debug Player Coordinates/TomTom Hotspots", function() RQE:Debug_PlayerCoordinates() end)
 			end
 
+			-- Sets the tom tom waypoint to closest flight master.
 			rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
 
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+				-- Tracks quests whose database entries have no authored steps.
 				rootDescription:CreateContributionButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+				-- Tracks quests that have authored steps in the database.
 				rootDescription:CreateContributionButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+				-- Tracks logged quests missing from the applicable database.
 				rootDescription:CreateContributionButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
 			end
 
+			-- Provides an empty callback where no action is required.
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			-- Toggles the frame lock.
 			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
 				RQE.ToggleFrameLock()
 			end)
+			-- Temporarily changes the native objective tracker's visibility.
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 
+			-- Restores the login frame settings.
 			rootDescription:CreateButton("Restore frame settings from login", function() RQE:RestoreLoginFrameSettings() end)
 
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+				-- Resets the frame and size to default.
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
 			end
 		end)
@@ -302,6 +360,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	})
 	RQEFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
 	if RQE.UI then RQE.UI:StylePanel(RQEFrame, RQE.db.profile.MainFrameOpacity, "main") end
+	-- Provides an empty callback where no action is required.
 	RQE.OnCoordinateClicked = RQE.OnCoordinateClicked or function() end
 
 
@@ -320,6 +379,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	content:SetPoint("TOPLEFT", ScrollFrame, "TOPLEFT", 0, 0)
 	content:SetSize(math.max(1, ScrollFrame:GetWidth()), 600)
 	ScrollFrame:SetScrollChild(content)
+	-- Updates the content size.
 	ScrollFrame:SetScript("OnSizeChanged", function(self, width)
 		content:SetWidth(math.max(1, width or self:GetWidth() or 1))
 		if RQE.UpdateContentSize then RQE:UpdateContentSize() end
@@ -396,15 +456,18 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	thumb:SetSize(4, 54)
 	slider:Hide()
 
+	-- Sets the vertical scroll.
 	slider:SetScript("OnValueChanged", function(self, value)
 		ScrollFrame:SetVerticalScroll(value)
 	end)
 	slider:EnableMouseWheel(true)
+	-- Moves the helper scrollbar in response to the mouse wheel.
 	slider:SetScript("OnMouseWheel", function(self, delta)
 		self:SetValue(self:GetValue() - delta * 40)
 	end)
 	RQE.API.ConfigureScrollbarDrag(slider)
 
+	-- Updates the quest helper scrollbar visual.
 	function RQE.UpdateQuestHelperScrollbarVisual(contentHeight)
 		if not RQE.slider or not RQE.ScrollFrame then return end
 		local _, maximum = RQE.slider:GetMinMaxValues()
@@ -540,6 +603,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Function to set up a tooltip for a given frame and multiple text lines
 	local function SetUpTooltip(frame, texts)
+		-- Shows this control's tooltip while the pointer is over it.
 		frame:SetScript("OnEnter", function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 			-- Concatenate all text lines, separated by line breaks
@@ -548,6 +612,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			GameTooltip:Show()
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		frame:SetScript("OnLeave", function(self)
 			GameTooltip:Hide()
 		end)
@@ -839,6 +904,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	local questStatusUpdater = CreateFrame("Frame", nil, RQEFrame)
 	questStatusUpdater.elapsed = 0
+	-- Updates the retail quest status text.
 	questStatusUpdater:SetScript("OnUpdate", function(self, elapsed)
 		self.elapsed = self.elapsed + elapsed
 		if self.elapsed < 0.25 then return end
@@ -1147,6 +1213,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 	end)
 
+	-- Stops the coordinate display updates.
 	RQEFrame:HookScript("OnHide", function()
 		if RQE and RQE.StopCoordinateDisplayUpdates then
 			RQE:StopCoordinateDisplayUpdates()
@@ -1293,6 +1360,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Add a click event to open the map for the current QuestName
 	if RQE.QuestNameText then  -- Check if QuestNameText is initialized
+		-- Opens the quest log to quest details.
 		RQE.QuestNameText:SetScript("OnMouseDown", function(self, button)
 			-- Previous Blizzard call changed 2026.09.25: if button == "LeftButton" and not IsShiftKeyDown() then
 			if button == "LeftButton" and not RQE.API.Client.IsShiftKeyDown() then
@@ -1559,6 +1627,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Sets flag to true if player is hovering over RQEFrame
 	if RQEFrame then
+		-- Records that the pointer is hovering over the main helper frame.
 		RQEFrame:SetScript("OnEnter", function()
 			RQE.RQEFrameHover = true
 		end)
@@ -1567,6 +1636,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Hide tooltip for the RQEFrame when moving out of the frame
 	if RQEFrame then
+		-- Hides the tooltip when the pointer leaves this control.
 		RQEFrame:SetScript("OnLeave", function()
 			RQE.RQEFrameHover = false
 			GameTooltip:Hide()
@@ -1581,10 +1651,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			CreateQuestTooltip(self, questID, "questID")
 		end
 	end)
+	-- Hides the tooltip when the pointer leaves this control.
 	RQE.QuestIDText:SetScript("OnLeave", function(self)
 		GameTooltip:Hide()
 	end)
 
+	-- Shows the quest dropdown RQE frame.
 	RQE.QuestIDText:SetScript("OnMouseUp", function(self, button)
 		if button == "RightButton" then
 			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
@@ -1596,12 +1668,14 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Add mouseover event for QuestNameText
 	if RQE.QuestNameText then
+		-- Shows this control's tooltip while the pointer is over it.
 		RQE.QuestNameText:SetScript("OnEnter", function(self)
 			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
 			if questID then
 				CreateQuestTooltip(self, questID, "questName")
 			end
 		end)
+		-- Hides the tooltip when the pointer leaves this control.
 		RQE.QuestNameText:SetScript("OnLeave", function(self)
 			GameTooltip:Hide()
 		end)
@@ -1610,6 +1684,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	end
 
 
+	-- Shows the quest dropdown RQE frame.
 	RQE.QuestNameText:SetScript("OnMouseUp", function(self, button)
 		if button == "RightButton" then
 			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
@@ -1732,10 +1807,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		local searchBox, examineButton = RQE.SearchModule:CreateSearchBox()
 		local editBox = searchBox.editbox
 		local originalEscape = editBox:GetScript("OnEscapePressed")
+		-- Runs the original Escape handler and closes the quest-search window.
 		editBox:SetScript("OnEscapePressed", function(box)
 			if originalEscape then originalEscape(box) end
 			SearchFrame.frame:Hide()
 		end)
+		-- Restores pooled edit-box scripts and removes the search window's Escape alias.
 		SearchFrame:SetCallback("OnClose", function(widget)
 			-- AceGUI pools its unnamed frames and edit boxes. Remove the Escape
 			-- alias and restore the edit-box script before returning them to the pool.
@@ -1778,6 +1855,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RequestLoadQuestByID(questID)
 		RQE.API.Client.C_QuestLog.RequestLoadQuestByID(questID)
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()  -- Wait for 1 second for data to load
+		-- Loads quest text and updates the search result after the data-loading delay.
 		RQE.API.Client.C_Timer.After(1, function()  -- Wait for 1 second for data to load
 			local questTitle = RQE.API.GetTitleForQuestID(questID)
 			-- Previous Blizzard call changed 2026.09.25: local questDetail, questObjectives = GetQuestLogQuestText(questID)
@@ -1954,6 +2032,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					end
 				end)
 
+				-- Shows the tooltip matching an item, spell, or quest-text hyperlink.
 				StepText:SetScript("OnHyperlinkEnter", function(_, link)
 					if not link then return end
 
@@ -2094,6 +2173,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			WaypointButton.number = number
 			if RQE.UI then RQE.UI:StyleQuestIndexButton(WaypointButton, RQE.LastClickedIdentifier == i) end
 
+			-- Shows this control's tooltip while the pointer is over it.
 			WaypointButton:SetScript("OnEnter", function(self)
 				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 				GameTooltip:SetText(CoordsText[i])
@@ -2277,6 +2357,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
 		if not self._stepsLayoutTimer then
 			-- Previous Blizzard call changed 2026.09.25: self._stepsLayoutTimer = C_Timer.NewTimer(0.5, function()
+			-- Updates the content size.
 			self._stepsLayoutTimer = RQE.API.Client.C_Timer.NewTimer(0.5, function()
 				self._stepsLayoutTimer = nil
 				self:UpdateContentSize()
@@ -2691,6 +2772,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		local viewportHeight = math.max(1, ScrollFrame:GetHeight() or 1)
 		local contentTop = content:GetTop()
 		local lowestBottom
+		-- Includes a visible region when measuring the frame's content bounds.
 		local function IncludeRegion(region)
 			if not region or region == RQE.StepsHoverContainer
 				or not region.IsShown or not region:IsShown() then return end
@@ -2810,6 +2892,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 	end)
 
+	-- Stops dragging the frame and retains its final position.
 	header:SetScript("OnMouseUp", function(self, button)
 		if button == "LeftButton" then
 			RQEFrame:StopMovingOrSizing()
@@ -2845,10 +2928,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	end)
 
 
+	-- Reports whether the quest helper is locked against dragging.
 	function RQE.IsRQEFrameLocked()
 		return isFrameLocked
 	end
 
+	-- Updates the quest helper's drag lock and optionally saves the choice.
 	function RQE.SetRQEFrameLocked(locked, persist)
 		isFrameLocked = locked == true
 		RQEFrame:EnableMouse(true)  -- Retain right-click access while locked.
@@ -2863,6 +2948,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			RQEFrame:SetResizable(true)
 			RQEFrame:RegisterForDrag("LeftButton")
 			RQEFrame:SetScript("OnDragStart", RQEFrame.StartMoving)
+			-- Stops dragging the frame and retains its final position.
 			RQEFrame:SetScript("OnDragStop", function()
 				RQEFrame:StopMovingOrSizing()
 				RQE:SaveFramePosition()
@@ -2877,6 +2963,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		UpdateMenuText()  -- Make sure this function is called here
 	end
 
+	-- Toggles the frame lock.
 	function RQE.ToggleFrameLock()
 		RQE.SetRQEFrameLocked(not isFrameLocked)
 	end
@@ -3042,10 +3129,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			focusThumb:SetColorTexture(r, g, b, 1)
 			focusThumb:SetSize(4, 42)
 			focusSlider:SetFrameLevel(RQE.SeparateFocusFrame:GetFrameLevel() + 5)
+			-- Sets the vertical scroll.
 			focusSlider:SetScript("OnValueChanged", function(_, value)
 				RQE.SeparateScrollFrame:SetVerticalScroll(value)
 			end)
 			focusSlider:EnableMouseWheel(true)
+			-- Moves the separate-focus scrollbar in response to the mouse wheel.
 			focusSlider:SetScript("OnMouseWheel", function(self, delta)
 				self:SetValue(self:GetValue() - delta * 30)
 			end)
@@ -3059,6 +3148,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		if not RQE._separateFocusLocationWatcher then
 			local watcher = CreateFrame("Frame", nil, RQE.SeparateFocusFrame)
 			watcher.elapsed = 0
+			-- Refreshes the quest helper direction for location.
 			watcher:SetScript("OnUpdate", function(self, elapsed)
 				self.elapsed = self.elapsed + elapsed
 				if self.elapsed < 0.4 then return end
@@ -3315,18 +3405,22 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					return string.format('<a href="item:%s">|cffff66cc[%s]|r</a>', id, name)
 				end)
 
+				-- Converts spell notation into a colored, clickable spell link.
 				html = html:gsub("{spell:(%d+):([^}]+)}", function(id, name)
 					return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', id, name)
 				end)
 
+				-- Converts NPC notation into a colored preview link.
 				html = html:gsub("{npc:(%d+):([^}]+)}", function(id, name)
 					return string.format('<a href="rqenpc:%s">|cff66ff66[%s]|r</a>', id, name)
 				end)
 
+				-- Converts object notation into a colored preview link.
 				html = html:gsub("{object:([%a%d]+):([^}]+)}", function(id, name)
 					return string.format('<a href="rqeobject:%s">|cffffd700[%s]|r</a>', id, name)
 				end)
 
+				-- Converts coordinate-block notation into a waypoint link for the focus view.
 				html = html:gsub("{coordblock:([^}]+)}", function(data)
 					local x, y, mapID, title =
 						data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
@@ -3348,6 +3442,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					return string.format('<a href="%s">|cff40e0d0%s|r</a>', href, label)
 				end)
 
+				-- Converts coordinate notation into an inline waypoint link for the focus view.
 				html = html:gsub("{coords:([^}]+)}", function(data)
 					local x, y, mapID, title =
 						data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
@@ -3419,6 +3514,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 							x, y, mapID, (title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""))
 						if markedActive then
 							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+							-- Refreshes the active coordblock links.
 							RQE.API.Client.C_Timer.After(0, function()
 								if RQE.ActiveCoordblock and RQE.ActiveCoordblock.data == coordblockData then
 									RQE:RefreshActiveCoordblockLinks()
@@ -3428,6 +3524,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					end
 				end)
 
+				-- Shows the tooltip matching a hyperlink in the separate-focus text.
 				StepText:SetScript("OnHyperlinkEnter", function(self, link, text)
 					if RQE._coordblockTooltipOwner == self then RQE._coordblockTooltipOwner = nil end
 					self:SetScript("OnUpdate", nil)
@@ -3470,6 +3567,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 						if isCompact then
 							RQE._coordblockTooltipOwner = self
 							RQE:AnchorCoordblockTooltip(self)
+							-- Anchors the coordblock tooltip.
 							self:SetScript("OnUpdate", function(frame)
 								if RQE._coordblockTooltipOwner ~= frame or not GameTooltip:IsShown() then
 									frame:SetScript("OnUpdate", nil)
@@ -3481,6 +3579,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					end
 				end)
 
+				-- Hides the tooltip when the pointer leaves this control.
 				StepText:SetScript("OnHyperlinkLeave", function(self)
 					if RQE._coordblockTooltipOwner == self then RQE._coordblockTooltipOwner = nil end
 					self:SetScript("OnUpdate", nil)
@@ -3505,6 +3604,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				-- ✅ Handle following paragraphs (if \n exists)
 				if #paragraphs > 1 then
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+					-- Creates hover regions for the rendered coordinate links after layout settles.
 					RQE.API.Client.C_Timer.After(0.05, function()
 						-- Ignore stale delayed callbacks from older rebuilds
 						if buildToken ~= RQE._SeparateFocusBuildToken then
@@ -3617,6 +3717,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			RQE.UpdateSeparateContentHeight()
 			if #routeLinks > 0 then
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				-- Renders the coord order focus below text.
 				RQE.API.Client.C_Timer.After(0.1, function()
 					if buildToken ~= RQE._SeparateFocusBuildToken
 						or RQE.CurrentDisplayedQuestID ~= questID
@@ -3627,6 +3728,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				end)
 			end
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.12, function()
+			-- Updates the separate content height.
 			RQE.API.Client.C_Timer.After(0.12, function()
 				if buildToken ~= RQE._SeparateFocusBuildToken then return end
 				RQE.UpdateSeparateContentHeight()
@@ -3646,6 +3748,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			local _, maximum = RQE.SeparateFocusSlider:GetMinMaxValues()
 			local themed = RQE.UI and RQE.UI:IsEnabled()
 			local hasMeaningfulContent = false
+			-- Includes visible text when calculating the focus frame's content height.
 			local function CheckText(region)
 				if hasMeaningfulContent or not region or not region.IsShown
 					or not region:IsShown() or not region.GetText then return end
@@ -3686,6 +3789,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			local viewportHeight = math.max(1, RQE.SeparateScrollFrame:GetHeight() or 1)
 			local contentTop = RQE.SeparateContentFrame:GetTop()
 			local lowestBottom
+			-- Includes a visible region when measuring the frame's content bounds.
 			local function IncludeRegion(region)
 				if not region or not region.IsShown or not region:IsShown() then return end
 				local bottom = region.GetBottom and region:GetBottom()
@@ -3776,6 +3880,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 						-- Tier Two Importance: 
 						if RQE.db.profile.autoClickWaypointButton then
 							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+							-- Checks the current macro contents.
 							RQE.API.Client.C_Timer.After(0.1, function()
 								RQE.isCheckingMacroContents = true
 								local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -3786,9 +3891,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 								RQEMacro:CreateMacroForCurrentStep()
 								-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+								-- Releases macro inspection now and clears the focus-update guard later.
 								RQE.API.Client.C_Timer.After(0.2, function()
 									RQE.isCheckingMacroContents = false
 									-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+									-- Releases the separate-focus macro creation guard after the delayed refresh.
 									RQE.API.Client.C_Timer.After(3, function()
 										RQE.CreateMacroForUpdateSeparateFocusFrame = false
 									end)

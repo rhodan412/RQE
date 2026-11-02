@@ -166,6 +166,7 @@ Shared profile application, frame geometry restoration, and persistence safeguar
 
 		local profile = self.db.profile
 		self.ApplyingProfile = true
+		-- Restores the geometry.
 		local success, err = pcall(function()
 			local helper = { self:GetFrameGeometry("RQEFrame") }
 			local tracker = { self:GetFrameGeometry("RQEQuestFrame") }

@@ -312,7 +312,9 @@ Debug message capture, filtering, display, export, and legacy print integration
 	header:EnableMouse(true)
 	header:SetMovable(true)
 	header:RegisterForDrag("LeftButton")
+	-- Starts moving the frame when dragging is allowed.
 	header:SetScript("OnDragStart", function(self) self:GetParent():StartMoving() end)
+	-- Stops dragging the frame and retains its final position.
 	header:SetScript("OnDragStop", function(self) self:GetParent():StopMovingOrSizing() end)
 
 
@@ -346,6 +348,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 	editBox:SetPoint("BOTTOMRIGHT", scrollFrame, "BOTTOMRIGHT")
 	editBox:SetFontObject("ChatFontNormal")
 	editBox:SetAutoFocus(false)
+	-- Cleans up widget state before it returns to the reuse pool.
 	editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
 
 	scrollFrame:SetScrollChild(editBox)
@@ -411,6 +414,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 	closeButton:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up")
 	closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down")
 	closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight")
+	-- Closes the window containing the clicked close button.
 	closeButton:SetScript("OnClick", function(self)
 		self:GetParent():Hide()
 	end)
@@ -427,6 +431,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 	resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
 	resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
 	resizeButton:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+	-- Starts the sizing.
 	resizeButton:SetScript("OnMouseDown", function(self, button)
 		if button == "LeftButton" then
 			logFrame:StartSizing("BOTTOMRIGHT")
@@ -435,6 +440,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 	end)
 
 
+	-- Stops dragging the frame and retains its final position.
 	resizeButton:SetScript("OnMouseUp", function(self)
 		logFrame:StopMovingOrSizing()
 		self:GetHighlightTexture():Show()
@@ -461,6 +467,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 
 	-- Define the SLASH command to toggle the log
 	SLASH_LOGTOGGLE1 = "/logtoggle"
+	-- Toggles the debug log frame.
 	SlashCmdList["LOGTOGGLE"] = function()
 		RQE.ToggleDebugLogFrame()
 	end
@@ -686,6 +693,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 
 	-- Register the slash command
 	SLASH_CLEARDEBUG1 = "/rqeclearlog"
+	-- Clears the DEBUG.
 	SlashCmdList["CLEARDEBUG"] = function(msg)
 		RQE:ClearDebugLog()
 	end
@@ -736,6 +744,7 @@ Debug message capture, filtering, display, export, and legacy print integration
 
 	local lastDetailNPCIDWarning
 
+	-- Escapes an NPC name so it can be embedded safely in a Lua string.
 	local function EscapeNPCNameForLua(name)
 		local escaped = name:gsub("\\", "\\\\"):gsub('"', '\\"')
 		return escaped:gsub("\n", "\\n"):gsub("\r", "\\r"):gsub("\t", "\\t")

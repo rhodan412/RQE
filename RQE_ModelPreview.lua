@@ -363,6 +363,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		end
 	end
 
+	-- Refreshes the creature object preview theme.
 	function RQE.RefreshCreatureObjectPreviewTheme()
 		ApplyPreviewTheme(previewFrame)
 	end
@@ -378,6 +379,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		frame:SetClampedToScreen(true)
 		frame:SetMovable(true)
 		frame:EnableMouse(true)
+		-- Closes the model preview when the frame is right-clicked.
 		frame:SetScript("OnMouseUp", function(self, button)
 			if button == "RightButton" then self:Hide() end
 		end)
@@ -401,6 +403,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 				self:Hide()
 			end
 		end
+		-- Applies the preview theme.
 		frame:SetScript("OnShow", function(self)
 			ApplyPreviewTheme(self)
 			self.contextElapsed = 0
@@ -425,13 +428,16 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		frame.Header:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -5, -5)
 		frame.Header:SetHeight(41)
 		frame.Header:RegisterForDrag("LeftButton")
+		-- Starts moving the frame when dragging is allowed.
 		frame.Header:SetScript("OnDragStart", function()
 			frame:StartMoving()
 		end)
+		-- Stops dragging the frame and retains its final position.
 		frame.Header:SetScript("OnDragStop", function()
 			frame:StopMovingOrSizing()
 			SavePreviewFramePosition(frame)
 		end)
+		-- Closes the preview when its header is right-clicked.
 		frame.Header:SetScript("OnMouseUp", function(_, button)
 			if button == "RightButton" then frame:Hide() end
 		end)
@@ -462,6 +468,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 
 		frame.CloseButton = CreateFrame("Button", nil, frame.Header, "UIPanelCloseButton")
 		frame.CloseButton:SetPoint("TOPRIGHT", frame.Header, "TOPRIGHT", 2, 2)
+		-- Hides the associated frame or control.
 		frame.CloseButton:SetScript("OnClick", function()
 			frame:Hide()
 		end)
@@ -475,6 +482,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		frame.Content:EnableMouse(true)
 		frame.Content:EnableMouseWheel(true)
 		frame.Content:RegisterForDrag("LeftButton")
+		-- Records cursor and model-view state at the start of a preview drag.
 		frame.Content:SetScript("OnDragStart", function(content)
 			local cursorX, cursorY = GetCursorInRegionSpace(content)
 			content.dragCursorX = cursorX
@@ -491,10 +499,12 @@ Reusable creature-model and object-image preview window, interaction controls, a
 			content:SetScript("OnUpdate", UpdateViewportDrag)
 		end)
 		frame.Content:SetScript("OnDragStop", StopViewportDrag)
+		-- Stops the viewport drag.
 		frame.Content:SetScript("OnMouseUp", function(content, button)
 			if button == "RightButton" then frame:Hide() end
 			if button == "LeftButton" then StopViewportDrag(content) end
 		end)
+		-- Applies the object viewport.
 		frame.Content:SetScript("OnMouseWheel", function(_, delta)
 			if frame.previewKind == "npc" and frame.Model and frame.Model:IsShown() then
 				local options = GetModelViewOptions(frame.Model)
@@ -509,6 +519,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 				ApplyObjectViewport(frame)
 			end
 		end)
+		-- Applies the object viewport.
 		frame.Content:SetScript("OnSizeChanged", function()
 			if frame.previewKind == "object" then ApplyObjectViewport(frame) end
 		end)
@@ -517,6 +528,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		if frame.Model then
 			frame.Model:SetAllPoints(frame.Content)
 			frame.Model:EnableMouse(false)
+			-- Finishes the matching model load and reapplies its requested framing.
 			frame.Model:SetScript("OnModelLoaded", function(model)
 				if not frame:IsShown() or frame.previewKind ~= "npc"
 					or model.RQEPreviewToken ~= frame.requestToken then return end
@@ -547,6 +559,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		frame.Help:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
 		frame.Help:SetText("Drag view  •  Wheel zoom  •  Title moves window")
 
+		-- Stops preview dragging and cancels pending model loading when hidden.
 		frame:SetScript("OnHide", function(self)
 			CancelPreviewLoad(self)
 			self:SetScript("OnUpdate", nil)
@@ -659,6 +672,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 
 		if not frame.previewReady then
 			-- Previous Blizzard call changed 2026.09.25: frame.loadTimer = C_Timer.NewTimer(LOAD_TIMEOUT, function()
+			-- Shows the unavailable-model message if the current preview load times out.
 			frame.loadTimer = RQE.API.Client.C_Timer.NewTimer(LOAD_TIMEOUT, function()
 				if frame.requestToken ~= token then return end
 				frame.loadTimer = nil
@@ -730,6 +744,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		creatureID = tonumber(creatureID)
 		if not creatureID or creatureID <= 0 then return false end
 		local title = displayName and displayName ~= "" and (displayName .. " (NPC " .. creatureID .. ")") or ("NPC " .. creatureID)
+		-- Sets the creature preview model.
 		return BeginPreview(title, "npc:" .. creatureID, function(model)
 			return RQE.API.SetCreaturePreviewModel(model, creatureID)
 		end, "Blizzard returned no displayable creature model for NPC " .. creatureID .. ".", questBound)

@@ -79,6 +79,7 @@ local function InitializeSandbox()
 		end
 	end
 
+	-- Serializes a Sandbox table into indented Lua source text.
 	local function TableToLuaString(tbl, indent)
 		indent = indent or 0
 		local pad = string.rep("\t", indent)
@@ -103,6 +104,7 @@ local function InitializeSandbox()
 		return s:gsub("||c", "|c"):gsub("||r", "|r"):gsub("||H", "|H"):gsub("||h", "|h")
 	end
 
+	-- Normalizes escaped pipe characters throughout a Sandbox table.
 	local function NormalizePipesInTable(t)
 		if type(t) ~= "table" then return end
 		for k, v in pairs(t) do
@@ -164,6 +166,7 @@ local function InitializeSandbox()
 		return table.concat(sourceLines, "\n")
 	end
 
+	-- Makes commented Sandbox step fields available to the source parser.
 	local function PromoteCommentedSandboxSteps(code)
 		local lines = {}
 		local inCommentedStep = false
@@ -191,6 +194,7 @@ local function InitializeSandbox()
 		return table.concat(lines, "\n")
 	end
 
+	-- Restores the enabled or commented state of parsed Sandbox steps.
 	local function SetSandboxStepCommentState(data)
 		for stepIndex, stepData in pairs(data) do
 			if type(stepIndex) == "number" and type(stepData) == "table" and stepData._rqeContributionCommented == nil then
@@ -232,6 +236,7 @@ local function InitializeSandbox()
 			:gsub("\"", "\\\""))
 	end
 
+	-- Formats the sandbox export string list.
 	local function FormatSandboxExportStringList(values)
 		if type(values) ~= "table" then return "" end
 		local formattedValues = {}
@@ -241,6 +246,7 @@ local function InitializeSandbox()
 		return table.concat(formattedValues, ", ")
 	end
 
+	-- Returns the sandbox export comment.
 	local function GetSandboxExportComment(objectivesComment, objectivesQuestText)
 		local comment = objectivesComment
 		if (not comment or comment == "") and type(objectivesQuestText) == "table" and objectivesQuestText[1] then
@@ -252,6 +258,7 @@ local function InitializeSandbox()
 		return " " .. comment
 	end
 
+	-- Prints the sandbox export coordinate.
 	local function PrintSandboxExportCoordinate(prefix, coordinate, includeHotspotSettings)
 		coordinate = coordinate or {}
 		local x = tonumber(coordinate.x) or 0
@@ -268,6 +275,7 @@ local function InitializeSandbox()
 		print(prefix .. text .. " },")
 	end
 
+	-- Prints the sandbox export step.
 	local function PrintSandboxExportStep(stepIndex, stepData)
 		local stepPrefix = stepData._rqeContributionCommented == true and "-- " or ""
 		print(string.format("\t\t\t%s[%d] = {", stepPrefix, stepIndex))
@@ -350,6 +358,7 @@ local function InitializeSandbox()
 		print("\t\t\t" .. stepPrefix .. "},")
 	end
 
+	-- Prints the sandbox export quest.
 	local function PrintSandboxExportQuest(questID, questData)
 		print(string.format("\t\t[%d] = {", questID))
 		print(string.format("\t\t\ttitle = \"%s\",%s", EscapeSandboxExportString(questData.title or "Unknown Title"), GetSandboxExportComment(questData.objectivesComment, questData.objectivesQuestText)))
@@ -378,6 +387,7 @@ local function InitializeSandbox()
 		print("\t\t},")
 	end
 
+	-- Prints the Sandbox entries in the contribution export format.
 	function RQE_Sandbox.GetAllSandboxInfo()
 		-- Do not include legacyEntries here. This is the contribution-only
 		-- export consumed by RQE.GetSandBoxDataForAddon() and RQE_Contribution.
@@ -513,18 +523,22 @@ local function InitializeSandbox()
 
 	local currentSandboxMode = "contribution"
 
+	-- Reports whether the Sandbox is editing contribution-format entries.
 	local function IsContributionSandboxMode()
 		return currentSandboxMode == "contribution"
 	end
 
+	-- Returns the current sandbox entries.
 	local function GetCurrentSandboxEntries()
 		return IsContributionSandboxMode() and RQE_Sandbox.entries or RQE_Sandbox.legacyEntries
 	end
 
+	-- Returns the current sandbox mode name.
 	local function GetCurrentSandboxModeName()
 		return IsContributionSandboxMode() and "Contribution Sandbox" or "Legacy Runtime Sandbox"
 	end
 
+	-- Updates the mode controls.
 	local function UpdateModeControls()
 		local contributionMode = IsContributionSandboxMode()
 		SandboxFrame.Title:SetText(contributionMode and "|cffFFD100RQE Contribution Sandbox|r" or "|cffFFD100RQE Legacy Runtime Sandbox|r")
@@ -544,6 +558,7 @@ local function InitializeSandbox()
 		legacyTabBtn:SetEnabled(contributionMode)
 	end
 
+	-- Loads the sandbox entry.
 	local function LoadSandboxEntry(questID)
 		questIDBox:SetText(questID or "")
 		editBox:SetText("")
@@ -632,6 +647,7 @@ local function InitializeSandbox()
 		RQE:CheckCoordHotspotsInSteps(id)
 	end)
 
+	-- Loads the sandbox entry.
 	searchBtn:SetScript("OnClick", function()
 		local questID = tonumber(questIDBox:GetText())
 		if not questID then
@@ -641,6 +657,7 @@ local function InitializeSandbox()
 		LoadSandboxEntry(questID)
 	end)
 
+	-- Toggles the current Sandbox store and saves its enabled state.
 	toggleBtn:SetScript("OnClick", function()
 		if IsContributionSandboxMode() then
 			RQE_Sandbox.active = not RQE_Sandbox.active
@@ -656,6 +673,7 @@ local function InitializeSandbox()
 		RQE.OkayToUpdateSeparateFF = false
 	end)
 
+	-- Clears the selected quest or current Sandbox store and disables its override.
 	clearBtn:SetScript("OnClick", function()
 		local id = tonumber(questIDBox:GetText())
 		local entries = GetCurrentSandboxEntries()
@@ -686,6 +704,7 @@ local function InitializeSandbox()
 		editBox:SetText("")
 	end)
 
+	-- Clears and disables both Contribution and Legacy Sandbox stores.
 	clearAllBtn:SetScript("OnClick", function()
 		RQE_Sandbox.active = false
 		RQE_Sandbox.legacyActive = false
@@ -702,6 +721,7 @@ local function InitializeSandbox()
 		print("|cffff6666All Contribution and Legacy Sandbox data cleared.|r")
 	end)
 
+	-- Shows the sandbox mode.
 	local function ShowSandboxMode(mode)
 		currentSandboxMode = mode
 		UpdateModeControls()
@@ -710,9 +730,12 @@ local function InitializeSandbox()
 		LoadSandboxEntry(questID)
 	end
 
+	-- Shows the sandbox mode.
 	contributionTabBtn:SetScript("OnClick", function() ShowSandboxMode("contribution") end)
+	-- Shows the sandbox mode.
 	legacyTabBtn:SetScript("OnClick", function() ShowSandboxMode("legacy") end)
 
+	-- Hides the associated frame or control.
 	closeBtn:SetScript("OnClick", function() SandboxFrame:Hide() end)
 
 	-------------------------------------------------------
@@ -731,6 +754,7 @@ local function InitializeSandbox()
 	-- #1j. Slash Command
 	-------------------------------------------------------
 	SLASH_RQESANDBOX1 = "/rqesandbox"
+	-- Toggles the Sandbox window from its slash command.
 	SlashCmdList["RQESANDBOX"] = function()
 		if SandboxFrame:IsShown() then
 			SandboxFrame:Hide()
@@ -750,6 +774,7 @@ end
 local function sortKeys(tbl)
 	local keys = {}
 	for k in pairs(tbl) do table.insert(keys, k) end
+	-- Sorts numeric keys numerically and other keys by their string values.
 	table.sort(keys, function(a, b)
 		if type(a) == "number" and type(b) == "number" then return a < b end
 		return tostring(a) < tostring(b)
@@ -784,6 +809,7 @@ end
 -- the Sandbox's initialization message reaches the DebugLog print hook.
 local sandboxLoginInitializer = CreateFrame("Frame")
 sandboxLoginInitializer:RegisterEvent("PLAYER_LOGIN")
+-- Initializes both Sandbox stores once the player's saved data is available.
 sandboxLoginInitializer:SetScript("OnEvent", function(self)
 	self:UnregisterEvent("PLAYER_LOGIN")
 	InitializeSandbox()

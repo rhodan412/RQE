@@ -154,6 +154,7 @@ Cross-client quest database selection, sandbox precedence, and lookup control
 	for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "GARRISON_UPDATE" }) do
 		pcall(databaseOrderFrame.RegisterEvent, databaseOrderFrame, event)
 	end
+	-- Invalidates the cached database ordering when the source changes.
 	databaseOrderFrame:SetScript("OnEvent", function()
 		cachedDatabaseOrder = nil
 	end)

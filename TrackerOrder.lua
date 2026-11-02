@@ -274,6 +274,7 @@ Profile-specific tracker section ordering, collapsible presentation, and layout 
 	local function QueueScrollRange()
 		if RQE._trackerOrderRangeQueued then return end
 		RQE._trackerOrderRangeQueued = true
+		-- Applies the tracker section order.
 		RQE.API.Client.C_Timer.After(0, function()
 			RQE._trackerOrderRangeQueued = nil
 			if not RQE:UsesManagedTrackerSectionLayout() then return end
@@ -436,6 +437,7 @@ Profile-specific tracker section ordering, collapsible presentation, and layout 
 	local function QueueReflow()
 		if not RQE:UsesManagedTrackerSectionLayout() or RQE._trackerOrderReflowQueued then return end
 		RQE._trackerOrderReflowQueued = true
+		-- Applies the tracker section order.
 		RQE.API.Client.C_Timer.After(0, function()
 			RQE._trackerOrderReflowQueued = nil
 			RQE:ApplyTrackerSectionOrder()
@@ -465,21 +467,26 @@ Profile-specific tracker section ordering, collapsible presentation, and layout 
 		button:SetSize(18, 18)
 		button:SetPoint("RIGHT", frame.headerFrame, "RIGHT", -21, 0)
 		button:SetFrameLevel(frame.headerFrame:GetFrameLevel() + 2)
+		-- Toggles whether the selected tracker section is collapsed.
 		button:SetScript("OnClick", function()
 			RQE:SetTrackerSectionCollapsed(key, not RQE:IsTrackerSectionCollapsed(key))
 		end)
+		-- Shows this control's tooltip while the pointer is over it.
 		button:SetScript("OnEnter", function(owner)
 			GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
 			GameTooltip:SetText((RQE:IsTrackerSectionCollapsed(key) and "Expand " or "Collapse ")
 				.. (frame._rqeFullHeaderText or key))
 			GameTooltip:Show()
 		end)
+		-- Hides the tooltip when the pointer leaves this control.
 		button:SetScript("OnLeave", function() GameTooltip:Hide() end)
 		frame._rqeCollapseButton = button
 		frame._rqeFullHeaderText = frame.header and frame.header:GetText() or key
+		-- Refreshes the tracker section header text.
 		frame.headerFrame:HookScript("OnSizeChanged", function()
 			RQE:RefreshTrackerSectionHeaderText(frame)
 		end)
+		-- Maintains collapsed section height while remembering its expanded height.
 		frame:HookScript("OnSizeChanged", function(owner, _, height)
 			if RQE:IsTrackerSectionCollapsed(key) and height ~= collapsedHeight then
 				if height and height > collapsedHeight then owner._rqeExpandedHeight = height end
@@ -497,6 +504,7 @@ Profile-specific tracker section ordering, collapsible presentation, and layout 
 	-------------------------------------------------------
 
 	if RQE.CreateRecipeTrackingFrame then
+		-- Queues the reflow.
 		hooksecurefunc(RQE, "CreateRecipeTrackingFrame", function()
 			WatchSection(RQE.recipeTrackingFrame)
 			InstallCollapseButton("profession", RQE.recipeTrackingFrame)
@@ -515,6 +523,7 @@ Profile-specific tracker section ordering, collapsible presentation, and layout 
 	-------------------------------------------------------
 
 	if RQE.UI and RQE.UI.ApplySavedTheme then
+		-- Refreshes the tracker section presentation.
 		hooksecurefunc(RQE.UI, "ApplySavedTheme", function()
 			RQE:RefreshTrackerSectionPresentation()
 		end)
@@ -531,19 +540,23 @@ Profile-specific tracker section ordering, collapsible presentation, and layout 
 		RQE:RefreshTrackerSectionPresentation()
 		RQE:ApplyTrackerSectionOrder()
 	end)
+	-- Refreshes the tracker section presentation.
 	hooksecurefunc("UpdateRQEWorldQuestFrame", function()
 		RQE:RefreshTrackerSectionPresentation()
 		RQE:ApplyTrackerSectionOrder()
 	end)
+	-- Refreshes the tracker section presentation.
 	hooksecurefunc("UpdateRQEAchievementsFrame", function()
 		RQE:RefreshTrackerSectionPresentation()
 		RQE:ApplyTrackerSectionOrder()
 	end)
+	-- Refreshes the tracker section presentation.
 	hooksecurefunc("UpdateRQEQuestFrame", function()
 		RQE:RefreshTrackerSectionPresentation()
 		RQE:ApplyTrackerSectionOrder()
 	end)
 	if RQE.RenderRecipeTrackingFrame then
+		-- Refreshes the tracker section presentation.
 		hooksecurefunc(RQE, "RenderRecipeTrackingFrame", function()
 			RQE:RefreshTrackerSectionPresentation()
 			RQE:ApplyTrackerSectionOrder()

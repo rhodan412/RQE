@@ -131,6 +131,7 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 			if RQE.hoverTimers[display] then
 				RQE:CancelTimer(RQE.hoverTimers[display])
 			end
+			-- Shows the LDB dropdown menu.
 			RQE.hoverTimers[display] = RQE:ScheduleTimer(function()
 				RQE:ShowLDBDropdownMenu()
 			end, 3)
@@ -202,6 +203,7 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 			RQE.isRQEQuestFrameManuallyClosed = true
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			-- Toggles the objective tracker.
 			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE.db.profile.toggleBlizzObjectiveTracker then
 					RQE:ToggleObjectiveTracker()
@@ -236,6 +238,7 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 		RQE.updateScenarioUI() -- Necessary to check/update if scenario information was present in the RQEQuestFrame, closed and then re-opened outside of a scenario
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		-- Restores the super tracked quest for character.
 		RQE.API.Client.C_Timer.After(0.1, function()
 			if RQE.db.profile.enableFrame then
 				RQE:RestoreSuperTrackedQuestForCharacter()
@@ -269,9 +272,11 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 
 	-- Optional highlight on mouseover
 	RQE.MinimapButton:EnableMouse(true)
+	-- Sets the vertex color.
 	RQE.MinimapButton:SetScript("OnEnter", function(self)
 		tex:SetVertexColor(1, 1, 1, 1) -- normal
 	end)
+	-- Sets the vertex color.
 	RQE.MinimapButton:SetScript("OnLeave", function(self)
 		tex:SetVertexColor(0.8, 0.8, 0.8, 1) -- dimmed highlight
 	end)
@@ -571,8 +576,10 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 				self:Show()
 			end)
 
+			-- Schedules menu dismissal after allowing the pointer to enter its submenu.
 			self.CustomMenu:SetScript("OnLeave", function(self)
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				-- Hides the minimap menu only after the pointer leaves it and its submenu.
 				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOverMenu
 					local isMouseOverMoreOptions
@@ -613,9 +620,13 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 
 		-- Ensure buttons are only added once
 		if #self.CustomMenu.buttons == 0 then
+			-- Closes the minimap menu and toggles the RQE frames.
 			self.CustomMenu:AddButton("Toggle Frame(s)", function() RQE:HideLDBDropdownMenus(); RQE.ToggleBothFramesfromLDB() end)
+			-- Closes the minimap menu and opens addon settings.
 			self.CustomMenu:AddButton("AddOn Settings", function() RQE:HideLDBDropdownMenus(); RQE:OpenSettings() end)
+			-- Closes the minimap menu and opens the standalone configuration window.
 			self.CustomMenu:AddButton("Config Window", function() RQE:HideLDBDropdownMenus(); RQE:ToggleConfigFrame() end)
+			-- Closes the minimap menu and toggles the debug log.
 			self.CustomMenu:AddButton("Debug Log", function() RQE:HideLDBDropdownMenus(); RQE:ToggleDebugLog() end)
 		end
 
@@ -648,8 +659,10 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 				self:Show()
 				parentMenu:Show()
 			end)
+			-- Schedules submenu dismissal after the pointer leaves its visible region.
 			self.MoreOptionsMenu:SetScript("OnLeave", function(self)
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				-- Hides the submenu only when the pointer also leaves the parent menu.
 				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOverMenu
 					local isMouseOverParent
@@ -672,10 +685,15 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 
 		-- Ensure buttons are only added once
 		if #self.MoreOptionsMenu.buttons == 0 then
+			-- Closes the minimap menus and opens frame settings.
 			self.MoreOptionsMenu:AddButton("Frame Settings", function() RQE:HideLDBDropdownMenus(); RQE:OpenFrameSettings() end)
+			-- Closes the minimap menus and opens font settings.
 			self.MoreOptionsMenu:AddButton("Font Settings", function() RQE:HideLDBDropdownMenus(); RQE:OpenFontSettings() end)
+			-- Closes the minimap menus and opens debugging options.
 			self.MoreOptionsMenu:AddButton("Debug Options", function() RQE:HideLDBDropdownMenus(); RQE:OpenDebugOptions() end)
+			-- Closes the minimap menus and opens profile settings.
 			self.MoreOptionsMenu:AddButton("Profiles", function() RQE:HideLDBDropdownMenus(); RQE:OpenProfiles() end)
+			-- Closes the minimap menu and opens the standalone configuration window.
 			self.MoreOptionsMenu:AddButton("Config Window", function() RQE:HideLDBDropdownMenus(); RQE:ToggleConfigFrame() end)
 		end
 

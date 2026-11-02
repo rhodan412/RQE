@@ -359,6 +359,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		ScarletCrusade = { timed = 1, heroic = 1, normal = 1, follower = 1, delve = 1, torghast = 1 },
 	}
 
+	-- Returns the card picture opacity.
 	function UI:GetCardPictureOpacity(slot, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		local profile = RQE.db and RQE.db.profile
@@ -370,6 +371,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return math.max(0, math.min(1, tonumber(value) or 1))
 	end
 
+	-- Sets the card picture opacity.
 	function UI:SetCardPictureOpacity(slot, value, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		local validSlot
@@ -481,6 +483,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		ScarletCrusade = { questID = 0.60, questName = 0.60, macroBody = 0.15 },
 	}
 
+	-- Returns the button border opacity.
 	function UI:GetButtonBorderOpacity(themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if themeKey == "Basic" then return 1 end
@@ -491,6 +494,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return math.max(0, math.min(1, tonumber(value) or 1))
 	end
 
+	-- Sets the button border opacity.
 	function UI:SetButtonBorderOpacity(value, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if themeKey == "Basic" or not profileReady() then return false end
@@ -516,6 +520,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return math.max(0, math.min(1, tonumber(value) or 1))
 	end
 
+	-- Sets the frame border opacity.
 	function UI:SetFrameBorderOpacity(value, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if not self.Themes[themeKey] or not profileReady() then return false end
@@ -545,6 +550,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return choices
 	end
 
+	-- Returns the background picture.
 	function UI:GetBackgroundPicture(themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		local choices = self.BackgroundPictures[themeKey]
@@ -563,6 +569,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return nil
 	end
 
+	-- Sets the background picture.
 	function UI:SetBackgroundPicture(id, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if not profileReady() then return false end
@@ -580,6 +587,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return false
 	end
 
+	-- Reports whether background artwork is enabled for this theme.
 	function UI:IsBackgroundPictureEnabled(themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if not self.BackgroundPictures[themeKey] then return false end
@@ -588,6 +596,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return type(saved) ~= "table" or saved[themeKey] ~= false
 	end
 
+	-- Enables or disables background artwork for the selected theme.
 	function UI:SetBackgroundPictureEnabled(enabled, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if not self.BackgroundPictures[themeKey] or not profileReady() then return false end
@@ -598,6 +607,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return true
 	end
 
+	-- Returns the background picture opacity.
 	function UI:GetBackgroundPictureOpacity(role, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if themeKey == "Basic" then return 0 end
@@ -610,6 +620,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return math.max(0, math.min(1, tonumber(value) or fallback))
 	end
 
+	-- Sets the background picture opacity.
 	function UI:SetBackgroundPictureOpacity(role, value, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if role ~= "main" and role ~= "tracker" then return false end
@@ -623,6 +634,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return true
 	end
 
+	-- Returns the tooltip picture opacity.
 	function UI:GetTooltipPictureOpacity(kind, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		local defaults = self.ThemeTooltipPictureOpacityDefaults[themeKey]
@@ -636,6 +648,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return math.max(0, math.min(1, tonumber(value) or fallback))
 	end
 
+	-- Sets the tooltip picture opacity.
 	function UI:SetTooltipPictureOpacity(kind, value, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		local defaults = self.ThemeTooltipPictureOpacityDefaults[themeKey]
@@ -658,6 +671,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		tooltip.RQEThemeTooltipKind = nil
 	end
 
+	-- Lays out the tooltip background.
 	function UI:LayoutTooltipBackground(tooltip)
 		-- GameTooltip reuses this hook after RQE's artwork has been cleared.
 		if not tooltip or not tooltip.RQEThemeTooltipKind then return end
@@ -681,6 +695,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		end
 	end
 
+	-- Applies the tooltip background.
 	function UI:ApplyTooltipBackground(kind)
 		local tooltip = GameTooltip
 		local themeKey = self:GetSelectedTheme()
@@ -691,10 +706,13 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			return
 		end
 		if not tooltip.RQEThemeTooltipHooked then
+			-- Clears the tooltip background.
 			tooltip:HookScript("OnHide", function() UI:ClearTooltipBackground() end)
 			if tooltip:HasScript("OnTooltipCleared") then
+				-- Clears the tooltip background.
 				tooltip:HookScript("OnTooltipCleared", function() UI:ClearTooltipBackground() end)
 			end
+			-- Lays out the tooltip background.
 			tooltip:HookScript("OnSizeChanged", function(frame) UI:LayoutTooltipBackground(frame) end)
 			tooltip.RQEThemeTooltipHooked = true
 		end
@@ -716,6 +734,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		picture:Show()
 	end
 
+	-- Refreshes the tooltip background.
 	function UI:RefreshTooltipBackground()
 		local tooltip = GameTooltip
 		if tooltip and tooltip.RQEThemeTooltipKind and tooltip:IsShown() then
@@ -745,6 +764,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		profile.themeFrameBackgroundOpacityMigrated = true
 	end
 
+	-- Returns the frame background opacity.
 	function UI:GetFrameBackgroundOpacity(role, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		local profile = RQE.db and RQE.db.profile
@@ -763,6 +783,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return math.max(0, math.min(1, tonumber(value) or tonumber(fallback) or 0.55))
 	end
 
+	-- Sets the frame background opacity.
 	function UI:SetFrameBackgroundOpacity(role, value, themeKey)
 		themeKey = themeKey or self:GetSelectedTheme()
 		if (role ~= "main" and role ~= "tracker") or not profileReady() then return false end
@@ -834,6 +855,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		},
 	}
 
+	-- Returns the theme font default.
 	function UI:GetThemeFontDefault(role, themeKey)
 		local fallback = FONT_ROLE_DEFAULTS[role]
 		if not fallback then return nil end
@@ -845,6 +867,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			color = override and override.color or fallback.color,
 		}
 	end
+	-- Copies saved font choices and fills missing values from theme defaults.
 	local function copyFontSettings(source, themeKey, saved)
 		local result = {}
 		for role in pairs(FONT_ROLE_DEFAULTS) do
@@ -865,6 +888,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		end
 		return result
 	end
+	-- Compares two saved font colors by their color components.
 	local function sameFontColor(left, right)
 		if type(left) ~= "table" then return false end
 		for index = 1, 3 do
@@ -873,6 +897,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		return true
 	end
 
+	-- Migrates older Canary step-font defaults while preserving custom choices.
 	local function migrateCanaryStepDefaults(bank)
 		if bank.canaryStepDefaultsV1 then return end
 		for _, themeKey in ipairs({ "Basic", "AzureGold" }) do
@@ -923,6 +948,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		bank.roundTableQuestTitleDefaultsV2 = true
 	end
 
+	-- Migrates older Scarlet font defaults while preserving custom choices.
 	local function migrateScarletFontDefaults(bank)
 		if bank.scarletFontDefaultsV2 then return end
 		local scarlet = bank.ScarletCrusade
@@ -942,6 +968,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		bank.scarletFontDefaultsV2 = true
 	end
 
+	-- Activates the theme text settings.
 	function UI:ActivateThemeTextSettings(themeKey)
 		if not profileReady() then return end
 		local profile = RQE.db.profile
@@ -1001,6 +1028,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		self._fontActiveTheme = themeKey
 	end
 
+	-- Styles the section header text.
 	function UI:StyleSectionHeaderText(title)
 		local settings = RQE.db and RQE.db.profile and RQE.db.profile.textSettings
 		local section = settings and settings.sectionHeader or FONT_ROLE_DEFAULTS.sectionHeader
@@ -1013,11 +1041,13 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 	-- Inline |c...|r codes and rich entity links retain their authored colors.
 	UI.StepTextRegions = UI.StepTextRegions or setmetatable({}, { __mode = "k" })
 
+	-- Returns the step text settings.
 	function UI:GetStepTextSettings()
 		local settings = RQE.db and RQE.db.profile and RQE.db.profile.textSettings
 		return settings and settings.StepText or self:GetThemeFontDefault("StepText")
 	end
 
+	-- Styles the step text.
 	function UI:StyleStepText(region)
 		if not region then return end
 		self.StepTextRegions[region] = true
@@ -1033,6 +1063,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		end
 	end
 
+	-- Refreshes the step text styles.
 	function UI:RefreshStepTextStyles()
 		local settings = self:GetStepTextSettings()
 		for region in pairs(self.StepTextRegions) do
@@ -1055,6 +1086,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		if RQE.UpdateSeparateContentHeight then RQE.UpdateSeparateContentHeight() end
 	end
 
+	-- Applies the theme fonts.
 	function UI:ApplyThemeFonts()
 		local profile = RQE.db and RQE.db.profile
 		local settings = profile and profile.textSettings
@@ -1085,6 +1117,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 	end
 
 	local originalConfigurationChanged = RQE.ConfigurationChanged
+	-- Applies changed configuration values and refreshes the active theme's text.
 	function RQE:ConfigurationChanged(...)
 		if self.UI and self.db and self.db.profile then
 			self.UI:ActivateThemeTextSettings(self.UI:GetSelectedTheme())
@@ -1368,15 +1401,18 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 	local HEADER_BORDER_PIECES = {
 		"RQEThemeHeaderLeft", "RQEThemeHeaderMiddle", "RQEThemeHeaderRight", "RQEThemeHeaderAccent",
 	}
+	-- Identifies frame roles whose border opacity is configurable.
 	local function isFrameBorderRole(role)
 		return role == "main" or role == "tracker" or role == "section" or role == "focus"
 	end
+	-- Applies opacity to the named custom border textures.
 	local function setBorderPieceOpacity(owner, keys, opacity)
 		for _, key in ipairs(keys) do
 			local piece = owner[key]
 			if piece then piece:SetAlpha(opacity) end
 		end
 	end
+	-- Applies opacity to the frame's native border regions.
 	local function setNativeBorderOpacity(owner, opacity)
 		local native = UI.Native[owner]
 		local color = native and native.borderColor
@@ -1404,6 +1440,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		end
 	end
 
+	-- Applies the background picture.
 	function UI:_ApplyBackgroundPicture(frame, role)
 		if role ~= "main" and role ~= "tracker" then return end
 		local choice = self:IsEnabled() and self:IsBackgroundPictureEnabled()
@@ -1417,6 +1454,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			picture:SetPoint("TOPLEFT", frame, "TOPLEFT", 6, -6)
 			picture:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 6)
 			frame.RQEThemeBackgroundPicture = picture
+			-- Lays out the background picture.
 			frame:HookScript("OnSizeChanged", function(resized)
 				UI:LayoutBackgroundPicture(resized)
 			end)
@@ -1428,6 +1466,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		picture:Show()
 	end
 
+	-- Refreshes the background pictures.
 	function UI:RefreshBackgroundPictures()
 		for _, entry in ipairs(self.Registry.panels) do
 			self:_ApplyBackgroundPicture(entry.target, entry.data.role)
@@ -1797,6 +1836,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		"UnknownQuestButton", "SearchGroupButton", "SeparateWaypointButton",
 	}
 
+	-- Identifies buttons that use the shared configurable border opacity.
 	local function isButtonBorderOpacityTarget(button)
 		if button.RQEThemeBorderOpacityTarget then return true end
 		for _, key in ipairs(BUTTON_BORDER_TARGET_KEYS) do
@@ -1827,15 +1867,19 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			if texture then texture:SetAlpha(opacity) end
 		end
 		if not button.RQEThemeBorderHoverHooks then
+			-- Updates the icon border hover.
 			button:HookScript("OnEnter", function(owner) self:_UpdateIconBorderHover(owner, true) end)
+			-- Clears the pressed state and removes the icon's hover border.
 			button:HookScript("OnLeave", function(owner)
 				owner.RQEThemeBorderPressed = nil
 				self:_UpdateIconBorderHover(owner, false)
 			end)
+			-- Marks the icon as pressed and refreshes its border highlight.
 			button:HookScript("OnMouseDown", function(owner)
 				owner.RQEThemeBorderPressed = true
 				self:_UpdateIconBorderHover(owner, true)
 			end)
+			-- Clears the pressed state and restores the appropriate icon border.
 			button:HookScript("OnMouseUp", function(owner)
 				owner.RQEThemeBorderPressed = nil
 				self:_UpdateIconBorderHover(owner)
@@ -1845,6 +1889,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		self:_UpdateIconBorderHover(button)
 	end
 
+	-- Applies badge border opacity while keeping the supertracked badge fully visible.
 	function UI:_ApplyQuestBadgeBorderOpacity(button)
 		if not self:IsEnabled() or not button or not button.RQEThemeQuestKind then return end
 		local opacity = button.RQEThemeQuestSupertracked and 1 or self:GetButtonBorderOpacity()
@@ -1854,6 +1899,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		if hover then hover:SetAlpha(1) end
 	end
 
+	-- Refreshes the button border opacity.
 	function UI:RefreshButtonBorderOpacity()
 		if not self:IsEnabled() then return end
 		for _, entry in ipairs(self.Registry.iconButtons) do
@@ -1919,10 +1965,12 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		button.RQEThemeIcon:SetBlendMode(additiveIcon and "ADD" or "BLEND")
 		button.RQEThemeIcon:Show()
 		if not button.RQEThemeStateHooks then
+			-- Desaturates the themed icon when its button is disabled.
 			button:HookScript("OnDisable", function(owner)
 				if owner.RQEThemeIcon and owner.RQEThemeIcon.SetDesaturated then owner.RQEThemeIcon:SetDesaturated(true) end
 				if owner.RQEThemeIcon then owner.RQEThemeIcon:SetAlpha(0.45) end
 			end)
+			-- Restores the themed icon's saturation when its button is enabled.
 			button:HookScript("OnEnable", function(owner)
 				if owner.RQEThemeIcon and owner.RQEThemeIcon.SetDesaturated then owner.RQEThemeIcon:SetDesaturated(false) end
 				if owner.RQEThemeIcon then owner.RQEThemeIcon:SetAlpha(1) end
@@ -2201,9 +2249,11 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			-- Keep transparent action artwork readable against bright world scenes
 			-- without making the detached Magic Button surround fully opaque.
 			self:_ApplyPanel(button.RQEThemeMagicBackdrop, 0.68, "section")
+			-- Shows the themed macro backdrop when its button becomes visible.
 			button:HookScript("OnShow", function(owner)
 				if UI:IsEnabled() and owner.RQEThemeMagicBackdrop then owner.RQEThemeMagicBackdrop:Show() end
 			end)
+			-- Hides the themed macro backdrop when its button is hidden.
 			button:HookScript("OnHide", function(owner)
 				if owner.RQEThemeMagicBackdrop then owner.RQEThemeMagicBackdrop:Hide() end
 			end)
@@ -2516,6 +2566,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		self:RefreshExternalButtons()
 		if RQE.RefreshQuestToolTheme then RQE:RefreshQuestToolTheme() end
 		if RQE.Buttons and RQE.Buttons.UpdateMagicButtonIcon then RQE.Buttons.UpdateMagicButtonIcon() end
+		-- Refreshes the quest tracker after search.
 		C_Timer.After(0, function()
 			if RQE.UI ~= self then return end
 			if RQE.API and RQE.API.Client and RQE.API.Client.InCombatLockdown() then
@@ -2583,6 +2634,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		self.ThemeCardPictureOpacityDefaults[key] = defaults.cardPictureOpacity or { timed = 1, heroic = 1, normal = 1, follower = 1, delve = 1, torghast = 1 }
 		self.ThemeFontDefaults[key] = theme.fontDefaults or {}
 		table.insert(self.ThemeOrder, key)
+		-- Sorts Basic first, then orders the remaining themes by display name.
 		table.sort(self.ThemeOrder, function(left, right)
 			if left == "Basic" then return true end
 			if right == "Basic" then return false end
@@ -2636,6 +2688,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 	externalSkinWatcher:RegisterEvent("ADDON_LOADED")
 	externalSkinWatcher:RegisterEvent("PLAYER_LOGIN")
 	externalSkinWatcher:RegisterEvent("PLAYER_REGEN_ENABLED")
+	-- Applies the saved theme.
 	externalSkinWatcher:SetScript("OnEvent", function(_, event, addonName)
 		if event == "PLAYER_REGEN_ENABLED" then
 			if UI.pendingTheme then UI:ApplySavedTheme() end

@@ -20,12 +20,14 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 	local state = { records = {}, builds = {}, worldRows = {}, generation = 0, pending = false, queued = false }
 	RQE.TrackerSyncStats = { checks = 0, repairs = 0, normalRenders = 0, worldRenders = 0 }
 
+	-- Checks whether two quest-ID sets contain the same entries.
 	local function SameSet(a, b)
 		for key, value in pairs(a) do if b[key] ~= value then return false end end
 		for key, value in pairs(b) do if a[key] ~= value then return false end end
 		return true
 	end
 
+	-- Adds a valid quest ID to the tracking set.
 	local function AddID(set, questID)
 		questID = tonumber(questID)
 		if questID and questID > 0 then set[questID] = true end
@@ -57,6 +59,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 			-- deferred result when group context changes, rather than every sync tick.
 			snapshot.raid = client.IsInRaid()
 		else
+			-- Merges quest IDs from another source into the expected tracking set.
 			local function AddSet(source)
 				for id in pairs(source or {}) do AddID(candidates, id) end
 			end
@@ -124,10 +127,12 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		local frame = RQE.RQEQuestFrame
 		if frame and frame.HookScript and not frame.rqeTrackerSyncShowHook then
 			frame.rqeTrackerSyncShowHook = true
+			-- Resumes the tracker sync.
 			frame:HookScript("OnShow", function() RQE:ResumeTrackerSync() end)
 		end
 	end
 
+	-- Recovers tracker render state left behind by an interrupted build.
 	local function RecoverUnfinishedBuilds()
 		state.buildGuardQueued = false
 		for kind, stack in pairs(state.builds) do
@@ -164,6 +169,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		end
 	end
 
+	-- Sets the tracker sync expected quests.
 	function RQE:SetTrackerSyncExpectedQuests(kind, questIDs)
 		local stack = state.builds[kind]
 		local build = stack and stack[#stack]
@@ -171,6 +177,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		for id in pairs(questIDs or {}) do AddID(build.expected, id) end
 	end
 
+	-- Registers the tracker sync row.
 	function RQE:RegisterTrackerSyncRow(kind, questID, row, parent)
 		local stack = state.builds[kind]
 		local build = stack and stack[#stack]
@@ -180,6 +187,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		build.rows[questID] = { row = row, parent = parent }
 	end
 
+	-- Commits the tracker sync render.
 	function RQE:CommitTrackerSyncRender(kind)
 		local stack = state.builds[kind]
 		if not stack or #stack == 0 then return end
@@ -193,6 +201,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		self.TrackerSyncStats[key] = self.TrackerSyncStats[key] + 1
 	end
 
+	-- Aborts the tracker sync render.
 	function RQE:AbortTrackerSyncRender(kind)
 		local stack = state.builds[kind]
 		if not stack or #stack == 0 then return end
@@ -203,6 +212,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		state.pending = true
 	end
 
+	-- Invalidates the tracker sync rows.
 	function RQE:InvalidateTrackerSyncRows(kind)
 		local record = state.records[kind]
 		if record then record.valid = false; record.deferred = nil end
@@ -218,6 +228,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		state.worldRows[row] = true
 	end
 
+	-- Clears the owned tracker world rows.
 	function RQE:ClearOwnedTrackerWorldRows()
 		for row in pairs(state.worldRows) do
 			row:Hide()
@@ -248,6 +259,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		return false
 	end
 
+	-- Checks whether visible tracker rows differ from the expected quests.
 	local function NeedsRepair()
 		local waiting = false
 		for _, kind in ipairs({ "normal", "world" }) do
@@ -286,6 +298,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		state.pending = true
 		if state.queued or IsBlocked() then return end
 		state.queued = true
+		-- Repairs tracker rows that diverged from the expected watched-quest set.
 		self.API.Client.C_Timer.After(0, function()
 			state.queued = false
 			if IsBlocked() then return end
@@ -313,6 +326,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		if repair then self:QueueTrackerSyncRepair() end
 	end
 
+	-- Resumes the tracker sync.
 	function RQE:ResumeTrackerSync()
 		if state.pending then self:CheckWatchedQuestsSync() end
 	end
@@ -331,6 +345,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 	local TRACKER_REFRESH_MAX_WAIT = 1.0
 	local trackerRefresh = { timer = nil, firstRequestAt = nil }
 
+	-- Requests a quest-tracker redraw while coalescing redundant refreshes.
 	function RQE:RequestQuestTrackerRefresh()
 		local client = self.API.Client
 		local now = client.GetTime()
@@ -338,6 +353,7 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 		if trackerRefresh.timer then trackerRefresh.timer:Cancel() end
 		local delay = math.min(TRACKER_REFRESH_DELAY,
 			math.max(0, trackerRefresh.firstRequestAt + TRACKER_REFRESH_MAX_WAIT - now))
+		-- Updates the RQE quest frame.
 		trackerRefresh.timer = client.C_Timer.NewTimer(delay, function()
 			trackerRefresh.timer, trackerRefresh.firstRequestAt = nil, nil
 			if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
@@ -360,4 +376,5 @@ Shared tracker membership reconciliation, render ownership, and deferred recover
 	for _, event in ipairs({ "PLAYER_REGEN_ENABLED", "QUEST_LOG_UPDATE", "QUEST_DATA_LOAD_RESULT", "GROUP_ROSTER_UPDATE" }) do
 		pcall(resumeFrame.RegisterEvent, resumeFrame, event)
 	end
+	-- Resumes the tracker sync.
 	resumeFrame:SetScript("OnEvent", function() RQE:ResumeTrackerSync() end)

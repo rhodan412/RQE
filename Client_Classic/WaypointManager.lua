@@ -266,6 +266,7 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 		RQE.superY = nil
 		RQE.superMapID = nil
 
+		-- Creates the searched quest waypoint.
 		C_Timer.After(0.5, function()
 			if RQE:IsCoordblockWaypointProtected() then return end
 			if not questID then
@@ -522,6 +523,7 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 		-- 4) Utility to accept either normalized (0..1) or percent (0..100)
 		local xPct, yPct
+		-- Stores resolved waypoint coordinates and their map ID.
 		local function setFrom(posX, posY, mid)
 			if not posX or not posY then return false end
 			posX, posY = tonumber(posX), tonumber(posY)
@@ -949,6 +951,7 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 					RQE._currentTomTomUID = nil
 				end
 
+				-- Adds the delayed legacy quest waypoint while respecting protected routes.
 				C_Timer.After(0.5, function()
 					if RQE:IsCoordblockWaypointProtected() then return end
 					if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
@@ -1082,6 +1085,7 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 			-- Previous code (commented out 2026.10.30): reset TomTom's whole waypoint profile, deleting the player's own and other addons' waypoints
 			-- TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
+			-- Adds the delayed TomTom waypoint when its quest step still permits replacement.
 			C_Timer.After(0.5, function()
 				if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 				if mapID and x and y then
