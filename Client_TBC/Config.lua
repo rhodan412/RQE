@@ -495,6 +495,26 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 							RQE:DisableBlizzardAutoQuestTracking()
 						end,
 					},
+					autoAcceptQuestDetail = {
+						type = "toggle",
+						name = "Auto-Accept Quests",
+						desc = "Automatically accept a quest when its detail window opens. The QUEST_DETAIL event triggers this regardless of its optional item payload.",
+						order = 10.25,
+						-- Reads the saved auto accept quest detail setting.
+						get = function() return RQE.db.profile.autoAcceptQuestDetail end,
+						-- Saves the auto accept quest detail setting and applies the change.
+						set = function(_, value) RQE.db.profile.autoAcceptQuestDetail = value end,
+					},
+					autoCompleteNoRewardChoices = {
+						type = "toggle",
+						name = "Auto-Complete when No Reward Choices",
+						desc = "Allow the Contribution turn-in macro to select the supertracked quest and complete it when there is no reward choice. Multiple reward choices or a required payment remain manual. Reopen the Contribution menu to copy the updated macro.",
+						order = 10.5,
+						-- Reads the saved auto complete no reward choices setting.
+						get = function() return RQE.db.profile.autoCompleteNoRewardChoices end,
+						-- Saves the auto complete no reward choices setting and applies the change.
+						set = function(_, value) RQE.db.profile.autoCompleteNoRewardChoices = value end,
+					},
 					removeWQatLogin = {
 						type = "toggle",
 						name = "Remove WQ after login",
@@ -1740,6 +1760,46 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		end)
 
 		scrollFrame:AddChild(autoQuestProgressCheckbox)
+
+		-- Accept quest offers when their detail view opens.
+		do
+			local checkbox = AceGUI:Create("CheckBox")
+			checkbox:SetLabel("Auto-Accept Quests")
+			checkbox:SetValue(RQE.db.profile.autoAcceptQuestDetail)
+			-- Saves the auto accept quest detail setting and applies the change.
+			checkbox:SetCallback("OnValueChanged", function(_, _, value)
+				RQE.db.profile.autoAcceptQuestDetail = value
+			end)
+			-- Shows this control's tooltip while the pointer is over it.
+			checkbox:SetCallback("OnEnter", function(widget)
+				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+				GameTooltip:SetText("Automatically accept a quest when its detail window opens, regardless of the QUEST_DETAIL item payload.", nil, nil, nil, nil, true)
+				GameTooltip:Show()
+			end)
+			-- Hides the tooltip when the pointer leaves this control.
+			checkbox:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+			scrollFrame:AddChild(checkbox)
+		end
+
+		-- Complete the selected turn-in only when no reward choice is needed.
+		do
+			local checkbox = AceGUI:Create("CheckBox")
+			checkbox:SetLabel("Auto-Complete when No Reward Choices")
+			checkbox:SetValue(RQE.db.profile.autoCompleteNoRewardChoices)
+			-- Saves the auto complete no reward choices setting and applies the change.
+			checkbox:SetCallback("OnValueChanged", function(_, _, value)
+				RQE.db.profile.autoCompleteNoRewardChoices = value
+			end)
+			-- Shows this control's tooltip while the pointer is over it.
+			checkbox:SetCallback("OnEnter", function(widget)
+				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+				GameTooltip:SetText("Allow the Contribution turn-in macro to complete the supertracked quest when no reward choice is needed. Multiple reward choices or a required payment remain manual. Reopen the Contribution menu to copy the updated macro.", nil, nil, nil, nil, true)
+				GameTooltip:Show()
+			end)
+			-- Hides the tooltip when the pointer leaves this control.
+			checkbox:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+			scrollFrame:AddChild(checkbox)
+		end
 
 		-- Remove WQ after login Checkbox
 		local removeWQatLoginCheckbox = AceGUI:Create("CheckBox")
