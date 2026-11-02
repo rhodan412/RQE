@@ -122,6 +122,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 		--"QUEST_LOOT_RECEIVED",			-- ONLY AVAILABLE in RETAIL (7.0.3+)
 		-- "QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
+		"QUEST_PROGRESS",
 		"QUEST_REMOVED",
 		"QUEST_TURNED_IN",
 		"QUEST_WATCH_LIST_CHANGED",		-- Frequent fires... trying to move bits out of this function into better locations that won't trigger as frequently
@@ -349,6 +350,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
 			QUEST_LOOT_RECEIVED = RQE.handleQuestLootReceived,
 			-- QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
+			QUEST_PROGRESS = RQE.handleQuestProgress,
 			QUEST_REMOVED = RQE.handleQuestRemoved,
 			QUEST_TURNED_IN = RQE.handleQuestTurnIn,
 			QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
@@ -598,6 +600,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			for _, step in ipairs(data) do
 				-- Check `check` field
 				if stepData.funct and (stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff") then
+					-- Starts the periodic checks.
 					C_Timer.After(4.5, function()
 						-- print("CheckDBBuff/CheckDBDebuff is present within the 'check' or 'checks' of the DB entry")
 						RQE:StartPeriodicChecks()
@@ -608,6 +611,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				if step.checks then
 					for _, checkData in ipairs(step.checks) do
 						if checkData.funct and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff") then
+							-- Starts the periodic checks.
 							C_Timer.After(4.5, function()
 								-- print("CheckDBBuff/CheckDBDebuff is present within the 'check' or 'checks' of the DB entry")
 								RQE:StartPeriodicChecks()
@@ -785,6 +789,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			if questID then
 				RQE:QueuePeriodicChecks("ITEM_COUNT_CHANGED", 0.2, questID)
 			else
+				-- Starts the periodic checks.
 				C_Timer.After(0.2, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
 				end)
@@ -855,6 +860,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local isInventoryCheck = stepUsesInventoryCheck(stepData)
 
 		if isInventoryCheck then
+			-- Starts the periodic checks.
 			C_Timer.After(1.2, function()
 				RQE:StartPeriodicChecks()
 			end)
@@ -930,6 +936,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		if stepUsesInventoryCheck(stepData) then
+			-- Starts the periodic checks.
 			C_Timer.After(3, function()
 				RQE:StartPeriodicChecks()
 			end)
@@ -1004,6 +1011,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("MERCHANT_UPDATE related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
+			-- Starts the periodic checks.
 			C_Timer.After(1.3, function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("~~ Running RQE:StartPeriodicChecks() from MERCHANT_UPDATE ~~")
@@ -1069,6 +1077,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local pendingQuestID = tonumber(RQE.PendingClassicQuestLogDetails)
 		if pendingQuestID and RQE.DisplayClassicQuestLogDetails then
 			RQE.PendingClassicQuestLogDetails = nil
+			-- Restores deferred Classic quest details when the player remains out of combat.
 			C_Timer.After(0.1, function()
 				if not InCombatLockdown() then
 					RQE:DisplayClassicQuestLogDetails(pendingQuestID)
@@ -1081,9 +1090,11 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE:ClearSeparateFocusFrame()
 			RQE.ClearSeparateFocusFrameAfterCombat = false
 
+			-- Creates the macro for current step.
 			C_Timer.After(1.3, function()
 				RQE.isCheckingMacroContents = true
 				RQEMacro:CreateMacroForCurrentStep()-- Checks for macro status if PLAYER_REGEN_ENABLED event fires
+				-- Releases the macro-content inspection guard.
 				C_Timer.After(0.3, function()
 					RQE.isCheckingMacroContents = false
 				end)
@@ -1100,6 +1111,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Updates RQEWorldQuestFrame after combat ends
 		if RQE.RunUpdateRQEWorldQuestFrame then
+			-- Updates the RQE world quest frame.
 			C_Timer.After(0.2, function()
 				UpdateRQEWorldQuestFrame()
 				RQE.RunUpdateRQEWorldQuestFrame = false
@@ -1123,6 +1135,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE.QuestButtonToReClickAfterCombat = nil
 
 			if deferredQuestID then
+				-- Selects the deferred quest-log row when combat no longer blocks it.
 				C_Timer.After(0.1, function()
 					if not InCombatLockdown() then
 						RQE.ClickQuestLogIndexButton(deferredQuestID)
@@ -1134,6 +1147,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.CheckNClickWButtonAfterCombat then
 			RQE.CheckNClickWButtonAfterCombat = false
 
+			-- Activates the current quest step's waypoint button when available.
 			C_Timer.After(0.1, function()
 				if not InCombatLockdown() then
 					RQE.CheckAndClickWButton()
@@ -1144,6 +1158,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.RunPeriodicChecksAfterCombat then
 			RQE.RunPeriodicChecksAfterCombat = false
 
+			-- Starts the periodic checks.
 			C_Timer.After(0.1, function()
 				if InCombatLockdown() then
 					RQE.RunPeriodicChecksAfterCombat = true
@@ -1156,6 +1171,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.ReapplyMacroBindingAfterCombat then
 			RQE.ReapplyMacroBindingAfterCombat = false
 
+			-- Restores the macro override binding if combat has not restarted.
 			C_Timer.After(0.1, function()
 				if not InCombatLockdown() then
 					RQE:SetupOverrideMacroBinding()
@@ -1164,6 +1180,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		if RQEMacro and RQEMacro.ProcessPendingMacroOperations then
+			-- Processes queued macro operations if combat has not restarted.
 			C_Timer.After(0.1, function()
 				if not InCombatLockdown() then
 					RQEMacro:ProcessPendingMacroOperations()
@@ -1174,6 +1191,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.RefreshMagicButtonAfterCombat then
 			RQE.RefreshMagicButtonAfterCombat = false
 
+			-- Updates the magic button icon.
 			C_Timer.After(0.1, function()
 				if InCombatLockdown() then
 					RQE.RefreshMagicButtonAfterCombat = true
@@ -1192,6 +1210,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.ToggleRQEFrameFromSlashAfterCombat then
 			RQE.ToggleRQEFrameFromSlashAfterCombat = false
 
+			-- Runs the deferred frame-toggle command or queues it again during combat.
 			C_Timer.After(0.1, function()
 				if InCombatLockdown() then
 					RQE.ToggleRQEFrameFromSlashAfterCombat = true
@@ -1204,6 +1223,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.ToggleRQEFrameAfterCombat then
 			RQE.ToggleRQEFrameAfterCombat = false
 
+			-- Toggles the RQE frame.
 			C_Timer.After(0.1, function()
 				if InCombatLockdown() then
 					RQE.ToggleRQEFrameAfterCombat = true
@@ -1216,6 +1236,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.ToggleFramesAndTrackerAfterCombat then
 			RQE.ToggleFramesAndTrackerAfterCombat = false
 
+			-- Toggles the frames and tracker.
 			C_Timer.After(0.1, function()
 				if InCombatLockdown() then
 					RQE.ToggleFramesAndTrackerAfterCombat = true
@@ -1229,6 +1250,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			local deferredQuestID = RQE.WorldQuestButtonToClickAfterCombat
 			RQE.WorldQuestButtonToClickAfterCombat = nil
 
+			-- Clicks the deferred world quest or queues it again if combat resumes.
 			C_Timer.After(0.1, function()
 				if InCombatLockdown() then
 					RQE.WorldQuestButtonToClickAfterCombat = deferredQuestID
@@ -1276,6 +1298,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				RQE:CheckAndRefreshSeparateFocusFrame()		-- Checks SeparateFocusFrame and refreshes it if RQEFrame has quest data but SeparateFocusFrame is empty when PLAYER_REGEN_ENABLED event fires
 			end)
 
+			-- Checks the separate focus has text but RQE frame missing quest.
 			C_Timer.After(1.75, function()
 				RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()		-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info when PLAYER_REGEN_ENABLED event fires
 			end)
@@ -1364,6 +1387,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				RQE.SortOnly = true
 				-- print("~~~ RQE:SortWatchedQuestsByProximity(): 1196 ~~~")
 				RQE:SortWatchedQuestsByProximity()	-- Sorts RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
+				-- Clears the temporary sort-only refresh mode.
 				C_Timer.After(0.5, function()
 					RQE.SortOnly = false
 				end)
@@ -1372,6 +1396,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		if not InCombatLockdown() then
 			local isMounted = IsMounted()
+			-- Selects the closest quest after a confirmed mount-state change.
 			C_Timer.After(0.1, function()
 				if isMounted then
 					RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
@@ -1446,9 +1471,11 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE.ActiveTaskQuests[questID] = true
 		else
 			RQE.ActiveTaskQuests[questID] = nil
+			-- Creates the macro for current step.
 			C_Timer.After(0.55, function()
 				RQE.isCheckingMacroContents = true
 				RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event fires
+				-- Releases the macro-content inspection guard.
 				C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
@@ -1537,6 +1564,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- Fetch current MapID to have option of appearing with Frame
 		RQE:UpdateMapIDDisplay()
 
+		-- Updates the tracker visibility.
 		C_Timer.After(1.75, function()
 			RQE:UpdateTrackerVisibility()
 		end)
@@ -1579,11 +1607,13 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 		end)
 
+		-- Returns the missing quest data.
 		C_Timer.After(6, function()
 			RQE.GetMissingQuestData()	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
 		end)
 
 		if RQE.db.profile.autoClickWaypointButton then
+			-- Finds the quest zone transition.
 			C_Timer.After(12, function()
 				local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 				if isSuperTracking then
@@ -1629,6 +1659,14 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 	-- Function to handle ADDON_LOADED
 	-- Fires after an AddOn has been loaded and is typically the first event to fire (running after all .lua files have been run and SavedVariables have loaded)
 	function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
+		-- TomTom can finish loading after RQE. Its saved pins are restored by its
+		-- ADDON_LOADED handler, so reconcile on the next frame after both handlers.
+		if addonName == "TomTom" then
+			-- Reconciles saved flight-master waypoint ownership after login.
+			RQE.API.Client.C_Timer.After(0, function() RQE:ReconcileFlightMasterWaypointAfterLogin() end)
+			return
+		end
+
 		-- Only proceed if RQE is the addon being loaded
 		if addonName == "RQE" then
 			RQE.infoLog("ADDON_LOADED for Rhodan's Quest Explorer")
@@ -1892,12 +1930,14 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)	-- French Lilac
 		end
 
+		-- Updates the RQE quest frame.
 		C_Timer.After(1.6, function()
 			if not C_Scenario.IsInScenario() then
 				UpdateRQEQuestFrame()
 			end
 		end)
 
+		-- Updates the tracker visibility.
 		C_Timer.After(0.5, function()
 			RQE:UpdateTrackerVisibility()
 			-- RQE.updateScenarioUI()
@@ -1924,6 +1964,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 		end
 
+		-- Updates the RQE quest frame.
 		C_Timer.After(1.2, function()
 			if RQE.ScenarioChildFrame:IsVisible() then
 				UpdateRQEQuestFrame()
@@ -2038,6 +2079,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 	function RQE.handleSpellsChanged()
 		RQE:StartPeriodicChecks()
 
+		-- Checks the current macro contents.
 		C_Timer.After(0.1, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -2047,6 +2089,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SPELLS_CHANGED event fires
+			-- Releases the macro-content inspection guard.
 			C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
@@ -2182,6 +2225,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.JailorsTowerLevelUpdate then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Scheduled InitializeScenarioFrame after 4 seconds.", 0.0, 1.0, 1.0)	-- Aqua
 		end
+		-- Updates the scenario UI.
 		C_Timer.After(4, function()
 			RQE.updateScenarioUI()
 			-- print("~~~ UpdateRQEQuestFrame(): 1924 ~~~")
@@ -2298,6 +2342,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				end
 				RQE:QueuePeriodicChecks("MINIMAP_UPDATE_ZOOM", 1.3, questID)
 			else
+				-- Starts the periodic checks.
 				C_Timer.After(1.3, function()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("[RQE] Detected CheckDBZoneChange logic. Scheduling RQE:StartPeriodicChecks()...")
@@ -2321,6 +2366,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("[RQE] Failed zone check matches AddonSetStepIndex. Triggering button click.")
 				end
+				-- Selects the matching quest-log row in the RQE helper.
 				C_Timer.After(0.2, function()
 					RQE.ClickQuestLogIndexButton(questID)
 				end)
@@ -2362,6 +2408,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if IsFlying("player") then return end
 		if IsMounted() then return end
 
+		-- Updates the frame.
 		C_Timer.After(1.4, function()
 			if RQE.NavigationDestinationReached then
 				UpdateFrame()
@@ -2394,6 +2441,25 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 	end
 
 
+	-- A saved TomTom flight-master pin outlives RQE's in-memory ownership on reload.
+	-- Wait until TomTom has initialized, and never let deferred login cleanup remove
+	-- a flight master explicitly selected in this session.
+	function RQE:ReconcileFlightMasterWaypointAfterLogin()
+		if not self.PendingFlightMasterLoginCleanup then return end
+		if self.API.Client.UnitOnTaxi("player") then
+			self.TaxiFlightInProgress = true
+			return
+		end
+		if self.ManualFlightMasterWaypointMapID or self.ManualFlightMasterWaypointUID then
+			self.PendingFlightMasterLoginCleanup = nil
+			return
+		end
+		if not (TomTom and TomTom.RemoveWaypoint and type(TomTom.waypoints) == "table") then return end
+		self:ReleaseManualFlightMasterWaypoint()
+		self.PendingFlightMasterLoginCleanup = nil
+	end
+
+
 	-- Handles PLAYER_CONTROL_GAINED event
 	-- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
 	function RQE.handlePlayerControlGained()
@@ -2404,8 +2470,10 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			if RQE.ReleaseManualFlightMasterWaypoint then
 				RQE:ReleaseManualFlightMasterWaypoint()
 			end
+			RQE:ReconcileFlightMasterWaypointAfterLogin()
 		end
 
+		-- Updates the map ID display.
 		C_Timer.After(1.5, function()
 			RQE:UpdateMapIDDisplay()
 			RQE:UpdateCoordinates()
@@ -2421,6 +2489,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				RQE.SortOnly = true
 				-- print("~~~ UpdateRQEQuestFrame(): 1913 ~~~")
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
+				-- Clears the temporary sort-only refresh mode.
 				C_Timer.After(0.5, function()
 					RQE.SortOnly = false
 				end)
@@ -2439,6 +2508,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 			if questID then
+				-- Queues the periodic checks.
 				C_Timer.After(0.25, function()
 
 					RQE:QueuePeriodicChecks("PLAYER_CONTROL_GAINED", 0.1, questID)
@@ -2483,6 +2553,11 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 	-- Handling PLAYER_CONTROL_LOST event
 	-- Fires whenever the player is unable to control the character. Examples are when afflicted by fear, mind controlled, or when using a taxi. 
 	function RQE.handlePlayerControlLost()
+		-- Release only the nearest-flight-master destination as soon as control is lost.
+		-- The helper uses its hidden RQE_FlightMaster tag, preserving RQE and /way pins.
+		RQE:ReleaseManualFlightMasterWaypoint()
+
+		-- Records a confirmed legacy taxi flight after the control-loss delay.
 		C_Timer.After(2.5, function()
 			if UnitOnTaxi("player") then
 				RQE.NearestFlightMasterSet = false
@@ -2512,6 +2587,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- not just from Blizzard's objective tracker watch list.
 		if RQE.db.profile.enableAutoSuperTrackSwap and not RQE.API.IsAutomaticQuestSelectionBlocked()
 			and not InCombatLockdown() and not UnitOnTaxi("player") then
+			-- Selects the closest quest after movement only if automation is still allowed.
 			C_Timer.After(0.15, function()
 				-- RQE:AutoSuperTrackClosestQuest()
 				-- A player can enter combat during the timer delay. Do not permit this
@@ -2526,6 +2602,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- Refresh the tracker once when movement starts, provided doing so is safe.
 		-- Ongoing label updates and throttled re-sorts are handled by OnUpdate.
 		if not InCombatLockdown() and not C_Scenario.IsInScenario() then
+			-- Updates the RQE quest frame.
 			C_Timer.After(0.05, function()
 				if not InCombatLockdown() then
 					UpdateRQEQuestFrame()
@@ -2535,6 +2612,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Checks to see if showCoordinates is selected as true for an option before calling the applicable function
 		if RQE.db.profile.showCoordinates then
+			-- Starts the updating coordinates.
 			C_Timer.After(0.3, function()
 				RQE:StartUpdatingCoordinates()
 			end)
@@ -2576,6 +2654,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- end
 
 		if not isFlying and not isMounted and not onTaxi then
+			-- Checks the current macro contents.
 			C_Timer.After(0.3, function()
 				-- Get the macro index for 'RQE Macro'
 				local macroIndex = GetMacroIndexByName("RQE Macro")
@@ -2586,6 +2665,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 					-- Check if the macro body has content
 					if macroBody and macroBody == "" then
+						-- Checks the current macro contents.
 						C_Timer.After(0.25, function()
 							RQE.isCheckingMacroContents = true
 							local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -2595,6 +2675,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 							end
 
 							RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_STARTED_MOVING event fires
+							-- Releases the macro-content inspection guard.
 							C_Timer.After(0.1, function()
 								RQE.isCheckingMacroContents = false
 							end)
@@ -2605,6 +2686,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		if IsMounted() then
+			-- Updates the RQE quest frame.
 			C_Timer.After(1.1, function()
 				if not C_Scenario.IsInScenario() then
 					UpdateRQEQuestFrame()
@@ -2632,6 +2714,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- stops, do one final immediate rebuild so the visible row order precisely
 		-- matches the last displayed distances.
 		if not InCombatLockdown() and not C_Scenario.IsInScenario() then
+			-- Refreshes the tracked quest distances.
 			C_Timer.After(0.05, function()
 				if InCombatLockdown() then return end
 				if RQE.RefreshTrackedQuestDistances then
@@ -2761,6 +2844,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("UPDATE_OVERRIDE_ACTIONBAR related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
+			-- Selects the matching quest-log row in the RQE helper.
 			C_Timer.After(0.2, function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("~~ Running RQE:StartPeriodicChecks() from UPDATE_OVERRIDE_ACTIONBAR ~~")
@@ -2769,6 +2853,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				if questID then
 					RQE:QueuePeriodicChecks("UPDATE_OVERRIDE_ACTIONBAR", 0.5, questID)
 				else
+					-- Starts the periodic checks.
 					C_Timer.After(0.5, function()
 						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_MODEL_CHANGED fires
 					end)
@@ -2973,6 +3058,13 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local event = select(2, ...)
 		local isLogin = select(3, ...)
 		local isReload = select(4, ...)
+		if isLogin or isReload then
+			-- PLAYER_CONTROL_LOST has already happened when reloading during a flight.
+			RQE.TaxiFlightInProgress = RQE.API.Client.UnitOnTaxi("player") and true or false
+			RQE.PendingFlightMasterLoginCleanup = true
+			-- Reconciles saved flight-master waypoint ownership after login.
+			RQE.API.Client.C_Timer.After(0, function() RQE:ReconcileFlightMasterWaypointAfterLogin() end)
+		end
 
 		-- Print Event-specific Args
 		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
@@ -3036,10 +3128,12 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE.HasReloaded = false
 		end
 
+		-- Checks the frame visibility.
 		C_Timer.After(3.3, function()
 			RQE:CheckFrameVisibility()
 		end)
 
+		-- Clears the button pressed.
 		C_Timer.After(10, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE.HasLoggedIn is: " .. tostring(RQE.HasLoggedIn) .. " & RQE.HasReloaded is: " .. tostring(RQE.HasReloaded) .. " & RQE.HasPortaledOrHearthed is: " .. tostring(RQE.HasPortaledOrHearthed))
@@ -3070,10 +3164,12 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 					UpdateFrame()
 					--RQE:ClearSeparateFocusFrame()
 					RQE:UpdateSeparateFocusFrame()
+					-- Clears the flag requesting a refresh of all frames.
 					C_Timer.After(1, function()
 						RQE.AllFramesShouldUpdate = false
 					end)
 
+					-- Restores the tracked quests for character.
 					C_Timer.After(0.05, function()
 						RQE:RestoreTrackedQuestsForCharacter()
 						RQE:RestoreSuperTrackedQuestForCharacter()
@@ -3126,6 +3222,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 					RQE.TrackClosestQuest()
 				end
 
+				-- Updates the frame.
 				C_Timer.After(1, function()
 					if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 					UpdateFrame()
@@ -3141,12 +3238,14 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 		end)
 
+		-- Creates the unknown quest waypoint with direction text.
 		C_Timer.After(5, function()
 			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			local playerMapID = C_Map.GetBestMapForUnit("player")
 			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
 		end)
 
+		-- Refreshes cached mount, flight, taxi, and dragonriding state on legacy clients.
 		C_Timer.After(2, function()
 			-- Check for Dragonriding & Capture and print the current states for debugging purposes
 			if RQE.CheckForDragonMounts() then
@@ -3177,6 +3276,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 06 Debug: Entering handlePlayerEnterWorld function.", 0.93, 0.51, 0.93)	-- Violet
 		end
 
+		-- Clears the saved world-quest watch snapshot after the loading delay.
 		C_Timer.After(1, function()  -- Delay of 1 second
 			wipe(RQE.savedWorldQuestWatches)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
@@ -3230,6 +3330,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 					local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 					if questID then
+						-- Queues the periodic checks.
 						C_Timer.After(0.35, function()
 
 							local questData = RQE.getQuestData(questID)
@@ -3271,6 +3372,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 			-- Checks to see if in scenario and if no, will reset the scenario timer
 			if not C_Scenario.IsInScenario() then
+				-- Stops the scenario timer.
 				C_Timer.After(0.7, function()
 					RQE.StopScenarioTimer()
 				end)
@@ -3280,6 +3382,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE.updateScenarioUI()
 		end
 
+		-- Rechecks the selected quest's type after the delayed quest update.
 		C_Timer.After(2, function()
 			-- print("~~~ RQE:QuestType(): 2508 ~~~")
 			RQE:QuestType()
@@ -3333,6 +3436,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- Clicks Waypoint Button if autoClickWaypointButton is true
 		RQE:AutoClickQuestLogIndexWaypointButton()
 
+		-- Checks the current macro contents.
 		C_Timer.After(5.5, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -3342,6 +3446,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_ENTERING_WORLD event fires
+			-- Releases the macro-content inspection guard.
 			C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
@@ -3417,6 +3522,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE.StepDistanceOverride = true
 			RQE:UpdateStepDistance()
 			RQE.StepDistanceOverride = false
+			-- Refreshes the tracked quest distances.
 			C_Timer.After(0.35, function()
 				if RQE.RefreshTrackedQuestDistances then
 					RQE:RefreshTrackedQuestDistances()
@@ -3467,6 +3573,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				if RQE.db.profile.autoClickWaypointButton
 					and tonumber(newQID) and tonumber(newQID) > 0
 					and tonumber(newQID) ~= tonumber(oldQID) then
+					-- Starts the periodic checks.
 					C_Timer.After(1, function()
 						if RQE.db.profile.autoClickWaypointButton
 							and tonumber(RQE.API.GetSuperTrackedQuestID()) == tonumber(newQID) then
@@ -3475,15 +3582,18 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 					end)
 				end
 			else
+				-- Starts the periodic checks.
 				C_Timer.After(0.1, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
 				end)
 			end
 
+			-- Clears the hidden-tracker supertrack-button state.
 			C_Timer.After(0.15, function()
 				RQE.QuestTrackerHiddenSuperTrackedPressed = false
 			end)
 
+			-- Checks the current macro contents.
 			C_Timer.After(0.1, function()
 				RQE.isCheckingMacroContents = true
 				local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -3493,6 +3603,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				end
 
 				RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
+				-- Releases the macro-content inspection guard.
 				C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
@@ -3535,6 +3646,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 		end
 
+		-- Updates the content size.
 		C_Timer.After(1.5, function()
 			RQE:UpdateContentSize()
 		end)
@@ -3693,6 +3805,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 			if questID then
+				-- Starts the periodic checks.
 				C_Timer.After(0.25, function()
 
 					-- Only fire if the quest itself actually changed
@@ -3833,6 +3946,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Checks to make sure if UpdateFrame occurred as a result of more information in the code above with StepsText, CoordsText and MapIDs. If so, this doesn't need to also run
 		if not RQE.SuperTrackUpdatingFrameWithStepTextInfo then
+			-- Updates the frame.
 			C_Timer.After(0.5, function()
 				UpdateFrame()
 			end)
@@ -3851,10 +3965,12 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE:CheckCPUUsage()
 		end
 
+		-- Updates the magic button visibility.
 		C_Timer.After(1, function()
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
 
+		-- Updates the frame.
 		C_Timer.After(1.5, function()
 			UpdateFrame()
 		end)
@@ -3939,6 +4055,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		elseif RQE.GetDebugLogCaptureGeneration then
 			debugLogCaptureGeneration = RQE:GetDebugLogCaptureGeneration()
 		end
+		-- Returns the missing quest data.
 		C_Timer.After(2.5, function()
 			RQE.GetMissingQuestData(questID, debugLogCaptureGeneration)
 		end)
@@ -3946,6 +4063,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- Refresh the RQE-only Zone Quests list after Classic has finished adding
 		-- the accepted quest to the quest log and updating its zone information.
 		if RQE.db.profile.autoTrackZoneQuests then
+			-- Displays and tracks quests applicable to the current zone.
 			C_Timer.After(2.5, function()
 				RQE.DisplayCurrentZoneQuests()
 			end)
@@ -3972,6 +4090,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE.QuestLogIndexButtonPressed = true
 			--RQE:ClearSeparateFocusFrame()
 			RQE:ShouldClearFrame()
+			-- Sets the super tracked quest ID.
 			C_Timer.After(1, function()
 				-- C_SuperTrack.SetSuperTrackedQuestID(questID)
 				RQE.API.SetSuperTrackedQuestID(questID)
@@ -3979,6 +4098,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end)
 		else
 			if RQE.searchedQuestID then
+				-- Resumes frame updates and rebuilds the searched quest's NPC macro.
 				C_Timer.After(2, function()
 					RQE.DontUpdateFrame = false
 					RQE:GenerateNpcMacroIfNeeded(RQE.searchedQuestID)
@@ -3999,6 +4119,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			-- Delay processing of all quest watches after multiple acceptances
 			if not RQE.DelayedQuestWatchScheduled then
 				RQE.DelayedQuestWatchScheduled = true
+				-- Verifies watches and clears the pending delayed-watch check state.
 				C_Timer.After(4, function()
 					RQE:VerifyWatchedQuests()
 					RQE.DelayedQuestWatchCheck = {}
@@ -4014,6 +4135,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		RQE.QuestAcceptedToSuperTrackOkay = true
 		RQE.SetInitialFromAccept = true
 
+		-- Focuses the closest eligible quest when automatic selection is allowed.
 		C_Timer.After(1.3, function()
 			RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
 		end)
@@ -4030,6 +4152,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		C_Timer.After(1, function()
 			-- print("~~~ RQE:QuestType(): 2888 ~~~")
 			RQE:QuestType()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to accept a quest (fires during QUEST_ACCEPTED event) - possible duplicate
+			-- Refreshes the tracked quest distances.
 			C_Timer.After(0.25, function()
 				if RQE.RefreshTrackedQuestDistances then
 					RQE:RefreshTrackedQuestDistances()
@@ -4115,6 +4238,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				end
 			end)
 
+			-- Sets the super tracked quest ID.
 			C_Timer.After(0.5, function()
 				-- Reapply the manual super-tracked quest ID if it's set and different from the current one
 				if RQE.ManualSuperTrack then
@@ -4157,6 +4281,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Delay to check for a blank RQEFrame and attempt to click the QuestLogIndexButton if necessary
 		if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
+			-- Selects the accepted quest only if no quest has gained focus in the meantime.
 			C_Timer.After(2, function()
 				if focusedQuestAtAcceptance > 0
 					or (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0 then return end
@@ -4177,6 +4302,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if isSuperTracking then
 			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			if questID == superTrackedQuestID then
+				-- Updates the frame.
 				C_Timer.After(1, function()  -- Delay of 1 second
 					UpdateFrame()
 				end)
@@ -4250,8 +4376,10 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		RQE:UpdateTrackerVisibility()
 
+		-- Updates the scenario frame.
 		C_Timer.After(2.1, function()
 			RQE.UpdateScenarioFrame()
+			-- Updates the scenario UI.
 			C_Timer.After(0.2, function()
 				RQE.updateScenarioUI()
 			end)
@@ -4263,6 +4391,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			if questID then
 				RQE:QueuePeriodicChecks("UNIT_EXITING_VEHICLE", 1.8, questID)
 			else
+				-- Starts the periodic checks.
 				C_Timer.After(1.8, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_EXITING_VEHICLE fires
 				end)
@@ -4287,6 +4416,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 						print("Zone change → direction text changed → UpdateFrame()")
 					end
 					
+					-- Updates the frame.
 					C_Timer.After(0.05, function()
 						RQE.DirectionChangedUpdateRQEFrame = true
 						UpdateFrame()
@@ -4317,6 +4447,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				end
 			end
 
+			-- Checks the watched quests sync.
 			C_Timer.After(0.1, function()
 				if not InCombatLockdown() then
 					RQE:CheckWatchedQuestsSync()	-- Fires when ZONE_CHANGED or ZONE_CHANGED_INDOORS event is called
@@ -4361,6 +4492,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 		end)
 
+		-- Refreshes cached mount, flight, taxi, and dragonriding state on legacy clients.
 		C_Timer.After(2, function()
 			-- Check for Dragonriding & Capture and print the current states for debugging purposes
 			if RQE.CheckForDragonMounts() then
@@ -4394,6 +4526,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 			-- Get the current map ID
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
+				-- Prints the legacy player's map ID after its update settles.
 				C_Timer.After(1.0, function()  -- Delay of 1 second
 					local mapID = C_Map.GetBestMapForUnit("player")
 					DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID), 0, 1, 1)  -- Cyan
@@ -4574,6 +4707,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 			-- Trigger the button click only if the failed zone matches and we are on the correct stepIndex
 			if isFailedZoneCheck and stepIndex == RQE.AddonSetStepIndex then
+				-- Restores the supertracked quest's helper view after a failed zone check.
 				C_Timer.After(0.2, function()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Failed zone check. Clicking supertracked quest button.")
@@ -4587,6 +4721,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("ZONE_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
 				end
+				-- Starts the periodic checks.
 				C_Timer.After(1.3, function()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("~~ Running RQE:StartPeriodicChecks() from ZONE_CHANGED ~~")
@@ -4624,11 +4759,13 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- Refresh RQE's zone-only list independently of supertracking. Keeping this
 		-- near the start ensures it still runs when the handler returns early later.
 		if RQE.db.profile.autoTrackZoneQuests then
+			-- Displays and tracks quests applicable to the current zone.
 			C_Timer.After(0.5, function()
 				RQE.DisplayCurrentZoneQuests()
 			end)
 		end
 
+		-- Finds the quest zone transition.
 		C_Timer.After(0.5, function()
 			if isSuperTracking then
 			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -4655,11 +4792,13 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 						print("Zone change → direction text changed → UpdateFrame()")
 					end
 					
+					-- Updates the frame.
 					C_Timer.After(0.05, function()
 						RQE.DirectionChangedUpdateRQEFrame = true
 						UpdateFrame()
 					end)
 
+					-- Queues the periodic checks.
 					C_Timer.After(0.10, function()
 						local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 						if questID then
@@ -4748,6 +4887,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				RQE.SortOnly = true
 				-- print("~~~ UpdateRQEQuestFrame(): 3425 ~~~")
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED_NEW_AREA event fires
+				-- Clears the temporary sort-only refresh mode.
 				C_Timer.After(0.5, function()
 					RQE.SortOnly = false
 				end)
@@ -4783,8 +4923,10 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			return
 		end
 
+		-- Updates the scenario frame.
 		C_Timer.After(1.15, function()
 			RQE.UpdateScenarioFrame()
+			-- Updates the scenario UI.
 			C_Timer.After(0.15, function()
 				RQE.updateScenarioUI()
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED_NEW_AREA event fires
@@ -4990,6 +5132,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				RQE.UIInfoMessageCompletedObjectives[questID] = RQE.UIInfoMessageCompletedObjectives[questID] or {}
 				RQE.UIInfoMessageCompletedObjectives[questID][objectiveText] = true
 
+				-- Updates the frame.
 				C_Timer.After(0.15, function()
 					if UpdateFrame then
 						UpdateFrame(questID)
@@ -5014,12 +5157,14 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 		end
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(0.3, function()
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 			if not isSuperTracking then return end
 
 			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
+			-- Checks the separate focus has text but RQE frame missing quest.
 			C_Timer.After(2.6, function()
 				if RQE.db.profile.debugLevel == "INFO" then
 					-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within UI_INFO_MESSAGE event function")
@@ -5028,6 +5173,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end)
 
 			if messageType == 310 then
+				-- Starts the periodic checks.
 				C_Timer.After(1.5, function()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Running RQE:StartPeriodicChecks() due to UI_INFO_MESSAGE idx 310: " .. tostring(message))
@@ -5037,6 +5183,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 
 			if messageType == 310 or messageType == 311 then
+				-- Checks the current macro contents.
 				C_Timer.After(2.5, function()
 					-- print("Checking contents")
 
@@ -5048,6 +5195,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 					end
 
 					RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UI_INFO_MESSAGE event fires with idx 311 or 312
+					-- Releases the macro-content inspection guard.
 					C_Timer.After(0.2, function()
 						RQE.isCheckingMacroContents = false
 					end)
@@ -5259,6 +5407,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				end
 
 				RQE.CombinedAuraObjectiveRecheckTimer =
+					-- Starts the periodic checks.
 					C_Timer.NewTimer(0.20, function()
 						RQE.CombinedAuraObjectiveRecheckTimer = nil
 
@@ -5320,6 +5469,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print(string.format("Aura %s (SpellID: %d) matched quest step. Running periodic checks.", aura.name, aura.spellId))
 					end
+					-- Starts the periodic checks.
 					C_Timer.After(0.5, function()
 						RQE:StartPeriodicChecks()
 					end)
@@ -5411,6 +5561,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("UNIT_MODEL_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
+			-- Selects the matching quest-log row in the RQE helper.
 			C_Timer.After(0.2, function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("~~ Running RQE:StartPeriodicChecks() from UNIT_MODEL_CHANGED ~~")
@@ -5419,6 +5570,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				if questID then
 					RQE:QueuePeriodicChecks("UNIT_MODEL_CHANGED", 0.5, questID)
 				else
+					-- Starts the periodic checks.
 					C_Timer.After(0.5, function()
 						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_MODEL_CHANGED fires
 					end)
@@ -5529,6 +5681,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- Coalesce the frequent log-change events into one Task Quests refresh.
 		if unitTarget == "player" and not RQE.TaskQuestRefreshScheduled then
 			RQE.TaskQuestRefreshScheduled = true
+			-- Updates the RQE task quest frame.
 			C_Timer.After(0.15, function()
 				RQE.TaskQuestRefreshScheduled = false
 				if UpdateRQETaskQuestFrame then
@@ -5554,6 +5707,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- A cached task row remains visible only while IsOnQuest is true.
 		if unitTarget == "player" then
+			-- Updates the RQE world quest frame.
 			C_Timer.After(0.1, function()
 				if UpdateRQEWorldQuestFrame then
 					UpdateRQEWorldQuestFrame()
@@ -5567,6 +5721,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		if not questID then return end
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(2.5, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within UNIT_QUEST_LOG_CHANGED event function")
@@ -5575,6 +5730,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end)
 
 		if unitTarget == "player" and questID and not UnitOnTaxi("player") and RQE.db.profile.autoClickWaypointButton then
+			-- Activates the current quest step's waypoint button when available.
 			C_Timer.After(0.25, function()
 
 				-- Auto-click W button if needed
@@ -5599,6 +5755,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 						RQE:QueuePeriodicChecks("UNIT_QUEST_LOG_CHANGED", 0.25, questID)
 						RQE.PeriodicIsFiring = true
 					else
+						-- Starts the periodic checks.
 						C_Timer.After(0.25, function()
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Running RQE:StartPeriodicChecks() due to changes detected")
@@ -5609,6 +5766,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 						end)
 					end
 
+					-- Releases the quest-log-change periodic-check guard.
 					C_Timer.After(3, function()
 						RQE.StartPerioFromUnitQuestLogChanged = false
 					end)
@@ -5620,6 +5778,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 				-- Delayed retry for objective-based steps, such as profession crafting objectives
 				if CurrentStepUsesObjectiveStatus(questID) then
+					-- Queues the periodic checks.
 					C_Timer.After(0.75, function()
 						if RQE.API.GetSuperTrackedQuestID() == questID then		--if C_SuperTrack.GetSuperTrackedQuestID() == questID then
 							if RQE.db.profile.debugLevel == "INFO+" then
@@ -5673,6 +5832,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				-----------------------------------------
 				RQE.currentSuperTrackedQuestID = questID
 
+				-- Restores the periodic waypoint action or defers it when combat resumes.
 				C_Timer.After(0.2, function()
 					if InCombatLockdown() then
 						RQE.RunPeriodicChecksAfterCombat = true
@@ -5703,6 +5863,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- ALWAYS RUN: Achievements frame refresh
 		-----------------------------------------
 		if RQE.AchievementsFrame:IsShown() then
+			-- Reclassifies the selected quest unless the quest-log handler already did so.
 			C_Timer.After(2, function()
 				if not RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -5890,6 +6051,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Clicks the button to trigger a waypoint creation shortly after login of the current supertracked quest
 		if not C_Scenario.IsInScenario() then
+			-- Activates the current quest step's waypoint button when available.
 			C_Timer.After(1.15, function()
 				RQE.CheckAndClickWButton()
 			end)
@@ -5898,12 +6060,15 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		RQE:UpdateMapIDDisplay()
 		RQE:UpdateCoordinates()
 
+		-- Updates the tracker visibility.
 		C_Timer.After(0.5, function()
 			RQE:UpdateTrackerVisibility()
 		end)
 
+		-- Updates the scenario frame.
 		C_Timer.After(1.2, function()
 			RQE.UpdateScenarioFrame()
+			-- Updates the scenario UI.
 			C_Timer.After(0.15, function()
 				RQE.updateScenarioUI()
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when UPDATE_INSTANCE_INFO event fires
@@ -5935,6 +6100,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("UPDATE_INSTANCE_INFO: Objective change → StartPeriodicChecks()")
 					end
+					-- Releases the instance-update periodic-check guard.
 					C_Timer.After(3, function()
 						RQE.StartPerioFromInstanceInfoUpdate = false
 					end)
@@ -5956,6 +6122,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 		end
 
+		-- Checks the current macro contents.
 		C_Timer.After(0.1, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -5965,6 +6132,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UPDATE_INSTANCE_INFO event fires
+			-- Releases the macro-content inspection guard.
 			C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
@@ -5994,6 +6162,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			-- database explicitly opts into the final CheckDBComplete turn-in step.
 			if not RQE.ClassicTurnInStepCheckQueued then
 				RQE.ClassicTurnInStepCheckQueued = true
+				-- Queues the periodic checks.
 				C_Timer.After(0.15, function()
 					RQE.ClassicTurnInStepCheckQueued = false
 					local questID = RQE.API.GetSuperTrackedQuestID()
@@ -6072,7 +6241,8 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Skip the delayed main-frame refresh only while on a taxi. The previous
 		-- condition was always true because the mount states are mutually exclusive.
-		if RQE.PlayerMountStatus ~= "Taxi" then
+		-- Read the live state: PlayerMountStatus can remain "Taxi" after landing.
+		if not RQE.API.Client.UnitOnTaxi("player") then
 		-- Previous code (commented out 2026.10.30): always true, so the refresh never skipped a taxi ride
 		-- if RQE.PlayerMountStatus == "Flying" or RQE.PlayerMountStatus ~= "Taxi" or RQE.PlayerMountStatus ~= "Dragonriding" then
 			-- Each QUEST_LOG_UPDATE restarts one shared timer, so the main-frame refresh
@@ -6082,6 +6252,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE.QuestStatusUpdateFirstAt = RQE.QuestStatusUpdateFirstAt or now
 			if RQE.QuestStatusUpdateTimer then RQE.QuestStatusUpdateTimer:Cancel() end
 			local refreshDelay = math.min(0.7, math.max(0, RQE.QuestStatusUpdateFirstAt + 2 - now))
+			-- Sets the super tracked quest ID.
 			RQE.QuestStatusUpdateTimer = C_Timer.NewTimer(refreshDelay, function()
 				RQE.QuestStatusUpdateTimer, RQE.QuestStatusUpdateFirstAt = nil, nil
 			-- Previous code (commented out 2026.10.30): every event scheduled its own refresh 0.7 seconds later
@@ -6120,6 +6291,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 						-- The super-tracked quest is not what we set; avoid changing focus
 						RQE:CheckAndRefreshSeparateFocusFrame()
 
+						-- Checks the separate focus has text but RQE frame missing quest.
 						C_Timer.After(1.7, function()
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #1 event function")
@@ -6154,6 +6326,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- current progress without rebuilding the tracker for every event in a burst.
 		if not RQE.TrackerRefreshQueued then
 			RQE.TrackerRefreshQueued = true
+			-- Updates the RQE quest frame.
 			C_Timer.After(0.15, function()
 				RQE.TrackerRefreshQueued = false
 				if UpdateRQEQuestFrame then
@@ -6167,6 +6340,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE:CheckAndRefreshSeparateFocusFrame()
 		end)
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(1.7, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #2 event function")
@@ -6209,6 +6383,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Clear the raid marker from the current target
 		if UnitExists("target") then
+			-- Clears the target when the currency-loot quest is no longer relevant.
 			C_Timer.After(1, function()
 				if questID and not RQE:IsQuestRelevant(questID) then
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -6279,6 +6454,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 		end
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(2.1, function()
 			if RQE.db.profile.debugLevel == "INFO" then
 				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_CRITERIA_UPDATE event function")
@@ -6314,6 +6490,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Clear the raid marker from the current target
 		if UnitExists("target") then
+			-- Clears the target when the currency-loot quest is no longer relevant.
 			C_Timer.After(1, function()
 				if questID and not RQE:IsQuestRelevant(questID) then
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -6405,6 +6582,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		RQE.alreadyPrintedSchematics = false
 
 		if RQE.ReEnableRQEFrames then
+			-- Toggles the both framesfrom LDB.
 			C_Timer.After(2.5, function()
 				RQE.ToggleBothFramesfromLDB()
 			end)
@@ -6443,6 +6621,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		RQE:QuestComplete(questID)
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(2.1, function()
 			if RQE.db.profile.debugLevel == "INFO" then
 				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_COMPLETE event function")
@@ -6489,12 +6668,15 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			RQE.StartPerioFromQuestComplete = true
 			if questID then
 				RQE:QueuePeriodicChecks("QUEST_COMPLETE", 1.3, questID)
+				-- Releases the quest-completion periodic-check guard.
 				C_Timer.After(3, function()
 					RQE.StartPerioFromQuestComplete = false
 				end)
 			else
+				-- Starts the periodic checks.
 				C_Timer.After(1.3, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_COMPLETE fires
+					-- Releases the quest-completion periodic-check guard.
 					C_Timer.After(3, function()
 						RQE.StartPerioFromQuestComplete = false
 					end)
@@ -6560,6 +6742,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		RQE:QuestComplete(questID)
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(2.1, function()
 			if RQE.db.profile.debugLevel == "INFO" then
 				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_AUTOCOMPLETE event function")
@@ -6632,6 +6815,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 	-- Handling CLIENT_SCENE_CLOSED event (restoring of World Quests when event fires):
 	function RQE.HandleClientSceneClosed()
 		RQE.isRestoringWorldQuests = true
+		-- Restores the saved world quest watches.
 		C_Timer.After(1, function()
 			RQE:RestoreSavedWorldQuestWatches()
 			-- Set isRestoringWorldQuests back to false after all quests are restored
@@ -6639,6 +6823,12 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				RQE.isRestoringWorldQuests = false
 			end)
 		end)
+	end
+
+
+	-- Handling QUEST_PROGRESS event
+	function RQE.handleQuestProgress()
+		RQE.API.AutoComplete(true)
 	end
 
 
@@ -6689,6 +6879,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		UpdateRQEWorldQuestFrame()
 
+		-- Saves the tracked quests to character.
 		C_Timer.After(0.15, function()
 			RQE:SaveTrackedQuestsToCharacter()
 		end)
@@ -6969,6 +7160,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			DEFAULT_CHAT_FRAME:AddMessage("QWU 03 Debug: Current super tracked quest ID/Name: " .. tostring(RQE.currentSuperTrackedQuestID) .. " / " .. tostring(superTrackedQuestName), 0.56, 0.93, 0.56)	-- Light Green
 		end
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(2.1, function()
 			if RQE.db.profile.debugLevel == "INFO" then
 				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_WATCH_UPDATE event function")
@@ -7093,6 +7285,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 			-- Checks to see if any changes were made to the objectives and if so will call the RQE:StartPeriodicChecks(), if it exists in the DB
 			if RQE.db.profile.autoClickWaypointButton then
+				-- Activates the current quest step's waypoint button when available.
 				C_Timer.After(0.25, function()
 					-- Click the "W" Button is autoclick is selected and no steps or questData exist
 					RQE.CheckAndClickWButton()
@@ -7105,6 +7298,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 								print("Objective change → continuing StartPeriodicChecks()")
 							end
 						else
+							-- Starts the periodic checks.
 							C_Timer.After(0.1, function()
 								RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_UPDATE fires
 								if RQE.db.profile.debugLevel == "INFO+" then
@@ -7130,6 +7324,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				end)
 			end
 
+			-- Updates the frame.
 			C_Timer.After(0.5, function()
 				if RQE.QuestWatchUpdateFired then
 					RQE.QuestWatchUpdateFired = false	-- Reset the flag to false if it is currently marked as true
@@ -7221,6 +7416,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			UpdateRQEWorldQuestFrame()
 		end
 
+		-- Saves the tracked quests to character.
 		C_Timer.After(0.15, function()
 			RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_LIST_CHANGED event fires
 			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
@@ -7258,6 +7454,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		if RQE.UnitQuestLogChangedFired then	-- may need to place this flag in other locations too to ensure that RQEQuestFrame updates, but keep lag low
+			-- Updates the tracker visibility.
 			C_Timer.After(0.1, function()
 				RQE:UpdateTrackerVisibility()
 			end)
@@ -7346,6 +7543,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 						if superTrackedQuestID then
 							RQE:QueuePeriodicChecks("QUEST_WATCH_LIST_CHANGED", 0.5, superTrackedQuestID)
 						else
+							-- Starts the periodic checks.
 							C_Timer.After(0.5, function()
 								RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_LIST_CHANGED fires
 							end)
@@ -7399,8 +7597,10 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				end
 			end
 
+			-- Updates the scenario frame.
 			C_Timer.After(1.2, function()
 				RQE.UpdateScenarioFrame()
+				-- Updates the scenario UI.
 				C_Timer.After(0.15, function()
 					RQE.updateScenarioUI()
 					RQE:RequestQuestTrackerRefresh()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires
@@ -7410,6 +7610,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end)
 		end
 
+		-- Clears the macro content by name.
 		C_Timer.After(0.5, function()
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
 				local extractedQuestID = RQE.DisplayedQuestID
@@ -7504,11 +7705,13 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		if RQE.db.profile.enableAutoSuperTrackSwap then
+			-- Focuses the closest eligible quest when automatic selection is allowed.
 			C_Timer.After(0.7, function()
 				RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_TURNED_IN event
 			end)
 		end
 
+		-- Clears the button pressed.
 		C_Timer.After(0.5, function()
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 			if not RQE.previousSuperTrackedQuestID then
@@ -7705,7 +7908,6 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			-- 	DEFAULT_CHAT_FRAME:AddMessage("QuestID (displayed): " .. tostring(questID), 0.46, 0.82, 0.95)	-- Sky Blue
 			-- end
 			DEFAULT_CHAT_FRAME:AddMessage(messagePrefix, 0.46, 0.82, 0.95) -- Sky Blue
-			return
 		end
 
 		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
@@ -7774,6 +7976,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				end
 			end
 		end
+		RQE.API.AutoAcceptQuestDetail()
 	end
 
 
@@ -7837,6 +8040,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			return	-- returns if nothing is being supertracked
 		end
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(2.1, function()
 			if RQE.db.profile.debugLevel == "INFO" then
 				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_FINISHED event function")
@@ -7878,6 +8082,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		-- Check to advance to next step in quest
 		if RQE.db.profile.autoClickWaypointButton then
+			-- Logs the delayed step-advance diagnostic for the finished quest.
 			C_Timer.After(0.5, function()
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
 					DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)		-- Pink
@@ -7944,6 +8149,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 	-- Add a click event to SearchButton
 	if RQE.SearchButton then
+		-- Creates the search frame.
 		RQE.SearchButton:SetScript("OnClick", function(self, button)
 			RQE.isSearchFrameShown = not RQE.isSearchFrameShown  -- Toggle the variable
 			CreateSearchFrame(RQE.isSearchFrameShown)  -- Pass the updated variable
@@ -7996,6 +8202,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		ObjectiveTrackerFrame.RQEVisibilityHooked = true
+		-- Enforces the objective tracker visibility.
 		ObjectiveTrackerFrame:HookScript("OnShow", function()
 			-- The RQE Quest Tracker, not the main RQE window, determines whether the
 			-- Blizzard Objective Tracker should be hidden.
@@ -8056,6 +8263,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		RQE.ToggleBothFramesfromLDB()
 
+		-- Toggles the objective tracker.
 		C_Timer.After(0.5, function()
 			RQE:ToggleObjectiveTracker()
 		end)
@@ -8070,10 +8278,12 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 
 		RQE.ToggleBothFramesfromLDB()
 
+		-- Toggles the objective tracker.
 		C_Timer.After(0.5, function()
 			RQE:ToggleObjectiveTracker()
 		end)
 
+		-- Toggles the both framesfrom LDB.
 		C_Timer.After(10, function()
 			RQE.ToggleBothFramesfromLDB()
 		end)
@@ -8098,12 +8308,14 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			-- Hide RQE frames and show Blizzard Tracker
 			if RQEFrame and RQEFrame:IsShown() then
 				RQEFrame:Hide()
+				-- Toggles the objective tracker.
 				C_Timer.After(0.5, function()
 					RQE:ToggleObjectiveTracker()
 				end)
 			end
 			if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() then
 				RQE.RQEQuestFrame:Hide()
+				-- Toggles the objective tracker.
 				C_Timer.After(0.5, function()
 					RQE:ToggleObjectiveTracker()
 				end)
