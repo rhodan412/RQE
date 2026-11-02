@@ -1,3 +1,155 @@
+12.1.5.2 (2026.11.01)
+
+	**HIGHLIGHTS**
+		- World quests already shown in the Quest Tracker now update their objectives, progress bar, distance, and time left during combat, instead of waiting until combat ends.
+		- A world quest completed during combat now disappears from the Quest Tracker right away instead of lingering with its objectives reset to 0 until combat ends.
+		- Your tracked quests and focused quest are now saved every time the Quest Tracker or the main RQE frame updates, so a reload or relog restores the latest selection.
+		- On Retail and Classic Forever, after combat ends, the RQE Macro now matches the RQE Quest Helper: a quest finished during combat no longer leaves its macro behind when the frame is empty.
+		- World Quest Tracker redraws are no longer lost when combat restarts immediately after ending.
+		- World quest percentage progress stays visible as objective types change during combat, without obsolete bars or cached bars overlapping the following row.
+		- The RQE Macro now clears when the current quest step has no macro, while dungeon and raid behavior stays unchanged.
+		- World quests first tracked during combat now appear in the Quest Tracker and continue updating during the fight.
+		- Untracking or completing world quests during combat now removes their rows, closes gaps, and updates the World Quests count without waiting for combat to end.
+		- Quest Helper updates resume normally after landing from a flight, even when the last recorded mount status still says Taxi.
+		- Automatically skipped quests now keep their replacement quest focused and its macro intact.
+		- World quest objectives that grow or wrap during combat now keep the following tracker sections and scroll range aligned.
+		- Selecting a quest without RQE database guidance during combat now clears the previous quest's macro after combat ends.
+		- Reloading during a flight now preserves flight-master cleanup on landing; stale saved flight-master pins are also removed when logging in on the ground.
+		- The closest-flight-master waypoint now clears immediately on PLAYER_CONTROL_LOST, while RQE quest waypoints and regular TomTom /way pins remain intact.
+		- The Contribution menu's multi-window turn-in macro fills the current NPC and supertracked quest ID while keeping placeholders when either is unavailable.
+		- A new quest automation setting makes the Contribution turn-in macro complete the supertracked quest when no reward choice is needed, while leaving multiple-choice and paid turn-ins for the player.
+		- The Contribution turn-in macro now copies the targeted NPC's full name, including names with quotes.
+		- An optional Auto-Accept Quests setting accepts offered quests as soon as their detail view opens on Retail, TBC Anniversary, Season of Discovery, and Classic Forever, including QUEST_DETAIL events with a zero or missing item payload.
+		- Quest progress now starts the optional automatic turn-in, while the Contribution companion can keep quests missing from RQEDatabase manual for its designated contributor account.
+		- Automatic turn-in from a quest progress window now uses that displayed quest, even when a different quest is supertracked; Contribution macros keep their supertracked quest behavior.
+		- Retail now focuses newly accepted quests, including active bonus objectives and tasks, when no quest is focused, while preserving existing focus and manual selections.
+		- Retail movement tracking now takes priority, includes watched world quests but excludes tasks/bonus objectives, and applies campaign preferences only at the matching level and on the current objective map. Campaign options hide when movement tracking is off and retain their saved checkmarks.
+
+	Buttons.lua
+		- Added an explicit immediate-only mode to ClearButtonPressed that finishes macro cleanup before returning and skips delayed frame, focus, and macro clears. Automatic blacklist handoffs use it so queued clears cannot erase the replacement or a newer manual selection; ordinary Clear button calls retain their existing retries. (2026.10.31.1306)
+		- Confirmed Clear-button actions now cancel pending Retail accept/watch selection even when the helper is already empty and no native supertracking setter runs. Cancellation happens after ordered-route confirmation, so an accepted quest cannot refill a window the player just cleared. (2026.11.01.1848)
+
+	Client_Classic/Config.lua
+		- Added Auto-Complete when No Reward Choices to both the AddOn Settings schema and the standalone configuration window for Classic clients, with guidance about manual reward choices and paid turn-ins. (2026.11.01.1328)
+		- Added an Auto-Accept Quests toggle to Classic AddOn Settings and the standalone configuration window, with help text describing the QUEST_DETAIL trigger and optional item payload. (2026.11.01.1439)
+
+	Client_Classic/Core.lua
+		- UpdateFrame() now calls RQE:SaveSuperTrackedQuestToCharacter() as its first statement, before any early return, so every call saves the character's supertracked or searched quest. The save function's PendingTrackerStateRestore guard still blocks saving before login restoration finishes. (2026.10.31.0009)
+		- CreateMacroForCurrentStep now distinguishes unavailable step data from a known step with neither macro nor macroArray. Known steps without macro content use ClearMacroContentByName and refresh MagicButton visibility, preventing the previous step's macro from remaining active. An explicit party/raid guard preserves instance behavior and combat queues; missing quest/step data still returns without clearing. Existing macro functions retain combat deferral, and the replaced return remains commented out. (2026.10.31.1213)
+		- CheckSuperTrackedQuestAndStep now uses immediate-only ClearButtonPressed before choosing its replacement, preventing the previous quest's delayed cleanup from removing the new focus and macro while preserving the captured original quest re-watch. (2026.10.31.1306)
+		- Defaulted the new quest turn-in automation setting to off for Classic and Classic Forever profiles, so existing players must opt in. (2026.11.01.1328)
+		- Defaulted quest-detail auto-accept to off for Season of Discovery and Classic Forever profiles, preserving manual acceptance until enabled. (2026.11.01.1439)
+
+	Client_Classic/EventManager.lua
+		- Changed the quest-status refresh gate to query UnitOnTaxi directly, so a stale PlayerMountStatus value cannot suppress main-frame updates after landing. (2026.10.31.1306)
+		- Restored taxi-flight state when entering the world and reconciled saved flight-master waypoints on initial loading and TomTom availability. Ground cleanup removes only stale flight-master ownership, and deferred cleanup preserves a newly chosen manual waypoint; a reload during flight still releases the saved pin after landing. (2026.10.31.1306)
+		- handlePlayerControlLost now calls the existing ReleaseManualFlightMasterWaypoint helper immediately when the event fires, before the delayed taxi-state check. Cleanup targets the hidden RQE_FlightMaster ownership tag instead of the visible waypoint name, preserving RQE-tagged quest and ordinary TomTom waypoints. Existing taxi bookkeeping and landing/login recovery remain available. (2026.10.31.1333)
+		- handleQuestDetail now invokes the shared auto-accept function after its existing quest diagnostics, regardless of whether QUEST_DETAIL supplied a zero or nil item payload; removed the early debug-level return so the enabled action runs in every mode. (2026.11.01.1439)
+		- Registered QUEST_PROGRESS with RQE.handleQuestProgress and used that handler to call RQE.API.AutoComplete, so the enabled no-choice turn-in can advance from the quest progress window on Classic clients. (2026.11.01.1510)
+		- Passed the displayed-quest mode from Classic QUEST_PROGRESS to AutoComplete, so the open quest can turn in without changing the player's supertracked quest. (2026.11.01.1524)
+
+	Client_Classic/QuestingModule.lua
+		- UpdateRQEQuestFrame() now calls RQE:SaveTrackedQuestsToCharacter() as its first statement, so every tracker update, whatever triggered it, saves the character's tracked quests and SC/ZQ tracker mode. The save function's PendingTrackerStateRestore guard still blocks saving before login restoration finishes. (2026.10.31.0009)
+
+	Client_TBC/Config.lua
+		- Added Auto-Complete when No Reward Choices to the TBC AddOn Settings schema and standalone configuration window, keeping the saved setting available in both interfaces. (2026.11.01.1328)
+		- Added an Auto-Accept Quests toggle to TBC AddOn Settings and the standalone configuration window, with help text explaining event-driven quest acceptance. (2026.11.01.1439)
+
+	Client_TBC/Core.lua
+		- UpdateFrame() now calls RQE:SaveSuperTrackedQuestToCharacter() as its first statement, before any early return, so every call saves the character's supertracked or searched quest. The save function's PendingTrackerStateRestore guard still blocks saving before login restoration finishes. (2026.10.31.0009)
+		- CreateMacroForCurrentStep now distinguishes unavailable step data from a known step with neither macro nor macroArray. Known steps without macro content use ClearMacroContentByName and refresh MagicButton visibility, preventing the previous step's macro from remaining active. An explicit party/raid guard preserves instance behavior and combat queues; missing quest/step data still returns without clearing. Existing macro functions retain combat deferral, and the replaced return remains commented out. (2026.10.31.1213)
+		- CheckSuperTrackedQuestAndStep now uses immediate-only ClearButtonPressed before choosing its replacement, preventing the previous quest's delayed cleanup from removing the new focus and macro while preserving the captured original quest re-watch. (2026.10.31.1306)
+		- Defaulted the TBC quest turn-in automation setting to off, preserving manual turn-in behavior until the player enables it. (2026.11.01.1328)
+		- Defaulted TBC quest-detail auto-accept to off, so existing profiles keep manual acceptance until players opt in. (2026.11.01.1439)
+
+	Client_TBC/EventManager.lua
+		- Changed the quest-status refresh gate to query UnitOnTaxi directly, so a stale PlayerMountStatus value cannot suppress main-frame updates after landing. (2026.10.31.1306)
+		- Restored taxi-flight state when entering the world and reconciled saved flight-master waypoints on initial loading and TomTom availability. Ground cleanup removes only stale flight-master ownership, and deferred cleanup preserves a newly chosen manual waypoint; a reload during flight still releases the saved pin after landing. (2026.10.31.1306)
+		- handlePlayerControlLost now calls the existing ReleaseManualFlightMasterWaypoint helper immediately when the event fires, before the delayed taxi-state check. Cleanup targets the hidden RQE_FlightMaster ownership tag instead of the visible waypoint name, preserving RQE-tagged quest and ordinary TomTom waypoints. Existing taxi bookkeeping and landing/login recovery remain available. (2026.10.31.1333)
+		- handleQuestDetail now calls the shared quest-detail auto-accept function after collecting quest diagnostics, ignoring the optional event payload; removed its early debug-level return so the opt-in action is available in every mode. (2026.11.01.1439)
+		- Registered QUEST_PROGRESS with RQE.handleQuestProgress and used that handler to call RQE.API.AutoComplete, so the enabled no-choice turn-in can advance from the quest progress window on TBC Anniversary. (2026.11.01.1510)
+		- Passed the displayed-quest mode from TBC QUEST_PROGRESS to AutoComplete, so the open quest can turn in without changing the player's supertracked quest. (2026.11.01.1524)
+
+	Client_TBC/QuestingModule.lua
+		- UpdateRQEQuestFrame() now calls RQE:SaveTrackedQuestsToCharacter() as its first statement, so every tracker update, whatever triggered it, saves the character's tracked quests and SC/ZQ tracker mode. The save function's PendingTrackerStateRestore guard still blocks saving before login restoration finishes. (2026.10.31.0009)
+
+	Config.lua
+		- Added the turn-in automation checkbox to Retail AddOn Settings and the standalone configuration window; its help text explains reward-choice, payment, and macro-copy behavior. (2026.11.01.1328)
+		- Added Auto-Accept Quests to Retail AddOn Settings and the standalone configuration window, with help text that identifies QUEST_DETAIL as the trigger. (2026.11.01.1439)
+		- Made Retail campaign-option visibility depend on Nearest quest while moving in the shared AceConfig schema used by Blizzard AddOn Settings and the standalone themed window. Hiding either option leaves its saved profile value untouched; movement changes notify RQE_Main to redraw both views and refresh movement monitoring immediately. Updated Retail help text for mode precedence, eligible quest types, level checks, and exact-map campaign priority; the legacy standalone entry point now uses the shared schema on Retail, while non-Retail visibility and widgets retain their behavior. (2026.11.01.1921)
+
+	ConfigTheme.lua
+		- Placed the turn-in automation checkbox in the shared Quest Automation settings group, so the themed AddOn Settings layout shows it with related options on every client. (2026.11.01.1328)
+		- Placed Auto-Accept Quests beside the turn-in automation option in the shared themed Quest Automation group on all clients. (2026.11.01.1439)
+
+	Core.lua
+		- UpdateFrame() now calls RQE:SaveSuperTrackedQuestToCharacter() as its first statement, before any early return, so every call saves the character's supertracked or searched quest. The save function's PendingTrackerStateRestore guard still blocks saving before login restoration finishes. (2026.10.31.0009)
+		- CreateMacroForCurrentStep now distinguishes unavailable step data from a known step with neither macro nor macroArray. Known steps without macro content use ClearMacroContentByName and refresh MagicButton visibility, preventing the previous step's macro from remaining active. An explicit party/raid guard preserves instance behavior and combat queues; missing quest/step data still returns without clearing. Existing macro functions retain combat deferral, and the replaced return remains commented out. (2026.10.31.1213)
+		- CheckSuperTrackedQuestAndStep now uses immediate-only ClearButtonPressed before choosing its replacement, preventing the previous quest's delayed cleanup from removing the new focus and macro while preserving the captured original quest re-watch. (2026.10.31.1306)
+		- Defaulted Retail's new turn-in automation profile option to off, requiring an explicit player choice before automated completion. (2026.11.01.1328)
+		- Defaulted Retail quest-detail auto-accept to off, keeping manual acceptance until the setting is enabled. (2026.11.01.1439)
+		- Retail nearest, first-in-zone, and forced-selection routines now yield while an accept/watch batch owns empty focus. Movement-swap and forced reapply callbacks compare the focus revision captured when scheduled, preventing an older callback from replacing a subsequently accepted quest or manual selection. (2026.11.01.1848)
+		- Marked forced watch removal/restoration as internal work so its membership events do not enqueue a competing Retail watch-list fallback. Original watches are still restored, and the superTrackedQuestID CVar is written only after the guarded Retail setter succeeds, preventing that secondary write from bypassing deferred-selection safeguards. (2026.11.01.1848)
+		- Added a Retail-only nearest selector that compares watched quest objective distances in yards using the existing per-quest tracker distance resolver. Movement includes ordinary, daily, meta, campaign and world watches, with world classification checked before excluding non-world task, bonus and threat objectives. With the applicable maximum-level or below-cap preference enabled, the nearest campaign having an eligible current-step coordinate on the exact player map wins; otherwise selection uses the nearest eligible quest without type bias. Campaign preferences have no effect with movement disabled and cannot independently enable empty-focus selection. (2026.11.01.1921)
+		- Added a half-second Retail movement monitor independent of coordinate display and waypoint automation, with timer identity and focus-revision checks to discard stale ticks after manual input. Retail movement selection updates focus directly without clearing user waypoints, simulating a row click, or removing/restoring quest watches. Existing combat, taxi, map, instance/scenario, numbered-route and searched-preview safeguards remain; non-Retail selectors retain their prior paths. (2026.11.01.1921)
+
+	EventManager.lua
+		- handlePlayerRegenEnabled() now calls RQEMacro:SyncMacroWithFrameAfterCombat() 0.6 seconds after combat ends, after the deferred combat supertrack has applied. Macro edits made during combat were queued but never replayed on Retail or Forever, so a quest completed in combat could leave its macro behind while the RQEFrame was empty. (2026.10.31.0026)
+		- Replaced the RQEMacro:SyncMacroWithFrameAfterCombat() call with existing functions inline. 0.6 seconds after combat ends, handlePlayerRegenEnabled() empties RQEMacro's pendingMacroSets, pendingMacroOperations, and pendingMacroClears queues. It then calls RQEMacro:ClearMacroContentByName("RQE Macro") when the RQEFrame is empty (no DisplayedQuestID and no searched preview). Otherwise it sets RQE.isCheckingMacroContents, calls RQEMacro:CreateMacroForCurrentStep(), and clears the flag 0.3 seconds later, matching the existing post-combat macro pattern. The previous call remains commented out. (2026.10.31.0032)
+		- Moved the RunUpdateRQEWorldQuestFrame reset immediately before UpdateRQEWorldQuestFrame inside handlePlayerRegenEnabled's existing 0.2-second callback. A redraw blocked by renewed combat can now reassert its pending flag and retry at the next combat exit without requiring another quest-progress event; the previous order remains commented out. (2026.10.31.1200)
+		- Changed the quest-status refresh gate to query the live client UnitOnTaxi API, so a stale PlayerMountStatus value cannot suppress main-frame updates after landing. (2026.10.31.1306)
+		- Restored taxi-flight state when entering the world and reconciled saved flight-master waypoints on initial loading and TomTom availability. Ground cleanup removes only stale flight-master ownership, and deferred cleanup preserves a newly chosen manual waypoint; a reload during flight still releases the saved pin after landing. (2026.10.31.1306)
+		- Post-combat macro reconciliation now remembers an explicitly queued RQE Macro clear and applies it when the current supertracked quest has no effective database entry or active focus, preventing the previous quest's command from surviving. Searched previews and known-step rebuilding take precedence over stale clears; missing data without a queued clear, renewed-combat deferral, and the existing instance clear guard retain their prior behavior. (2026.10.31.1306)
+		- handlePlayerControlLost now calls the existing ReleaseManualFlightMasterWaypoint helper immediately when the event fires, before the delayed taxi-state check. Cleanup targets the hidden RQE_FlightMaster ownership tag instead of the visible waypoint name, preserving RQE-tagged quest and ordinary TomTom waypoints. Existing taxi bookkeeping and landing/login recovery remain available. (2026.10.31.1333)
+		- handleQuestDetail now calls the shared auto-accept function after its existing quest diagnostics, independent of the optional QUEST_DETAIL payload; removed its early debug-level return so the opt-in behavior runs in every mode. (2026.11.01.1439)
+		- Registered QUEST_PROGRESS with RQE.handleQuestProgress and used that handler to call RQE.API.AutoComplete, so the enabled no-choice turn-in can advance from the quest progress window on Retail. (2026.11.01.1510)
+		- Passed the displayed-quest mode from Retail QUEST_PROGRESS to AutoComplete, so the open quest can turn in without changing the player's supertracked quest. (2026.11.01.1524)
+		- Added Retail-only QueueUnfocusedQuestSelection and ProcessUnfocusedQuestSelection to combine acceptance and watch-list events into one selection. Accepted IDs are deduplicated in arrival order; the first still-eligible acceptance wins once, with nearest/watched fallback used only when no acceptance joined the batch. Selection uses live focus and quest membership rather than helper text, button visibility, or the broken simulated tracker-row click. (2026.11.01.1848)
+		- Included regular and meta quests plus active bonus, threat, and task objectives. Area objectives must remain incomplete and in the player's current objective area, and may qualify without a standard quest-log row; world-quest acquisition is excluded. Every attempt rechecks the Choose-a-quest setting, instance/scenario restrictions, existing focus, and searched previews. A 1.5-second settle delay, half-second retries, short data-readiness grace, and 30-second expiry avoid stale requests after combat, map interaction, abandonment, or leaving an objective area. (2026.11.01.1848)
+		- Retail watch additions now reserve their selection before the UnitQuestLogChangedFired gate and join the acceptance batch instead of immediately focusing an older nearby quest. Retail QUEST_ACCEPTED no longer runs the movement-swap pass or blank-helper click fallback; non-Retail root-file behavior is retained behind client checks. (2026.11.01.1848)
+		- Added secure observation of native quest selection and ClearAllSuperTracked calls plus client-driven focus-change cancellation. Same-quest reselection and explicit clearing invalidate pending requests without relying on the temporary ManualSuperTrack flag. Deferred Retail automatic map/combat requests retain their originating focus ID and revision, so old queued work cannot replay over a newer choice; acceptance retries stay out of those generic queues and RQE user-waypoint pins do not count as quest focus. (2026.11.01.1848)
+		- Retail accept/watch batches now honor movement mode before newly accepted quest order, including when Choose a quest when none is focused is disabled. Movement batches use the shared nearest/campaign selector and permit world-watch candidates; with movement off, acceptance retains FIFO selection of ordinary/meta quests and active bonus/tasks. Existing focus, manual cancellation, bounded combat/map retries, live eligibility and instance/scenario checks remain, and movement batches also wait while on a taxi. (2026.11.01.1921)
+		- Connected Retail movement start/stop events to the independent selection monitor. Deferred automatic map/combat selections now retain the four originating tracking preferences and reject replay after any of them changes or both main modes are disabled, preventing obsolete settings from selecting a stale candidate. These changes are guarded by IsRetail so shared-root Classic behavior is unchanged. (2026.11.01.1921)
+
+	QuestingModule.lua
+		- Added RQE:RefreshShownWorldQuestRowsInCombat(). It rewrites the objective text (through BuildTrackerObjectiveDisplay, the same text ApplyTrackerObjectiveDisplay uses), an existing progress bar's value and percentage, the distance, and the time left on World Quest rows that are already shown. It creates no rows, re-sorts nothing, and moves no anchors, so it is safe during combat lockdown. Previously these rows kept their pre-combat progress until combat ended. (2026.10.30.2356)
+		- UpdateRQEWorldQuestFrame() still defers the full render during combat through RunUpdateRQEWorldQuestFrame, but now queues one RQE:RefreshShownWorldQuestRowsInCombat() call 0.2 seconds later. The WorldQuestCombatRefreshQueued flag collapses the several requests one kill produces into one refresh. The previous combat early-return remains commented out. (2026.10.30.2356)
+		- Stored each World Quest row's FormatTimeLeft function as row.RQEFormatTimeLeft, so the combat refresh formats time left exactly as the full render does. (2026.10.30.2356)
+		- RQE:RefreshShownWorldQuestRowsInCombat() now walks the shown WQButton rows instead of the world quest watch list. A row whose quest is no longer watched or is flagged completed (C_QuestLog.IsQuestFlaggedCompleted) is hidden together with its section-parented progress bar, so a world quest finished mid-combat no longer lingers until combat ends. Objectives are rewritten only while the quest has a quest log index, because a world quest leaves the log as it completes and its objectives then read as 0 fulfilled; this stops the reset-to-0 display. The previous watch-list loop remains commented out. (2026.10.31.0004)
+		- UpdateRQEQuestFrame() now calls RQE:SaveTrackedQuestsToCharacter() as its first statement, so every tracker update, whatever triggered it, saves the character's watched quests and their step indexes. The save function's PendingTrackerStateRestore guard still blocks saving before login restoration finishes. (2026.10.31.0009)
+		- Recorded each world quest row's RQELayoutProgressBar from the bottom element returned by its latest full objective render, resetting it when the layout excludes the bar. RefreshShownWorldQuestRowsInCombat now hides obsolete bars and updates or re-shows only a matching bar whose space remains reserved for the current row, preventing retained bars from older layouts from overlapping later rows. Completion and untracking also clear this eligibility. (2026.10.31.1200)
+		- Added an optional includeProgressPercentage argument to BuildTrackerObjectiveDisplay for the combat refresh's text fallback when no eligible bar can be shown. The percentage stays on its original objective line with existing colors and the same rounding as the bar, including 0%, while other objective lines and default full-render formatting remain unchanged. Combat updates create no frames or anchors; full redraws restore normal bar presentation. (2026.10.31.1200)
+		- UpdateRQEWorldQuestFrame retains the shared 0.2-second combat refresh but checks the latest watch list for missing, hidden, mismatched, or wrongly parented World Quest rows. It reuses the existing plain-frame renderer only when a tracked row needs to appear, including the first world quest in a hidden section; ordinary progress events keep the lightweight refresh. Combat membership redraws update the section count/header, exclude completed quests still lingering in the watch list, and retain the post-combat reconciliation flag. Collapsed rows use IsShown rather than IsVisible to avoid repeated rebuilds. (2026.10.31.1213)
+		- Before a combat membership redraw clears rows, it preserves objective text and any currently shown, correctly owned progress bar for existing rows temporarily missing from the quest log. Those rows keep their last displayed progress instead of resetting to zero; hidden obsolete bars stay hidden and are not reserved in the new layout. New rows use the normal objective formatter and bar layout, and replaced code remains commented out. (2026.10.31.1213)
+		- Extended the batched combat membership check to detect shown rows absent from the current eligible watch set and an empty-but-shown section. Additions, removals, and completed quests now share one membership redraw; removed rows and their bars are hidden, remaining rows compact, and removing the final row hides the section and reanchors following sections. A queued combat refresh that runs after combat ends retains the lightweight path, leaving the existing post-combat callback to perform the full redraw once. (2026.10.31.1217)
+		- Shared World Quest layout measurement between full renders and lightweight combat refreshes. Objective growth, wrapping, and progress-bar changes update row spacing, measured section height, collapsed-section height caches, following section anchors, and scroll range as needed without rebuilding unchanged quest membership. Full membership redraws also restore section anchors when a removed World Quests section returns at the same measured height. (2026.10.31.1306)
+		- Added GetCampaignStepDistanceOnMap for Retail campaign ranking. It resolves the candidate quest's own saved/live/next-incomplete step, examines that step's coordinates or coordinateHotspots only, filters completed objective-index hotspots and invalid coordinates, and measures the closest remaining point on the exact player map in yards. It never borrows another focused quest's step index, treats a continent as a map match, or promotes unrelated steps; existing tracker distance helpers and Classic behavior remain unchanged. (2026.11.01.1921)
+
+	QuestTools.lua
+		- Filled both QUESTID placeholders in the new multi-window turn-in macro from the current supertracked quest, while preserving NPCNAME and QUESTID placeholders independently when no valid target or quest is available; the flyout preview keeps the raw template placeholders. (2026.11.01.1303)
+		- Shortened only the multi-window turn-in template's copied NPC target to its first word, allowing the new compact API call to produce the requested /tar Stamp form without changing other target macros. (2026.11.01.1328)
+		- Removed the single-word target override from Contribution macro copies, restoring the full NPC name in both the copyable macro and its dialog title; the existing Lua string escaping preserves embedded quotation marks. (2026.11.01.1343)
+
+	RQE.toc
+		- Updated version#. (2026.10.31.0106)
+
+	RQE_API.lua
+		- Added RQE.API.AutoComplete with client-resolved gossip, quest panel, timer, and reward APIs. It selects only the supertracked quest, advances its progress and reward panels, and stops for multiple reward choices, required payment, disabled settings, or unavailable quest APIs. (2026.11.01.1328)
+		- Added RQE.API.AutoAcceptQuestDetail using the client API bridge for AcceptQuest and Blizzard's auto-accept acknowledgement when available. It checks the saved option at event time and never depends on the QUEST_DETAIL item payload. (2026.11.01.1439)
+		- Consulted the optional Contribution companion before quest-detail acceptance or no-choice completion, passing the offered, supertracked, and displayed quest IDs so contributor-specific missing-database quests remain manual without putting account identity rules in RQE. (2026.11.01.1510)
+		- Added a displayed-quest mode to AutoComplete for QUEST_PROGRESS. It reads GetQuestID for the quest at the giver and keeps the existing setting, Contribution database check, reward-choice, and payment guards; macro calls still use the supertracked quest, while the event mode never selects another gossip quest. (2026.11.01.1524)
+
+	RQEDatabase.lua
+		- Updated several profession quests and Darkmoon Faire quests in DB (2026.11.01.2343) 
+
+	RQEMacro.lua
+		- Added RQEMacro:SyncMacroWithFrameAfterCombat(). Outside combat it discards the pendingMacroSets, pendingMacroOperations, and pendingMacroClears queues, which Retail and Forever filled during combat but never replayed, so they no longer grow or hold stale work. It then sets the RQE Macro from what the RQEFrame shows: a searched quest preview rebuilds its preview macro; an empty frame (no DisplayedQuestID) clears the macro; a displayed supertracked quest gets its current step macro, or a cleared macro when that step has none; a displayed quest that is neither supertracked nor searched goes through RQE:ShouldClearFrame(), which clears the frame and macro together when the quest no longer belongs there. (2026.10.31.0026)
+		- Commented out RQEMacro:SyncMacroWithFrameAfterCombat(); EventManager.lua now does the same post-combat reconciliation with the existing ClearMacroContentByName and CreateMacroForCurrentStep functions, so RQEMacro gains no new function. (2026.10.31.0032)
+
+	WPUtil.lua
+		- ReleaseManualFlightMasterWaypoint now requires its cached TomTom UID to carry the RQE_FlightMaster tag before adding it to the removal list, matching the tag filter used for stored waypoints. TomTom may reuse a same-coordinate/same-title pin owned by the player or another addon; a cached reference alone can no longer remove that pin. Updated the helper comments for immediate PLAYER_CONTROL_LOST cleanup and retained the previous UID condition commented out. (2026.10.31.1333)
+
+
 12.1.5.1 (2026.10.31)
 
 	**HIGHLIGHTS**
@@ -186,6 +338,11 @@
 	RQE.toc
 		- Updated version#. (2026.10.13.1739)
 
+	RQE_API.lua
+		- Added shared loaded-Dugi detection and a setting plus RQE quest-frame visibility check for all clients, independent of native or virtual quest watch counts. (2026.10.21.1230)
+		- Exposed the active Dugi compatibility state separately from the hidden-frame check so tracker enforcement can also hide Blizzard's tracker when RQE's Quest Tracker is visible. (2026.10.21.1232)
+		- Saved and restored Dugi's separately parented objective border across RQE Quest Tracker visibility changes so hiding Blizzard's tracker does not leave the border behind or lose it on return. (2026.10.21.1237)
+
 	RQEDatabase.lua
 		- Removed duplicates from several DB tables (2026.10.13.1739) 
 		- Copied Burning Crusade quest entries into Burning Crusade Anniversary while preserving its existing quests and remapping Outland zone and continent IDs for Anniversary coordinates. (2026.10.12.1739)
@@ -200,11 +357,6 @@
 
 	RQEMinimap.lua
 		- Replaced the TomTom.waydb:ResetProfile() call with RQE:ClearRQETomTomWaypoints(), which removes only waypoints tagged from = "RQE", so clearing RQE's arrow no longer deletes the player's own or other addons' TomTom waypoints; the previous call remains commented out. (2026.10.30.2139)
-
-	RQE_API.lua
-		- Added shared loaded-Dugi detection and a setting plus RQE quest-frame visibility check for all clients, independent of native or virtual quest watch counts. (2026.10.21.1230)
-		- Exposed the active Dugi compatibility state separately from the hidden-frame check so tracker enforcement can also hide Blizzard's tracker when RQE's Quest Tracker is visible. (2026.10.21.1232)
-		- Saved and restored Dugi's separately parented objective border across RQE Quest Tracker visibility changes so hiding Blizzard's tracker does not leave the border behind or lose it on return. (2026.10.21.1237)
 
 	TrackerSync.lua
 		- Added RQE:RequestQuestTrackerRefresh(), a shared trailing debounce that restarts one C_Timer.NewTimer on each request and calls UpdateRQEQuestFrame 0.3 seconds after the last one (at most 1 second after the first), so event bursts rebuild the Quest Tracker once with the final quest-log state on every client. (2026.10.30.2203)
