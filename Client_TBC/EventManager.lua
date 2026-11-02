@@ -1629,6 +1629,13 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	-- Function to handle ADDON_LOADED
 	-- Fires after an AddOn has been loaded and is typically the first event to fire (running after all .lua files have been run and SavedVariables have loaded)
 	function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
+		-- TomTom can finish loading after RQE. Its saved pins are restored by its
+		-- ADDON_LOADED handler, so reconcile on the next frame after both handlers.
+		if addonName == "TomTom" then
+			RQE.API.Client.C_Timer.After(0, function() RQE:ReconcileFlightMasterWaypointAfterLogin() end)
+			return
+		end
+
 		-- Only proceed if RQE is the addon being loaded
 		if addonName == "RQE" then
 			RQE.infoLog("ADDON_LOADED for Rhodan's Quest Explorer")
@@ -2394,6 +2401,25 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	end
 
 
+	-- A saved TomTom flight-master pin outlives RQE's in-memory ownership on reload.
+	-- Wait until TomTom has initialized, and never let deferred login cleanup remove
+	-- a flight master explicitly selected in this session.
+	function RQE:ReconcileFlightMasterWaypointAfterLogin()
+		if not self.PendingFlightMasterLoginCleanup then return end
+		if self.API.Client.UnitOnTaxi("player") then
+			self.TaxiFlightInProgress = true
+			return
+		end
+		if self.ManualFlightMasterWaypointMapID or self.ManualFlightMasterWaypointUID then
+			self.PendingFlightMasterLoginCleanup = nil
+			return
+		end
+		if not (TomTom and TomTom.RemoveWaypoint and type(TomTom.waypoints) == "table") then return end
+		self:ReleaseManualFlightMasterWaypoint()
+		self.PendingFlightMasterLoginCleanup = nil
+	end
+
+
 	-- Handles PLAYER_CONTROL_GAINED event
 	-- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
 	function RQE.handlePlayerControlGained()
@@ -2404,6 +2430,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			if RQE.ReleaseManualFlightMasterWaypoint then
 				RQE:ReleaseManualFlightMasterWaypoint()
 			end
+			RQE:ReconcileFlightMasterWaypointAfterLogin()
 		end
 
 		C_Timer.After(1.5, function()
@@ -2973,6 +3000,12 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		local event = select(2, ...)
 		local isLogin = select(3, ...)
 		local isReload = select(4, ...)
+		if isLogin or isReload then
+			-- PLAYER_CONTROL_LOST has already happened when reloading during a flight.
+			RQE.TaxiFlightInProgress = RQE.API.Client.UnitOnTaxi("player") and true or false
+			RQE.PendingFlightMasterLoginCleanup = true
+			RQE.API.Client.C_Timer.After(0, function() RQE:ReconcileFlightMasterWaypointAfterLogin() end)
+		end
 
 		-- Print Event-specific Args
 		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
@@ -6072,7 +6105,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 
 		-- Skip the delayed main-frame refresh only while on a taxi. The previous
 		-- condition was always true because the mount states are mutually exclusive.
-		if RQE.PlayerMountStatus ~= "Taxi" then
+		-- Read the live state: PlayerMountStatus can remain "Taxi" after landing.
+		if not RQE.API.Client.UnitOnTaxi("player") then
 		-- Previous code (commented out 2026.10.30): always true, so the refresh never skipped a taxi ride
 		-- if RQE.PlayerMountStatus == "Flying" or RQE.PlayerMountStatus ~= "Taxi" or RQE.PlayerMountStatus ~= "Dragonriding" then
 			-- Each QUEST_LOG_UPDATE restarts one shared timer, so the main-frame refresh
