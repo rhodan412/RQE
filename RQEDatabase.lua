@@ -13,6 +13,36 @@ RQEDatabase = {
 
 -- Midnight Expansion
 	Midnight = {
+		[95794] = {
+			title = "De-cryption Process",
+			location = { x = 44.54, y = 34.44, mapID = 2512 },
+			objectivesQuestText = { "" },	-- WQ
+			descriptionQuestText = { "" },	-- WQ
+			npcs = {
+				{ object = "WQ", id = "x99" },
+			},
+			-- [1] = {
+				-- description = "Complete Objective #1: 0/6 Spirits de-crypted",
+				-- coordinates = { x = 44.54, y = 34.44, mapID = 2512 },
+				-- check = { "95794" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBObjectiveStatus",
+				-- npcTargets = {
+					-- { name = "", marker = 8, mustBeAlive = true },
+				-- },
+				-- macro = { "" },
+				-- objectiveIndex = 1,
+			-- },
+			-- [2] = {
+				-- description = "Turn in the quest (done so automatically)",
+				-- coordinates = { x = 44.54, y = 34.44, mapID = 2512 },
+				-- check = { "95794" },
+				-- neededAmt = { "1" },
+				-- funct = "CheckDBComplete",
+				-- macro = { "" },
+				-- objectiveIndex = 99,
+			-- },
+		},
 		[31911] = {
 			title = "Deiza Plaguehorn", -- Objectives: Defeat Deiza Plaguehorn in a pet battle.
 			locations = {
@@ -58539,7 +58569,7 @@ RQEDatabase = {
 				objectiveIndex = 99,
 			},
 		},
-		[93713] = {-- Skinning Weekly in Silvermoon City
+		[93713] = { -- Skinning Weekly in Silvermoon City
 			title = "Essential Materials", -- Objectives: Collect 5 Carving Canines and 2 Void-Tempered Hides and deliver it to Tyn in Silvermoon.
 			locations = {
 				{ x = 43.21, y = 55.59, mapID = 2393 },
@@ -60098,7 +60128,7 @@ RQEDatabase = {
 				-- npcTargets = {
 				-- 	{ name = "", marker = 8, mustBeAlive = true },
 				-- },
-				-- macro = { "#showtooltip item:5830\n/tar Jorvan Longmoor\n/run RQE.SelectMultipleGossipOptions(\"Jorvan Longmoor\", 0, 0)\n/tm 0\n/tm ~2" },	-- COORECT GOSSIPOPTIONS!
+				-- macro = { "#showtooltip item:5830\n/tar Jorvan Longmoor\n/run RQE.SelectMultipleGossipOptions(\"Jorvan Longmoor\", 0, 0)\n/tm 0\n/tm ~2" },	-- CORRECT GOSSIPOPTIONS!
 				-- objectiveIndex = 1,
 			-- },
 			-- [2] = {
@@ -92393,7 +92423,10 @@ RQEDatabase = {
 		},
 		[80295] = {
 			title = "Rocks, Water and Elemental Fodder",
-			location = { x = 71.83, y = 52.78, mapID = 2248 },
+			locations = {
+				{ x = 71.83, y = 52.78, mapID = 2248 },
+				{ x = 79.21, y = 20.59, continentID = 2274 },
+			},
 			objectivesQuestText = { "" },	-- WQ
 			descriptionQuestText = { "" },	-- WQ
 			npcs = {
@@ -96520,7 +96553,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Discover more about Zekvir, Hand of the Harbinger." },
 			descriptionQuestText = { "A few of our explorer's have come back battered and bruised from delves. They speak of a terrible monster called Zekvir. Perhaps you've heard of this creature? Allow me to tell you more of what we've learned." },
 			npcs = {
-				{ npc = "Naleidea Rivergleam", id = "x99" },
+				{ npc = "Naleidea Rivergleam", id = 226763 },
 			},
 			[1] = {
 				description = "Ask Naleidea about Zekvir in Delver's Headquarters by seand select, \"Tell me more about this Zekvir.\" Next, watch the dialogue/RP.",
@@ -96623,130 +96656,67 @@ RQEDatabase = {
 		},
 		[81615] = {
 			title = "Wick Points",
-			location = { x = 62.96, y = 41.91, mapID = 2248 },
+			locations = {
+				{ x = 63.49, y = 42.90, mapID = 2248 },
+				{ x = 78.44, y = 20.13, continentID = 2274 },
+			},
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
-			npc = { "" },
-			-- [1] = {
-				-- description = "! Kobold Invader slain: 2/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 62.99, y = 42.81, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 1,
-			-- },
-			-- [2] = {
-				-- description = "! Kobold Invader slain: 3/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 62.99, y = 42.81, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 2,
-			-- },
-			-- [3] = {
-				-- description = "! Kobold Invader slain: 4/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 62.99, y = 42.81, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 3,
-			-- },
-			-- [4] = {
-				-- description = "! Kobold Invader slain: 5/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 63.18, y = 43.31, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 4,
-			-- },
-			-- [5] = {
-				-- description = "! Kobold Invader slain: 6/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 62.69, y = 43.45, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 5,
-			-- },
-			-- [6] = {
-				-- description = "! Kobold Invader slain: 7/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 62.67, y = 43.43, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 6,
-			-- },
-			-- [7] = {
-				-- description = "! Kobold Invader slain: 8/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 62.67, y = 43.43, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 7,
-			-- },
-			-- [8] = {
-				-- description = "! Kobold Invader slain: 9/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 62.67, y = 43.43, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 8,
-			-- },
-			-- [9] = {
-				-- description = "! Kobold Invader slain: 10/12 in Mourning Rise, Isle of Dorn.",
-				-- coordinates = { x = 62.69, y = 44.33, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBObjectiveStatus",
-				-- npcTargets = {
-					-- { name = "", marker = 8, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 9,
-			-- },
-			-- [10] = {
-				-- description = "Turn in the quest",
-				-- coordinates = { x = 63.22, y = 45.42, mapID = 2248 },
-				-- check = { "81615" },
-				-- neededAmt = { "1" },
-				-- funct = "CheckDBComplete",
-				-- npcTargets = {
-					-- { name = "", marker = 6, mustBeAlive = true },
-				-- },
-				-- macro = { "" },
-				-- objectiveIndex = 99,
-			-- },
+			npcs = {
+				{ object = "WQ", id = "x99" },
+			},
+			[1] = {
+				description = "Kill |cFFffcc33{objectiveRemaining}|r Kobold Invaders at Mourning Rise, Isle of Dorn.",
+				coordinateHotspots = {
+					{ x = 63.49, y = 42.90, mapID = 2248, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 78.44, y = 20.13, continentID = 2274, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "81615" },
+				neededAmt = { "9" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Candlelit Big-Boomer", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Blind-Hound", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Boomer", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Hexthrower", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Lootsnatcher", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Ouchpatcher", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Candlelit\n/cleartarget [dead]\n/tm 0\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[2] = {
+				description = "Kill |cFFffcc331|r Kobold Invaders at Mourning Rise, Isle of Dorn.",
+				coordinateHotspots = {
+					{ x = 63.49, y = 42.90, mapID = 2248, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 78.44, y = 20.13, continentID = 2274, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "81615" },
+				neededAmt = { "10" },
+				funct = "CheckDBObjectiveStatus",
+				npcTargets = {
+					{ name = "Candlelit Big-Boomer", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Blind-Hound", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Boomer", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Hexthrower", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Lootsnatcher", marker = 8, mustBeAlive = true },
+					{ name = "Candlelit Ouchpatcher", marker = 8, mustBeAlive = true },
+				},
+				macro = { "#showtooltip item:4588\n/tar Candlelit\n/cleartarget [dead]\n/tm 0\n/tm ~8" },
+				objectiveIndex = 1,
+			},
+			[3] = {
+				description = "Turn in the quest (done so automatically)",
+				coordinateHotspots = {
+					{ x = 63.49, y = 42.90, mapID = 2248, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 78.44, y = 20.13, continentID = 2274, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+				},
+				check = { "81615" },
+				neededAmt = { "1" },
+				funct = "CheckDBComplete",
+				macro = { "" },
+				objectiveIndex = 99,
+			},
 		},
 		[81620] = {
 			title = "Recovery Job",
@@ -96893,14 +96863,19 @@ RQEDatabase = {
 		},
 		[81630] = {
 			title = "Activation Protocol",
-			location = { x = 50.10, y = 58.75, mapID = 2348 },
+			locations = {
+				{ x = 50.10, y = 58.75, mapID = 2248 },
+				{ x = 72.45, y = 27.20, continentID = 2274 },
+			},
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
-			npc = { "" },
+			npcs = {
+				{ object = "WQ", id = "x99" },
+			},
 			[1] = {
-				description = "Kordac slain in Isle of Dorn.",
+				description = "Kill Kordac in the Isle of Dorn.",
 				coordinateHotspots = {
-					{ x = 50.10, y = 58.75, mapID = 2348, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
+					{ x = 50.10, y = 58.75, mapID = 2248, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 72.45, y = 27.20, mapID = 2274, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 				},
 				check = { "81630" },
@@ -102605,10 +102580,15 @@ RQEDatabase = {
 		},
 		[82234] = {
 			title = "A Floral Flair for Every Ram",
-			location = { x = 42.55, y = 74.53, mapID = 2248 },
+			locations = {
+				{ x = 42.55, y = 74.53, mapID = 2248 },
+				{ x = 68.40, y = 33.53, continentID = 2274 },
+			},
 			objectivesQuestText = { "" },
 			descriptionQuestText = { "" },
-			npc = { "" },
+			npcs = {
+				{ object = "WQ", id = "x99" },
+			},
 			[1] = {
 				description = "Crimson Charmer collected from the grounds near in Freywold Village, Isle of Dorn.",
 				coordinates = { x = 42.55, y = 74.53, mapID = 2248 },
@@ -141965,11 +141945,14 @@ RQEDatabase = {
 		},
 		[93898] = {
 			title = "A Haunted Home",
-			location = { x = 56.84, y = 28.64, mapID = 2339 },
-			objectivesQuestText = { "" },	-- WQ
-			descriptionQuestText = { "" },	-- WQ
+			locations = {
+				{ x = 46.07, y = 55.00, mapID = 2339 },
+				{ x = 71.83, y = 21.44, continentID = 2274 },
+			},
+			objectivesQuestText = { "Speak with Yin Shuilan at your neighborhood." },
+			descriptionQuestText = { "I've heard tell of spooky apparitions and tasty treats popping up around the neighborhoods. If ye get a chance, you may want to look into it." },
 			npcs = {
-				{ object = "WQ", id = "x99" },
+				{ npc = "Holiday Enthusiast", id = 220307 },
 			},
 			-- [1] = {
 				-- description = "Turn in the quest (done so automatically)",
@@ -182960,7 +182943,7 @@ RQEDatabase = {
 				coordinateHotspots = {
 					{ x = 28.53, y = 61.34, mapID = 2112, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 54.76, y = 49.35, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },		-- Thaldraszus
+					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Thaldraszus
 					{ x = 98.11, y = 27.10, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Ohn'Aran Plains
 					{ x = 66.00, y = 99.96, mapID = 2022, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- The Waking Shores
 				},
@@ -182975,7 +182958,7 @@ RQEDatabase = {
 				coordinateHotspots = {
 					{ x = 28.53, y = 61.34, mapID = 2112, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 54.76, y = 49.35, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },		-- Thaldraszus
+					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Thaldraszus
 					{ x = 98.11, y = 27.10, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Ohn'Aran Plains
 					{ x = 66.00, y = 99.96, mapID = 2022, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- The Waking Shores
 				},
@@ -182990,7 +182973,7 @@ RQEDatabase = {
 				coordinateHotspots = {
 					{ x = 28.53, y = 61.34, mapID = 2112, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 54.76, y = 49.35, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },		-- Thaldraszus
+					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Thaldraszus
 					{ x = 98.11, y = 27.10, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Ohn'Aran Plains
 					{ x = 66.00, y = 99.96, mapID = 2022, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- The Waking Shores
 				},
@@ -183005,7 +182988,7 @@ RQEDatabase = {
 				coordinateHotspots = {
 					{ x = 28.53, y = 61.34, mapID = 2112, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 54.76, y = 49.35, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },		-- Thaldraszus
+					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Thaldraszus
 					{ x = 98.11, y = 27.10, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Ohn'Aran Plains
 					{ x = 66.00, y = 99.96, mapID = 2022, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- The Waking Shores
 				},
@@ -183020,7 +183003,7 @@ RQEDatabase = {
 				coordinateHotspots = {
 					{ x = 28.53, y = 61.34, mapID = 2112, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 54.76, y = 49.35, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },		-- Thaldraszus
+					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Thaldraszus
 					{ x = 98.11, y = 27.10, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Ohn'Aran Plains
 					{ x = 66.00, y = 99.96, mapID = 2022, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- The Waking Shores
 				},
@@ -183035,7 +183018,7 @@ RQEDatabase = {
 				coordinateHotspots = {
 					{ x = 28.53, y = 61.34, mapID = 2112, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 54.76, y = 49.35, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },		-- Thaldraszus
+					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Thaldraszus
 					{ x = 98.11, y = 27.10, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Ohn'Aran Plains
 					{ x = 66.00, y = 99.96, mapID = 2022, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- The Waking Shores
 				},
@@ -183050,7 +183033,7 @@ RQEDatabase = {
 				coordinateHotspots = {
 					{ x = 28.53, y = 61.34, mapID = 2112, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 54.76, y = 49.35, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },		-- Thaldraszus
+					{ x = 36.84, y = 61.51, mapID = 2025, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Thaldraszus
 					{ x = 98.11, y = 27.10, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- Ohn'Aran Plains
 					{ x = 66.00, y = 99.96, mapID = 2022, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- The Waking Shores
 				},
@@ -203418,14 +203401,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 8 Lava-Quenched Blades." },
 			descriptionQuestText = { "I've heard tales that the djaradin forge their blades with magic so hot that they can actually quench the metal with lava. Lava! It's like ice water compared to the heat their magic creates! But I've never been able to verify it for myself. They aren't exactly peddling their wares at the market. You smell like battle, though. Go and fetch some of their weapons for the blacksmiths back in Loamm and we'll see if the legends are true, eh?" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Kill Zaqali Infernoblades and Cragrunners and loot 8 {item:204434:Lava-Quenched Blades} from their bodies at Igira's Watch, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 39.32, y = 45.28, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75148" },
 				neededAmt = { "8" },
@@ -203459,14 +203442,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Obsidian Tablets." },
 			descriptionQuestText = { "It's not common these days, but we do have a few of our histories in writing--well, carvings really. We can trace the etchings with our fingers! We used to use clay tablets for this, but they were brittle, and prone to breaking. Not good if you want to preserve history! I hear the djaradin carve their important texts into volcanic glass. If they can manage that without shattering the tablets, we could probably learn a thing or two from their techniques! Take some samples back to Loamm for study." },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Collect 10 {item:204435:Obsidian Tablets}, from the ground, around Igira's Watch, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 36.14, y = 58.90, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75149" },
 				neededAmt = { "10" },
@@ -203496,14 +203479,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 8 Everburning Fireshards." },
 			descriptionQuestText = { "Some of our incense needs to be burned very slowly to release the right aromas. You can check the heat yourself, of course--but it gets to be a bother. Fortunately, I've found a solution! If you grind up shards of fire elementals and sprinkle the dust over the incense, you can keep the heat consistent using enchantments. Completely hands-free! Those shards are a bit hard to come by, though. Could you find some and bring them to my friends back in Loamm?" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Kill Rousing Flames and loot 8 {item:204433:Everburning Fireshard}, from their bodies, at Igira's Watch, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 39.09, y = 41.15, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75150" },
 				neededAmt = { "8" },
@@ -204211,14 +204194,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Whelkshell Crystals and deliver them to Fanilly in Loamm." },
 			descriptionQuestText = { "Well, hello there! Have you seen those snails in Zaralek Cavern with the crystals growing from their shells? When crushed to powder and mixed with a proper solution of slime, those crystals make a paste that adds a considerable luster to our gems! Bring some to my good friend Fanilly, and I'm sure she'll be happy to chat your ear off about jewelcrafting!" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Kill Slimy and Redolent Whelks, and loot 10 {item:204794:Whelkshell Crystals}, from their bodies, in Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 60.46, y = 48.57, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75362" },
 				neededAmt = { "10" },
@@ -204252,14 +204235,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Deepflayer Dust and deliver them to Mistie in Loamm." },
 			descriptionQuestText = { "Why, I just got another letter from my good friend Mistie. She's been looking for interesting ingredient ideas for her smelly concoctions! A while ago, the kithguards took down a deepflayer near Loamm. I noticed a peculiar dust it shed when it perished. It had a unique aroma to it, and I'm sure Mistie would love to experiment with something like that! Could you gather some from the deepflayers near Loamm, then bring it to Miss Mistie? You'll be doing us a favor, too!" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Kill Swooping and Scavenging Flayers and loot 10 {item:204796:Deepflayer Dust}, from their bodies, at Shimmering Towers, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 61.17, y = 43.79, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75363" },
 				neededAmt = { "10" },
@@ -204348,14 +204331,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Gelcap Spores." },
 			descriptionQuestText = { "Ah, Uplander! Can I ask for your assistance? The cavern below is full of mushrooms that are useful for all kinds of things! Miss Mistie has asked for help gathering them for her alchemical experiments. She says the Gelcap mushrooms produce sticky spores that she can make into a balm, good for easing achy joints and bunions! I sure could use some after standing around on these hard stones all day! If you can find her some, I'm sure she will make it worth your while!" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Collect 10 {item:204801:Gelcap Spores}, from the ground, around Fanged Pasture, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 47.18, y = 74.04, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75371" },
 				neededAmt = { "10" },
@@ -204458,14 +204441,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Underlight Cocoons Fibers in Zaralek Cavern." },
 			descriptionQuestText = { "Hello friend! You're a tailor, right? So you must know about silk! Mister Rossmar down in Loamm knows how to make special silk from the cocoons of the Underlight Moths, but could use some help gathering them up! You should be able to find them in the mushroomy area near Glimmerogg. I'll sure he will make it worth your while!" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Collect 10 {item:204817:Underlight Cocoon Fibers}, from the ground, around Cascades Column, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 47.36, y = 74.16, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75407" },
 				neededAmt = { "10" },
@@ -205380,14 +205363,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 8 Blackened Plate." },
 			descriptionQuestText = { "The black dragonkin in the north of Zaralek Cavern are said to be fine blacksmiths. They're quick to claim it has something do with a \"dominion over the earth\", but I'd like to see them try burrowing like a proper niffen! Still, you can't argue with the results. Grab a few examples and bring them to Kilnmaster Crubus in Loamm so he can study their techniques." },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Kill Brimstone dragonkins and loot 8 {item:205117:Blackened Plates}, from their bodies, at Brimstone Garrison, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 44.79, y = 19.29, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75569" },
 				neededAmt = { "8" },
@@ -205425,14 +205408,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Infused Proclamations." },
 			descriptionQuestText = { "You know who likes to hear themselves talk, loves bureaucracy, and enchants their own records? Dragons! Go poke around in the old black dragon fort north of Loamm. I'm sure they'll be all sort of magic-ish decrees, proclamations, and shopping lists just lying around! Bring whatever you uncover to Scridorsa the Chiseler back in Loamm. I'm sure she'd love something new and heavily enchanted to read!" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Collect 10 {item:205124:Infused Proclamation} at the Brimstone Garrison, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 44.84, y = 18.75, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75573" },
 				neededAmt = { "10" },
@@ -205462,7 +205445,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Ballistae Bits." },
 			descriptionQuestText = { "Those djaradin might smell like brutes, but their engineering corps must be top notch to keep churning out ballistae strong enough to threaten a dragon! Northeast of Loamm there's an ongoing scrap between them and some black dragons. There ought to be lots of spare parts scattered around. Or slightly used, moderately on fire ones, anyway! Haul them all back to Loamm! A little scorching won't stop our top minds from reverse niffeneering them." },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Collect 10 {item:205125:Ballistae Bits} from the \"Smashed Ballista\" at the Battlefield Ruins, Zaralek Cavern.",
@@ -205495,14 +205478,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 8 Calcisilk Bundles." },
 			descriptionQuestText = { "We may not have access to all those fancy plant fibers you surface types use up here, but we do have a lot of options I bet you don't! The spiders near Loamm make the most interesting smelling silk I ever did sniff. I think it might have something to do with their diet? If you round some up, I'm sure Rossmar back in Loamm will be happy to teach you a thing or two about how to use it!" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Kill Calcifying Crawler and Bone Collector spiders, and loot 8 {item:205158:Calcisilk Bundles}, from their bodies, at a cave south of Loamm, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 54.85, y = 65.84, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75600" },
 				neededAmt = { "8" },
@@ -205536,14 +205519,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Living Chips." },
 			descriptionQuestText = { "The crystalline creatures back home are as mysterious as they are stompy. What allows them to move? Are they even really alive? What do they taste like? Bring Fanilly a few samples to start studying. Just not any big enough to step on anyone in Loamm, ok?" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Kill Crystalline Walkers and loot 10 {item:205167:Living Chips} from their bodies at The Crystal Fields, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 56.56, y = 66.81, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75602" },
 				neededAmt = { "1" },
@@ -205576,7 +205559,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 10 Hololithic Gears." },
 			descriptionQuestText = { "The watchers left all sorts of amazing technology just laying around when they went to sleep. We could learn so much from their ancient castoffs. Even the least of contraptions are marvels to behold! If only there was someone brave, intelligent, and dare I say handsome enough to go retrieve a few examples for our finest niffeneers back in Loamm to examine... sound familiar?" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Collect {item:205177:Hololithic Gear} (on the ground): 1/10 in Nal ks'kol, Zaralek Cavern (against the top of the stairs near a flag).\n\n|cFFFF3333You may need to kill a Nal ks'kol Defense Orb, which might appear, when you loot the hololithic gear!|r",
@@ -206967,14 +206950,14 @@ RQEDatabase = {
 			objectivesQuestText = { "Collect 8 Relic Shards." },
 			descriptionQuestText = { "A group of mean, scaly uplanders moved in near the old titan ruins south of Loamm and started tearing the place apart. Rude, but they're sure to have uncovered all sorts of ancient titan scraps. And that stuff is almost always magic in some way. Grab some and go see what Dustmonger Topuiz back in Loamm can make of it!" },
 			npcs = {
-				{ npc = "Kayann", id = "x99" },
+				{ npc = "Kayann", id = 203516 },
 			},
 			[1] = {
 				description = "Kill Sundered Menders, Defenders and Researchers, and then loot 8 {item:205449:Relic Shards}, from their bodies, at Sundered Flame Camp, Zaralek Cavern.",
 				coordinateHotspots = {
 					{ x = 59.28, y = 72.59, mapID = 2133, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
 					{ x = 89.63, y = 28.50, mapID = 2023, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-					{ x = 52.24, y = 49.77, mapID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
+					{ x = 52.24, y = 49.77, continentID = 1978, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },	-- #1978 represents the 'Dragon Isles' continent map
 				},
 				check = { "75865" },
 				neededAmt = { "8" },
@@ -864916,6 +864899,7 @@ RQEDatabase = {
 					{ name = "Sylannia", marker = 6, mustBeAlive = true },
 				},
 				macro = { "#showtooltip item:2554\n/tar Sylannia\n/tm 6" },
+				-- macro = { "#showtooltip item:2554\n/tar Sylannia\n/tm 6\n/run C_GossipInfo.SelectActiveQuest(29506) C_Timer.NewTicker(.2,function(t)if GetQuestID()==29506 then if QuestFrameRewardPanel:IsShown()then t:Cancel()GetQuestReward(1)else CompleteQuest()end end end,25)" },
 				objectiveIndex = 99,
 			},
 		},
@@ -865181,7 +865165,7 @@ RQEDatabase = {
 				npcTargets = {
 					{ name = "Stamp Thunderhorn", marker = 6, mustBeAlive = true },
 				},
-				macro = { "#showtooltip item:2554\n/tar Stamp\n/tm 6" },
+				macro = { "#showtooltip item:2554\n/tar Stamp Thunderhorn\n/tm 6" },
 				objectiveIndex = 99,
 			},
 		},
@@ -865527,7 +865511,7 @@ RQEDatabase = {
 				npcTargets = {
 					{ name = "Stamp Thunderhorn", marker = 6, mustBeAlive = true },
 				},
-				macro = { "#showtooltip item:2554\n/tar Stamp\n/tm 6" },
+				macro = { "#showtooltip item:2554\n/tar Stamp Thunderhorn\n/tm 6" },
 				objectiveIndex = 99, 
 			},
 		},
@@ -867140,7 +867124,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring Moonfang's Pelt to Yebb Neblegear at the Darkmoon Faire on Darkmoon Island." },
 			descriptionQuestText = { "This is the pelt of Darkmoon Island's monstrous den mother. Yebb Neblegear, beastmaster of the Darkmoon Faire, will be happy to know the ghostly wolf and her spawn will no longer be terrorizing his menagerie... at least for a little while. Bring it to him." },
 			npcs = {
-				{ npc = "Moonfang", id = "x99" },
+				{ npc = "Moonfang", id = 71992 },
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:14829:Yebb Neblegear} at The Darkmoon Faire, Darkmoon Island.",
@@ -935036,7 +935020,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Use your Meatloaf Pan to cook 4 Infused Mushrooms and 2 Chilled Meats and bring the finished Mushroom Meatloaf to Orton Bennet in Curiosities & Moore, located in Runeweaver Square in Dalaran." },
 			descriptionQuestText = { "We have an important order that needs to go out! Orton Bennet in Curiosities & Moore needs a mushroom meatloaf. Get some infused mushrooms found in the Dalaran sewers, chilled meat, and cook them in this meatloaf pan. When you're done, deliver the cooked meatloaf to Orton." },
 			npcs = {
-				{ npc = "Katherine Lee", id = "x99" },
+				{ npc = "Katherine Lee", id = 28705 },
 			},
 			[1] = {
 				description = "Travel to the Dalaran Sewer. If you're an Herbalist you will be able to track herbs for the next part (make sure that it is turned on).",
@@ -935101,7 +935085,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Bring 4 Northern Stew that you use your cooking skill to make and a Jug of Wine from the cheese shop in Dalaran to Arille Azuregaze at the Legerdemain Lounge found in Runeweaver Square in Dalaran." },
 			descriptionQuestText = { "Arille Azuregaze at the Legerdemain Lounge has a convention coming in and needs a feast pronto! You need to provide some Northern Stew and a Jug of Wine from the cheese shop \"One More Glass\" in central Dalaran. The owner of the cheese shop owes me the wine and you should find it somewhere around the shop. Bring the wine and stews to Arille." },
 			npcs = {
-				{ npc = "Katherine Lee", id = "x99" },
+				{ npc = "Katherine Lee", id = 28705 },
 			},
 			[1] = {
 				description = "Create |cFFffcc334|r {item:34747:Northern Stew} via Cooking or through AH.",
@@ -935167,7 +935151,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Cook 4 Crystalsong Carrots from Crystalsong Forest with 4 Chilled Meat in the Cookpot. Once it is ready bring the Vegetable Stew to the Dalaran sewers Innkeeper Ajay Green." },
 			descriptionQuestText = { "Ajay Green the innkeeper in the Dalaran sewers needs a vegetable stew for his customers as they are running low on food down there. Collect 4 Crystalsong Carrots from the Crystalsong Forest and cook them together with 4 Chilled Meat. You can get to the Crystalsong Forest from the portal chamber in the eastern corner of Runeweaver Square. Once the vegetable stew is ready, bring it to Ajay." },
 			npcs = {
-				{ npc = "Katherine Lee", id = "x99" },
+				{ npc = "Katherine Lee", id = 28705 },
 			},
 			[1] = {
 				description = "Travel to the river underneath Dalaran, in Crystalsong Forest and collect 4 {item:43148:Crystalsong Carrots}.",
@@ -935237,7 +935221,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Combine the Empty Cheese Platter with Aged Dalaran Limburger from the cheese shop \"One More Glass\" and with 6 Half Full Dalaran Wine Glasses found on tables around Dalaran. Bring the Wine and Cheese platter to Ranid Glowergold at the Leatherworkers in the Magus Commerce Exchange." },
 			descriptionQuestText = { "Ranid Glowergold in the Leatherworkers shop in Dalaran has had a sudden craving for wine and cheese. Collect cheese which is on the shelf at \"One More Glass\" in central Dalaran and half full wine glasses found on tables all over the city. Pour the wine together into a bottle and serve it with the cheese to Ranid. We don't think he will know the difference." },
 			npcs = {
-				{ npc = "Katherine Lee", id = "x99" },
+				{ npc = "Katherine Lee", id = 28705 },
 			},
 			[1] = {
 				description = "Collect an {item:43137:Aged Dalaran Limburger} (on a table inside/outside/upstairs in One More Glass wine and cheese shop).",
@@ -935362,7 +935346,7 @@ RQEDatabase = {
 			objectivesQuestText = { "Fill the Empty Picnic Basket with 4 Rhino Dogs that you cook with your cooking skill and 4 Wild Mustard that you find in the grassy areas of Dalaran. Bring the Picnic Basket to Archmage Pentarus at Krasus' Landing in Dalaran." },
 			descriptionQuestText = { "Archmage Pentarus likes to watch the occasional game of battle ball and is preparing to go, but needs food for the trip. You need to fill his picnic basket with 4 rhino dogs that you cook and then 4 wild mustard that are found in grassy areas of the city. Bring him his picnic basket so he can be ready to go see the big game." },
 			npcs = {
-				{ npc = "Katherine Lee", id = "x99" },
+				{ npc = "Katherine Lee", id = 28705 },
 			},
 			[1] = {
 				description = "Collect 4 {item:43143:Wild Mustard} from either the patch of grass near The Violet Citadel, Dalaran or Antonidas Memorial, Dalaran.",
