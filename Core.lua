@@ -422,6 +422,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	local defaults = {
 		profile = {
 			autoClickWaypointButton = true,
+			autoAcceptQuestDetail = false,
+			autoCompleteNoRewardChoices = false,
 			autoQuestProgress = true,
 			autoQuestWatch = true,
 			autoTrackZoneQuests = false,
@@ -853,6 +855,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.db.profile.enableStepControls = false
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.45, function()
+			-- Starts the periodic checks.
 			RQE.API.Client.C_Timer.After(0.45, function()
 				RQE:StartPeriodicChecks()
 			end)
@@ -920,6 +923,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			info.text = "Auto-Track Zone Quests"
 			info.keepShownOnClick = true  -- Keeps the dropdown open after clicking
 			info.isNotRadio = true
+			-- Enables or disables automatic tracking of the current zone's quests.
 			info.func = function()
 				RQE:SetAutoTrackZoneQuestsEnabled(not RQE.db.profile.autoTrackZoneQuests)
 			end
@@ -948,6 +952,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local campaigns = RQE.GetCampaignsFromQuestLog()
 			for campaignID, campaignName in pairs(campaigns) do
 				info.text = campaignName
+				-- Filters the specific campaign.
 				info.func = function() RQE.filterSpecificCampaign(campaignID) end
 				UIDropDownMenu_AddButton(info, level)
 			end
@@ -1380,6 +1385,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			-- Saves the super track data.
 			RQE.API.Client.C_Timer.After(1, function()
 				if RQE.superX == nil or RQE.superY == nil then
 					RQE.SaveSuperTrackData()
@@ -1509,6 +1515,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local functionName = "RQE:RestoreSuperTrackedQuestForCharacter()"
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		-- Selects the appropriate quest for automatic supertracking.
 		RQE.API.Client.C_Timer.After(0.2, function()
 			-- Per-attempt state must not leak into a later searched-quest restore.
 			local restoredSomething = false
@@ -1586,6 +1593,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if RQE.ResumeTrackerSync then RQE:ResumeTrackerSync() end
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			-- Sets the displayed step from steps list.
 			RQE.API.Client.C_Timer.After(0.1, function()
 				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): restore ~~")
 				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
@@ -1605,6 +1613,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+		-- Initializes the separate focus waypoints.
 		RQE.API.Client.C_Timer.After(0.35, function()
 			RQE.InitializeSeparateFocusWaypoints()
 		end)
@@ -1665,6 +1674,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+			-- Shows the delete confirmation dialog.
 			RQE.API.Client.C_Timer.After(2, function()
 				RQE:ShowDeleteConfirmationDialog()
 			end)
@@ -1684,6 +1694,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.ToggleDebugLogFrame()
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+			-- Shows the RQE database contribution cleanup confirmation dialog.
 			RQE.API.Client.C_Timer.After(2, function()
 				RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
 			end)
@@ -1891,6 +1902,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- One producer decides whether quest text or pickup metadata can improve.
 		-- Passing the accepted ID keeps delayed captures tied to their own quest.
 		local ok, err = pcall(function()
+			-- Checks the missing quest text data.
 			RQE:CapturePrintedDebugOutput(function()
 				RQE_Contribution:CheckMissingQuestTextData(questID)
 			end)
@@ -1905,6 +1917,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if not isSuperTracking then return end
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+		-- Prints the focused quest's database coverage after the UI update settles.
 		RQE.API.Client.C_Timer.After(0.15, function()
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				if RQEFrame and RQEFrame:IsShown() and RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -1946,9 +1959,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			text = "Are you sure you want to delete all contribution data? This action is irreversible.",
 			button1 = "Delete Data",
 			button2 = "Cancel",
+			-- Deletes the saved addon data after the user confirms the action.
 			OnAccept = function()
 				RQE:ExecuteDataDeletion()
 			end,
+			-- Clears the database-deletion flag when the confirmation is canceled.
 			OnCancel = function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Data deletion canceled.")
@@ -1972,9 +1987,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			text = "Remove contribution data only for quests that already exist in RQEDatabase.Vanilla?\n\nSandbox-only entries will be preserved. This action is irreversible.",
 			button1 = "Remove Entries",
 			button2 = "Cancel",
+			-- Runs the confirmed Contribution database cleanup.
 			OnAccept = function()
 				RQE:ExecuteRQEDatabaseContributionCleanup()
 			end,
+			-- Logs that the Contribution database cleanup confirmation was canceled.
 			OnCancel = function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("RQE Contribution database cleanup canceled.")
@@ -1996,6 +2013,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase()
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			-- Shows the reload confirmation dialog.
 			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE:ShowReloadConfirmationDialog()
 			end)
@@ -2011,10 +2029,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			text = "Are you sure you want to reload the UI?",
 			button1 = "Reload",
 			button2 = "Cancel",
+			-- Reloads the game interface after the confirmed action.
 			OnAccept = function()
 				-- Previous Blizzard call changed 2026.09.25: ReloadUI()
 				RQE.API.Client.ReloadUI()
 			end,
+			-- Reports that the user declined to reload the interface.
 			OnCancel = function()
 				print("Not Reloading the UI")
 			end,
@@ -2034,6 +2054,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE_Contribution.DeleteAllContributionInfo()
 			print("All contribution data has been deleted.")
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			-- Shows the reload confirmation dialog.
 			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE:ShowReloadConfirmationDialog()
 			end)
@@ -2754,6 +2775,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Watches and reports logged quests whose database entries have no steps.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
@@ -2786,6 +2808,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Watches and reports logged quests with authored database steps.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
@@ -2823,6 +2846,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Watches and reports quests missing from the database, then saves the watches.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
@@ -2924,6 +2948,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE._lastSeparateClearReason = nil
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.10, function()
+			-- Updates the separate focus frame.
 			RQE.API.Client.C_Timer.After(0.10, function()
 				if RQE.UpdateSeparateFocusFrame then
 					RQE:UpdateSeparateFocusFrame()
@@ -3036,6 +3061,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			UpdateFrame(questID)
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			-- Clears the forced frame-refresh flag after the delayed update.
 			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.UpdateTheFrameNoMatterWhat = false
 			end)
@@ -3360,6 +3386,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to initiate a delayed re-check and clear operation
 	function RQE:DelayedClearCheck()
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+		-- Clears the separate focus frame.
 		RQE.API.Client.C_Timer.After(3, function()
 			-- Attempt to directly extract questID from RQE.QuestIDText if available
 			local extractedQuestID
@@ -3694,6 +3721,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local sources, seen = {}, {}
 		if not questData then return sources end
 
+		-- Adds a distinct quest pickup source with its type and hostility metadata.
 		local function AddSource(kind, name, id, hostile)
 			if type(name) ~= "string" then return end
 			name = name:match("^%s*(.-)%s*$")
@@ -3757,6 +3785,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return npcs
 	end
 
+	-- Returns the quest pickup source text.
 	function RQE:GetQuestPickupSourceText(questID, useLinks, npcOnly, hostileOnly, sourceFilter)
 		local names = {}
 		local sources = npcOnly and self:GetQuestPickupNPCs(questID) or self:GetQuestPickupSources(questID)
@@ -3822,6 +3851,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return action and (action:gsub("^%l", string.upper) .. ".") or "Pick up the quest."
 	end
 
+	-- Renders the searched quest pickup direction.
 	function RQE:RenderSearchedQuestPickupDirection(questID)
 		local direction = self.DirectionTextFrame
 		if not direction then return end
@@ -3835,6 +3865,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- UpdateFrame function
 	function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		-- Every UpdateFrame call, including ones that return early below, also saves
+		-- this character's supertracked or searched quest.
+		RQE:SaveSuperTrackedQuestToCharacter()
 		if RQE.DontUpdateFrame then return end
 
 		-- Check if the player is supertracking anything and if not it will run the function to check if the frame should be cleared
@@ -4238,6 +4271,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- If quest exists but has no steps defined, click the "W" button
 		local hasSteps = false
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		-- Activates the waypoint button for index.
 		RQE.API.Client.C_Timer.After(1, function()
 			for _, step in pairs(questData) do
 				if type(step) == "table" and step.description then
@@ -4503,9 +4537,79 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- #9k. Nearest Quest Super-Tracking
 	-------------------------------------------------------
 
+	-- Select Retail watches by objective distance, with optional level-specific, same-map campaign priority.
+	function RQE:GetRetailClosestTrackedQuest()
+		local profile, client = self.db.profile, self.API.Client
+		local movement = profile.enableAutoSuperTrackSwap
+		if not movement and not profile.enableNearestSuperTrack then return end
+		local playerMapID = client.C_Map.GetBestMapForUnit("player")
+		if not playerMapID then return end
+		local level, cap = tonumber(client.UnitLevel("player")), tonumber(client.GetMaxPlayerLevel())
+		local preferCampaign = movement and level and cap and cap > 0
+			and ((level >= cap and profile.enableNearestSuperTrackCampaign)
+				or (level < cap and profile.enableNearestSuperTrackCampaignLevelingOnly))
+		local nearest, nearestDistance, campaign, campaignDistance = nil, math.huge, nil, math.huge
+		local seen = {}
+		-- Compare each watch once; world quests remain eligible even when Blizzard also labels them tasks.
+		local function consider(questID)
+			questID = tonumber(questID)
+			if not questID or questID <= 0 or seen[questID] then return end
+			seen[questID] = true
+			local world = self.API.IsWorldQuest(questID)
+			if world then
+				if not movement or client.C_QuestLog.IsComplete(questID) then return end
+			else
+				if not self.API.IsOnQuest(questID) then return end
+				local classification = client.C_QuestInfoSystem.GetQuestClassification(questID)
+				if movement and (client.C_QuestLog.IsQuestTask(questID)
+					or client.C_QuestLog.IsThreatQuest(questID) or classification == 8 or classification == 9) then
+					return
+				end
+			end
+			local distance = self:GetTrackerQuestStepDistance(questID)
+			if distance and distance >= 0 and distance < nearestDistance then
+				nearest, nearestDistance = questID, distance
+			end
+			if preferCampaign and client.C_CampaignInfo.IsCampaignQuest(questID) then
+				local localDistance = self:GetCampaignStepDistanceOnMap(questID, playerMapID)
+				if localDistance and localDistance < campaignDistance then
+					campaign, campaignDistance = questID, localDistance
+				end
+			end
+		end
+		for i = 1, client.C_QuestLog.GetNumQuestWatches() do
+			consider(client.C_QuestLog.GetQuestIDForQuestWatchIndex(i))
+		end
+		if movement then
+			for i = 1, client.C_QuestLog.GetNumWorldQuestWatches() do
+				consider(client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i))
+			end
+		end
+		return campaign or nearest
+	end
+
+	-- Refresh Retail movement selection on a throttled timer independent of coordinate and waypoint display settings.
+	function RQE:RefreshMovementQuestTracking()
+		if not self.IsRetail then return end
+		self.MovementQuestTrackingToken = (self.MovementQuestTrackingToken or 0) + 1
+		if not self.db.profile.enableAutoSuperTrackSwap or not self.API.Client.IsPlayerMoving() then return end
+		local token = self.MovementQuestTrackingToken
+		local revision = self.QuestFocusRevision or 0
+		-- Stop stale timers and skip a selection if the player changed focus since this tick was scheduled.
+		local function tick()
+			if token ~= RQE.MovementQuestTrackingToken or not RQE.db.profile.enableAutoSuperTrackSwap
+				or not RQE.API.Client.IsPlayerMoving() then return end
+			if revision == (RQE.QuestFocusRevision or 0) then RQE:AutoSuperTrackClosestQuest() end
+			revision = RQE.QuestFocusRevision or 0
+			RQE.API.Client.C_Timer.After(0.5, tick)
+		end
+		self.API.Client.C_Timer.After(0.5, tick)
+	end
+
 	-- Function to find the closest quest currently being tracked
 	function RQE:GetClosestTrackedQuest()
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
+		if self.IsRetail then return self:GetRetailClosestTrackedQuest() end
 		local closestQuestID, closestDistance = nil, math.huge
 		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
 		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
@@ -4590,10 +4694,21 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to Auto Supertrack the Nearest Watched Quest
 	function RQE:AutoSuperTrackClosestQuest()
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
+		if RQE.IsRetail and RQE.PendingUnfocusedQuestSelection then return end
 		-- Previous Blizzard call changed 2026.09.25: if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
 		if not RQE.db.profile.enableAutoSuperTrackSwap or RQE.API.Client.InCombatLockdown() or RQE.API.Client.UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
 		-- Automatic nearest-quest changes never interrupt a numbered route.
 		if self:HasCurrentCoordOrderStep() then return end
+		if self.IsRetail then
+			if self.CanNavigateSearchedQuestSteps and self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then return end
+			local questID = self:GetClosestTrackedQuest()
+			if questID and questID ~= self.API.GetSuperTrackedQuestID()
+				and self:AutoSetSuperTrackedQuestID(questID, true) then
+				self:SaveSuperTrackedQuestToCharacter()
+				UpdateFrame(questID)
+			end
+			return
+		end
 
 		local functionName = "RQE:AutoSuperTrackClosestQuest()"
 
@@ -4608,10 +4723,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 				RQE.Buttons.ClearButtonPressed()
 				RQE:AutoSetSuperTrackedQuestID(0, true)
+				local selectionRevision = RQE.QuestFocusRevision or 0
 
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+				-- Forces the super track quest properly.
 				RQE.API.Client.C_Timer.After(0.3, function()
 					if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
+					if RQE.IsRetail and (RQE.PendingUnfocusedQuestSelection
+						or selectionRevision ~= (RQE.QuestFocusRevision or 0)) then return end
 					if RQE:HasCurrentCoordOrderStep() then return end
 					RQE:ForceSuperTrackQuestProperly(closestQuestID)
 					RQE.ClickQuestLogIndexButton(closestQuestID)
@@ -4622,6 +4741,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end
 
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+					-- Updates the frame.
 					RQE.API.Client.C_Timer.After(0.3, function()
 						if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 						RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3219 ~~")
@@ -4630,6 +4750,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end)
 
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.4, function()
+					-- Activates the current quest step's waypoint button when available.
 					RQE.API.Client.C_Timer.After(0.4, function()
 						if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 						RQE.CheckAndClickWButton()
@@ -4642,6 +4763,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Helper function to RQE:AutoSuperTrackClosestQuest() to force the nearest quest to be supertracked
 	function RQE:ForceSuperTrackQuestProperly(questID)
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
+		if RQE.IsRetail and RQE.PendingUnfocusedQuestSelection then return end
 		if not questID or questID == 0 then return end
 
 		-- Step 1: Save all currently watched quests BEFORE nuking them
@@ -4657,6 +4779,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Step 2: Remove all watched quests
+		-- Rewatching for a forced selection is not a fresh player watch/acceptance burst.
+		if RQE.IsRetail then RQE.RestoringAutomaticQuestWatches = true end
 		for _, qid in ipairs(RQE.SavedQuestWatches) do
 			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(qid)
 			RQE.API.Client.C_QuestLog.RemoveQuestWatch(qid)
@@ -4667,19 +4791,24 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.API.Client.C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Manual)
 
 		-- Step 4: Force supertrack
-		RQE:AutoSetSuperTrackedQuestID(questID, true)
+		local selected = RQE:AutoSetSuperTrackedQuestID(questID, true)
+		if RQE.IsRetail then RQE.RestoringAutomaticQuestWatches = nil end
 		-- Previous Blizzard call changed 2026.09.25: SetCVar("superTrackedQuestID", questID)
-		RQE.API.Client.SetCVar("superTrackedQuestID", questID)
+		if not RQE.IsRetail or selected then RQE.API.Client.SetCVar("superTrackedQuestID", questID) end
+		local selectionRevision = RQE.QuestFocusRevision or 0
 
 		-- Step 5: After a slight delay, re-add previously watched quests (except the one we supertracked)
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		-- Restore the original watch list without treating its membership events as new player requests.
 		RQE.API.Client.C_Timer.After(0.1, function()
+			if RQE.IsRetail then RQE.RestoringAutomaticQuestWatches = true end
 			for _, qid in ipairs(RQE.SavedQuestWatches) do
 				if qid ~= questID then
 					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(qid, Enum.QuestWatchType.Manual)
 					RQE.API.Client.C_QuestLog.AddQuestWatch(qid, Enum.QuestWatchType.Manual)
 				end
 			end
+			if RQE.IsRetail then RQE.RestoringAutomaticQuestWatches = nil end
 
 			-- Debug
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -4689,11 +4818,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Step 6: Additional delay to re-force supertracking after Blizzard refreshes
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		-- Reapply only while the original request still owns focus and no acceptance batch has begun.
 		RQE.API.Client.C_Timer.After(0.1, function()
 			if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
-			RQE:AutoSetSuperTrackedQuestID(questID, true)
+			if RQE.IsRetail and (RQE.PendingUnfocusedQuestSelection
+				or selectionRevision ~= (RQE.QuestFocusRevision or 0)) then return end
+			local selected = RQE:AutoSetSuperTrackedQuestID(questID, true)
 			-- Previous Blizzard call changed 2026.09.25: SetCVar("superTrackedQuestID", questID)
-			RQE.API.Client.SetCVar("superTrackedQuestID", questID)
+			if not RQE.IsRetail or selected then RQE.API.Client.SetCVar("superTrackedQuestID", questID) end
 
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Final forced SuperTracking quest ID after rewatch:", questID)
@@ -4704,6 +4836,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to supertrack the first watched quest matching the player's current map ID
 	function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
+		if RQE.IsRetail and RQE.PendingUnfocusedQuestSelection then return end
 		-- Get the player's current map ID
 		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
 		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
@@ -4873,6 +5006,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function that tracks the closest quest on certain events in the Event Manager
 	function RQE.TrackClosestQuest()
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
+		if RQE.IsRetail and RQE.PendingUnfocusedQuestSelection then return end
+		if RQE.IsRetail and not (RQE.db.profile.enableAutoSuperTrackSwap or RQE.db.profile.enableNearestSuperTrack) then
+			return
+		end
 		if not RQEFrame:IsShown() then return end
 		-- "Choose a quest when none is focused" must not replace an
 		-- already-focused quest when watch lists or zone filters change.
@@ -4881,7 +5018,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local functionName = "RQE.TrackClosestQuest()"
 
 		-- Ensure supertracking is enabled in the profile
-		if RQE.db.profile.enableNearestSuperTrack or RQE.db.profile.enableNearestSuperTrackCampaign or RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly then
+		if RQE.db.profile.enableNearestSuperTrack or (RQE.IsRetail and RQE.db.profile.enableAutoSuperTrackSwap)
+			or (not RQE.IsRetail and (RQE.db.profile.enableNearestSuperTrackCampaign
+				or RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly)) then
 			-- Get the closest tracked quest ID
 			local closestQuestID = RQE:GetClosestTrackedQuest()
 
@@ -5737,11 +5876,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 								print("No location data available.")
 							end
 						end)
+						-- Shows this control's tooltip while the pointer is over it.
 						RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 							GameTooltip:SetText("Coordinates: Not Available")
 							GameTooltip:Show()
 						end)
+						-- Hides the tooltip when the pointer leaves this control.
 						RQE.UnknownQuestButton:SetScript("OnLeave", function()
 							GameTooltip:Hide()
 						end)
@@ -5766,6 +5907,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	local frame = CreateFrame("Frame")
 	frame:RegisterEvent("QUEST_TURNED_IN")
 
+	-- Populates the next quest in event series.
 	frame:SetScript("OnEvent", function(self, event, questID)
 		if event == "QUEST_TURNED_IN" then
 			-- Check and populate the next quest if event 324 is active
@@ -6236,8 +6378,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end
 				end)
 
+				-- Hides the tooltip when the pointer leaves this control.
 				Simple:SetScript("OnHyperlinkLeave", function() GameTooltip:Hide() end)
 
+				-- Creates the waypoint.
 				Simple:SetScript("OnHyperlinkClick", function(_, link)
 					if not link:match("^coords:") then return end
 					local x, y, mapID, title =
@@ -6455,6 +6599,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if not self.ActiveCoordblock then return end
 		self.ActiveCoordblock = nil
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function() self:RefreshActiveCoordblockLinks() end)
+		-- Refreshes the active coordblock links.
 		RQE.API.Client.C_Timer.After(0, function() self:RefreshActiveCoordblockLinks() end)
 	end
 
@@ -6514,6 +6659,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			for href, data in pairs(htmlFrame._rqeCoordblockLinks) do
 				local escapedHref = href:gsub("([^%w])", "%%%1")
 				local pattern = '(<a href="' .. escapedHref .. '">|cff40e0d0)%b[](|r</a>)'
+				-- Replaces the coordinate-block label while preserving surrounding markup.
 				html = html:gsub(pattern, function(before, after)
 					return before .. self:GetCoordblockDisplayLabel(data) .. after
 				end)
@@ -6553,6 +6699,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		displayText = displayText:gsub("{npc:(%d+):([^}]+)}", "|cff66ff66[%2]|r")
 		displayText = displayText:gsub("{object:([%a%d]+):([^}]+)}", "|cffffd700[%2]|r")
 
+		-- Formats coordinate notation as a colored, readable map-position label.
 		displayText = displayText:gsub("{coords:([^}]+)}", function(data)
 			local x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
 
@@ -6607,6 +6754,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local baseParent = customParent or parentFrame:GetParent() or UIParent
 		local lineHeight = 14
 		if parentFrame.GetLineHeight then
+			-- Returns the line height.
 			local ok, lh = pcall(function() return parentFrame:GetLineHeight() end)
 			if ok and lh then lineHeight = lh end
 		elseif type(size) == "number" then
@@ -6650,6 +6798,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", x, -y)
 
 			if tagType == "item" then
+				-- Shows this control's tooltip while the pointer is over it.
 				hover:SetScript("OnEnter", function(self)
 					GameTooltip:Hide()
 					GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
@@ -6660,6 +6809,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					GameTooltip:Show()
 				end)
 			elseif tagType == "spell" then
+				-- Shows this control's tooltip while the pointer is over it.
 				hover:SetScript("OnEnter", function(self)
 					GameTooltip:Hide()
 					GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
@@ -6667,16 +6817,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					GameTooltip:Show()
 				end)
 			elseif tagType == "npc" then
+				-- Shows the NPC preview.
 				hover:SetScript("OnEnter", function()
 					if RQE.ShowNPCPreview then RQE.ShowNPCPreview(hoveredID, tagName, true) end
 				end)
 			elseif tagType == "object" then
+				-- Shows the object image preview.
 				hover:SetScript("OnEnter", function()
 					if RQE.ShowObjectImagePreview then RQE.ShowObjectImagePreview(hoveredID, tagName, nil, true) end
 				end)
 			end
 
 			if tagType == "item" or tagType == "spell" then
+				-- Hides the tooltip when the pointer leaves this control.
 				hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 			end
 			table.insert(parentFrame._rqeSegments, hover)
@@ -6800,9 +6953,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			-- Expand coordinate markup and add ordinary text to the rich-text layout.
 			local function AddPlainText(plainText)
+				-- Formats the coords for layout.
 				plainText = plainText:gsub("{coords:([^}]+)}", function(data)
 					return FormatCoordsForLayout(data, false)
 				end)
+				-- Formats the coords for layout.
 				plainText = plainText:gsub("{coordblock:([^}]+)}", function(data)
 					return FormatCoordsForLayout(data, true)
 				end)
@@ -6868,6 +7023,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						preText = preText
 							:gsub("{item:%d+:([^}]+)}", "[%1]")
 							:gsub("{spell:%d+:([^}]+)}", "[%1]")
+							-- Formats coordinate notation as a plain-text map-position label.
 							:gsub("{coords:([^}]+)}", function(data)
 								local cx, cy, cm = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
 								if cx and cy and cm then
@@ -6875,6 +7031,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 								end
 								return data
 							end)
+							-- Returns the coordblock display label.
 							:gsub("{coordblock:([^}]+)}", function(data)
 								return RQE:GetCoordblockDisplayLabel(data)
 							end)
@@ -6915,16 +7072,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						hover:SetSize(tagWidth + 6, lineHeight)
 						hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
 
+						-- Shows this control's tooltip while the pointer is over it.
 						hover:SetScript("OnEnter", function()
 							GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
 							GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
 							GameTooltip:Show()
 						end)
 
+						-- Hides the tooltip when the pointer leaves this control.
 						hover:SetScript("OnLeave", function()
 							GameTooltip:Hide()
 						end)
 
+						-- Creates the waypoint.
 						hover:SetScript("OnMouseDown", function()
 							RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
 							RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
@@ -6955,6 +7115,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						preText = preText
 							:gsub("{item:%d+:([^}]+)}", "[%1]")
 							:gsub("{spell:%d+:([^}]+)}", "[%1]")
+							-- Returns the coordblock display label.
 							:gsub("{coordblock:([^}]+)}", function(data)
 								return RQE:GetCoordblockDisplayLabel(data)
 							end)
@@ -6996,12 +7157,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						hover:SetSize(tagWidth + 6, lineHeight)
 						hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
 
+						-- Shows this control's tooltip while the pointer is over it.
 						hover:SetScript("OnEnter", function()
 							GameTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 							GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
 							GameTooltip:Show()
 							RQE._coordblockTooltipOwner = hover
 							RQE:AnchorCoordblockTooltip(hover)
+							-- Anchors the coordblock tooltip.
 							hover:SetScript("OnUpdate", function(self)
 								if RQE._coordblockTooltipOwner ~= self or not GameTooltip:IsShown() then
 									self:SetScript("OnUpdate", nil)
@@ -7011,12 +7174,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							end)
 						end)
 
+						-- Hides the tooltip when the pointer leaves this control.
 						hover:SetScript("OnLeave", function()
 							if RQE._coordblockTooltipOwner == hover then RQE._coordblockTooltipOwner = nil end
 							hover:SetScript("OnUpdate", nil)
 							GameTooltip:Hide()
 						end)
 
+						-- Selects the coordblock waypoint.
 						hover:SetScript("OnMouseDown", function()
 							RQE:SelectCoordblockWaypoint(coordData)
 						end)
@@ -7057,6 +7222,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		hover:SetSize(width or 120, lineHeight)
 		hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
 
+		-- Shows this control's tooltip while the pointer is over it.
 		hover:SetScript("OnEnter", function(self)
 			-- Force a fresh spell tooltip context
 			GameTooltip:Hide()
@@ -7068,6 +7234,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			GameTooltip:Show()
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		hover:SetScript("OnLeave", function(self)
 			if GameTooltip:IsOwned(self) then
 				GameTooltip:Hide()
@@ -7079,6 +7246,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Utility function for showing item tooltips on hover (for quest descriptions, etc.)
 	function RQE:CreateItemTooltip(frame, itemID)
+		-- Shows this control's tooltip while the pointer is over it.
 		frame:SetScript("OnEnter", function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")  -- follow the mouse
 			GameTooltip:SetItemByID(itemID)
@@ -7096,6 +7264,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			GameTooltip:Show()
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		frame:SetScript("OnLeave", function(self)
 			GameTooltip:Hide()
 		end)
@@ -7119,6 +7288,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local editBox = AceGUI:Create("EditBox")
 		editBox:SetLabel("Enter Quest ID, Title, Description or Objective:")
 		editBox:SetWidth(350)
+		-- Searches quest IDs and database text, then reports matching quest entries.
 		editBox:SetCallback("OnEnterPressed", function(widget, event, text)
 			local questID = tonumber(text)
 			local foundQuestIDs = {} -- Initialize the table here to store all found quest IDs
@@ -7186,6 +7356,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				local isQuestCompletedOnAccount = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(foundQuestID)
 
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				-- Prints a matching quest's link and character or account completion state.
 				RQE.API.Client.C_Timer.After(0.2, function()
 					-- Previous Blizzard call changed 2026.09.25: local questLink = GetQuestLink(foundQuestID)
 					local questLink = RQE.API.Client.GetQuestLink(foundQuestID)
@@ -7227,6 +7398,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		examineButton:SetText("Track")
 		examineButton:SetWidth(100)
 
+		-- Clears stale waypoint state and examines the entered quest.
 		examineButton:SetCallback("OnClick", function()
 			local inputText = editBox:GetText()
 			local questID = tonumber(inputText)
@@ -7410,6 +7582,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if coordinateDisplayTicker then return end
 
 		-- Previous Blizzard call changed 2026.09.25: coordinateDisplayTicker = C_Timer.NewTicker(0.10, function()
+		-- Updates the coordinates.
 		coordinateDisplayTicker = RQE.API.Client.C_Timer.NewTicker(0.10, function()
 			if RQEFrame and RQEFrame:IsShown()
 				and RQE.db and RQE.db.profile and RQE.db.profile.showCoordinates then
@@ -7577,6 +7750,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.API.Client.C_QuestLog.SetSelectedQuest(oldSelectedQuest)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+		-- Checks the quest info exists.
 		RQE.API.Client.C_Timer.After(1.5, function()
 			RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
 		end)
@@ -8246,6 +8420,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				RQEMacro:CreateMacroForCurrentStep()
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				-- Releases the macro-content inspection guard.
 				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
@@ -8255,6 +8430,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.SetInitialFromAccept = false
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		-- Clicks the last selected waypoint button after the frame has settled.
 		RQE.API.Client.C_Timer.After(1, function()
 			if RQE.LastClickedIdentifier == 1 then
 				RQE.WaypointButtons[1]:Click()
@@ -8271,6 +8447,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to check and set the final step
 	function RQE.CheckAndSetFinalStep()
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		-- Rechecks completed objectives and resolves the focused quest's final step.
 		RQE.API.Client.C_Timer.After(1, function()
 			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
@@ -8332,6 +8509,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+			-- Checks the current macro contents.
 			RQE.API.Client.C_Timer.After(1.5, function()
 				if highestCompletedObjectiveIndex == 99 then
 					RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
@@ -8340,6 +8518,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					RQE.CreateMacroForCheckAndSetFinalStep = true
 
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+					-- Checks the current macro contents.
 					RQE.API.Client.C_Timer.After(0.1, function()
 						RQE.isCheckingMacroContents = true
 						local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -8350,6 +8529,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 						RQEMacro:CreateMacroForCurrentStep()
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						-- Releases the macro-content inspection guard.
 						RQE.API.Client.C_Timer.After(0.2, function()
 							RQE.isCheckingMacroContents = false
 						end)
@@ -8489,9 +8669,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Fetch the macro data for the current step
 		local stepData = questData[stepIndex]
-		if not stepData or (not stepData.macro and not stepData.macroArray) then
+		-- Missing data must not erase a valid macro, but a known step without one must.
+		if not stepData then return end
+		if not stepData.macro and not stepData.macroArray then
+			-- Preserve the existing dungeon/raid behavior, including combat queues.
+			if isInInstance and (instanceType == "party" or instanceType == "raid") then return end
+			self:ClearMacroContentByName("RQE Macro")
+			RQE.Buttons.UpdateMagicButtonVisibility()
 			return
 		end
+		-- Previous code (commented out 2026.10.31): kept the previous macro on a known step without macro content
+		-- if not stepData or (not stepData.macro and not stepData.macroArray) then
+			-- return
+		-- end
 
 		-- ✅ Determine if we're using the new macroArray or legacy macro
 		local macroContent
@@ -8552,6 +8742,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			and type(RQE.getQuestData(questID)) == "table"
 	end
 
+	-- Checks whether step controls are available for the displayed quest.
 	function RQE:CanUseStepControlsForQuest(questID)
 		return RQE.db.profile.enableStepControls or RQE:CanNavigateSearchedQuestSteps(questID)
 	end
@@ -8632,6 +8823,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self._lastPeriodicQuestID = questID
 
 		-- Previous Blizzard call changed 2026.09.25: self._scheduledPeriodicCheck = C_Timer.NewTimer(delay, function()
+		-- Queues the periodic checks.
 		self._scheduledPeriodicCheck = RQE.API.Client.C_Timer.NewTimer(delay, function()
 			self._scheduledPeriodicCheck = nil
 
@@ -8681,6 +8873,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.7, function()
+		-- Checks the separate focus has text but RQE frame missing quest.
 		RQE.API.Client.C_Timer.After(1.7, function()
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
@@ -9165,6 +9358,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end
 
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.20, function()
+					-- Releases the macro-content inspection guard.
 					RQE.API.Client.C_Timer.After(0.20, function()
 						RQE.isCheckingMacroContents = false
 					end)
@@ -9195,6 +9389,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+		-- Checks the current macro contents.
 		RQE.API.Client.C_Timer.After(0.15, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -9205,6 +9400,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			RQEMacro:CreateMacroForCurrentStep()
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			-- Releases the macro-content inspection guard.
 			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
@@ -9229,6 +9425,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Final cleanup
 		RQE.NewZoneChange = false
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.45, function()
+		-- Updates the separate focus frame.
 		RQE.API.Client.C_Timer.After(0.45, function()
 			RQE:UpdateSeparateFocusFrame()
 		end)
@@ -10290,6 +10487,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.API.Client.C_Timer.After(0.7, function()
 			RQE:HandleFactionLogicAfterAdvance()
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			-- Handles the class faction logic after advance.
 			RQE.API.Client.C_Timer.After(1, function()
 				RQE:HandleClassFactionLogicAfterAdvance()
 			end)
@@ -10347,6 +10545,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				-- Creates the unknown quest waypoint.
 				RQE.API.Client.C_Timer.After(0.2, function()
 					if questID then
 						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
@@ -10409,6 +10608,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.API.Client.C_Timer.After(0.7, function()
 				RQE:HandleFactionLogicAfterAdvance()
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+				-- Handles the class faction logic after advance.
 				RQE.API.Client.C_Timer.After(1, function()
 					RQE:HandleClassFactionLogicAfterAdvance()
 				end)
@@ -10464,6 +10664,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.API.Client.C_Timer.After(0.7, function()
 				RQE:HandleFactionLogicAfterAdvance()
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+				-- Handles the class faction logic after advance.
 				RQE.API.Client.C_Timer.After(1, function()
 					RQE:HandleClassFactionLogicAfterAdvance()
 				end)
@@ -10859,6 +11060,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end
 
 					-- Previous Blizzard call changed 2026.09.25: state.settleTimer = C_Timer.NewTimer(0.80, function()
+					-- Restarts step checks after aura data settles if the same quest still has focus.
 					state.settleTimer = RQE.API.Client.C_Timer.NewTimer(0.80, function()
 						state.settleTimer = nil
 
@@ -11642,6 +11844,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		-- Checks the current macro contents.
 		RQE.API.Client.C_Timer.After(0.1, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -11652,6 +11855,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			RQEMacro:CreateMacroForCurrentStep()
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+			-- Releases the final-step macro creation and inspection guards after the delay.
 			RQE.API.Client.C_Timer.After(3, function()
 				RQE.CreateMacroForCheckAndSetFinalStep = false
 				RQE.isCheckingMacroContents = false
@@ -12605,6 +12809,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		self.AutoTrackZoneQuestRefreshQueued = true
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+		-- Filters the by zone.
 		RQE.API.Client.C_Timer.After(0.3, function()
 			self.AutoTrackZoneQuestRefreshQueued = false
 			if not (self.db and self.db.profile and self.db.profile.autoTrackZoneQuests) then
@@ -12704,6 +12909,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				table.insert(zoneQuestMenuList, {
 					zoneID = zoneID,  -- Store zoneID for sorting
 					text = zoneID .. ": " .. zoneName,
+					-- Filters the by zone.
 					func = function() RQE.filterByZone(zoneID) end,
 				})
 			end
@@ -12722,6 +12928,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if #zoneQuestMenuList == 0 then
 			table.insert(zoneQuestMenuList, {
 				text = "No zone quests",
+				-- Reports that no zone quests are available for this filter.
 				func = function() print("No zone quests to filter.") end,
 				disabled = true
 			})
@@ -12937,6 +13144,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			table.insert(campaignMenuList, {
 				campaignID = campaignID,  -- Add campaignID key for sorting
 				text = campaignID .. ": " .. campaignName,
+				-- Filters the by campaign.
 				func = function() RQE.filterByCampaign(campaignID) end,
 			})
 		end
@@ -12955,6 +13163,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- If there are no campaigns, add a placeholder item
 			table.insert(campaignMenuList, {
 				text = "No active campaigns",
+				-- Reports that no active campaigns are available for this filter.
 				func = function() print("No active campaigns to filter.") end,
 				disabled = true
 			})
@@ -13105,6 +13314,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- Include the questLineID before the quest line name
 			table.insert(questLineMenuList, {
 				text = questLineID .. ": " .. questLineData.name,
+				-- Filters the by quest line.
 				func = function() RQE.filterByQuestLine(questLineID) end,
 			})
 		end
@@ -13120,6 +13330,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if #questLineMenuList == 0 then
 			table.insert(questLineMenuList, {
 				text = "No active quest lines to filter.",
+				-- Reports that no active quest lines are available for this filter.
 				func = function() print("No active quest lines to filter.") end,
 				disabled = true  -- Make it non-selectable
 			})
@@ -13375,6 +13586,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		eventFrame = CreateFrame("Frame")
 		eventFrame:RegisterEvent("QUEST_DATA_LOAD_RESULT")
+		-- Resolves the entry.
 		eventFrame:SetScript("OnEvent", function(_, _, loadedQuestID, success)
 			loadedQuestID = tonumber(loadedQuestID)
 			if not loadedQuestID or not pendingQuestIDs[loadedQuestID] then return end
@@ -13450,11 +13662,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	if not isRetailClient and type(ChatFrame_OnHyperlinkShow) == "function" then
 		-- Previous Blizzard call changed 2026.09.25: hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chatFrame, link, text, button)
+		-- Handles the RQE quest tooltip link.
 		RQE.API.Client.hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chatFrame, link, text, button)
 			HandleRQEQuestTooltipLink(link)
 		end)
 	else
 		-- Previous Blizzard call changed 2026.09.25: hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
+		-- Handles the RQE quest tooltip link.
 		RQE.API.Client.hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
 			HandleRQEQuestTooltipLink(link)
 		end)
@@ -13558,6 +13772,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			table.insert(questTypeMenuList, {
 				sortKey = sortKey,
 				text = (questTypeName == "Misc" and questTypeName) or (questType .. ": " .. questTypeName),
+				-- Filters the by quest type.
 				func = function() RQE.filterByQuestType(questType) end,
 			})
 		end
@@ -13575,6 +13790,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if #questTypeMenuList == 0 then
 			table.insert(questTypeMenuList, {
 				text = "No quest types",
+				-- Reports that no quest types are available for this filter.
 				func = function() print("No quest types to filter.") end,
 				disabled = true
 			})
@@ -14242,12 +14458,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				RQE.API.Client.PlaySound(6199) -- Sound for quest completion
 				soundCooldown = true
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function() soundCooldown = false end)
+				-- Allows the throttled sound to play again after its cooldown.
 				RQE.API.Client.C_Timer.After(5, function() soundCooldown = false end)
 			elseif playSoundForObjectives then
 				-- Previous Blizzard call changed 2026.09.25: PlaySound(6192) -- Sound for individual objective completion
 				RQE.API.Client.PlaySound(6192) -- Sound for individual objective completion
 				soundCooldown = true
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function() soundCooldown = false end)
+				-- Allows the throttled sound to play again after its cooldown.
 				RQE.API.Client.C_Timer.After(5, function() soundCooldown = false end)
 			end
 
@@ -14257,6 +14475,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				if questID then
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.65, function()
+					-- Starts the periodic checks.
 					RQE.API.Client.C_Timer.After(0.65, function()
 
 						if RQE:DidObjectivesChange(questID) then
@@ -14265,6 +14484,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							end
 
 							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+							-- Starts the periodic checks.
 							RQE.API.Client.C_Timer.After(0.35, function()
 								RQE:StartPeriodicChecks()
 							end)
@@ -14314,12 +14534,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				RQE.API.Client.PlaySound(6199) -- Sound for quest completion
 				soundCooldown = true
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function() soundCooldown = false end)
+				-- Allows the throttled sound to play again after its cooldown.
 				RQE.API.Client.C_Timer.After(5, function() soundCooldown = false end)
 			elseif playSoundForObjectives then
 				-- Previous Blizzard call changed 2026.09.25: PlaySound(6192) -- Sound for individual objective completion
 				RQE.API.Client.PlaySound(6192) -- Sound for individual objective completion
 				soundCooldown = true
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function() soundCooldown = false end)
+				-- Allows the throttled sound to play again after its cooldown.
 				RQE.API.Client.C_Timer.After(5, function() soundCooldown = false end)
 			end
 
@@ -14329,6 +14551,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				if questID then
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.65, function()
+					-- Starts the periodic checks.
 					RQE.API.Client.C_Timer.After(0.65, function()
 
 						if RQE:DidObjectivesChange(questID) then
@@ -14337,6 +14560,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							end
 
 							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+							-- Starts the periodic checks.
 							RQE.API.Client.C_Timer.After(0.35, function()
 								RQE:StartPeriodicChecks()
 							end)
@@ -14350,6 +14574,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
+	-- Initializes the quest objective completion.
 	eventFrame:SetScript("OnEvent", function(self, event, ...)
 		if event == "PLAYER_LOGIN" then
 			InitializeQuestObjectiveCompletion()
@@ -14421,6 +14646,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			text = message,
 			button1 = "Reload UI",
 			button2 = "Cancel",
+			-- Reloads the game interface after the confirmed action.
 			OnAccept = function()
 				-- Previous Blizzard call changed 2026.09.25: ReloadUI()
 				RQE.API.Client.ReloadUI()
@@ -14532,6 +14758,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			-- Activates the quest button for the currently supertracked quest.
 			RQE.API.Client.C_Timer.After(0.5, function()
 				RQE:ClickSuperTrackedQuestButton()
 			end)
@@ -14551,6 +14778,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.CreateMacroForCheckAndBuildMacroIfNeed = true
 			RQEMacro:CreateMacroForCurrentStep()
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+			-- Releases the macro-build guard after the deferred operation.
 			RQE.API.Client.C_Timer.After(3, function()
 				RQE.CreateMacroForCheckAndBuildMacroIfNeed = false
 			end)
@@ -14558,6 +14786,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		if RQE.shouldCheckFinalStep then
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			-- Rechecks quest completion and selects the final step when appropriate.
 			RQE.API.Client.C_Timer.After(1, function()
 				RQE.CheckAndSetFinalStep()
 			end)
@@ -14781,6 +15010,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to obtain the index of a given itemID and pass that onto a function used for purchasing that item
 	function RQE:BuyItemByItemID(itemID, quantity)
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+		-- Finds the requested merchant item and prepares its purchase flow.
 		RQE.API.Client.C_Timer.After(1.2, function()
 			local itemFound = false
 
@@ -14842,6 +15072,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			text = string.format("Do you want to buy %d of %s for %s?", quantity, itemDisplay, priceString),
 			button1 = "Yes",
 			button2 = "No",
+			-- Purchases the confirmed quantity in full stacks and a remaining partial stack.
 			OnAccept = function()
 				if quantity > maxStack then
 					local fullStacks = math.floor(quantity / maxStack)
@@ -14859,6 +15090,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					RQE.API.Client.BuyMerchantItem(index, quantity)
 				end
 			end,
+			-- Adds an item-link hover region to the purchase confirmation text.
 			OnShow = function(self)
 				if itemLink and self.text then
 					-- Create a small clickable region just over the text, not the entire popup
@@ -14872,11 +15104,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					-- Do NOT intercept mouse clicks
 					itemFrame:EnableMouse(false)
 
+					-- Shows this control's tooltip while the pointer is over it.
 					itemFrame:SetScript("OnEnter", function()
 						GameTooltip:SetOwner(self, "ANCHOR_TOP")
 						GameTooltip:SetHyperlink(itemLink)
 						GameTooltip:Show()
 					end)
+					-- Hides the tooltip when the pointer leaves this control.
 					itemFrame:SetScript("OnLeave", function()
 						GameTooltip:Hide()
 					end)
@@ -14918,6 +15152,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local step = questData and stepIndex and questData[stepIndex]
 			local itemTag = "{item:" .. tostring(itemID) .. ":"
 
+			-- Returns how much progress is still required for the chosen objective.
 			local function RemainingForObjective(objectiveIndex, needed)
 				local objective = objectives[objectiveIndex]
 				local fulfilled, required
@@ -15058,6 +15293,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.API.Client.C_AuctionHouse.SendSearchQuery(itemKey, searchQuery.sorts, false)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		-- Reads loaded commodity auction results for the requested item.
 		RQE.API.Client.C_Timer.After(1, function()
 			-- Previous Blizzard call changed 2026.09.25: if C_AuctionHouse.HasFullCommoditySearchResults(itemID) then
 			if RQE.API.Client.C_AuctionHouse.HasFullCommoditySearchResults(itemID) then
@@ -15107,6 +15343,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.API.Client.C_AuctionHouse.SendSearchQuery(itemKey, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false}, false)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		-- Calculates the requested commodity cost and prepares purchase confirmation.
 		RQE.API.Client.C_Timer.After(1, function()
 			-- Previous Blizzard call changed 2026.09.25: local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
 			local numResults = RQE.API.Client.C_AuctionHouse.GetNumCommoditySearchResults(itemID)
@@ -15145,10 +15382,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, RQE.API.Client.C_Item.GetItemNameByID(itemID), RQE.API.Client.GetCoinTextureString(totalCost)),
 						button1 = "Yes",
 						button2 = "No",
+						-- Starts the commodities purchase.
 						OnAccept = function()
 							-- Previous Blizzard call changed 2026.09.25: C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
 							RQE.API.Client.C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
 							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()  -- Allow for server response time
+							-- Confirms the pending commodity purchase for the requested item quantity.
 							RQE.API.Client.C_Timer.After(1.5, function()  -- Allow for server response time
 								-- Previous Blizzard call changed 2026.09.25: C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
 								RQE.API.Client.C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
@@ -15158,6 +15397,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						whileDead = true,
 						hideOnEscape = true,
 						preferredIndex = 3,  -- Avoid taint from UIParent
+					-- Formats the commodity confirmation and adds an item tooltip to its text.
 					OnShow = function(self)
 						if self.text then
 							-- Previous Blizzard call changed 2026.09.25: self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
@@ -15165,11 +15405,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						end
 						local itemFrame = CreateFrame("Frame", nil, self)
 						itemFrame:SetAllPoints(self.text or self)  -- fallback to whole popup if self.text is nil
+						-- Shows this control's tooltip while the pointer is over it.
 						itemFrame:SetScript("OnEnter", function()
 							GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
 							GameTooltip:SetHyperlink(itemLink)
 							GameTooltip:Show()
 						end)
+						-- Hides the tooltip when the pointer leaves this control.
 						itemFrame:SetScript("OnLeave", function()
 							GameTooltip:Hide()
 						end)
@@ -15312,7 +15554,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- Temporarily remove the quest from the watch list
 			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
 			RQE.API.Client.C_QuestLog.RemoveQuestWatch(blacklistedQuestID)
-			RQE.Buttons.ClearButtonPressed()
+			-- Complete the clear before selecting a replacement; delayed clear-button
+			-- retries would otherwise remove the newly selected quest and its macro.
+			RQE.Buttons.ClearButtonPressed(true)
 
 			-- Set the supertracked quest to the next closest non-blacklisted quest
 			RQE:AutoSetSuperTrackedQuestID(nextClosestQuestID, true)
@@ -16201,6 +16445,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local x1, y1 = startPos:GetXY()
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(sampleTime, function()
+		-- Samples the player's later position to calculate movement over the interval.
 		RQE.API.Client.C_Timer.After(sampleTime, function()
 			-- Previous Blizzard call changed 2026.09.25: local newPos = C_Map.GetPlayerMapPosition(mapID, "player")
 			local newPos = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
@@ -16238,6 +16483,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			text = ("Set a TomTom waypoint to the closest flight master?\n\nNearest: %s"):format(nearestName),
 			button1 = "Yes",
 			button2 = "No",
+			-- Sets the tom tom waypoint to closest flight master.
 			OnAccept = function()
 				RQE:SetTomTomWaypointToClosestFlightMaster()
 				RQE.NearestFlightMasterSet = true
@@ -16898,6 +17144,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			hideOnEscape = true,
 			preferredIndex = 3,
 
+			-- Sets the focus.
 			OnShow = function(self)
 				local editBox = self.editBox or self:GetEditBox()
 				if editBox then
@@ -16915,6 +17162,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 			end,
 
+			-- Prints the coords for quest step.
 			OnAccept = function(self)
 				local editBox = self.editBox or self:GetEditBox()
 				local text = editBox and editBox:GetText() or ""
@@ -16959,6 +17207,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			hideOnEscape = true,
 			preferredIndex = 3,
 
+			-- Sets the focus.
 			OnShow = function(self)
 				local editBox = self.editBox or self:GetEditBox()
 				if editBox then
@@ -16972,6 +17221,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 			end,
 
+			-- Prints the coords for quest step.
 			OnAccept = function(self)
 				local editBox = self.editBox or self:GetEditBox()
 				local stepIndex = tonumber(editBox and editBox:GetText())
