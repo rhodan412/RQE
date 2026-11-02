@@ -3983,6 +3983,9 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Updates the RQEQuestFrame
 	function UpdateRQEQuestFrame()
+		-- Every tracker update, whatever triggered it, also saves this character's
+		-- watched quests, so the saved list always matches what the tracker shows.
+		RQE:SaveTrackedQuestsToCharacter()
 		-- if InCombatLockdown() then
 			-- RQE.RunUpdateRQEQuestFrameAfterCombat = true
 			-- return
