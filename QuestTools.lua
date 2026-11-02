@@ -93,6 +93,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return RQE.IsRetail and ClientCall("C_QuestLog.IsMetaQuest", questID) == true
 	end
 
+	-- Identifies quests marked as daily or weekly repeatable quests.
 	local function IsDailyOrWeeklyQuest(info)
 		local frequency = info.frequency
 		local daily = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Daily or 1
@@ -169,6 +170,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return false
 	end
 
+	-- Returns the auto quest category matches.
 	function RQE:GetAutoQuestCategoryMatches()
 		local selected = {}
 		local enabled = self.db.profile.autoTrackQuestCategories or {}
@@ -180,6 +182,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return selected
 	end
 
+	-- Checks whether two quest-ID sets contain the same entries.
 	local function SameSet(a, b)
 		for id in pairs(a or {}) do if not b[id] then return false end end
 		for id in pairs(b or {}) do if not a or not a[id] then return false end end
@@ -222,6 +225,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		end
 	end
 
+	-- Checks whether native quest watches still match the saved selection.
 	local function NativeSelectionMatches(selected, previousSelection)
 		local watched = NativeWatches()
 		for _, info in ipairs(QuestLogEntries()) do
@@ -322,16 +326,19 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return true
 	end
 
+	-- Queues the auto quest category refresh.
 	function RQE:QueueAutoQuestCategoryRefresh(delay)
 		if not self:HasAutoQuestCategories() or self.db.profile.autoTrackZoneQuests
 			or self.AutoQuestCategoryRefreshQueued then return end
 		self.AutoQuestCategoryRefreshQueued = true
+		-- Clears the queued flag and reconciles automatic quest-category tracking.
 		self.API.Client.C_Timer.After(delay or 0.4, function()
 			self.AutoQuestCategoryRefreshQueued = false
 			self:ReconcileAutoQuestCategories()
 		end)
 	end
 
+	-- Toggles the auto quest category.
 	function RQE:ToggleAutoQuestCategory(key)
 		if ClientCall("InCombatLockdown") then return false end
 		local choice
@@ -358,6 +365,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 
 	-- All zone controls, including settings panels, disable the category checkboxes on either toggle.
 	local originalZoneSetter = RQE.SetAutoTrackZoneQuestsEnabled
+	-- Enables or disables automatic tracking of the current zone's quests.
 	function RQE:SetAutoTrackZoneQuestsEnabled(enabled)
 		self.db.profile.autoTrackQuestCategories = {}
 		self.AutoQuestCategorySelected = nil
@@ -429,6 +437,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		"filterByQuestLine", "TrackQuestsNotInDB" }) do
 		local original = RQE[name]
 		if type(original) == "function" then
+			-- Clears automatic category selection before applying a manual quest filter.
 			RQE[name] = function(...)
 				RQE.QuestMenuSelection = nil
 				RQE.db.profile.autoTrackQuestCategories = {}
@@ -447,6 +456,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		local original = RQE[name]
 		if type(original) == "function" then
 			local adds = name == "AddClassicVirtualQuestWatch"
+			-- Keeps manual quest selection synchronized with explicit watch changes.
 			RQE[name] = function(self, id, ...)
 				local questID = tonumber(id)
 				local temporary = adds and select(1, ...) == true
@@ -553,13 +563,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		menu.rows = {}
 		menu:EnableMouse(true)
 		menu:EnableMouseWheel(true)
+		-- Moves the scroll position in response to the mouse wheel.
 		menu:SetScript("OnMouseWheel", function(_, delta)
 			local range = math.max(0, menu.content:GetHeight() - menu.scroll:GetHeight())
 			menu.scroll:SetVerticalScroll(math.max(0, math.min(range, menu.scroll:GetVerticalScroll() - delta * 54)))
 		end)
+		-- Closes the quest filter menus.
 		menu:SetScript("OnLeave", function()
+			-- Closes the quest filter menus.
 			After(0.3, function() if not TreeHovered() then RQE:CloseQuestFilterMenus() end end)
 		end)
+		-- Closes child flyout menus when their parent menu is hidden.
 		menu:SetScript("OnHide", function()
 			for _, child in pairs(menus) do if child.parentMenu == menu then child:Hide() end end
 		end)
@@ -671,6 +685,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				row.line:SetHeight(1)
 				row.line:SetPoint("LEFT", 6, 0)
 				row.line:SetPoint("RIGHT", -6, 0)
+				-- Shows this control's tooltip while the pointer is over it.
 				row:SetScript("OnEnter", function(self)
 					if self.tooltip then
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -683,8 +698,10 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 						GameTooltip:Show()
 					end
 				end)
+				-- Hides the tooltip when the pointer leaves this control.
 				row:SetScript("OnLeave", function()
 					GameTooltip:Hide()
+					-- Closes the quest filter menus.
 					After(0.3, function() if not TreeHovered() then RQE:CloseQuestFilterMenus() end end)
 				end)
 				menu.rows[index] = row
@@ -708,6 +725,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			row.check:SetShown(item.checked == true)
 			if item.disabled or item.kind == "heading" or item.kind == "separator" then row:Disable()
 			else row:Enable() end
+			-- Opens the clicked flyout submenu or executes its available action.
 			row:SetScript("OnClick", function(self)
 				local entry = self.item
 				if entry.backMenu then
@@ -718,6 +736,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 					local child = GetMenu(entry.submenu)
 					if child:IsShown() and child.anchorRow == self then child:Hide(); return end
 					child.anchorRow = self
+					-- Refreshes the layout.
 					child.RefreshLayout = function()
 						for _, descendant in pairs(menus) do
 							if descendant.parentMenu == child then descendant:Hide() end
@@ -774,6 +793,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			tooltip = kind == "instance"
 				and "Track dungeon, raid, delve, and scenario quests currently in your quest log. Outdoor group quests are excluded."
 				or "Select matching quests currently in your quest log once. This replaces the quest-log selection and turns Auto-track current zone off.",
+			-- Applies the quest menu selection.
 			action = function() RQE:ApplyQuestMenuSelection(kind, value, text) end }
 	end
 
@@ -785,6 +805,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			return row
 		end
 		return { text = item.text, disabled = item.disabled,
+			-- Captures the quest menu tracking.
 			action = function()
 				if ClientCall("InCombatLockdown") then return end
 				local previousRestore = RQE.QuestMenuRestoreState
@@ -829,6 +850,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			SelectionRow("All quests", "all"),
 			SelectionRow("Current zone", "zone", mapID),
 			{ text = "Campaign", count = Count(RQE:GetQuestMenuMatches("campaign")),
+				-- Builds the campaign menu list.
 				submenu = "Campaign", build = function()
 					local campaigns = { SelectionRow("All campaign quests", "campaign") }
 					RQE.ScanAndCacheCampaigns()
@@ -841,14 +863,18 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			SelectionRow("Instance", "instance"),
 			SelectionRow("Incomplete", "incomplete"),
 			SelectionRow("Ready for turn-in", "ready"),
+			-- Builds the additional quest-filter submenu categories.
 			{ text = "More filters", submenu = "MoreFilters", build = function()
 				return {
+					-- Builds a flyout list from the existing quest-filter menu provider.
 					{ text = "Zone quests", submenu = "Zone", build = function()
 						return ExistingList(RQE.BuildZoneQuestMenuList, RQE.ScanAndCacheZoneQuests)
 					end },
+					-- Builds a flyout list from the existing quest-filter menu provider.
 					{ text = "Quest type", submenu = "Type", build = function()
 						return ExistingList(RQE.BuildQuestTypeMenuList, RQE.ScanQuestTypes, "type")
 					end },
+					-- Builds a flyout list from the existing quest-filter menu provider.
 					{ text = "Quest line", submenu = "Line", build = function()
 						return ExistingList(RQE.BuildQuestLineMenuList, RQE.RequestAndCacheQuestLines, "line")
 					end },
@@ -858,6 +884,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			{ text = "Automatic", kind = "heading" },
 			{ text = "Auto-track current zone", keepOpen = true, checked = RQE.db.profile.autoTrackZoneQuests,
 				tooltip = "Keep the current zone's quest selection updated using RQE's existing automatic zone tracking.",
+				-- Captures the quest menu tracking.
 				action = function()
 					local enabled = not RQE.db.profile.autoTrackZoneQuests
 					if ClientCall("InCombatLockdown") then return end
@@ -873,6 +900,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 						if enabled then RQE.DisplayCurrentZoneQuests() end
 					end
 				end },
+			-- Builds the menu explaining the current automatic quest-sorting behavior.
 			{ text = "Sorting", submenu = "Sorting", build = function()
 				return {
 					{ text = "RQE automatic proximity order", kind = "heading",
@@ -882,8 +910,10 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			end },
 			{ kind = "separator" },
 			{ text = "Restore previous tracking", disabled = not RQE.QuestMenuRestoreState,
+				-- Restores the quest menu tracking.
 				action = function() RQE:RestoreQuestMenuTracking() end },
 			{ text = "Untrack quest-log quests",
+				-- Applies the quest menu selection.
 				action = function() RQE:ApplyQuestMenuSelection("none", nil, "Untrack quest-log quests") end },
 		}
 		if RQE.IsRetail then
@@ -902,12 +932,14 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 					text = choice.text, keepOpen = true,
 					checked = (RQE.db.profile.autoTrackQuestCategories or {})[key] == true,
 					tooltip = "Keep matching quests in your quest log tracked as quests are accepted or removed.",
+					-- Toggles the auto quest category.
 					action = function() RQE:ToggleAutoQuestCategory(key) end,
 				})
 				sortingIndex = sortingIndex + 1
 			end
 		end
 		if ContributionLoaded() then
+			-- Builds the Contribution-specific quest tracking and filter actions.
 			items[#items + 1] = { text = "Contribution", submenu = "Contribution", build = function()
 				local contribution = {
 					ExistingFilterRow({ text = "Track quests not in DB", func = RQE.TrackQuestsNotInDB }),
@@ -952,23 +984,28 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		menu.rootAtCursor = nil
 		BuildMenu(menu, {
 			{ text = "Contribution", kind = "heading" },
+			-- Shows the target NPC copy.
 			{ text = "Copy target NPC reference", action = function()
 				self:ShowTargetNPCCopy()
 			end },
+			-- Builds the NPC description-template submenu and its copy actions.
 			{ text = "Descriptions", submenu = "TargetNPCDescriptions", build = function()
 				local templates = RQE_Contribution and RQE_Contribution.GetStepEditorDescriptionTemplates
 					and RQE_Contribution.GetStepEditorDescriptionTemplates() or {}
+				-- Orders templates alphabetically by their case-insensitive display names.
 				table.sort(templates, function(left, right) return left.name:lower() < right.name:lower() end)
 				local rows = {}
 				for _, template in ipairs(templates) do
 					local selectedTemplate = template
 					rows[#rows + 1] = {
 						text = selectedTemplate.name, tooltip = selectedTemplate.tooltip or selectedTemplate.text, previewTooltip = true,
+						-- Shows the contribution description copy.
 						action = function() self:ShowContributionDescriptionCopy(selectedTemplate) end,
 					}
 				end
 				return rows
 			end },
+			-- Builds the NPC macro-template submenu and its copy actions.
 			{ text = "Macros", submenu = "TargetNPCMacros", build = function()
 				local templates = RQE_Contribution and RQE_Contribution.GetStepEditorMacroTemplates
 					and RQE_Contribution.GetStepEditorMacroTemplates() or {
@@ -978,23 +1015,28 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 					name = "Cancel Aura",
 					body = "#showtooltip item:" .. (RQE.IsRetail and "153541" or "54068") .. "\n/cancelaura SPELLNAME",
 				}
+				-- Orders templates alphabetically by their case-insensitive display names.
 				table.sort(templates, function(left, right) return left.name:lower() < right.name:lower() end)
 				local rows = {}
 				for _, template in ipairs(templates) do
 					local selectedTemplate = template
 					rows[#rows + 1] = {
 						text = selectedTemplate.name, tooltip = selectedTemplate.tooltip or selectedTemplate.body, previewTooltip = true,
+						-- Shows the contribution macro copy.
 						action = function() self:ShowContributionMacroCopy(selectedTemplate) end,
 					}
 				end
 				return rows
 			end },
+			-- Prints the player's continent coordinates for diagnostics.
 			{ text = "Copy player locations", action = function()
 				RQE.DebugPrintPlayerContinentPosition(nil, "locations")
 			end },
+			-- Prints the player's continent coordinates for diagnostics.
 			{ text = "Copy player coordinate hotspots", action = function()
 				RQE.DebugPrintPlayerContinentPosition(nil, "coordinateHotspots")
 			end },
+			-- Shows the player zone copy.
 			{ text = "Copy subzone and zone", action = function()
 				self:ShowPlayerZoneCopy()
 			end },
@@ -1053,6 +1095,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		for _, choice in ipairs(scenarioCardTestChoices) do
 			local label, kind = choice[1], choice[2]
 			items[#items + 1] = { text = label, checked = RQE.ScenarioCardTestKind == kind,
+				-- Selects which scenario-card type the preview displays.
 				action = function() RQE:SetScenarioCardTestKind(kind) end }
 		end
 		return items
@@ -1132,6 +1175,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				local enabled = RQE:IsScenarioCardTestEnabled()
 				items[#items + 1] = { text = "Test Scenario Cards", checked = enabled, keepOpen = true,
 					tooltip = "Show sample scenario cards in the tracker using the selected theme and card style.",
+					-- Enables or disables the scenario-card preview mode.
 					action = function() RQE:SetScenarioCardTestEnabled(not enabled) end }
 				if enabled then
 					items[#items + 1] = { text = "Choose card to preview", submenu = "ScenarioCardTest",
@@ -1203,6 +1247,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 
 	-- Defers URL focus and full-text selection until menu focus has been released.
 	local function QueueReferenceSelection(frame)
+		-- Selects the reference text.
 		After(0, function() SelectReferenceText(frame) end)
 	end
 
@@ -1223,6 +1268,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 
 	-- Percent-encodes text for safe use in an external quest-search query string.
 	local function EncodeQuery(text)
+		-- Percent-encodes a character for use in a URL query.
 		return text:gsub("[^A-Za-z0-9%-%_%.~]", function(char) return string.format("%%%02X", string.byte(char)) end)
 	end
 
@@ -1264,10 +1310,15 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.editBox:SetPoint("TOPLEFT", frame.questTitle, "BOTTOMLEFT", 3, -14)
 			frame.editBox:SetPoint("TOPRIGHT", frame.questTitle, "BOTTOMRIGHT", 0, -14)
 			frame.editBox:SetHyperlinksEnabled(false)
+			-- Selects the edit box text for copying or replacement.
 			frame.editBox:SetScript("OnEditFocusGained", function(box) box:HighlightText() end)
+			-- Queues the reference selection.
 			frame.editBox:SetScript("OnMouseUp", function() QueueReferenceSelection(frame) end)
+			-- Hides the associated frame or control.
 			frame.editBox:SetScript("OnEscapePressed", function() frame:Hide() end)
+			-- Hides the associated frame or control.
 			frame.editBox:SetScript("OnEnterPressed", function() frame:Hide() end)
+			-- Queues the reference selection.
 			frame.editBox:SetScript("OnTextChanged", function(box, userInput)
 				if userInput and box:GetText() ~= frame.copyValue then
 					box:SetText(frame.copyValue)
@@ -1298,14 +1349,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.macroIDButton.label = frame.macroIDButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			frame.macroIDButton.label:SetPoint("CENTER")
 			frame.macroIDButton.label:SetText("Update macro")
+			-- Updates the contribution description ID.
 			frame.macroIDButton:SetScript("OnClick", function()
 				if frame.descriptionState then RQE:UpdateContributionDescriptionID(frame)
 				else RQE:UpdateContributionMacroID(frame) end
 			end)
+			-- Updates the contribution description ID.
 			frame.macroIDInput:SetScript("OnEnterPressed", function()
 				if frame.descriptionState then RQE:UpdateContributionDescriptionID(frame)
 				else RQE:UpdateContributionMacroID(frame) end
 			end)
+			-- Releases keyboard focus when Escape is pressed.
 			frame.macroIDInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
 			frame.macroQuantityRow = CreateFrame("Frame", nil, frame.macroControls)
 			frame.macroQuantityRow:SetHeight(26)
@@ -1324,14 +1378,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.macroQuantityButton.label = frame.macroQuantityButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			frame.macroQuantityButton.label:SetPoint("CENTER")
 			frame.macroQuantityButton.label:SetText("Update macro")
+			-- Updates the contribution description quantity.
 			frame.macroQuantityButton:SetScript("OnClick", function()
 				if frame.descriptionState then RQE:UpdateContributionDescriptionQuantity(frame)
 				else RQE:UpdateContributionMacroQuantity(frame) end
 			end)
+			-- Updates the contribution description quantity.
 			frame.macroQuantityInput:SetScript("OnEnterPressed", function()
 				if frame.descriptionState then RQE:UpdateContributionDescriptionQuantity(frame)
 				else RQE:UpdateContributionMacroQuantity(frame) end
 			end)
+			-- Releases keyboard focus when Escape is pressed.
 			frame.macroQuantityInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
 			frame.macroObjectRow = CreateFrame("Frame", nil, frame.macroControls)
 			frame.macroObjectRow:SetHeight(26)
@@ -1350,14 +1407,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.macroObjectButton.label = frame.macroObjectButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			frame.macroObjectButton.label:SetPoint("CENTER")
 			frame.macroObjectButton.label:SetText("Update macro")
+			-- Updates the contribution description object.
 			frame.macroObjectButton:SetScript("OnClick", function()
 				if frame.descriptionState then RQE:UpdateContributionDescriptionObject(frame)
 				else RQE:UpdateContributionMacroObject(frame) end
 			end)
+			-- Updates the contribution description object.
 			frame.macroObjectInput:SetScript("OnEnterPressed", function()
 				if frame.descriptionState then RQE:UpdateContributionDescriptionObject(frame)
 				else RQE:UpdateContributionMacroObject(frame) end
 			end)
+			-- Releases keyboard focus when Escape is pressed.
 			frame.macroObjectInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
 			frame.macroGossipRow = CreateFrame("Frame", nil, frame.macroControls)
 			frame.macroGossipRow:SetHeight(26)
@@ -1376,8 +1436,11 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.macroGossipButton.label = frame.macroGossipButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			frame.macroGossipButton.label:SetPoint("CENTER")
 			frame.macroGossipButton.label:SetText("Update macro")
+			-- Updates the contribution macro gossip.
 			frame.macroGossipButton:SetScript("OnClick", function() RQE:UpdateContributionMacroGossip(frame) end)
+			-- Updates the contribution macro gossip.
 			frame.macroGossipInput:SetScript("OnEnterPressed", function() RQE:UpdateContributionMacroGossip(frame) end)
+			-- Releases keyboard focus when Escape is pressed.
 			frame.macroGossipInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
 			frame.macroNPCRow = CreateFrame("Frame", nil, frame.macroControls)
 			frame.macroNPCRow:SetPoint("TOPRIGHT", frame.macroControls, "TOPRIGHT")
@@ -1387,6 +1450,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				button:SetSize(150, 24)
 				button.label = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				button.label:SetPoint("CENTER")
+				-- Updates the contribution description NPC.
 				button:SetScript("OnClick", function()
 					if frame.descriptionState then RQE:UpdateContributionDescriptionNPC(frame)
 					else RQE:UpdateContributionMacroNPC(frame, slot) end
@@ -1401,13 +1465,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.closeButton = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
 			frame.closeButton:SetSize(22, 22)
 			frame.closeButton:SetPoint("TOPRIGHT", -7, -6)
+			-- Hides the associated frame or control.
 			frame.closeButton:SetScript("OnClick", function() frame:Hide() end)
 			frame:SetScript("OnDragStart", frame.StartMoving)
+			-- Stops dragging the frame and retains its final position.
 			frame:SetScript("OnDragStop", function()
 				frame:StopMovingOrSizing()
 				QueueReferenceSelection(frame)
 			end)
+			-- Queues the reference selection.
 			frame:SetScript("OnShow", function() QueueReferenceSelection(frame) end)
+			-- Stops moving the copy window and clears its temporary selection state.
 			frame:SetScript("OnHide", function()
 				frame:StopMovingOrSizing()
 				frame.editBox:ClearFocus()
@@ -1471,6 +1539,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		frame.hint:ClearAllPoints()
 		if hasID or hasQuantity or hasObject or hasGossip or hasNPCButton then
 			local rowTop = 0
+			-- Places a visible flyout row and advances the layout cursor.
 			local function positionRow(row, visible)
 				if not visible then return end
 				row:ClearAllPoints()
@@ -1588,9 +1657,11 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			local marker = "\001" .. (#pending + 1) .. "\002"
 			local replacements
 			macro, replacements = macro:gsub('(RQE%.SelectMultipleGossipOptions%(%s*".-"%s*,%s*)[^)]-(%))',
+				-- Protects the matched placeholder while preserving its surrounding macro text.
 				function(before, after) return before .. marker .. after end, 1)
 			if replacements > 0 then pending[#pending + 1] = { marker, state.gossipOptions } end
 		end
+		-- Protects matching macro text while template placeholders are substituted.
 		local function mask(pattern, value)
 			local marker = "\001" .. (#pending + 1) .. "\002"
 			macro = macro:gsub(pattern, marker)
@@ -1603,15 +1674,18 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		if state.secondary and state.npcValues.secondary then
 			npcSlots[#npcSlots + 1] = { state.secondary, state.npcValues.secondary }
 		end
+		-- Orders NPC placeholders longest first to avoid partial replacements.
 		table.sort(npcSlots, function(left, right) return #left[1] > #right[1] end)
 		for _, slot in ipairs(npcSlots) do
 			mask('"' .. slot[1] .. '"', '"' .. EscapeLuaString(slot[2]) .. '"')
 			mask(slot[1], slot[2])
 		end
+		if state.questID then mask("QUESTID", tostring(state.questID)) end
 		if state.objectName then
 			local marker = "\001" .. (#pending + 1) .. "\002"
 			local replacements
 			macro, replacements = macro:gsub('(RQE%.SelectMultipleGossipOptions%(%s*")(.-)("%s*,)',
+				-- Protects the matched placeholder while preserving both surrounding text parts.
 				function(before, _, after) return before .. marker .. after end, 1)
 			if replacements > 0 then pending[#pending + 1] = { marker, EscapeLuaString(state.objectName) } end
 		end
@@ -1624,11 +1698,13 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		end
 		if state.quantity then mask("NUMBER", tostring(state.quantity)) end
 		for _, replacement in ipairs(pending) do
+			-- Returns the literal replacement text without pattern-substitution expansion.
 			macro = macro:gsub(replacement[1], function() return replacement[2] end)
 		end
 		return 'macro = { "' .. EscapeLuaString(macro) .. '" },'
 	end
 
+	-- Refreshes the contribution macro copy.
 	function RQE:RefreshContributionMacroCopy(frame)
 		local state = frame and frame.macroState
 		if not state or not frame:IsShown() then return end
@@ -1677,6 +1753,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		self:RefreshContributionMacroCopy(frame)
 		if not state.hasItemName then return end
 		local serial = state.lookupSerial
+		-- Updates the copy preview after the requested item name becomes available.
 		local function itemLoaded(resolvedID, itemName)
 			if frame.macroState ~= state or state.lookupSerial ~= serial or state.itemID ~= resolvedID
 				or not frame:IsShown() then return end
@@ -1741,6 +1818,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		self:RefreshContributionMacroCopy(frame)
 	end
 
+	-- Shows the contribution macro copy.
 	function RQE:ShowContributionMacroCopy(template)
 		if not ContributionLoaded() then return end
 		if type(template) ~= "table" or type(template.body) ~= "string" then return end
@@ -1749,9 +1827,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			and type(secondary) == "string" and secondary ~= "" and secondary ~= primary
 		local name = not dualNPC and TargetNPC() or nil
 		local idKind, hasItemName, hasSpellName = MacroBodyIDKind(template.body)
+		local questID
+		if template.body:find("QUESTID", 1, true) and self.API and self.API.GetSuperTrackedQuestID then
+			local trackedID = self.API.GetSuperTrackedQuestID()
+			if not (issecretvalue and issecretvalue(trackedID)) then
+				trackedID = tonumber(trackedID)
+				if trackedID and trackedID > 0 and trackedID % 1 == 0 then questID = trackedID end
+			end
+		end
 		local state = {
 			body = template.body, primary = primary, secondary = secondary, dualNPC = dualNPC,
-			npcValues = { primary = name }, idKind = idKind,
+			npcValues = { primary = name }, idKind = idKind, questID = questID,
 			hasItemName = hasItemName, hasSpellName = hasSpellName,
 			hasQuantity = template.body:find("NUMBER", 1, true) ~= nil,
 			hasObject = MacroHasObjectName(template.body, primary, secondary),
@@ -1858,6 +1944,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return self:ShowCopyableReferenceText("Player subzone and zone", "Current position", value)
 	end
 
+	-- Chooses an NPC button label appropriate to the description template.
 	local function DescriptionNPCButtonLabel(name, objectPlaceholder)
 		if objectPlaceholder == "OBJECT/NPC" then return "Target NPC" end
 		if name:find("^Kill") then return "Kill target" end
@@ -1874,19 +1961,24 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			local fallback = state.npcPlaceholder == "NPC" and "NPC" or "NPCNAME"
 			local npcReference = state.npcReference or "{npc:NPCID:" .. fallback .. "}"
 			description = description:gsub("{npc:NPCID:" .. state.npcPlaceholder .. "}",
+				-- Returns the NPC reference.
 				function() return npcReference end)
 		end
+		-- Returns the location.
 		description = description:gsub("SUBZONE, ZONE", function() return state.location end)
+			-- Substitutes the chosen nearby-body item label in the description.
 			:gsub("{item:71967:item}", function()
 				return "{item:71967:" .. state.nearBodyItemLabel .. "}"
 			end)
 		if state.itemID or state.itemName then
+			-- Rebuilds an item reference with the chosen item ID and name.
 			description = description:gsub("{item:%d+:[^}]+}", function(reference)
 				local sourceID, sourceName = reference:match("{item:(%d+):([^}]+)}")
 				return "{item:" .. (state.itemID or sourceID) .. ":" .. (state.itemName or sourceName) .. "}"
 			end)
 		end
 		if state.spellID or state.spellName then
+			-- Replaces the spell placeholder with the selected spell reference.
 			description = description:gsub("{spell:SPELLID:SPELL}", function()
 				return "{spell:" .. (state.spellID or "SPELLID") .. ":" .. (state.spellName or "SPELL") .. "}"
 			end)
@@ -1894,17 +1986,20 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		if state.quantity then
 			description = description:gsub("##", tostring(state.quantity))
 			if state.fixedCount then
+				-- Substitutes the chosen quantity while retaining its color formatting.
 				description = description:gsub("|cFFffcc33" .. state.fixedCount .. "|r", function()
 					return "|cFFffcc33" .. state.quantity .. "|r"
 				end, 1)
 			end
 		end
 		if state.objectValue and state.objectPlaceholder then
+			-- Returns the object value.
 			description = description:gsub(state.objectPlaceholder, function() return state.objectValue end)
 		end
 		return 'description = "' .. EscapeLuaString(description) .. '",'
 	end
 
+	-- Refreshes the contribution description copy.
 	function RQE:RefreshContributionDescriptionCopy(frame)
 		local state = frame and frame.descriptionState
 		if not state or not frame:IsShown() then return end
@@ -1914,6 +2009,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		QueueReferenceSelection(frame)
 	end
 
+	-- Updates the contribution description NPC.
 	function RQE:UpdateContributionDescriptionNPC(frame)
 		local state = frame and frame.descriptionState
 		if not state or not state.hasNPCButton then return end
@@ -1934,6 +2030,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		self:RefreshContributionDescriptionCopy(frame)
 	end
 
+	-- Updates the contribution description ID.
 	function RQE:UpdateContributionDescriptionID(frame)
 		local state = frame and frame.descriptionState
 		if not state or not state.idKind then return end
@@ -1957,6 +2054,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		frame.macroStatus:SetText("Loading item name...")
 		self:RefreshContributionDescriptionCopy(frame)
 		local serial = state.lookupSerial
+		-- Updates the copy preview after the requested item name becomes available.
 		local function itemLoaded(resolvedID, itemName)
 			if frame.descriptionState ~= state or state.lookupSerial ~= serial or state.itemID ~= resolvedID
 				or not frame:IsShown() then return end
@@ -1975,6 +2073,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		end
 	end
 
+	-- Updates the contribution description quantity.
 	function RQE:UpdateContributionDescriptionQuantity(frame)
 		local state = frame and frame.descriptionState
 		if not state or not state.hasQuantity then return end
@@ -1989,6 +2088,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		self:RefreshContributionDescriptionCopy(frame)
 	end
 
+	-- Updates the contribution description object.
 	function RQE:UpdateContributionDescriptionObject(frame)
 		local state = frame and frame.descriptionState
 		if not state or not state.hasObject then return end
@@ -2088,6 +2188,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	watcher:RegisterEvent("QUEST_ACCEPTED")
 	watcher:RegisterEvent("QUEST_REMOVED")
 	watcher:RegisterEvent("QUEST_TURNED_IN")
+	-- Closes the quest filter menus.
 	watcher:SetScript("OnEvent", function(_, event, ...)
 		if event == "PLAYER_LOGIN" and LegacyTracker() and RQECharacterDB then
 			RQE.QuestMenuSelection = Copy(RQECharacterDB.rqeQuestMenuSelection)
@@ -2101,6 +2202,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			-- RQE's rapid-accept watch repair runs four seconds later. Recheck once
 			-- afterward so it cannot leave an unmatched quest in the selected list.
 			if RQE:HasAutoQuestCategories() then
+				-- Queues the auto quest category refresh.
 				RQE.API.Client.C_Timer.After(4.2, function()
 					RQE:QueueAutoQuestCategoryRefresh(0)
 				end)
