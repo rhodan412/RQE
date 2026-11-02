@@ -91,6 +91,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		end
 
 		local methods = {
+			-- Resets the widget's default state when it is acquired from the pool.
 			OnAcquire = function(self)
 				self.alignoffset = PREVIEW_ROW_ALIGN_OFFSET
 				self.previewWidth, self.previewHeight = 32, 32
@@ -100,20 +101,25 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				self.image:SetTexture(nil)
 				updateLayout(self)
 			end,
+			-- Cleans up widget state before it returns to the reuse pool.
 			OnRelease = function(self)
 				self.image:SetTexture(nil)
 			end,
+			-- Repositions or resizes widget content after its width changes.
 			OnWidthSet = function(self)
 				updateLayout(self)
 			end,
+			-- Sets the text.
 			SetText = function(self, value)
 				self.caption:SetText(value or "")
 				updateLayout(self)
 			end,
+			-- Sets the font object.
 			SetFontObject = function(self, font)
 				self.caption:SetFontObject(font or GameFontHighlightSmall)
 				updateLayout(self)
 			end,
+			-- Sets the image.
 			SetImage = function(self, path, ...)
 				self.image:SetTexture(path)
 				local count = select("#", ...)
@@ -124,6 +130,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				end
 				updateLayout(self)
 			end,
+			-- Sets the image size.
 			SetImageSize = function(self, width, height)
 				self.previewWidth, self.previewHeight = width, height
 				updateLayout(self)
@@ -173,6 +180,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		end
 
 		local methods = {
+			-- Resets the widget's default state when it is acquired from the pool.
 			OnAcquire = function(self)
 				self.previewWidth, self.previewHeight = 256, 128
 				self.frame:SetWidth(260)
@@ -181,15 +189,21 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				self.image:SetAlpha(1)
 				updateLayout(self)
 			end,
+			-- Cleans up widget state before it returns to the reuse pool.
 			OnRelease = function(self) self.image:SetTexture(nil) end,
+			-- Repositions or resizes widget content after its width changes.
 			OnWidthSet = function(self) updateLayout(self) end,
+			-- Provides an empty callback where no action is required.
 			SetText = function() end,
+			-- Provides an empty callback where no action is required.
 			SetFontObject = function() end,
+			-- Sets the image.
 			SetImage = function(self, path, left, right, top, bottom, alpha)
 				self.image:SetTexture(path)
 				self.image:SetTexCoord(left or 0, right or 1, top or 0, bottom or 1)
 				self.image:SetAlpha(alpha or 1)
 			end,
+			-- Sets the image size.
 			SetImageSize = function(self, width, height)
 				self.previewWidth, self.previewHeight = width, height
 				updateLayout(self)
@@ -218,11 +232,13 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			["Quest Name tooltip picture opacity"] = "Quest Name",
 			["Magic Button tooltip picture opacity"] = "Magic Button macro text",
 		}
+		-- Creates and registers this AceGUI widget and its child controls.
 		local function Constructor()
 			local widget = AceGUI:Create("Slider")
 			local setLabel = widget.SetLabel
 			widget.type = widgetType
 			widget.RQEBaseType = "Slider"
+			-- Sets the label.
 			widget.SetLabel = function(self, label)
 				setLabel(self, shortLabels[label] or label)
 			end
@@ -360,6 +376,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					end
 				end
 
+				-- Resets the widget's default state when it is acquired from the pool.
 				self.OnAcquire = function(widget)
 					if widget.RQESkipNextAcquire then
 						widget.RQESkipNextAcquire = nil
@@ -369,16 +386,19 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					widget.colorPreview:Hide()
 				end
 
+				-- Cleans up widget state before it returns to the reuse pool.
 				self.OnRelease = function(widget)
 					widget.colorPreview:Hide()
 					BaseOnRelease(widget)
 				end
 
+				-- Sets the text.
 				self.SetText = function(widget, text)
 					BaseSetText(widget, text)
 					widget:UpdateColorPreview(text)
 				end
 
+				-- Updates the control's selected value and its displayed state.
 				self.SetValue = function(widget, value)
 					BaseSetValue(widget, value)
 					widget:UpdateColorPreview(value)
@@ -399,17 +419,20 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		if not AceGUI or not itemBaseLibrary or AceGUI:GetWidgetVersion(itemWidgetType) then return end
 		local ItemBase = itemBaseLibrary.GetItemBase()
 
+		-- Updates the control's selected value and its displayed state.
 		local function SetValue(self, value)
 			self.value = value
 			self.check:SetShown(value and true or false)
 		end
 
+		-- Cleans up widget state before it returns to the reuse pool.
 		local function OnRelease(self)
 			if GameTooltip:IsOwned(self.frame) then GameTooltip:Hide() end
 			ItemBase.OnRelease(self)
 			self:SetValue(nil)
 		end
 
+		-- Toggles the themed checkbox and fires its value-change callback.
 		local function OnClick(frame)
 			local self = frame.obj
 			if self.disabled then return end
@@ -419,6 +442,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			self:Fire("OnValueChanged", self.value)
 		end
 
+		-- Shows this control's tooltip while the pointer is over it.
 		local function OnEnter(frame)
 			local self = frame.obj
 			local theme = RQE.UI.Themes[self.userdata.value]
@@ -431,13 +455,16 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			GameTooltip:Show()
 		end
 
+		-- Hides the tooltip associated with this control.
 		local function HideTooltip(frame)
 			if GameTooltip:IsOwned(frame) then GameTooltip:Hide() end
 		end
 
+		-- Creates and registers this AceGUI widget and its child controls.
 		local function Constructor()
 			local self = ItemBase.Create(itemWidgetType)
 			self.SetValue = SetValue
+			-- Returns the value.
 			self.GetValue = function(widget) return widget.value end
 			self.OnRelease = OnRelease
 			self.frame:SetScript("OnClick", OnClick)
@@ -575,6 +602,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		widget.RQEConfigChildMode = mode or "styled"
 		if widget.RQEConfigAddChildWrapped or type(widget.AddChild) ~= "function" then return end
 		local originalAddChild = widget.AddChild
+		-- Adds the child.
 		widget.AddChild = function(owner, child, ...)
 			local result = originalAddChild(owner, child, ...)
 			if owner.RQEConfigChildMode == "native" then
@@ -632,6 +660,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			local ratio = contentHeight > 0 and math.min(1, viewportHeight / contentHeight) or 1
 			thumb:SetHeight(math.min(trackHeight, math.max(32, trackHeight * ratio)))
 		end
+		-- Forwards scrollbar-wheel input to the owning scroll frame.
 		RQE.API.ConfigureScrollbarDrag(scrollbar, function(_, delta)
 			local handler = scrollframe:GetScript("OnMouseWheel")
 			if handler then handler(scrollframe, delta) end
@@ -689,6 +718,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				}
 			end
 			local originalFixScroll = widget.FixScroll
+			-- Recalculates and clamps the content's scroll range.
 			widget.FixScroll = function(owner, ...)
 				if owner.RQESuspendScrollFix then return end
 				local result = originalFixScroll(owner, ...)
@@ -696,8 +726,10 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				return result
 			end
 			if widget.frame and widget.frame.HookScript then
+				-- Updates the styled scroll frame.
 				widget.frame:HookScript("OnShow", function()
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+					-- Updates the styled scroll frame.
 					RQE.API.Client.C_Timer.After(0, function()
 						if widget.RQEConfigChildMode == "styled" then updateStyledScrollFrame(widget) end
 					end)
@@ -766,6 +798,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			skinSurface(widget.border or widget.frame, 0.82, 0)
 			if not widget.RQEConfigBuildTabsWrapped and type(widget.BuildTabs) == "function" then
 				local originalBuildTabs = widget.BuildTabs
+				-- Builds the tabs.
 				widget.BuildTabs = function(owner, ...)
 					local result = originalBuildTabs(owner, ...)
 					skinTabs(owner)
@@ -775,6 +808,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			end
 			if not widget.RQEConfigSelectTabWrapped and type(widget.SelectTab) == "function" then
 				local originalSelectTab = widget.SelectTab
+				-- Selects the tab.
 				widget.SelectTab = function(owner, ...)
 					local result = originalSelectTab(owner, ...)
 					skinTabs(owner)
@@ -962,6 +996,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				headDefault = { type = "description", name = "Default", width = 0.9, order = 3, hidden = inStandaloneWindow },
 				standaloneHeading = {
 					type = "group", name = "", inline = true, order = 4,
+					-- Hides the option outside the standalone configuration window.
 					hidden = function(info) return not inStandaloneWindow(info) end,
 					args = {
 						current = { type = "description", name = "Current order", width = 3, order = 1 },
@@ -975,42 +1010,51 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			local row = index * 10
 			group.args["current" .. index] = {
 				type = "description", order = row, width = 1.2, hidden = inStandaloneWindow,
+				-- Returns the current tracker-section order as a readable label.
 				name = function() return currentLabel(rowIndex) end,
 			}
 			group.args["up" .. index] = {
 				type = "execute", name = "Up", width = 0.45, order = row + 1, hidden = inStandaloneWindow,
 				disabled = index == 1,
+				-- Applies the selected tracker-section ordering action.
 				func = function(info) runOrderAction(info, RQE.MoveTrackerSectionAt, rowIndex, -1) end,
 			}
 			group.args["down" .. index] = {
 				type = "execute", name = "Down", width = 0.45, order = row + 2, hidden = inStandaloneWindow,
 				disabled = index == 8,
+				-- Applies the selected tracker-section ordering action.
 				func = function(info) runOrderAction(info, RQE.MoveTrackerSectionAt, rowIndex, 1) end,
 			}
 			group.args["default" .. index] = {
 				type = "description", order = row + 3, width = 0.9, hidden = inStandaloneWindow,
+				-- Returns the default tracker-section order as a readable label.
 				name = function() return defaultLabel(rowIndex) end,
 			}
 			group.args["standaloneRow" .. index] = {
 				type = "group", name = "", inline = true, order = row + 4,
+				-- Hides the option outside the standalone configuration window.
 				hidden = function(info) return not inStandaloneWindow(info) end,
 				args = {
 					current = {
 						type = "description", order = 1, width = 1.7,
+						-- Returns the current tracker-section order as a readable label.
 						name = function() return currentLabel(rowIndex) end,
 					},
 					up = {
 						type = "execute", name = "Up", width = 0.65, order = 2,
 						disabled = rowIndex == 1,
+						-- Applies the selected tracker-section ordering action.
 						func = function(info) runOrderAction(info, RQE.MoveTrackerSectionAt, rowIndex, -1) end,
 					},
 					down = {
 						type = "execute", name = "Down", width = 0.65, order = 3,
 						disabled = rowIndex == 8,
+						-- Applies the selected tracker-section ordering action.
 						func = function(info) runOrderAction(info, RQE.MoveTrackerSectionAt, rowIndex, 1) end,
 					},
 					default = {
 						type = "description", order = 4, width = 1.35,
+						-- Returns the default tracker-section order as a readable label.
 						name = function() return defaultLabel(rowIndex) end,
 					},
 				},
@@ -1018,7 +1062,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		end
 		group.args.reset = {
 			type = "execute", name = "Restore default order", width = 1.5, order = 90,
+			-- Disables the reset action when no custom tracker-section order exists.
 			disabled = function() return not RQE:HasCustomTrackerSectionOrder() end,
+			-- Applies the selected tracker-section ordering action.
 			func = function(info) runOrderAction(info, RQE.ResetTrackerSectionOrder) end,
 		}
 		return group
@@ -1084,6 +1130,8 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		placeOption(automation.args, source, used, "removeWQatLogin", "Clear world quests at login", 3, 1.55)
 		placeOption(automation.args, source, used, "autoTrackZoneQuests", "Track quests for the current zone", 4, 1.9)
 		placeOption(automation.args, source, used, "autoClickWaypointButton", "Advance waypoint automatically", 5, 1.75)
+		placeOption(automation.args, source, used, "autoAcceptQuestDetail", "Auto-Accept Quests", 6, 1.6)
+		placeOption(automation.args, source, used, "autoCompleteNoRewardChoices", "Auto-Complete when No Reward Choices", 7, 2)
 
 		local tracking = createOptionGroup("SearchGroup", "Smart Tracking", 4)
 		placeOption(tracking.args, source, used, "enableAutoSuperTrackSwap", "Nearest quest while moving", 1, 1.55)
@@ -1188,7 +1236,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			args = {
 				fontSize = {
 					type = "range", min = 8, max = 24, step = 1,
+					-- Reads the saved section-header font size setting.
 					get = function() return RQE.db.profile.textSettings.sectionHeader.size end,
+					-- Saves the section header size setting and applies the change.
 					set = function(_, value)
 						RQE.db.profile.textSettings.sectionHeader.size = value
 						RQE:ConfigurationChanged()
@@ -1197,7 +1247,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				fontStyle = {
 					type = "select", values = RQE.FontStyleLabels,
 					itemControl = "Dropdown-Item-RQEFontPreview",
+					-- Returns the font style key.
 					get = function() return RQE:GetFontStyleKey(RQE.db.profile.textSettings.sectionHeader.font) end,
+					-- Saves the section header font setting and applies the change.
 					set = function(_, value)
 						RQE.db.profile.textSettings.sectionHeader.font = RQE:GetFontStylePath(value)
 						RQE:ConfigurationChanged()
@@ -1206,7 +1258,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				fontColor = {
 					type = "select", values = RQE.FontColorLabels, sorting = RQE.FontColorOrder,
 					dialogControl = "RQEColorDropdown", itemControl = "Dropdown-Item-RQEColorPreview",
+					-- Returns the font color key.
 					get = function() return RQE:GetFontColorKey(RQE.db.profile.textSettings.sectionHeader.color) end,
+					-- Saves the section header color setting and applies the change.
 					set = function(_, value)
 						local r, g, b = RQE:GetFontColorRGB(value)
 						if r then
@@ -1223,7 +1277,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			args = {
 				fontSize = {
 					type = "range", min = 8, max = 24, step = 1,
+					-- Reads the saved step font size setting.
 					get = function() return RQE.db.profile.textSettings.StepText.size end,
+					-- Saves the step text size setting and applies the change.
 					set = function(_, value)
 						RQE.db.profile.textSettings.StepText.size = value
 						RQE:ConfigurationChanged()
@@ -1233,7 +1289,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				fontStyle = {
 					type = "select", values = RQE.FontStyleLabels,
 					itemControl = "Dropdown-Item-RQEFontPreview",
+					-- Returns the font style key.
 					get = function() return RQE:GetFontStyleKey(RQE.db.profile.textSettings.StepText.font) end,
+					-- Saves the step text font setting and applies the change.
 					set = function(_, value)
 						RQE.db.profile.textSettings.StepText.font = RQE:GetFontStylePath(value)
 						RQE:ConfigurationChanged()
@@ -1243,7 +1301,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				fontColor = {
 					type = "select", values = RQE.FontColorLabels, sorting = RQE.FontColorOrder,
 					dialogControl = "RQEColorDropdown", itemControl = "Dropdown-Item-RQEColorPreview",
+					-- Returns the font color key.
 					get = function() return RQE:GetFontColorKey(RQE.db.profile.textSettings.StepText.color) end,
+					-- Saves the step text color setting and applies the change.
 					set = function(_, value)
 						local r, g, b = RQE:GetFontColorRGB(value)
 						if r then
@@ -1271,11 +1331,13 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			if group and group.args then
 				local role = key
 				if group.args.fontSize then
+					-- Shows the current theme's default font size in the option description.
 					group.args.fontSize.desc = function()
 						return "Default: " .. tostring(RQE.UI:GetThemeFontDefault(role).size)
 					end
 				end
 				if group.args.fontStyle then
+					-- Shows the current theme's default font style in the option description.
 					group.args.fontStyle.desc = function()
 						local default = RQE.UI:GetThemeFontDefault(role)
 						local styleKey = RQE:GetFontStyleKey(default.font)
@@ -1283,6 +1345,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					end
 				end
 				if group.args.fontColor then
+					-- Shows the current theme's default font color in the option description.
 					group.args.fontColor.desc = function()
 						local default = RQE.UI:GetThemeFontDefault(role)
 						return "Default: " .. (RQE.FontColorLabels[RQE:GetFontColorKey(default.color)] or "Custom")
@@ -1337,7 +1400,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				desc = definition[3] or ("Print " .. label .. " diagnostics to chat when this event is available on the current client."),
 				order = order + 1,
 				width = 1.5,
+				-- Reads the enabled state of the selected profile option.
 				get = function() return RQE.db.profile[key] == true end,
+				-- Stores the new value of the selected profile option.
 				set = function(_, value) RQE.db.profile[key] = value end,
 			}
 		end
@@ -1363,6 +1428,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			if tools.args.resetFrameSize then tools.args.resetFrameSize.name = "Reset sizes"; tools.args.resetFrameSize.width = 1 end
 		end
 		local infoTrace = createOptionGroup("Search", "INFO event tracing", 3)
+		-- Hides trace controls unless informational debugging is enabled.
 		infoTrace.hidden = function()
 			local profile = RQE.db.profile
 			return not profile.debugMode or (profile.debugLevel ~= "INFO" and profile.debugLevel ~= "INFO+")
@@ -1505,7 +1571,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					type = "select", name = "Tracker theme", order = 2, width = 1.2,
 					itemControl = "Dropdown-Item-RQETheme",
 					values = themeLabels, sorting = RQE.UI.ThemeOrder,
+					-- Returns the selected theme.
 					get = function() return RQE.UI:GetSelectedTheme() end,
+					-- Selects the theme.
 					set = function(_, key)
 						RQE.UI:SelectTheme(key)
 						LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
@@ -1513,28 +1581,38 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				},
 				buttonBorderOpacity = {
 					type = "range", name = "Icon button border opacity", order = 3,
+					-- Builds the slider help text with its current theme default.
 					desc = function()
 						return sliderDescriptionWithDefault("Adjust the square surround behind marked Quest Helper and Quest Tracker icons. Icon artwork stays visible. Basic uses its original buttons.", RQE.UI.ThemeButtonBorderOpacityDefaults)
 					end,
 					min = 0, max = 1, step = 0.01, isPercent = true, width = 1.5,
+					-- Disables this theme-specific control while the Basic theme is selected.
 					disabled = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
+					-- Returns the button border opacity.
 					get = function() return RQE.UI:GetButtonBorderOpacity() end,
+					-- Sets the button border opacity.
 					set = function(_, value) RQE.UI:SetButtonBorderOpacity(value) end,
 				},
 				frameBorderOpacity = {
 					type = "range", name = "Frame border opacity", order = 3.1,
+					-- Builds the slider help text with its current theme default.
 					desc = function()
 						return sliderDescriptionWithDefault("Fade the borders around the Quest Helper, Quest Tracker, their child frames, and their headers. Frame backgrounds and icon button borders stay unchanged.", RQE.UI.ThemeFrameBorderOpacityDefaults)
 					end,
 					min = 0, max = 1, step = 0.01, isPercent = true, width = 1.5,
+					-- Returns the frame border opacity.
 					get = function() return RQE.UI:GetFrameBorderOpacity() end,
+					-- Sets the frame border opacity.
 					set = function(_, value) RQE.UI:SetFrameBorderOpacity(value) end,
 				},
 				useBackgroundPicture = {
 					type = "toggle", name = "Use background picture", order = 3.2, width = 1.2,
 					desc = "Show this theme's selected picture behind the Quest Helper and Quest Tracker. Both frames keep their saved picture opacity.",
+					-- Disables this theme-specific control while the Basic theme is selected.
 					hidden = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
+					-- Reports whether background artwork is enabled for this theme.
 					get = function() return RQE.UI:IsBackgroundPictureEnabled() end,
+					-- Enables or disables background artwork for the selected theme.
 					set = function(_, enabled)
 						RQE.UI:SetBackgroundPictureEnabled(enabled)
 						LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
@@ -1542,6 +1620,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				},
 				previewDescription = {
 					type = "description", order = 3.5, width = "full", fontSize = "medium",
+					-- Builds the selected theme's title and description for the options panel.
 					name = function()
 						local theme = RQE.UI.Themes[RQE.UI:GetSelectedTheme()]
 						return "|cffffd700" .. (theme.name or "Theme") .. "|r  " .. (theme.description or "")
@@ -1549,12 +1628,15 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				},
 				backgroundPicture = {
 					type = "select", name = "Background picture", order = 4, width = 1.2,
+					-- Describes the selected background picture and the available theme choices.
 					desc = function()
 						local picture = RQE.UI:GetBackgroundPicture()
 						return "Selected: " .. (picture and picture.themeName .. ": " .. picture.name or "None")
 							.. ". Choose one of this theme's three pictures."
 					end,
+					-- Hides picture choices when background pictures are disabled.
 					hidden = function() return not RQE.UI:IsBackgroundPictureEnabled() end,
+					-- Builds the value labels for the available background pictures.
 					values = function()
 						local values = {}
 						for _, picture in ipairs(RQE.UI:GetBackgroundPictureChoices()) do
@@ -1562,6 +1644,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 						end
 						return values
 					end,
+					-- Returns background picture IDs in their configured display order.
 					sorting = function()
 						local order = {}
 						for _, picture in ipairs(RQE.UI:GetBackgroundPictureChoices()) do
@@ -1569,10 +1652,12 @@ Shared configuration presentation, custom controls, option composition, and Sett
 						end
 						return order
 					end,
+					-- Returns the currently selected background picture ID.
 					get = function()
 						local picture = RQE.UI:GetBackgroundPicture()
 						return picture and picture.id
 					end,
+					-- Sets the background picture.
 					set = function(_, id)
 						RQE.UI:SetBackgroundPicture(id)
 						LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
@@ -1580,28 +1665,38 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				},
 				helperPictureOpacity = {
 					type = "range", name = "Helper picture opacity", order = 4.1, width = 1.1,
+					-- Builds the slider help text with its current theme default.
 					desc = function()
 						return sliderDescriptionWithDefault("Fade the picture in the Quest Helper without changing its frame background opacity.", RQE.UI.ThemeBackgroundPictureOpacityDefaults, "main")
 					end,
 					min = 0, max = 1, step = 0.01, isPercent = true,
+					-- Hides picture choices when background pictures are disabled.
 					hidden = function() return not RQE.UI:IsBackgroundPictureEnabled() end,
+					-- Returns the background picture opacity.
 					get = function() return RQE.UI:GetBackgroundPictureOpacity("main") end,
+					-- Sets the background picture opacity.
 					set = function(_, value) RQE.UI:SetBackgroundPictureOpacity("main", value) end,
 				},
 				trackerPictureOpacity = {
 					type = "range", name = "Tracker picture opacity", order = 4.2, width = 1.1,
+					-- Builds the slider help text with its current theme default.
 					desc = function()
 						return sliderDescriptionWithDefault("Fade the picture in the Quest Tracker without changing its frame background opacity.", RQE.UI.ThemeBackgroundPictureOpacityDefaults, "tracker")
 					end,
 					min = 0, max = 1, step = 0.01, isPercent = true,
+					-- Hides picture choices when background pictures are disabled.
 					hidden = function() return not RQE.UI:IsBackgroundPictureEnabled() end,
+					-- Returns the background picture opacity.
 					get = function() return RQE.UI:GetBackgroundPictureOpacity("tracker") end,
+					-- Sets the background picture opacity.
 					set = function(_, value) RQE.UI:SetBackgroundPictureOpacity("tracker", value) end,
 				},
 				backgroundPicturePreview = {
 					type = "description", dialogControl = "RQECardStylePreview",
 					name = "", order = 4.3, width = 0.55,
+					-- Hides picture choices when background pictures are disabled.
 					hidden = function() return not RQE.UI:IsBackgroundPictureEnabled() end,
+					-- Returns the selected background picture texture for the preview.
 					image = function()
 						local picture = RQE.UI:GetBackgroundPicture()
 						return picture and picture.texture
@@ -1610,52 +1705,69 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				},
 				tooltipPictureRow = {
 					type = "description", name = "|cffffd700Tooltip picture opacity|r", order = 4.31, width = "full",
+					-- Disables this theme-specific control while the Basic theme is selected.
 					hidden = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
 				},
 				questIDTooltipPictureOpacity = {
 					type = "range", dialogControl = "RQETooltipPictureSlider",
 					name = "Quest ID tooltip picture opacity", order = 4.32, width = 1,
+					-- Builds the slider help text with its current theme default.
 					desc = function()
 						return sliderDescriptionWithDefault("Fade the selected theme picture behind Quest ID hover details, even when frame pictures are hidden.", RQE.UI.ThemeTooltipPictureOpacityDefaults, "questID")
 					end,
 					min = 0, max = 1, step = 0.01, isPercent = true,
+					-- Disables this theme-specific control while the Basic theme is selected.
 					hidden = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
+					-- Returns the tooltip picture opacity.
 					get = function() return RQE.UI:GetTooltipPictureOpacity("questID") end,
+					-- Sets the tooltip picture opacity.
 					set = function(_, value) RQE.UI:SetTooltipPictureOpacity("questID", value) end,
 				},
 				tooltipPictureGapOne = {
 					type = "description", name = " ", order = 4.325, width = 0.2,
+					-- Disables this theme-specific control while the Basic theme is selected.
 					hidden = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
 				},
 				questNameTooltipPictureOpacity = {
 					type = "range", dialogControl = "RQETooltipPictureSlider",
 					name = "Quest Name tooltip picture opacity", order = 4.33, width = 1,
+					-- Builds the slider help text with its current theme default.
 					desc = function()
 						return sliderDescriptionWithDefault("Fade the selected theme picture behind tracked and untracked quest name hover details.", RQE.UI.ThemeTooltipPictureOpacityDefaults, "questName")
 					end,
 					min = 0, max = 1, step = 0.01, isPercent = true,
+					-- Disables this theme-specific control while the Basic theme is selected.
 					hidden = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
+					-- Returns the tooltip picture opacity.
 					get = function() return RQE.UI:GetTooltipPictureOpacity("questName") end,
+					-- Sets the tooltip picture opacity.
 					set = function(_, value) RQE.UI:SetTooltipPictureOpacity("questName", value) end,
 				},
 				tooltipPictureGapTwo = {
 					type = "description", name = " ", order = 4.335, width = 0.2,
+					-- Disables this theme-specific control while the Basic theme is selected.
 					hidden = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
 				},
 				macroTooltipPictureOpacity = {
 					type = "range", dialogControl = "RQETooltipPictureSlider",
 					name = "Magic Button tooltip picture opacity", order = 4.34, width = 1,
+					-- Builds the slider help text with its current theme default.
 					desc = function()
 						return sliderDescriptionWithDefault("Fade the selected theme picture behind literal Magic Button macro text, including Shift-hover text.", RQE.UI.ThemeTooltipPictureOpacityDefaults, "macroBody")
 					end,
 					min = 0, max = 1, step = 0.01, isPercent = true,
+					-- Disables this theme-specific control while the Basic theme is selected.
 					hidden = function() return RQE.UI:GetSelectedTheme() == "Basic" end,
+					-- Returns the tooltip picture opacity.
 					get = function() return RQE.UI:GetTooltipPictureOpacity("macroBody") end,
+					-- Sets the tooltip picture opacity.
 					set = function(_, value) RQE.UI:SetTooltipPictureOpacity("macroBody", value) end,
 				},
 				backgroundPictureName = {
 					type = "description", order = 4.4, width = "full",
+					-- Hides picture choices when background pictures are disabled.
 					hidden = function() return not RQE.UI:IsBackgroundPictureEnabled() end,
+					-- Builds the label describing the theme's default background picture.
 					name = function()
 						local themeKey = RQE.UI:GetSelectedTheme()
 						local defaultID = RQE.UI.BackgroundPictureDefaults[themeKey]
@@ -1671,7 +1783,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					type = "description", dialogControl = "RQEThemePreview",
 					order = 5, width = PREVIEW_CARD_WIDTH, fontSize = "medium",
 					name = "|cffffd700QUEST HELPER|r  |cff76caffQuest details|r",
+					-- Returns the selected theme's frame-preview texture.
 					image = function() return selectedPreviewImage("helper") end,
+					-- Crops the helper-frame preview to its actual texture dimensions.
 					imageCoords = function()
 						local preview = selectedPreview("helper")
 						return preview and { 0, preview.width / PREVIEW_TEXTURE_SIZE, 0, preview.height / PREVIEW_TEXTURE_SIZE }
@@ -1682,7 +1796,9 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					type = "description", dialogControl = "RQEThemePreview",
 					order = 6, width = PREVIEW_CARD_WIDTH, fontSize = "medium",
 					name = "|cffffd700QUEST TRACKER|r  |cff76caffTimed scenario and quest sections|r",
+					-- Returns the selected theme's frame-preview texture.
 					image = function() return selectedPreviewImage("tracker") end,
+					-- Crops the tracker-frame preview to its actual texture dimensions.
 					imageCoords = function()
 						local preview = selectedPreview("tracker")
 						return preview and { 0, preview.width / PREVIEW_TEXTURE_SIZE, 0, preview.height / PREVIEW_TEXTURE_SIZE }
@@ -1713,6 +1829,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			local function styleOrder()
 				local styles = {}
 				for _, style in ipairs(activeGroup().styles) do styles[#styles + 1] = style end
+				-- Sorts card styles by case-insensitive name, breaking ties by ID.
 				table.sort(styles, function(left, right)
 					local leftName, rightName = left.name:lower(), right.name:lower()
 					if leftName == rightName then return left.id < right.id end
@@ -1727,12 +1844,15 @@ Shared configuration presentation, custom controls, option composition, and Sett
 				args = {
 					choice = {
 						type = "select", name = "Card style", order = 1, width = 1.1,
+						-- Hides card-style controls when no applicable card theme is selected.
 						hidden = function() return not selectedCardTheme() end,
 						values = styleValues, sorting = styleOrder,
+						-- Returns the selected card style ID for the active card theme.
 						get = function()
 							local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
 							return style and style.id
 						end,
+						-- Sets the card style.
 						set = function(_, id)
 							RQE.UI:SetCardStyle(cardType, id, selectedCardTheme())
 							LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
@@ -1741,11 +1861,14 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					preview = {
 						type = "description", dialogControl = "RQECardStylePreview",
 						name = "", order = 2, width = 1.4,
+						-- Hides card-style controls when no applicable card theme is selected.
 						hidden = function() return not selectedCardTheme() end,
+						-- Returns the selected card style's preview texture.
 						image = function()
 							local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
 							return style and style.texture
 						end,
+						-- Provides full preview texture coordinates and the selected picture opacity.
 						imageCoords = function()
 							return { 0, 1, 0, 1, RQE.UI:GetCardPictureOpacity(cardType, selectedCardTheme()) }
 						end,
@@ -1753,11 +1876,14 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					},
 					reset = {
 						type = "execute", name = "Reset", order = 3, width = 0.5,
+						-- Hides card-style controls when no applicable card theme is selected.
 						hidden = function() return not selectedCardTheme() end,
+						-- Disables reset when the selected card style already matches the default.
 						disabled = function()
 							local style = RQE.UI:GetCardStyleRecord(cardType, selectedCardTheme())
 							return not style or style.id == activeGroup().default
 						end,
+						-- Restores the default card style for the selected card type.
 						func = function()
 							RQE.UI:SetCardStyle(cardType, activeGroup().default, selectedCardTheme())
 							LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Themes")
@@ -1765,16 +1891,21 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					},
 					pictureOpacity = {
 						type = "range", name = "Card picture opacity", order = 3.5, width = 1.5,
+						-- Builds the slider help text with its current theme default.
 						desc = function()
 							return sliderDescriptionWithDefault("Fade only the " .. group.name .. " card artwork. Names, timers, difficulty badges, Delve flags, and Torghast details stay visible.", RQE.UI.ThemeCardPictureOpacityDefaults, cardType)
 						end,
 						min = 0, max = 1, step = 0.01, isPercent = true,
+						-- Returns the picture opacity for the selected card type and theme.
 						get = function() return RQE.UI:GetCardPictureOpacity(cardType, selectedCardTheme()) end,
+						-- Sets the card picture opacity.
 						set = function(_, value) RQE.UI:SetCardPictureOpacity(cardType, value, selectedCardTheme()) end,
 					},
 					default = {
 						type = "description", order = 4, width = "full",
+						-- Hides card-style controls when no applicable card theme is selected.
 						hidden = function() return not selectedCardTheme() end,
+						-- Builds the label describing the active group's default card style.
 						name = function()
 							for _, style in ipairs(activeGroup().styles) do
 								if style.id == activeGroup().default then return "Default: " .. style.name end
@@ -1875,6 +2006,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		local dialog = LibStub("AceConfigDialog-3.0")
 		if dialog.RQEConfigOpenWrapped then return end
 		local originalOpen = dialog.Open
+		-- Opens the configuration dialog and refreshes its themed page scrolling.
 		dialog.Open = function(owner, appName, container, ...)
 			local page = ConfigUI.optionsPage
 			if appName ~= "RQE_Frame_Standalone" or container ~= ConfigUI.optionsContent or not page then
@@ -1929,6 +2061,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			displayAppName = "RQE_Frame_Standalone"
 			if not registry:GetOptionsTable(displayAppName) then
 				local sourceOptions = registry:GetOptionsTable(appName)
+				-- Builds option controls for the selected theme setting source.
 				registry:RegisterOptionsTable(displayAppName, function(uiType, uiName)
 					return sourceOptions(uiType, uiName)
 				end)
@@ -1968,6 +2101,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		local content = self.optionsContent
 		local scrollValue = page and page.scrollbar and page.scrollbar:GetValue()
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+		-- Applies the theme to the widget.
 		RQE.API.Client.C_Timer.After(0, function()
 			self.refreshQueued = nil
 			local container = self.optionsContainer
@@ -1980,6 +2114,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		end)
 	end
 
+	-- Refreshes the standalone page.
 	LibStub("AceConfigRegistry-3.0").RegisterCallback(ConfigUI, "ConfigTableChange", function(_, appName)
 		if appName == ConfigUI.optionsAppName and not ConfigUI.suppressStandaloneOrderRefresh then
 			ConfigUI:RefreshStandalonePage()
@@ -1998,8 +2133,10 @@ Shared configuration presentation, custom controls, option composition, and Sett
 	-- cannot call its protected opener. Queue only the latest requested category.
 	local settingsEvents = CreateFrame("Frame")
 	settingsEvents:RegisterEvent("PLAYER_REGEN_ENABLED")
+	-- Opens the registered panel.
 	settingsEvents:SetScript("OnEvent", function()
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+		-- Opens the registered panel.
 		RQE.API.Client.C_Timer.After(0, function()
 			-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() or not ConfigUI.pendingPanelKey then return end
 			if RQE.API.Client.InCombatLockdown() or not ConfigUI.pendingPanelKey then return end
@@ -2087,6 +2224,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			if widget.label then widget.label:SetText(pageTitle or "RQE Settings") end
 		end
 		if panel.HookScript then
+			-- Restores native widget styling when this options panel is shown.
 			panel:HookScript("OnShow", function(owner)
 				if owner.obj then ConfigUI:UseNativeWidget(owner.obj) end
 			end)
@@ -2139,6 +2277,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 			frame.RQEConfigEscapeHooked = true
 			frame:EnableKeyboard(true)
 			frame:SetPropagateKeyboardInput(true)
+			-- Closes the configuration window on Escape while passing through other keys.
 			frame:HookScript("OnKeyDown", function(owner, key)
 				if key == "ESCAPE" and owner:IsShown() then
 					-- Previous Blizzard call changed 2026.09.25: local canSuppress = not InCombatLockdown()
@@ -2147,6 +2286,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 					widget:Hide()
 					if canSuppress then
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+						-- Restores keyboard propagation after handling the window's Escape key.
 						RQE.API.Client.C_Timer.After(0, function()
 							if owner and owner.SetPropagateKeyboardInput then
 								owner:SetPropagateKeyboardInput(true)
