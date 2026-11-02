@@ -69,6 +69,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 		tooltip.RQEControlOldLineColors = oldColors
 	end)
+	-- Restores the coordinate label's normal color when its tooltip is hidden.
 	GameTooltip:HookScript("OnHide", function(tooltip)
 		for index, color in pairs(tooltip.RQEControlOldLineColors or {}) do
 			local line = _G[tooltip:GetName() .. "TextLeft" .. index]
@@ -105,6 +106,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		-- Contribution already styles its own launcher; its companion capture
 		-- button keeps this marker when Contribution replaces the hover script.
 		button.RQEControlTooltip = button ~= RQE.RQEContributionButton
+		-- Shows this control's tooltip while the pointer is over it.
 		button:SetScript("OnEnter", function(self) ShowTooltip(self, text) end)
 		button:SetScript("OnLeave", HideTooltip)
 	end
@@ -125,6 +127,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		border:SetShown(not (RQE.UI and RQE.UI:IsEnabled()))
 	end
 
+	-- Refreshes the legacy borders.
 	function RQE.Buttons.RefreshLegacyBorders()
 		local visible = not (RQE.UI and RQE.UI:IsEnabled())
 		for _, border in ipairs(RQE.Buttons.LegacyBorders or {}) do border:SetShown(visible) end
@@ -162,6 +165,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Add mouseover tooltip and trigger map opening/closing
 	RQE.UnknownButtonTooltip = function()
+		-- Shows this control's tooltip while the pointer is over it.
 		RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
 			RQE.hoveringOnRQEFrameAndButton = true
 
@@ -236,8 +240,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				if RQE.db.profile.debugLevel == "INFO" then
 					RQE.ClickWButton()
 					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+					-- Activates the separate-focus quest's waypoint button when available.
 					RQE.API.Client.C_Timer.After(0.3, function()
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						-- Activates the separate-focus quest's waypoint button when available.
 						RQE.API.Client.C_Timer.After(0.2, function()
 							RQE.CheckAndClickSeparateWaypointButtonButton()
 							-- Prints the tooltip information for the separate focus waypoint button by duplicating RQE.GetTooltipDataForCButton() function call. The function call can't be performed due to an error.
@@ -290,6 +296,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				end
 			end
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			-- Clears cached waypoint coordinates and restores the selected quest's waypoint.
 			RQE.API.Client.C_Timer.After(0.2, function()
 				GameTooltip:SetOwner(RQE.UnknownQuestButton, "ANCHOR_NONE")
 				GameTooltip:ClearAllPoints()
@@ -471,6 +478,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RQE.API.Client.PlaySound(8959)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Plays the UI sound while respecting the sound-throttle interval.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
 		end)
@@ -482,6 +490,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
 		if RQE.db.profile.debugLevel == "INFO+" then
+			-- Checks the coord hotspots in steps.
 			RQE.API.Client.C_Timer.After(1.2, function()
 				RQE:CheckCoordHotspotsInSteps(questID)
 			end)
@@ -512,6 +521,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RQE.API.Client.PlaySound(8959)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Plays the UI sound while respecting the sound-throttle interval.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(135755)	-- VO_82_Mechagnome_Citizen_Formal_F_Greetings
 		end)
@@ -522,6 +532,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
 		if RQE.db.profile.debugLevel == "INFO+" then
+			-- Checks the coord hotspots in steps.
 			RQE.API.Client.C_Timer.After(1.2, function()
 				RQE:CheckCoordHotspotsInSteps(questID)
 			end)
@@ -546,6 +557,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RQE.API.Client.PlaySound(8959)
 		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 1, g = 1, b = 0 })
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Plays the UI sound while respecting the sound-throttle interval.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(4574)	-- igPVPUpdate
 		end)
@@ -573,6 +585,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 1, g = 0, b = 0 })
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Plays the UI sound while respecting the sound-throttle interval.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(3784)	-- AirElemental
 		end)
@@ -597,6 +610,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 0, g = 1, b = 0 })
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Plays the UI sound while respecting the sound-throttle interval.
 		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(888)	-- LEVELUP
 		end)
@@ -608,6 +622,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Hide the tooltip when the mouse leaves
 	RQE.HideUnknownButtonTooltip = function()
+		-- Hides the tooltip when the pointer leaves this control.
 		RQE.UnknownQuestButton:SetScript("OnLeave", function()
 			RQE.hoveringOnRQEFrameAndButton = false
 			GameTooltip:Hide()
@@ -616,6 +631,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Add a mouse down event to simulate a button press
 	RQE.UnknownQuestButtonMouseDown = function()
+		-- Creates or selects the unknown-quest waypoint for the clicked mouse action.
 		RQE.UnknownQuestButton:SetScript("OnMouseDown", function(self, button)
 			if button ~= "LeftButton" then return end
 
@@ -698,6 +714,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Add a mouse up event to reset the texture
 	RQE.UnknownQuestButtonMouseUp = function()
+		-- Restores the helper background opacity when the left mouse button is released.
 		RQE.UnknownQuestButton:SetScript("OnMouseUp", function(self, button)
 			if button == "LeftButton" then
 				RQE.bg:SetAlpha(1)  -- Reset the alpha
@@ -740,6 +757,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Function to attach Search Group press handling for searching, creating, or delisting quest groups
 	RQE.SearchGroupButtonMouseDown = function()
+		-- Starts or stops group-finder activity for the selected quest.
 		RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
 			RQE.sgbg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 
@@ -788,6 +806,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			end
 		end)
 
+		-- Sets the alpha.
 		RQE.SearchGroupButton:SetScript("OnMouseUp", function(self, button)
 			RQE.sgbg:SetAlpha(1)  -- Reset the alpha
 		end)
@@ -861,6 +880,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			return s:match("^%s*(.-)%s*$")
 		end
 
+		-- Hides the tooltip when the pointer leaves this control.
 		MagicButton:SetScript("OnLeave", function()
 			GameTooltip:Hide()
 		end)
@@ -975,10 +995,13 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		ClearButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 6, -6)  -- Anchoring
 		-- Function to clear the active quest window and associated tracking state after confirmation
 		local function clearWindowAfterConfirmation()
+			-- An empty helper has no native quest setter call to cancel a pending Retail acceptance.
+			if RQE.IsRetail and RQE.CancelUnfocusedQuestSelection then RQE:CancelUnfocusedQuestSelection() end
 			-- Code for ClearButton functionality here
 			RQE.Buttons.ClearButtonPressed()
 			RQE.searchedQuestID = nil
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+			-- Saves the super tracked quest to character.
 			RQE.API.Client.C_Timer.After(0.3, function()
 				RQE:SaveSuperTrackedQuestToCharacter()
 
@@ -1003,6 +1026,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				end
 			end
 		end
+		-- Clears the window after confirmation.
 		ClearButton:SetScript("OnClick", function(_, mouseButton)
 			-- Internal clear callers invoke the script without a mouse button; only
 			-- the player's physical C press asks to abandon an ordered route.
@@ -1019,7 +1043,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	end
 
 	-- Function to handle the clearing of the RQEFrame when the "C" button is pressed (or similar functionality is desired)
-	function RQE.Buttons.ClearButtonPressed()
+	function RQE.Buttons.ClearButtonPressed(immediateOnly)
 		RQE.ClearButtonPressed = true	 -- FORCES the next clear (might need to add a check to make sure that the player physically pressed the button for this to actually clear the frame)
 		RQE.ActiveCoordblock = nil	 -- C clears the temporary [Active] coordblock label with the window
 		if RQE.HideCreatureObjectPreview then
@@ -1059,6 +1083,15 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			RQE._currentTomTomUID = nil
 		end
 
+		-- Automatic blacklist swaps select their replacement immediately after this
+		-- returns. Finish the old macro cleanup now so no delayed clear can erase
+		-- the replacement or a newer manual selection. Physical clears keep retries.
+		if immediateOnly == true then
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+			RQE.Buttons.UpdateMagicButtonVisibility()
+			return
+		end
+
 		-- Clearing the frame data a second time
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
 		RQE.API.Client.C_Timer.After(0.2, function()
@@ -1080,11 +1113,13 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		-- Clears the macro content by name.
 		RQE.API.Client.C_Timer.After(0.2, function()
 			RQEMacro:ClearMacroContentByName("RQE Macro")
 		end)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		-- Updates the magic button visibility.
 		RQE.API.Client.C_Timer.After(0.2, function()
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
@@ -1107,6 +1142,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Nested functions
 		RWButton:SetPoint("TOPLEFT", RQE.ClearButton, "TOPRIGHT", 3, 0)  -- Anchoring
+		-- Clears the user waypoint.
 		RWButton:SetScript("OnClick", function()
 			-- Code for RWButton functionality here
 			-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
@@ -1168,6 +1204,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Nested functions
 		SearchButton:SetPoint("TOPLEFT", RQE.RWButton, "TOPRIGHT", 3, 0)  -- Anchoring
+		-- Creates the search frame.
 		SearchButton:SetScript("OnClick", function()
 			RQE.isSearchFrameShown = not RQE.isSearchFrameShown  -- Toggle the variable
 			CreateSearchFrame(RQE.isSearchFrameShown)  -- Pass the updated variable
@@ -1206,6 +1243,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		button:Hide()
 		RQE.RQEContributionButton = button
 
+		-- Toggles the contribute buttons.
 		button:SetScript("OnClick", function()
 			local editor = RQE.ContributeFrame
 			if not editor then return end
@@ -1218,6 +1256,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			-- Previous Blizzard call changed 2026.09.25: if showEditor and C_Timer and C_Timer.After then
 			if showEditor and C_Timer and RQE.API.ResolveClientAPI("C_Timer.After") then
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+				-- Searches the quest ID field in step editor.
 				RQE.API.Client.C_Timer.After(2, function()
 					if editor:IsShown() and RQE_Contribution
 						and RQE_Contribution.SearchQuestIDFieldInStepEditor then
@@ -1249,11 +1288,13 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		button:Hide()
 		RQE.ContributionWaypointButton = button
 
+		-- Captures the supertracked waypoint.
 		button:SetScript("OnClick", function()
 			if not RQE_Contribution or not RQE_Contribution.CaptureSupertrackedWaypoint then return end
 			local _, message = RQE_Contribution.CaptureSupertrackedWaypoint()
 			if message then print("RQE Contribution: " .. message) end
 		end)
+		-- Refreshes the waypoint contribution button when the companion addon loads.
 		button:SetScript("OnEvent", function(self, _, addonName)
 			if addonName == "RQE_Contribution" then
 				self:UnregisterEvent("ADDON_LOADED")
@@ -1268,6 +1309,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return button
 	end
 
+	-- Refreshes the contribution waypoint button.
 	function RQE.Buttons.RefreshContributionWaypointButton()
 		local button = RQE.ContributionWaypointButton
 		if not button then return end
@@ -1360,6 +1402,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		if RQE.Buttons.UpdateHeaderNavigation then RQE.Buttons.UpdateHeaderNavigation() end
 	end
 
+	-- Creates the target NPC button.
 	function RQE.Buttons.CreateTargetNPCButton(RQEFrame)
 		if RQE.TargetNPCButton then return RQE.TargetNPCButton end
 		local button = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
@@ -1374,7 +1417,9 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		button.RQEThemeBorderOpacityTarget = true
 		button:Hide()
 		RQE.TargetNPCButton = button
+		-- Shows the target NPC menu.
 		button:SetScript("OnClick", function() RQE:ShowTargetNPCMenu() end)
+		-- Refreshes the NPC contribution button when the companion addon loads.
 		button:SetScript("OnEvent", function(self, _, addonName)
 			if addonName == "RQE_Contribution" then
 				self:UnregisterEvent("ADDON_LOADED")
@@ -1401,6 +1446,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Nested functions
 		CloseButton:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -6, -6)  -- Anchoring
+		-- Closes the quest helper and saves the player's disabled-frame preference.
 		CloseButton:SetScript("OnClick", function(self, button)
 			RQE.isRQEFrameManuallyClosed = true -- Marking the frame as manually closed
 			RQEFrame:Hide()
@@ -1429,6 +1475,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		PrevStepButton:SetFrameLevel(3)
 		PrevStepButton:SetPoint("TOPRIGHT", RQE.NextStepButton, "TOPLEFT", -3, 0)
 
+		-- Shows this control's tooltip while the pointer is over it.
 		PrevStepButton:SetScript("OnEnter", function(self)
 			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if RQE.db.profile.enableStepControls then
@@ -1456,10 +1503,12 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			end
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		PrevStepButton:SetScript("OnLeave", function()
 			GameTooltip:Hide()
 		end)
 
+		-- Selects the previous eligible quest step and updates its waypoint.
 		PrevStepButton:SetScript("OnClick", function()
 			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if RQE.db.profile.enableStepControls then
@@ -1470,6 +1519,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 						RQE:SetDisplayedStepFromStepsList(targetStep)
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						-- Creates the unknown quest waypoint.
 						RQE.API.Client.C_Timer.After(0.2, function()
 							local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
@@ -1490,6 +1540,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 						if isRetail and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						-- Creates the searched quest step waypoint.
 						RQE.API.Client.C_Timer.After(0.2, function()
 							local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
@@ -1521,6 +1572,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		NextStepButton:SetFrameLevel(3)
 		NextStepButton:SetPoint("TOPRIGHT", RQE.TargetNPCButton:IsShown() and RQE.TargetNPCButton or RQE.CloseButton, "TOPLEFT", -3, 0)
 
+		-- Shows this control's tooltip while the pointer is over it.
 		NextStepButton:SetScript("OnEnter", function(self)
 			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if RQE.db.profile.enableStepControls then
@@ -1555,10 +1607,12 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			end
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		NextStepButton:SetScript("OnLeave", function()
 			GameTooltip:Hide()
 		end)
 
+		-- Selects the next eligible quest step and updates its waypoint.
 		NextStepButton:SetScript("OnClick", function()
 			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if RQE.db.profile.enableStepControls then
@@ -1571,6 +1625,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 						RQE:SetDisplayedStepFromStepsList(targetStep)
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						-- Creates the unknown quest waypoint.
 						RQE.API.Client.C_Timer.After(0.2, function()
 							local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
@@ -1592,6 +1647,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 						if isRetail and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						-- Creates the searched quest step waypoint.
 						RQE.API.Client.C_Timer.After(0.2, function()
 							local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
@@ -1644,16 +1700,19 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		ForwardButton:SetFrameLevel(3)
 		RQE.HeaderWaypointForwardButton = ForwardButton
 
+		-- Selects the previous coordinate waypoint from the helper header.
 		BackButton:SetScript("OnClick", function()
 			if RQE.SelectHeaderWaypointByOffset then
 				RQE:SelectHeaderWaypointByOffset(-1)
 			end
 		end)
+		-- Selects the next coordinate waypoint from the helper header.
 		ForwardButton:SetScript("OnClick", function()
 			if RQE.SelectHeaderWaypointByOffset then
 				RQE:SelectHeaderWaypointByOffset(1)
 			end
 		end)
+		-- Shows this control's tooltip while the pointer is over it.
 		BackButton:SetScript("OnEnter", function(self)
 			local selection = RQE.GetCurrentHeaderWaypointSelection
 				and RQE:GetCurrentHeaderWaypointSelection()
@@ -1666,6 +1725,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				GameTooltip:Show()
 			end
 		end)
+		-- Shows this control's tooltip while the pointer is over it.
 		ForwardButton:SetScript("OnEnter", function(self)
 			local selection = RQE.GetCurrentHeaderWaypointSelection
 				and RQE:GetCurrentHeaderWaypointSelection()
@@ -1803,6 +1863,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Nested functions
 		CQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
+		-- Filters the all tracked quests.
 		CQButton:SetScript("OnClick", function()
 			RQE.filterAllTrackedQuests()
 			RQE.QuestScrollFrameToTop(true)
@@ -1827,6 +1888,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		SCButton:SetFrameLevel(3)
 
 		SCButton:SetPoint("TOPLEFT", RQE.CQButton, "TOPRIGHT", 4, 0)  -- Anchoring
+		-- Filters the complete quests.
 		SCButton:SetScript("OnClick", function()
 			if isRetail then
 				RQE.filterCompleteQuests()
@@ -1860,6 +1922,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Nested functions
 		HQButton:SetPoint("TOPLEFT", RQE.SCButton, "TOPRIGHT", 4, 0) 
+		-- Hides the completed watched quests.
 		HQButton:SetScript("OnClick", function()
 			RQE:HideCompletedWatchedQuests()
 			-- RQE.QuestScrollFrameToTop()
@@ -1886,6 +1949,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Nested functions
 		ZQButton:SetPoint("TOPLEFT", RQE.HQButton, "TOPRIGHT", 4, 0) 
+		-- Displays the current zone's quests and scrolls the tracker to the top.
 		ZQButton:SetScript("OnClick", function()
 			if isRetail then
 				RQE.DisplayCurrentZoneQuests()
@@ -1934,6 +1998,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		QTCloseButton:SetFrameLevel(3)
 
 		QTCloseButton:SetPoint("TOPRIGHT", RQEQuestFrame, "TOPRIGHT", -6, -6)
+		-- Closes the Quest Tracker and saves the player's disabled-frame preference.
 		QTCloseButton:SetScript("OnClick", function(self, button)
 			RQE.isRQEQuestFrameManuallyClosed = true -- Marking the frame as manually closed
 			RQEQuestFrame:Hide()
@@ -1958,6 +2023,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		QTMaximizeButton:SetFrameLevel(3)
 
 		QTMaximizeButton:SetPoint("TOPRIGHT", RQE.QTQuestCloseButton, "TOPLEFT", -3, 0)
+		-- Restores the Quest Tracker's normal dimensions and scrollbar layout.
 		QTMaximizeButton:SetScript("OnClick", function()
 			RQE.db.profile.enableQuestFrame = true
 			RQE.isRQEQuestFrameManuallyClosed = false
@@ -2016,6 +2082,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		QTMinimizeButton:SetFrameLevel(3)
 
 		QTMinimizeButton:SetPoint("TOPRIGHT", RQE.QTQuestCloseButton, "TOPLEFT", -3, 0)
+		-- Stores the normal tracker dimensions and switches to its minimized layout.
 		QTMinimizeButton:SetScript("OnClick", function()
 			RQE.QToriginalWidth, RQE.QToriginalHeight = RQEQuestFrame:GetWidth(), RQEQuestFrame:GetHeight()
 
@@ -2433,6 +2500,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 			button:SetScript("OnEnter", QuestItemButtonOnEnter)
 			button:SetScript("OnLeave", QuestItemButtonOnLeave)
+			-- Updates the quest item button state.
 			button:SetScript("OnUpdate", function(self, elapsed)
 				self.rqeUpdateElapsed = (self.rqeUpdateElapsed or 0) + elapsed
 				if self.rqeUpdateElapsed >= 0.2 then
@@ -2563,6 +2631,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				}
 			end
 		end
+		-- Orders the quest-item rows by their quest-log index.
 		table.sort(rows, function(left, right) return left.index < right.index end)
 		return rows
 	end
@@ -2660,6 +2729,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RQE.CreateOrUpdateQuestItemButton = function(_, questID, questLogIndex, orderIndex)
 			return RQE.Buttons.CreateOrUpdateQuestItemButton(questID, questLogIndex, orderIndex)
 		end
+		-- Updates the quest item buttons.
 		RQE.UpdateQuestItemButtons = function()
 			return RQE.Buttons.UpdateQuestItemButtons()
 		end
@@ -2676,6 +2746,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			and type(RQE.API.ResolveClientAPI("hooksecurefunc")) == "function"
 		then
 			-- Previous Blizzard call changed 2026.09.25: hooksecurefunc("UpdateRQEQuestFrame", function()
+			-- Schedules the quest item button update.
 			RQE.API.Client.hooksecurefunc("UpdateRQEQuestFrame", function()
 				RQE.Buttons.ScheduleQuestItemButtonUpdate()
 			end)
@@ -2683,9 +2754,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 
 		if RQE.RQEQuestFrame and not questItemButtonState.frameHooksInstalled then
+			-- Schedules the quest item button update.
 			RQE.RQEQuestFrame:HookScript("OnShow", function()
 				RQE.Buttons.ScheduleQuestItemButtonUpdate()
 			end)
+			-- Hides quest-item controls with their tracker, using opacity during combat.
 			RQE.RQEQuestFrame:HookScript("OnHide", function()
 				local container = questItemButtonState.container
 				if not container then return end
@@ -2695,6 +2768,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					container:Hide()
 				end
 			end)
+			-- Schedules the quest item button update.
 			RQE.RQEQuestFrame:HookScript("OnSizeChanged", function()
 				RQE.Buttons.ScheduleQuestItemButtonUpdate()
 			end)
@@ -2713,6 +2787,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	questItemButtonEventFrame:RegisterEvent("QUEST_LOG_UPDATE")
 	questItemButtonEventFrame:RegisterEvent("BAG_UPDATE")
 	questItemButtonEventFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
+	-- Schedules the quest item button update.
 	questItemButtonEventFrame:SetScript("OnEvent", function(_, event, addonName)
 		if event == "ADDON_LOADED" then
 			if addonName == "RQE" then
@@ -2761,6 +2836,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local closeButton = CreateFrame("Button", nil, logFrame, "UIPanelCloseButton")
 		closeButton:SetSize(18, 18)
 		closeButton:SetPoint("TOPRIGHT", logFrame, "TOPRIGHT", -6, -6)
+		-- Hides the associated frame or control.
 		closeButton:SetScript("OnClick", function(self, button)
 			logFrame:Hide()
 		end)
