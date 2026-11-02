@@ -87,6 +87,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	content:SetPoint("TOPLEFT", ScrollFrame, "TOPLEFT", 0, 0)
 	content:SetSize(math.max(1, ScrollFrame:GetWidth()), 600)
 	ScrollFrame:SetScrollChild(content)
+	-- Keeps the scroll content width aligned with the resized viewport.
 	ScrollFrame:SetScript("OnSizeChanged", function(self, width)
 		content:SetWidth(math.max(1, width))
 	end)
@@ -101,10 +102,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	local TRACKER_QUEST_LABEL_GAP = 5
 	local TRACKER_THEMED_BUTTON_TOP_OFFSET = 2
 
+	-- Returns the tracker quest label inset.
 	local function GetTrackerQuestLabelInset()
 		return (RQE.UI and RQE.UI:IsEnabled()) and 46 or 40
 	end
 
+	-- Anchors the tracker quest button.
 	local function AnchorTrackerQuestButton(button, label)
 		button:ClearAllPoints()
 		if RQE.UI and RQE.UI:IsEnabled() then
@@ -157,12 +160,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.UI:StyleSearchBox(questTrackerSearchInput)
 	end
 
+	-- Shows the quest tracker search tooltip.
 	local function ShowQuestTrackerSearchTooltip(self, text)
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
 		GameTooltip:SetText(text, 1, 1, 1, true)
 		GameTooltip:Show()
 	end
 
+	-- Shows this control's tooltip while the pointer is over it.
 	questTrackerSearchInput:SetScript("OnEnter", function(self)
 		ShowQuestTrackerSearchTooltip(self, "Type in questID, name, description, or objective")
 	end)
@@ -189,6 +194,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end)
 	questTrackerRestoreButton:SetScript("OnLeave", GameTooltip_Hide)
 
+	-- Searches the quest tracker.
 	local function RunQuestTrackerSearch()
 		if RQE.SearchQuestTracker then
 			RQE:SearchQuestTracker(questTrackerSearchInput:GetText())
@@ -200,6 +206,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	questTrackerSearchInput:SetScript("OnEnterPressed", RunQuestTrackerSearch)
 	questTrackerSearchButton:SetScript("OnClick", RunQuestTrackerSearch)
 
+	-- Restores the quest tracker search.
 	questTrackerRestoreButton:SetScript("OnClick", function()
 		if RQE.RestoreQuestTrackerSearch then
 			RQE:RestoreQuestTrackerSearch()
@@ -244,6 +251,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		frame:SetScript("OnLeave", function()
 			-- Delay to recheck mouse position to ensure accurate detection
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
@@ -281,21 +289,25 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	resizeBtn:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
 	resizeBtn:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
 	resizeBtn:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+	-- Starts the sizing.
 	resizeBtn:SetScript("OnMouseDown", function(self, button)
 	  if button == "LeftButton" then
 		frame:StartSizing()
 	  end
 	end)
+	-- Stops dragging the frame and retains its final position.
 	resizeBtn:SetScript("OnMouseUp", function(self, button)
 	  frame:StopMovingOrSizing()
 	  AdjustQuestItemWidths()
 	end)
 	RQE.QMQTResizeButton = resizeBtn
 
+	-- Reports whether the Quest Tracker is locked against dragging.
 	function RQE.IsRQEQuestFrameLocked()
 		return isQuestFrameLocked
 	end
 
+	-- Updates the Quest Tracker's drag lock and optionally saves the choice.
 	function RQE.SetRQEQuestFrameLocked(locked, persist)
 		isQuestFrameLocked = locked == true
 		frame:EnableMouse(true) -- Retain right-click access while locked.
@@ -309,6 +321,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			frame:SetResizable(true)
 			frame:RegisterForDrag("LeftButton")
 			frame:SetScript("OnDragStart", frame.StartMoving)
+			-- Stops dragging the frame and retains its final position.
 			frame:SetScript("OnDragStop", function()
 				frame:StopMovingOrSizing()
 				if SaveQuestFramePosition then SaveQuestFramePosition() end
@@ -322,6 +335,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Toggles the RQE quest frame lock.
 	function RQE.ToggleRQEQuestFrameLock()
 		RQE.SetRQEQuestFrameLocked(not isQuestFrameLocked)
 	end
@@ -386,6 +400,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	RQE.QMQTslider = QMQTslider
 
+	-- Sets the vertical scroll.
 	QMQTslider:SetScript("OnValueChanged", function(self, value)
 		RQE.QTScrollFrame:SetVerticalScroll(value)
 	end)
@@ -421,6 +436,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.QMQTslider:Show()
 	end
 
+	-- Refreshes the quest tracker scroll range.
 	function RQE.RefreshQuestTrackerScrollRange()
 		if not RQE.QTcontent or not RQE.QTScrollFrame or not RQE.QMQTslider then return end
 		if RQE.RefreshTrackerProgressBarLayouts then
@@ -457,6 +473,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.UpdateQuestTrackerScrollbarVisual(measuredHeight)
 	end
 
+	-- Moves the Quest Tracker scrollbar by the wheel's direction.
 	ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
 		local value = QMQTslider:GetValue()
 		if delta > 0 then
@@ -521,6 +538,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Recover a missed scenario enter/exit transition without continually
 	-- resetting a deliberate manual tracker switch outside scenarios.
 	local objectiveTrackerWatchdog = CreateFrame("Frame")
+	-- Enforces the objective tracker visibility.
 	objectiveTrackerWatchdog:SetScript("OnUpdate", function()
 		if not RQE.db then return end
 		if RQE.API.Client.InCombatLockdown() then
@@ -546,6 +564,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end)
 
 
+	-- Enforces the objective tracker visibility.
 	function RQE:EnforceObjectiveTrackerVisibility()
 		if not ObjectiveTrackerFrame or not RQE.db then return end
 		RQE.API.SyncDugiObjectiveBackdrop()
@@ -582,6 +601,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Initializes the objective tracker hooks.
 	function RQE:InitializeObjectiveTrackerHooks()
 		if self._objectiveTrackerHooksInitialized then
 			return
@@ -591,14 +611,17 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			return
 		end
 
+		-- Enforces the objective tracker visibility.
 		ObjectiveTrackerFrame:HookScript("OnShow", function()
 			RQE:EnforceObjectiveTrackerVisibility()
 		end)
 
+		-- Enforces the objective tracker visibility.
 		ObjectiveTrackerFrame:HookScript("OnHide", function()
 			if not RQE.API.ShouldKeepDugiObjectiveTrackerShown()
 				or RQE._dugiObjectiveTrackerReshowQueued then return end
 			RQE._dugiObjectiveTrackerReshowQueued = true
+			-- Enforces the objective tracker visibility.
 			RQE.API.Client.C_Timer.After(0, function()
 				RQE._dugiObjectiveTrackerReshowQueued = nil
 				if RQE.API.ShouldKeepDugiObjectiveTrackerShown() then
@@ -607,19 +630,23 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end)
 		end)
 
+		-- Enforces the objective tracker visibility.
 		RQEFrame:HookScript("OnShow", function()
 			RQE:EnforceObjectiveTrackerVisibility()
 		end)
 
+		-- Enforces the objective tracker visibility.
 		RQEFrame:HookScript("OnHide", function()
 			RQE:EnforceObjectiveTrackerVisibility()
 		end)
 
 		if RQE.RQEQuestFrame then
+			-- Enforces the objective tracker visibility.
 			RQE.RQEQuestFrame:HookScript("OnShow", function()
 				RQE:EnforceObjectiveTrackerVisibility()
 			end)
 
+			-- Enforces the objective tracker visibility.
 			RQE.RQEQuestFrame:HookScript("OnHide", function()
 				RQE:EnforceObjectiveTrackerVisibility()
 			end)
@@ -714,6 +741,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		recipeFrame:Hide()
 	end
 
+	-- Creates the recipe row.
 	local function CreateRecipeRow(recipeFrame)
 		local row = CreateFrame("Button", nil, recipeFrame)
 		row:SetHeight(19)
@@ -723,6 +751,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		row.text:SetJustifyH("LEFT")
 		row.text:SetWordWrap(false)
 		row:RegisterForClicks("LeftButtonUp")
+		-- Opens the tracked recipe or removes its watch for the requested click action.
 		row:SetScript("OnClick", function(self)
 			if RQE.API.Client.IsShiftKeyDown() then
 				RQE.API.SetTrackedRecipe(self.recipeID, false, self.isRecraft)
@@ -730,6 +759,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 			RQE.API.OpenTrackedRecipe(self.recipeID)
 		end)
+		-- Shows this control's tooltip while the pointer is over it.
 		row:SetScript("OnEnter", function(self)
 			RQE.API.ShowTrackedRecipeTooltip(self)
 		end)
@@ -737,6 +767,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return row
 	end
 
+	-- Renders the recipe tracking frame.
 	function RQE:RenderRecipeTrackingFrame(recipes)
 		local recipeFrame = self.recipeTrackingFrame
 		if not recipeFrame then return end
@@ -805,6 +836,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- ScenarioChildFrame header
 	local FALLBACK_SCENARIO_TEXT_INSET = 22
+	-- Fits the torghast scenario title.
 	local function FitTorghastScenarioTitle(frame)
 		local title = frame and frame.scenarioTitle
 		if not title then return end
@@ -821,6 +853,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 		frame.torghastTitleFitted = true
 	end
+	-- Checks whether the current scenario uses the Torghast title layout.
 	local function IsTorghastScenarioTitle()
 		if RQE.IsScenarioCardTestEnabled and RQE:IsScenarioCardTestEnabled() then
 			return RQE.ScenarioCardTestKind == "torghast"
@@ -993,6 +1026,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Updates the frame anchors.
 	function UpdateFrameAnchors()
 		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
 			RQE:ApplyTrackerSectionOrder()
@@ -1550,6 +1584,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Checks whether to sort quests while dragon riding.
 	local function shouldSortQuestsWhileDragonRiding()
 		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
 		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
@@ -1581,6 +1616,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	/run RQE:AddEmptyWorldQuestsToWatch(2339, { [10] = true, [9] = true })
 	/run RQE:AddEmptyWorldQuestsToWatch()
 	]]
+	-- Adds the empty world quests to watch.
 	function RQE:AddEmptyWorldQuestsToWatch(mapID, allowedClassifications)
 		-- Default to current zone if none passed
 		-- Previous Blizzard call changed 2026.09.25: mapID = mapID or C_Map.GetBestMapForUnit("player")
@@ -1841,6 +1877,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	RQE.trackerQuestStepCache = RQECharacterDB.trackedQuestStepIndexes
 
 
+	-- Checks that a database step exists and is enabled for tracking.
 	local function IsValidTrackerDBStep(questData, stepIndex)
 		stepIndex = tonumber(stepIndex)
 		return stepIndex and stepIndex >= 1 and stepIndex % 1 == 0
@@ -1848,6 +1885,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Returns the quest currently owning the helper's active step state.
 	local function GetLiveTrackerQuestOwnerID()
 		local displayedQuestID = tonumber(RQE.DisplayedQuestID)
 		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID and tonumber(RQE.API.GetSuperTrackedQuestID())
@@ -1875,6 +1913,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Reads the active helper step when it belongs to the tracked quest.
 	local function GetLiveTrackerQuestStep()
 		local ownerQuestID = GetLiveTrackerQuestOwnerID()
 		if not ownerQuestID then return nil end
@@ -1884,6 +1923,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Converts an objective's required-amount value into a usable number.
 	local function ParseTrackerRequiredAmount(rawAmount)
 		if type(rawAmount) == "string" then
 			local combinedAmount = rawAmount:match("^%s*(%d+)%s*%+%s*objective%s*$")
@@ -1895,6 +1935,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Reads progress for the objective selected by the database step.
 	local function GetTrackerObjectiveProgress(objectives, stepData)
 		local objectiveIndex = tonumber(stepData and stepData.objectiveIndex) or 1
 		local objective = objectives and objectives[objectiveIndex]
@@ -1902,6 +1943,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Reads an item's owned quantity for step completion checks.
 	local function GetTrackerItemCount(itemID)
 		-- Previous Blizzard call changed 2026.09.25: if C_Item and C_Item.GetItemCount then
 		if C_Item and RQE.API.ResolveClientAPI("C_Item.GetItemCount") then
@@ -1917,6 +1959,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Reads the stack count of a matching aura on the player.
 	local function GetTrackerAuraStacks(auraName, filter)
 		-- Previous Blizzard call changed 2026.09.25: if not (C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName) then return 0 end
 		if not (C_UnitAuras and RQE.API.ResolveClientAPI("C_UnitAuras.GetAuraDataBySpellName")) then return 0 end
@@ -1938,6 +1981,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	}
 
 
+	-- Evaluates a step condition against the player's current quest state.
 	local function EvaluateTrackerConditional(condition)
 		if type(condition) ~= "string" then return false end
 		local functionName, rawParameters = condition:match("RQE%.([%w_]+)%((.-)%)")
@@ -2085,6 +2129,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Checks whether a database step is satisfied by current quest progress.
 	local function EvaluateTrackerDBStep(questID, stepIndex, stepData, objectives)
 		if stepData.checks then
 			local overallResult
@@ -2126,6 +2171,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Checks whether the step belongs to the player's opposing faction.
 	local function ShouldSkipTrackerStepForFaction(stepData)
 		local description = tostring(stepData and stepData.description or "")
 		local requiredFaction = description:match("^%s*(ALLIANCE):") or description:match("^%s*(HORDE):")
@@ -2136,6 +2182,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Finds the current eligible database step for a tracked quest.
 	local function ResolveTrackerQuestStepIndex(questID, questData)
 		-- Previous Blizzard call changed 2026.09.25: if (C_QuestLog.IsComplete and C_QuestLog.IsComplete(questID))
 		if (RQE.API.ResolveClientAPI("C_QuestLog.IsComplete") and RQE.API.Client.C_QuestLog.IsComplete(questID))
@@ -2162,6 +2209,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Clears the tracked quest step index.
 	function RQE:ClearTrackedQuestStepIndex(questID)
 		-- The cache aliases SavedVariables; leave it intact until tracking is restored.
 		if self.PendingTrackerStateRestore then return end
@@ -2273,6 +2321,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		local targetPosition = CreateVector2D and CreateVector2D(x, y)
+		-- Measures the player's world-space distance to a step location.
 		local function GetWorldDistance(playerMapID, playerPosition)
 			-- Previous Blizzard call changed 2026.09.25: if not (targetPosition and C_Map.GetWorldPosFromMapPos and playerMapID and playerPosition) then
 			if not (targetPosition and RQE.API.ResolveClientAPI("C_Map.GetWorldPosFromMapPos") and playerMapID and playerPosition) then
@@ -2339,6 +2388,30 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Measure eligible coordinates on this campaign's own current step, restricted to the exact player map.
+	function RQE:GetCampaignStepDistanceOnMap(questID, playerMapID)
+		if not self.IsRetail then return end
+		local stepIndex = self:GetNextIncompleteTrackerStepIndex(questID)
+		local questData = self.getQuestData and self.getQuestData(questID)
+		local step = questData and stepIndex and questData[stepIndex]
+		if type(step) ~= "table" then return end
+		local points = step.coordinateHotspots or step.coordinates
+		if type(points) ~= "table" then return end
+		if points.x then points = { points } end
+		local objectives = self.API.GetQuestObjectives(questID) or {}
+		local closest
+		for _, point in ipairs(points) do
+			local mapID, x, y = tonumber(point.mapID), tonumber(point.x), tonumber(point.y)
+			local objective = objectives[tonumber(point.oI)]
+			if mapID == tonumber(playerMapID) and x and y and x > 0 and y > 0 and x <= 100 and y <= 100
+				and not (objective and objective.finished) then
+				local distance = GetPlayerDistanceToMapPositionYards(mapID, x / 100, y / 100)
+				if distance and distance >= 0 and (not closest or distance < closest) then closest = distance end
+			end
+		end
+		return closest
+	end
+
 	-- The visible no-database W-button tooltip obtains its coordinates from
 	-- RQE.PullDataFromMapQuests/C_QuestLog.GetQuestsOnMap. Cache that same snapshot
 	-- briefly so refreshing a full tracker only scans Blizzard's POIs once.
@@ -2367,6 +2440,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Returns the tracker quest step distance.
 	function RQE:GetTrackerQuestStepDistance(questID, stepIndex, useProvidedStepIndex)
 		if not useProvidedStepIndex then
 			stepIndex = RQE:GetNextIncompleteTrackerStepIndex(questID)
@@ -2475,6 +2549,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Collects watched quests whose tracker distance still needs resolving.
 	local function GetUnresolvedTrackedDistanceQuestIDs()
 		local questIDs = {}
 		local found = false
@@ -2632,6 +2707,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdown(self, questID)
+		-- Builds quest actions such as sharing, untracking, and abandonment.
 		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			-- Previous Blizzard call changed 2026.09.25: local isPlayerInGroup = IsInGroup()
 			local isPlayerInGroup = RQE.API.Client.IsInGroup()
@@ -2640,29 +2716,39 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 			if isPlayerInGroup and isQuestShareable then
 				-- Previous Blizzard call changed 2026.09.25: rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+				-- Selects the quest and opens the native quest-sharing action.
 				rootDescription:CreateButton("Share Quest", function() RQE.API.Client.C_QuestLog.SetSelectedQuest(questID); RQE.API.Client.QuestLogPushQuest(); end)
 			end
 
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE_SandboxEditor then
+					-- Shows the associated frame or control.
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
+				-- Prints the supertracked quest.
 				rootDescription:CreateContributionButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+				-- Checks the coord hotspots in steps.
 				rootDescription:CreateContributionButton("Check Coordinate Status for Quest", function() RQE:CheckCoordHotspotsInSteps(questID) end)
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			end
 
+			-- Sets the tom tom waypoint to closest flight master.
 			rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
 			-- Previous Blizzard call changed 2026.09.25: rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
+			-- Removes the quest watch.
 			rootDescription:CreateButton("Untrack Quest", function() RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
+			-- Abandons the quest selected in the context menu.
 			rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
+			-- Opens the quest log to quest details.
 			rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
 
 			-- uiMapID is optional.  Supplying the player's current map makes this
 			-- lookup fail when a tracked quest belongs to a questline on another map.
 			local questLineInfo = RQE.API.GetQuestLineInfo(questID)
 			if questLineInfo and questLineInfo.questLineID then
+				-- Prints the questline details.
 				rootDescription:CreateButton("Print Questline", function()
 					RQE.PrintQuestlineDetails(questLineInfo.questLineID, questID, questLineInfo)
 				end)
@@ -2671,26 +2757,39 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+				-- Tracks quests whose database entries have no authored steps.
 				rootDescription:CreateContributionButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+				-- Tracks quests that have authored steps in the database.
 				rootDescription:CreateContributionButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+				-- Tracks logged quests missing from the applicable database.
 				rootDescription:CreateContributionButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			else
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			end
 
+			-- Shows the wowhead link.
 			rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
+			-- Shows the wow wiki link.
 			rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
 			rootDescription:AppendQuestContextActions(questID)
+			-- Provides an empty callback where no action is required.
 			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
+			-- Toggles the RQE quest frame lock.
 			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
 				RQE.ToggleRQEQuestFrameLock()
 			end)
+			-- Temporarily changes the native objective tracker's visibility.
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 
 			if RQE.db.profile.debugLevel ~= "NONE" then
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+				-- Resets the frame and size to default.
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
 			end
 		end)
@@ -2699,18 +2798,25 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowDropdownRQEQuestFrame(self)
+		-- Builds the contributor context actions for the selected quest.
 		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+				-- Tracks quests whose database entries have no authored steps.
 				rootDescription:CreateContributionButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+				-- Tracks quests that have authored steps in the database.
 				rootDescription:CreateContributionButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+				-- Tracks logged quests missing from the applicable database.
 				rootDescription:CreateContributionButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
+				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			end
+			-- Toggles the RQE quest frame lock.
 			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
 				RQE.ToggleRQEQuestFrameLock()
 			end)
+			-- Temporarily changes the native objective tracker's visibility.
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 		end)
 	end
@@ -2732,12 +2838,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return instanceType == "party", difficultyID
 	end
 
+	-- Returns the dungeon card type.
 	local function GetDungeonCardType(difficultyID)
 		return difficultyID == 205 and "follower"
 			or difficultyID == 1 and "normal"
 			or difficultyID == 2 and "heroic"
 	end
 
+	-- Returns the themed dungeon card texture.
 	local function GetThemedDungeonCardTexture(difficultyID, timerID)
 		if timerID or difficultyID == 23 or difficultyID == 8
 			or not RQE.UI or not RQE.UI:IsEnabled() then return end
@@ -2751,6 +2859,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if cardType then return RQE.UI:GetCardTexture(cardType), cardType end
 	end
 
+	-- Reads the active challenge timer and its completion state.
 	local function GetActiveChallengeRun()
 		local getTimers = RQE.API.ResolveClientAPI("GetWorldElapsedTimers")
 		local getTimer = RQE.API.ResolveClientAPI("GetWorldElapsedTime")
@@ -2772,6 +2881,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Formats the challenge elapsed time and limit for the timer panel.
 	local function SetChallengeTime(panel, elapsed, limit)
 		local remaining = math.max(0, limit - elapsed)
 		panel.clock:SetText(SecondsToClock(remaining))
@@ -2786,6 +2896,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Creates or restores the challenge panel when needed.
 	local function EnsureChallengePanel(frame)
 		if frame.challengePanel then return frame.challengePanel end
 		local panel = CreateFrame("Frame", nil, frame.header, "BackdropTemplate")
@@ -2820,6 +2931,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			button.border = button:CreateTexture(nil, "OVERLAY")
 			button.border:SetAllPoints()
 			button.border:SetAtlas("ChallengeMode-AffixRing-Sm")
+			-- Shows this control's tooltip while the pointer is over it.
 			button:SetScript("OnEnter", function(self)
 				if not self.affixID then return end
 				local name, description = RQE.API.Client.C_ChallengeMode.GetAffixInfo(self.affixID)
@@ -2838,6 +2950,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return panel
 	end
 
+	-- Lays out the dungeon stage card.
 	local function LayoutDungeonStageCard(card)
 		local badge = card.difficultyBadge
 		local width = card:GetWidth()
@@ -2849,6 +2962,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			card.difficultyBadgeVisible and -math.max(18, width * 0.35) or -18, -16)
 	end
 
+	-- Creates or restores the dungeon stage card when needed.
 	local function EnsureDungeonStageCard(frame)
 		if frame.dungeonStageCard then return frame.dungeonStageCard end
 		local card = CreateFrame("Frame", nil, frame.header)
@@ -2879,6 +2993,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		badge.icon:SetPoint("TOP", badge, "TOP", 0, -4)
 		badge.count = badge:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 		badge.count:SetPoint("BOTTOM", badge, "BOTTOM", 0, 2)
+		-- Shows this control's tooltip while the pointer is over it.
 		badge:SetScript("OnEnter", function(self)
 			if self.difficultyID == 205 then
 				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT", 8, 8)
@@ -2908,6 +3023,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return card
 	end
 
+	-- Updates the dungeon difficulty badge.
 	local function UpdateDungeonDifficultyBadge(card, difficultyID, hasThemedTexture)
 		local badge = card.difficultyBadge
 		local showBadge = hasThemedTexture and (difficultyID == 205 or difficultyID == 1 or difficultyID == 2)
@@ -2927,6 +3043,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			or (instanceGroupSize and instanceGroupSize > 0 and tostring(instanceGroupSize) or ""))
 	end
 
+	-- Updates the challenge panel.
 	local function UpdateChallengePanel(frame, timerID, elapsed, limit)
 		local panel = EnsureChallengePanel(frame)
 		frame.challengeTimerID = timerID
@@ -2958,10 +3075,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		"C_UIWidgetManager.GetStatusBarWidgetVisualizationInfo",
 	}
 
+	-- Checks whether a scenario widget set contains a countdown widget.
 	local function WidgetSetHasCountdown(widgetSetID)
 		if type(widgetSetID) ~= "number" or widgetSetID <= 0 then return false end
 		local getWidgets = RQE.API.ResolveClientAPI("C_UIWidgetManager.GetAllWidgetsBySetID")
 		if not getWidgets then return false end
+		-- Safely checks the widget set for an active countdown widget.
 		local ok, hasCountdown = pcall(function()
 			local widgets = getWidgets(widgetSetID)
 			if type(widgets) ~= "table" then return false end
@@ -2993,6 +3112,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	local scenarioWidgetArtHooked
 	local delveFlagArtHooked
 	local torghastCurrencyArtHooked
+	-- Applies the delve flag art.
 	local function ApplyDelveFlagArt(widget, widgetContainer)
 		local frame = RQE.ScenarioChildFrame
 		if not frame or widgetContainer ~= frame.stageWidgets or not RQE.UI
@@ -3048,6 +3168,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		topEdge:SetShown(flag:IsShown())
 	end
 
+	-- Applies the torghast currency field.
 	local function ApplyTorghastCurrencyField(widget, showField)
 		local border = widget.RQETorghastCurrencyBorder
 		local fill = widget.RQETorghastCurrencyFill
@@ -3109,6 +3230,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		highlight:Show()
 	end
 
+	-- Saves the scenario native art.
 	local function SaveScenarioNativeArt(widget)
 		local art = widget.Frame
 		if not art then return end
@@ -3134,6 +3256,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return widget.RQEThemeNativeArt
 	end
 
+	-- Captures the scenario native art.
 	local function CaptureScenarioNativeArt(widget)
 		local previousNative = widget.RQEThemeNativeArt
 		local previousTheme = widget.RQEThemeAppliedArt
@@ -3173,6 +3296,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		widget.RQENativeStageHeight = native.height
 	end
 
+	-- Restores the scenario native art.
 	local function RestoreScenarioNativeArt(widget)
 		local native = widget.RQEThemeNativeArt
 		if native and widget.Frame then
@@ -3206,6 +3330,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		ApplyTorghastCurrencyField(widget, false)
 	end
 
+	-- Applies the scenario widget art.
 	local function ApplyScenarioWidgetArt(widget, widgetInfo, widgetContainer, fromSetup)
 		local frame = RQE.ScenarioChildFrame
 		if not frame or widgetContainer ~= frame.stageWidgets or not widgetInfo
@@ -3304,9 +3429,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return not inTorghast and hasTimer
 	end
 
+	-- Creates or restores the scenario widget art hook when needed.
 	local function EnsureScenarioWidgetArtHook()
 		if not scenarioWidgetArtHooked and type(UIWidgetBaseScenarioHeaderTemplateMixin) == "table"
 			and type(UIWidgetBaseScenarioHeaderTemplateMixin.Setup) == "function" then
+			-- Applies the scenario widget art.
 			hooksecurefunc(UIWidgetBaseScenarioHeaderTemplateMixin, "Setup", function(widget, widgetInfo, widgetContainer)
 				ApplyScenarioWidgetArt(widget, widgetInfo, widgetContainer, true)
 			end)
@@ -3314,6 +3441,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 		if not delveFlagArtHooked and type(UIWidgetTemplateScenarioHeaderDelvesMixin) == "table"
 			and type(UIWidgetTemplateScenarioHeaderDelvesMixin.Setup) == "function" then
+			-- Applies the delve flag art.
 			hooksecurefunc(UIWidgetTemplateScenarioHeaderDelvesMixin, "Setup", function(widget, _, widgetContainer)
 				-- Remember the live story spell's finished icon for the Delve test card.
 				-- Reading this widget does not change its artwork, geometry, or tooltip.
@@ -3337,6 +3465,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if not torghastCurrencyArtHooked
 			and type(UIWidgetTemplateScenarioHeaderCurrenciesAndBackgroundMixin) == "table"
 			and type(UIWidgetTemplateScenarioHeaderCurrenciesAndBackgroundMixin.Setup) == "function" then
+			-- Applies the torghast currency field.
 			hooksecurefunc(UIWidgetTemplateScenarioHeaderCurrenciesAndBackgroundMixin, "Setup", function(widget, widgetInfo, widgetContainer)
 				local frame = RQE.ScenarioChildFrame
 				if frame and widgetContainer == frame.stageWidgets then
@@ -3350,6 +3479,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Applies the existing scenario widget art.
 	local function ApplyExistingScenarioWidgetArt(widgetContainer, setHasCountdown)
 		if not RQE.UI then return end
 		local widgetInfo = {
@@ -3357,6 +3487,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			frameTextureKit = RQE.API.Client.IsInJailersTower() and "jailerstower" or "",
 		}
 		local visibleTimedWidget = false
+		-- Visits child frames to apply scenario artwork to their existing widgets.
 		local function Visit(parent)
 			for _, child in ipairs({ parent:GetChildren() }) do
 				if child.Frame and child.HeaderText and child:IsShown() then
@@ -3374,12 +3505,15 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return visibleTimedWidget
 	end
 
+	-- Creates or restores the scenario native widgets when needed.
 	local function EnsureScenarioNativeWidgets(frame)
 		EnsureScenarioWidgetArtHook()
+		-- Coalesces native scenario widget changes into a deferred layout pass.
 		local function QueueLayout()
 			local themedStage = RQE.UI and RQE.UI:IsEnabled() and not IsPartyDungeon()
 			if (frame:IsShown() or themedStage) and not frame.widgetLayoutQueued then
 				frame.widgetLayoutQueued = true
+				-- Updates the scenario frame.
 				RQE.API.Client.C_Timer.After(0, function()
 					frame.widgetLayoutQueued = nil
 					if frame:IsShown() then RQE.UpdateScenarioFrame() end
@@ -3435,6 +3569,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		buffs.List:SetParent(UIParent)
 		buffs.List:SetFrameStrata("DIALOG")
 		buffs.List:SetClampedToScreen(true)
+		-- Aligns the scenario tooltip flyout with its owning tracker card.
 		local function AlignFlyout()
 			local x = frame:GetCenter()
 			local screenX = UIParent:GetCenter()
@@ -3452,6 +3587,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 		if type(buffs.UpdateAlignment) == "function" then hooksecurefunc(buffs, "UpdateAlignment", AlignFlyout) end
 		buffs:HookScript("OnShow", AlignFlyout)
+		-- Hides the associated frame or control.
 		frame:HookScript("OnHide", function() buffs.List:Hide() end)
 		buffs:Hide()
 		frame.mawBuffs = buffs
@@ -3696,12 +3832,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		torghast = true, timed = true, delve = true,
 	}
 
+	-- Reports whether the scenario-card preview mode is active.
 	function RQE:IsScenarioCardTestEnabled()
 		return self.IsRetail and self.ScenarioCardTestEnabled == true
 			and ((self.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution"))
 				or (self.API.IsAddOnLoaded and self.API.IsAddOnLoaded("RQE_Contribution")))
 	end
 
+	-- Refreshes the scenario card test layout.
 	local function RefreshScenarioCardTestLayout()
 		RQE.UpdateScenarioFrame()
 		if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
@@ -3710,6 +3848,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if RQE.QuestScrollFrameToTop then RQE.QuestScrollFrameToTop(true) end
 	end
 
+	-- Enables or disables the scenario-card preview mode.
 	function RQE:SetScenarioCardTestEnabled(enabled)
 		if not self.IsRetail or self.API.Client.InCombatLockdown() then return false end
 		if enabled and not (self.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
@@ -3721,6 +3860,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return true
 	end
 
+	-- Selects which scenario-card type the preview displays.
 	function RQE:SetScenarioCardTestKind(kind)
 		if not self:IsScenarioCardTestEnabled() or not scenarioCardTestKinds[kind]
 			or self.API.Client.InCombatLockdown() then return false end
@@ -3730,12 +3870,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return true
 	end
 
+	-- Updates the scenario card test clock.
 	local function UpdateScenarioCardTestClock(preview)
 		local left = math.max(0, 633 - (GetTime() - (RQE.ScenarioCardTestTimerStart or GetTime())))
 		local seconds = math.ceil(left)
 		preview.clock:SetText(("%02d:%02d"):format(math.floor(seconds / 60), seconds % 60))
 	end
 
+	-- Creates or restores the scenario card test stage when needed.
 	local function EnsureScenarioCardTestStage(frame)
 		if frame.scenarioCardTestStage then return frame.scenarioCardTestStage end
 		local preview = CreateFrame("Frame", nil, frame.header)
@@ -3853,6 +3995,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		preview.anima.text:SetPoint("CENTER")
 		preview.anima.text:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
 		preview.anima.text:SetText("Anima Powers |cffffd100(0)|r")
+		-- Updates the scenario card test clock.
 		preview:SetScript("OnUpdate", function(self, elapsed)
 			if RQE.ScenarioCardTestKind ~= "timed" then return end
 			self.testClockElapsed = (self.testClockElapsed or 0) + elapsed
@@ -3867,6 +4010,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return preview
 	end
 
+	-- Renders the scenario card test.
 	local function RenderScenarioCardTest(frame)
 		local kind = RQE.ScenarioCardTestKind or "timed"
 		local dungeon = kind == "follower" or kind == "normal" or kind == "heroic" or kind == "mythic"
@@ -4009,6 +4153,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.SetScenarioChildFrameHeight()
 	end
 
+	-- Updates the scenario frame.
 	function RQE.UpdateScenarioFrame()
 			local frame = RQE.ScenarioChildFrame
 			if not frame then return end
@@ -4207,6 +4352,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.SetScenarioChildFrameHeight()
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+		-- Updates the RQE quest frame.
 		RQE.API.Client.C_Timer.After(0.35, function()
 			UpdateRQEQuestFrame()
 		end)
@@ -4400,6 +4546,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Button click: supertrack this bonus quest
 		bonusQuestButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
+		-- Focuses the clicked bonus quest and refreshes its helper and macro state.
 		bonusQuestButton:SetScript("OnMouseDown", function(self, button)
 			-- Previous Blizzard call changed 2026.09.25: if button == "LeftButton" and not IsShiftKeyDown() then
 			if button == "LeftButton" and not RQE.API.Client.IsShiftKeyDown() then
@@ -4427,11 +4574,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end
 
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+				-- Displays the selected bonus quest in the quest helper.
 				RQE.API.Client.C_Timer.After(0.15, function()
 					RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
 				end)
 
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.50, function()
+				-- Displays bonus-quest details only if that quest still has focus.
 				RQE.API.Client.C_Timer.After(0.50, function()
 					if RQE.API.GetSuperTrackedQuestID() == questID then
 						RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
@@ -4439,6 +4588,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end)
 
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.00, function()
+				-- Displays the selected bonus quest in the quest helper.
 				RQE.API.Client.C_Timer.After(1.00, function()
 					if RQE.API.GetSuperTrackedQuestID() == questID then
 						RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
@@ -4521,6 +4671,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.UI:ApplyTooltipBackground("questName")
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		bonusQuestLabel:SetScript("OnLeave", function()
 			GameTooltip:Hide()
 		end)
@@ -4602,6 +4753,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			challengeEvents:RegisterEvent(event)
 		end
 	end
+	-- Updates the scenario frame.
 	challengeEvents:SetScript("OnEvent", function()
 		if RQE.db and not RQE.db.profile.mythicScenarioMode
 			and RQE.API.Client.C_Scenario.IsInScenario() and not RQE.API.Client.InCombatLockdown() then
@@ -4666,6 +4818,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Updates the tracked quest status line.
 	local function UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
 		local statusLine = questButton and questButton.QuestStatusInfo
 		if not statusLine or not questNameLine or not followingLine then return end
@@ -4687,6 +4840,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Starts the tracked quest status updates.
 	local function StartTrackedQuestStatusUpdates(questButton, questID, questNameLine, followingLine)
 		local hasStatus, isFailed = UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
 		if not hasStatus or isFailed then
@@ -4694,6 +4848,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			return
 		end
 		questButton.rqeQuestStatusElapsed = 0
+		-- Updates the tracked quest status line.
 		questButton:SetScript("OnUpdate", function(self, elapsed)
 			self.rqeQuestStatusElapsed = (self.rqeQuestStatusElapsed or 0) + elapsed
 			if self.rqeQuestStatusElapsed < 0.25 then return end
@@ -4723,12 +4878,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		return true
 	end
 
+	-- Adds the quest tracker search text.
 	local function AddQuestTrackerSearchText(searchText, value)
 		if type(value) == "string" and value ~= "" then
 			searchText[#searchText + 1] = value
 		end
 	end
 
+	-- Adds the quest tracker search text list.
 	local function AddQuestTrackerSearchTextList(searchText, values)
 		if type(values) ~= "table" then return end
 		for _, value in ipairs(values) do
@@ -4736,6 +4893,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Finds the quest tracker search matches.
 	local function FindQuestTrackerSearchMatches(searchTerm)
 		local matches = {}
 		local normalizedSearchTerm = string.lower(searchTerm)
@@ -4810,6 +4968,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Collects the retail quest tracker search watches.
 	local function CollectRetailQuestTrackerSearchWatches()
 		local watchedQuestIDs = {}
 		-- Previous Blizzard call changed 2026.09.25: local numWatches = C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches() or 0
@@ -4838,6 +4997,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Adds the retail quest tracker search watch.
 	local function AddRetailQuestTrackerSearchWatch(questID)
 		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog and C_QuestLog.AddQuestWatch then
 		if C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.AddQuestWatch") then
@@ -4862,6 +5022,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Refreshes the quest tracker after search.
 	function RQE:RefreshQuestTrackerAfterSearch()
 		if UpdateRQEQuestFrame then
 			UpdateRQEQuestFrame()
@@ -4874,6 +5035,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Searches the quest tracker.
 	function RQE:SearchQuestTracker(searchText)
 		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown and InCombatLockdown() then
 		if RQE.API.ResolveClientAPI("InCombatLockdown") and RQE.API.Client.InCombatLockdown() then
@@ -4915,6 +5077,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		self:RefreshQuestTrackerAfterSearch()
 	end
 
+	-- Restores the quest tracker search.
 	function RQE:RestoreQuestTrackerSearch()
 		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown and InCombatLockdown() then
 		if RQE.API.ResolveClientAPI("InCombatLockdown") and RQE.API.Client.InCombatLockdown() then
@@ -5089,7 +5252,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- progressbar objective, separates its label from the numeric percentage.  A
 	-- missing type or percentage deliberately falls back to the original one-line
 	-- objective text so unusual quests never lose information.
-	local function BuildTrackerObjectiveDisplay(questID)
+	-- Combat callers without a laid-out bar keep its percentage on the objective line.
+	local function BuildTrackerObjectiveDisplay(questID, includeProgressPercentage)
+	-- Previous code (commented out 2026.10.31): always omitted the percentage because a visible bar was assumed
+	-- local function BuildTrackerObjectiveDisplay(questID)
 		local objectivesData = RQE.API.GetQuestObjectives(questID)
 		if type(objectivesData) ~= "table" or #objectivesData == 0 then
 			return nil, nil
@@ -5129,7 +5295,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				label = label:gsub("%s*[:%-]?%s*%d+%.?%d*%%%s*$", "")
 				if label == "" then label = PROGRESS or "Progress" end
 				progressInfo = { label = label, percentage = percentage }
-				description = label
+				-- Default rendering is unchanged; the combat fallback preserves this line's color and position.
+				description = includeProgressPercentage
+					and string.format("%s (%d%%)", label, math.floor(percentage + 0.5)) or label
+				-- Previous code (commented out 2026.10.31): stripped the number even when combat could not show a bar
+				-- description = label
 			end
 
 			local color
@@ -5177,6 +5347,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Refreshes the tracker progress bar layouts.
 	function RQE.RefreshTrackerProgressBarLayouts()
 		for _, section in ipairs({
 			RQE.CampaignFrame, RQE.QuestsFrame, RQE.WorldQuestsFrame,
@@ -5214,12 +5385,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 	end
 
+	-- Refreshes the objective progress bar colors.
 	function RQE.RefreshObjectiveProgressBarColors()
 		for progressBar in pairs(RQE.ObjectiveProgressBars) do
 			ApplyObjectiveProgressPalette(progressBar)
 		end
 	end
 
+	-- Applies the tracker objective display.
 	function RQE.ApplyTrackerObjectiveDisplay(owner, questID, objectiveText, parentFrame, fallbackText)
 		if not owner or not objectiveText or not parentFrame then return objectiveText end
 
@@ -5677,6 +5850,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Updates the RQEQuestFrame
 	function UpdateRQEQuestFrame()
+		-- Every tracker update, whatever triggered it, also saves this character's
+		-- watched quests, so the saved list always matches what the tracker shows.
+		RQE:SaveTrackedQuestsToCharacter()
 		RQE:BeginTrackerSyncRender("normal")
 		RQE.LastTrackerStepCacheMapID = RQE.LastTrackerStepCacheMapID
 			-- Previous Blizzard call changed 2026.09.25: or C_Map.GetBestMapForUnit("player")
@@ -5743,6 +5919,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local worldQuestHeight = baseHeight + (RQE.worldQuestCount * questHeight)
 		local achievementHeight = RQE.AchievementsFrame.lastMeasuredHeight or baseHeight
 
+		-- Keep the last measured World Quest height until the batched refresh adjusts
+		-- it for changed objective text or redraws changed membership.
+		-- Previous comment (updated 2026.10.31):
 		-- World Quest rows are deliberately not rebuilt during combat because that
 		-- renderer can create and reconfigure buttons.  Keep its last measured
 		-- height instead of replacing it with this coarse count-based estimate;
@@ -5925,6 +6104,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 					-- Quest Watch List
 					QuestLogIndexButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
+					-- Handles quest-row selection and its context actions while preserving step state.
 					QuestLogIndexButton:SetScript("OnMouseDown", function(self, button, confirmed)
 						-- Previous Blizzard call changed 2026.09.25: local shiftLeftClick = not confirmed and IsShiftKeyDown()
 						local shiftLeftClick = not confirmed and RQE.API.Client.IsShiftKeyDown()
@@ -5932,6 +6112,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						if not confirmed and not self:IsMouseOver() then return end
 						if not confirmed and not shiftLeftClick
 							and RQE:RequestCoordOrderTrackingConfirmation("switch", questID,
+								-- Replays the row's mouse action only while it still represents the same quest.
 								function()
 									if self.questID ~= questID then return end
 									local handler = self:GetScript("OnMouseDown")
@@ -6003,6 +6184,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							UpdateRQEQuestFrame()
 
 							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+							-- Saves the tracked quests to character.
 							RQE.API.Client.C_Timer.After(0.25, function()
 								RQE:SaveTrackedQuestsToCharacter()
 								RQE:SaveSuperTrackedQuestToCharacter()
@@ -6034,12 +6216,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 								RQE.shouldCheckFinalStep = true
 								RQE.CheckAndSetFinalStep()
 								-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+								-- Activates the unknown quest button.
 								RQE.API.Client.C_Timer.After(0.1, function()
 									RQE.ClickUnknownQuestButton()
 									RQE.NearestFlightMasterSet = false
 
 									if RQE.db.profile.enableTravelSuggestions then
 										-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.8, function()
+										-- Compares available travel choices for the selected destination.
 										RQE.API.Client.C_Timer.After(0.8, function()
 											RQE:RecommendFastestTravelMethod()
 										end)
@@ -6055,6 +6239,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 									if RQE.db.profile.autoClickWaypointButton then
 										-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+										-- Starts the periodic checks.
 										RQE.API.Client.C_Timer.After(0.1, function()
 											if not sameQuestReselect then RQE.AddonSetStepIndex = 1 end
 											RQE:StartPeriodicChecks()
@@ -6062,6 +6247,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 									end
 
 									-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+									-- Saves the super tracked quest to character.
 									RQE.API.Client.C_Timer.After(0.2, function()
 										RQE:SaveSuperTrackedQuestToCharacter()
 									end)
@@ -6244,6 +6430,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					QuestLevelAndName:SetHeight(0)  -- Auto height
 					QuestLevelAndName:EnableMouse(true)
 
+					-- Hides the tooltip when the pointer leaves this control.
 					QuestLevelAndName:SetScript("OnLeave", function()
 						GameTooltip:Hide()
 					end)
@@ -6283,6 +6470,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					QuestObjectivesOrDescription:SetWordWrap(true)
 					QuestObjectivesOrDescription:EnableMouse(true)
 
+					-- Shows the quest dropdown.
 					QuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
 						if button == "RightButton" then
 							ShowQuestDropdown(self, questID)
@@ -6299,6 +6487,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						end
 					end)
 
+					-- Handles quest-title clicks and updates the selected quest's helper state.
 					QuestLevelAndName:SetScript("OnMouseDown", function(self, button)
 						if RQE.searchedQuestID ~= nil then
 							RQE.Buttons.ClearButtonPressed()
@@ -6423,6 +6612,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						RQE.UI:ApplyTooltipBackground("questName")
 					end)
 
+					-- Shows this control's tooltip while the pointer is over it.
 					QuestObjectivesOrDescription:SetScript("OnEnter", function(self)
 						GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
 						GameTooltip:SetMinimumWidth(350)
@@ -6638,13 +6828,280 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- #11i. World Quest Rendering
 	-------------------------------------------------------
 
+	-- Reflow existing plain World Quest rows without rebuilding or sorting them.
+	-- Text bounds can change between quest stages even when membership is unchanged.
+	function RQE:RefreshWorldQuestSectionLayout()
+		local frame = self.WorldQuestsFrame
+		if not frame or not frame:IsShown() then return end
+		local padding = GetQuestSectionBottomPadding()
+		local lastElement
+		local anchorsChanged = false
+		for _, row in ipairs(frame.RQERenderedWorldRows or {}) do
+			if row:IsShown() and row:GetParent() == frame and row.QuestObjectives then
+				local anchor = lastElement or frame
+				if row.RQEWorldQuestAnchor ~= anchor then
+					row.WQuestLevelAndName:ClearAllPoints()
+					if lastElement then
+						row.WQuestLevelAndName:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -padding)
+					else
+						row.WQuestLevelAndName:SetPoint("TOPLEFT", frame, "TOPLEFT", GetTrackerQuestLabelInset(), -45)
+					end
+					row.RQEWorldQuestAnchor = anchor
+					anchorsChanged = true
+				end
+				local bar = row.RQELayoutProgressBar
+				lastElement = bar and bar:IsShown() and bar:GetParent() == frame
+					and bar.RQEObjectiveText == row.QuestObjectives and bar or row.QuestObjectives
+			end
+		end
+		if not lastElement then return end
+
+		local frameTop, rowBottom = frame:GetTop(), lastElement:GetBottom()
+		if not frameTop or not rowBottom then return end
+		local measuredHeight = math.max(80, frameTop - rowBottom + padding)
+		local heightChanged = not frame.lastMeasuredHeight
+			or math.abs(frame.lastMeasuredHeight - measuredHeight) > 0.5
+		frame.lastMeasuredHeight = measuredHeight
+		frame._rqeRenderedHeight = measuredHeight
+		frame._rqeExpandedHeight = measuredHeight
+		if self.TrackerSectionLastElements then
+			self.TrackerSectionLastElements.world = lastElement
+		end
+		local collapsed = self.IsTrackerSectionCollapsed and self:IsTrackerSectionCollapsed("world")
+		if not collapsed and math.abs(frame:GetHeight() - measuredHeight) > 0.5 then
+			frame:SetHeight(measuredHeight)
+			heightChanged = true
+		end
+		if anchorsChanged or (heightChanged and not collapsed) then
+			UpdateFrameAnchors()
+			self.RefreshQuestTrackerScrollRange()
+		end
+		return anchorsChanged or heightChanged
+	end
+
+
+	-- Refresh existing rows cheaply during combat. Missing tracked rows are handled
+	-- by a batched membership redraw in UpdateRQEWorldQuestFrame; ordinary progress
+	-- updates create no rows or sorting work; only changed geometry reflows the layout.
+	-- Previous comment (updated 2026.10.31):
+	-- The full World Quest render waits for combat to end, so without this the
+	-- shown rows keep their pre-combat progress until then. This rewrites only the
+	-- text and bar values of rows that are already shown: it creates no rows,
+	-- re-sorts nothing, and moves no anchors. A quest first tracked in combat
+	-- still appears when the full render runs after combat.
+	function RQE:RefreshShownWorldQuestRowsInCombat()
+		local frame = self.WorldQuestsFrame
+		if not frame or not frame:IsShown() then return end
+		local client = self.API.Client
+		local textChanged = false
+
+		local watched = {}
+		for i = 1, client.C_QuestLog.GetNumWorldQuestWatches() do
+			local questID = client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			if questID then watched[questID] = true end
+		end
+
+		-- Walk the shown rows rather than the watch list, so a row whose quest was
+		-- completed and untracked mid-combat is still reached and hidden.
+		for key, row in pairs(frame) do
+			local questID = type(key) == "string" and type(row) == "table" and row.IsShown
+				and key:match("^WQButton%d+$") and tonumber(row.questID)
+			local objectiveText = questID and row:IsShown() and row.QuestObjectives
+			if objectiveText then
+				if not watched[questID] or client.C_QuestLog.IsQuestFlaggedCompleted(questID) then
+					-- Hide a completed or untracked quest's row and its bar, which is
+					-- parented to the section. Rows below keep their place, leaving a
+					-- gap until the full render closes it after combat.
+					row:Hide()
+					if row.RQEProgressBar then row.RQEProgressBar:Hide() end
+					row.RQELayoutProgressBar = nil
+				else
+					-- A world quest leaves the quest log as it completes, and its
+					-- objectives then read as 0 fulfilled. Rewrite objectives only while
+					-- it is in the log; distance and time left still update below.
+					if client.C_QuestLog.GetLogIndexForQuestID(questID) then
+						-- Only reuse the bar owned by this row's latest full render.
+						-- An older cached bar may belong to a different objective layout.
+						local progressBar = row.RQEProgressBar
+						local canShowProgressBar = progressBar and row.RQELayoutProgressBar == progressBar
+							and progressBar.RQEObjectiveText == objectiveText
+							and progressBar.RQEObjectiveParent == frame and progressBar:GetParent() == frame
+							and progressBar.RQEFill and progressBar.RQEPercentText
+						local displayText, progressInfo = BuildTrackerObjectiveDisplay(questID, not canShowProgressBar)
+						-- Previous code (commented out 2026.10.31): omitted numeric progress when no shown bar was available
+						-- local displayText, progressInfo = BuildTrackerObjectiveDisplay(questID)
+						if displayText == nil or displayText == "" then
+							displayText = self.colorizeObjectives(questID) or ""
+						end
+						textChanged = textChanged or objectiveText:GetText() ~= displayText
+						if type(objectiveText.RQERawSetText) == "function" then
+							objectiveText.RQERawSetText(objectiveText, displayText)
+						else
+							objectiveText:SetText(displayText)
+						end
+
+						-- Reuse the owned bar after a count-only stage. The layout pass below
+						-- removes/restores its space without creating new widgets.
+						if progressInfo and canShowProgressBar then
+							progressBar.RQEFill:SetValue(progressInfo.percentage)
+							progressBar.RQEPercentText:SetText(string.format("%d%%",
+								math.floor(progressInfo.percentage + 0.5)))
+							progressBar:Show()
+						elseif progressBar then
+							progressBar:Hide()
+						end
+						-- Previous code (commented out 2026.10.31): left obsolete bars visible and could not restore a hidden bar
+						-- local progressBar = row.RQEProgressBar
+						-- if progressInfo and progressBar and progressBar:IsShown() then
+						-- 	progressBar.RQEFill:SetValue(progressInfo.percentage)
+						-- 	progressBar.RQEPercentText:SetText(string.format("%d%%",
+						-- 		math.floor(progressInfo.percentage + 0.5)))
+						-- end
+					end
+
+					if row.WQuestDistance then
+						local distanceSq = client.C_QuestLog.GetDistanceSqToQuest(questID)
+						row.WQuestDistance:SetText(distanceSq
+							and string.format("Distance: %.2f", math.sqrt(distanceSq))
+							or "Distance: N/A")
+					end
+
+					if row.WQuestTimeLeft and row.RQEFormatTimeLeft then
+						row.WQuestTimeLeft:SetText(row.RQEFormatTimeLeft(
+							client.C_TaskQuest.GetQuestTimeLeftSeconds(questID)))
+					end
+				end
+			end
+		end
+
+		local layoutChanged = self:RefreshWorldQuestSectionLayout()
+		-- Font-string bounds can settle on the next frame. Coalesce that second
+		-- measurement, and leave unchanged geometry/anchors untouched.
+		if (textChanged or layoutChanged) and not frame.RQEWorldQuestLayoutQueued then
+			frame.RQEWorldQuestLayoutQueued = true
+			-- Refreshes the world quest section layout.
+			client.C_Timer.After(0, function()
+				frame.RQEWorldQuestLayoutQueued = nil
+				RQE:RefreshWorldQuestSectionLayout()
+			end)
+		end
+
+		-- Previous code (commented out 2026.10.31): walked only the watch list and rewrote objectives after completion, showing 0 fulfilled on a finished quest
+		-- for i = 1, client.C_QuestLog.GetNumWorldQuestWatches() do
+		-- 	local questID = client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- 	local row = questID and frame["WQButton" .. questID]
+		-- 	local objectiveText = row and row:IsShown() and row.QuestObjectives
+		-- 	if objectiveText then
+		-- 		-- Same objective text the full render applies through ApplyTrackerObjectiveDisplay
+		-- 		local displayText, progressInfo = BuildTrackerObjectiveDisplay(questID)
+		-- 		if displayText == nil or displayText == "" then
+		-- 			displayText = self.colorizeObjectives(questID) or ""
+		-- 		end
+		-- 		if type(objectiveText.RQERawSetText) == "function" then
+		-- 			objectiveText.RQERawSetText(objectiveText, displayText)
+		-- 		else
+		-- 			objectiveText:SetText(displayText)
+		-- 		end
+		--
+		-- 		-- Update an existing bar's value only. Creating or re-anchoring a bar
+		-- 		-- would shift the rows below it, so that waits for the full render.
+		-- 		local progressBar = row.RQEProgressBar
+		-- 		if progressInfo and progressBar and progressBar:IsShown() then
+		-- 			progressBar.RQEFill:SetValue(progressInfo.percentage)
+		-- 			progressBar.RQEPercentText:SetText(string.format("%d%%",
+		-- 				math.floor(progressInfo.percentage + 0.5)))
+		-- 		end
+		--
+		-- 		if row.WQuestDistance then
+		-- 			local distanceSq = client.C_QuestLog.GetDistanceSqToQuest(questID)
+		-- 			row.WQuestDistance:SetText(distanceSq
+		-- 				and string.format("Distance: %.2f", math.sqrt(distanceSq))
+		-- 				or "Distance: N/A")
+		-- 		end
+		--
+		-- 		if row.WQuestTimeLeft and row.RQEFormatTimeLeft then
+		-- 			row.WQuestTimeLeft:SetText(row.RQEFormatTimeLeft(
+		-- 				client.C_TaskQuest.GetQuestTimeLeftSeconds(questID)))
+		-- 		end
+		-- 	end
+		-- end
+	end
+
+
 	-- Function to update the RQE.WorldQuestFrame with tracked World Quests
-	function UpdateRQEWorldQuestFrame()
-		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
-		if RQE.API.Client.InCombatLockdown() then
+	function UpdateRQEWorldQuestFrame(allowCombatRebuild)
+		local inCombat = RQE.API.Client.InCombatLockdown()
+		-- Keep progress events batched. Reuse the plain World Quest row renderer only
+		-- when displayed membership changes; it does not configure secure actions.
+		if inCombat and allowCombatRebuild ~= true then
 			RQE.RunUpdateRQEWorldQuestFrame = true
+			if not RQE.WorldQuestCombatRefreshQueued then
+				RQE.WorldQuestCombatRefreshQueued = true
+				-- Refreshes the shown world quest rows in combat.
+				RQE.API.Client.C_Timer.After(0.2, function()
+					RQE.WorldQuestCombatRefreshQueued = false
+					if not RQE.API.Client.InCombatLockdown() then
+						-- The pending post-combat callback owns the full redraw after combat ends.
+						RQE:RefreshShownWorldQuestRowsInCombat()
+						return
+					end
+					local frame = RQE.WorldQuestsFrame
+					if not frame then return end
+					local log = RQE.API.Client.C_QuestLog
+					local watched = {}
+					for i = 1, log.GetNumWorldQuestWatches() do
+						local questID = log.GetQuestIDForWorldQuestWatchIndex(i)
+						if questID and RQE.API.IsWorldQuest(questID) and not log.IsQuestFlaggedCompleted(questID) then
+							watched[questID] = true
+							local row = frame["WQButton" .. questID]
+							if not frame:IsShown() or not row or row.questID ~= questID
+								or not row:IsShown() or row:GetParent() ~= frame or not row.QuestObjectives then
+								UpdateRQEWorldQuestFrame(true)
+								return
+							end
+						end
+					end
+					-- Untracking and completion also change membership: compact the remaining
+					-- rows and update the count instead of leaving a gap until combat ends.
+					for key, row in pairs(frame) do
+						if type(key) == "string" and key:match("^WQButton%d+$")
+							and type(row) == "table" and row.IsShown and row:IsShown()
+							and row.questID and not watched[row.questID] then
+							UpdateRQEWorldQuestFrame(true)
+							return
+						end
+					end
+					if not next(watched) and frame:IsShown() then
+						UpdateRQEWorldQuestFrame(true)
+						return
+					end
+					RQE:RefreshShownWorldQuestRowsInCombat()
+				end)
+			end
 			return
 		end
+	-- Previous code (commented out 2026.10.31): combat could only refresh existing rows, so newly tracked world quests remained absent
+	-- function UpdateRQEWorldQuestFrame()
+		-- -- Combat still defers the full render, but the shown rows now get a text-only
+		-- -- refresh. One kill requests this render several times, so the requests
+		-- -- share one queued refresh.
+		-- if RQE.API.Client.InCombatLockdown() then
+			-- RQE.RunUpdateRQEWorldQuestFrame = true
+			-- if not RQE.WorldQuestCombatRefreshQueued then
+				-- RQE.WorldQuestCombatRefreshQueued = true
+				-- RQE.API.Client.C_Timer.After(0.2, function()
+					-- RQE.WorldQuestCombatRefreshQueued = false
+					-- RQE:RefreshShownWorldQuestRowsInCombat()
+				-- end)
+			-- end
+			-- return
+		-- end
+		-- Previous code (commented out 2026.10.30): left the shown rows unchanged until combat ended
+		-- -- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		-- if RQE.API.Client.InCombatLockdown() then
+		-- 	RQE.RunUpdateRQEWorldQuestFrame = true
+		-- 	return
+		-- end
 		RQE:BeginTrackerSyncRender("world")
 
 		-- Define padding value
@@ -6657,6 +7114,31 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Gather and sort World Quests by proximity
 		local sortedWorldQuests = GatherAndSortWorldQuestsByProximity()
+		local preservedCombatObjectives = {}
+		if inCombat then
+			-- A completed quest can linger in the watch list briefly. Do not resurrect it
+			-- when another quest joins the tracker during the same fight.
+			for i = #sortedWorldQuests, 1, -1 do
+				local questID = sortedWorldQuests[i].questID
+				if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) then
+					table.remove(sortedWorldQuests, i)
+				else
+					local row = RQE.WorldQuestsFrame["WQButton" .. questID]
+					if row and row.questID == questID and row:IsShown() and row:GetParent() == RQE.WorldQuestsFrame and row.QuestObjectives
+						and not RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID) then
+						-- Keep last known progress until completion is confirmed or log data returns.
+						-- Capture bar visibility before ClearOwnedTrackerWorldRows hides it.
+						local bar = row.RQEProgressBar
+						preservedCombatObjectives[questID] = {
+							progressBar = bar and row.RQELayoutProgressBar == bar and bar:IsShown()
+								and bar.RQEObjectiveText == row.QuestObjectives
+								and bar.RQEObjectiveParent == RQE.WorldQuestsFrame
+								and bar:GetParent() == RQE.WorldQuestsFrame and bar or nil,
+						}
+					end
+				end
+			end
+		end
 		local expectedQuestIDs = {}
 		for _, questInfo in ipairs(sortedWorldQuests) do
 			if questInfo.type == "WQ" and questInfo.questID then expectedQuestIDs[questInfo.questID] = true end
@@ -6665,6 +7147,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Hide all existing World Quest buttons first
 		RQE:ClearOwnedTrackerWorldRows()
+		RQE.WorldQuestsFrame.RQERenderedWorldRows = {}
 		for i = 1, 50 do -- Assuming player won't have more than 50 World Quests tracked at once
 			local button = RQE.WorldQuestsFrame["WQButton" .. i]
 			if button then
@@ -6692,12 +7175,21 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Total quests to be tracked
 		local totalTrackedQuests = numTrackedWorldQuests --+ numTrackedBonusQuests
 		RQE.numTrackedBonusQuests = numTrackedBonusQuests
+		if inCombat then
+			-- This path can run before the normal tracker refresh updates the header.
+			totalTrackedQuests = #sortedWorldQuests
+			RQE.worldQuestCount = totalTrackedQuests
+			RQE.WorldQuestsFrame.questCount = totalTrackedQuests
+			UpdateHeader(RQE.WorldQuestsFrame, "World Quests", totalTrackedQuests)
+		end
 
 		-- Ensure the frame is visible if there are any tracked quests
 		if totalTrackedQuests > 0 then
 			RQE.WorldQuestsFrame:Show()
 		else
 			RQE.WorldQuestsFrame:Hide()
+			-- Removing the final world quest must close the section's gap in combat too.
+			if inCombat then UpdateFrameAnchors() end
 			RQE.RefreshQuestTrackerScrollRange()
 			RQE:CommitTrackerSyncRender("world")
 			return -- Exit early if no quests to display
@@ -6752,6 +7244,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				-- Set flag to check if correct macro
 				if RQE.RQEQuestFrame then
+					-- Records that the pointer is hovering over the quest frame.
 					WQuestLogIndexButton:SetScript("OnEnter", function()
 						RQE.hoveringOnFrame = true
 					end)
@@ -6759,6 +7252,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				-- Hide tooltip for the RQEQuestFrame when moving out of the frame
 				if RQE.RQEQuestFrame then
+					-- Hides the tooltip when the pointer leaves this control.
 					WQuestLogIndexButton:SetScript("OnLeave", function()
 						GameTooltip:Hide()
 						RQE.hoveringOnFrame = false
@@ -6811,6 +7305,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						RQE.ManuallyTrackedQuests[questID] = true
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+						-- Sets the quest step macro.
 						RQE.API.Client.C_Timer.After(1, function()
 							local questData = RQE.getQuestData(questID)
 							if not questData then
@@ -6832,6 +7327,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						UpdateRQEQuestFrame()
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+						-- Updates the magic button visibility.
 						RQE.API.Client.C_Timer.After(1, function()
 							RQE.Buttons.UpdateMagicButtonVisibility()
 						end)
@@ -6881,8 +7377,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				-- Apply colorization to objectivesText. Progress-bar objectives are
 				-- converted after this label receives its final anchor below distance.
-				objectivesText = RQE.colorizeObjectives(questID)
-				WQuestObjectives:SetText(objectivesText)
+				-- Membership redraws must not replace a departing quest's last progress with zeroes.
+				if not preservedCombatObjectives[questID] then
+					objectivesText = RQE.colorizeObjectives(questID)
+					WQuestObjectives:SetText(objectivesText)
+				end
+				-- Previous code (commented out 2026.10.31): always rewrote objectives even when combat quest-log data had disappeared
+				-- objectivesText = RQE.colorizeObjectives(questID)
+				-- WQuestObjectives:SetText(objectivesText)
 
 				-- Untrack World Quest
 				WQuestLevelAndName:SetScript("OnMouseDown", function(self, button)
@@ -6920,8 +7422,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 					return table.concat(timeStrings, ", ")
 				end
+				-- Kept on the row so the combat text refresh formats time left the same way
+				WQuestLogIndexButton.RQEFormatTimeLeft = FormatTimeLeft
 
-				local WQuestTimeLeft = WQuestLogIndexButton.WQuestTimeLeft or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				local WQuestTimeLeft =WQuestLogIndexButton.WQuestTimeLeft or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				WQuestTimeLeft:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
 				WQuestTimeLeft:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				WQuestTimeLeft:SetTextColor(0.98, 0.5, 0.45)  -- Set the text color to Salmon
@@ -6965,6 +7469,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQuestObjectivesOrDescription:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
 				WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
 
+				-- Shows the quest dropdown.
 				WQuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
 					if button == "RightButton" then
 						ShowQuestDropdown(self, questID)
@@ -6973,9 +7478,26 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				-- Set position of the WQuestObjectives based on TimeLeft
 				WQuestObjectives:SetPoint("TOPLEFT", WQuestDistance, "BOTTOMLEFT", 0, -5)
-				local worldObjectiveLastElement = RQE.ApplyTrackerObjectiveDisplay(
-					WQuestLogIndexButton, questID, WQuestObjectives,
-					RQE.WorldQuestsFrame, objectivesText)
+				local preserved = preservedCombatObjectives[questID]
+				local worldObjectiveLastElement
+				if preserved then
+					worldObjectiveLastElement = preserved.progressBar or WQuestObjectives
+					if preserved.progressBar then
+						RQE.LayoutObjectiveProgressBar(preserved.progressBar)
+						preserved.progressBar:Show()
+					end
+				else
+					worldObjectiveLastElement = RQE.ApplyTrackerObjectiveDisplay(
+						WQuestLogIndexButton, questID, WQuestObjectives,
+						RQE.WorldQuestsFrame, objectivesText)
+				end
+				-- Previous code (commented out 2026.10.31): always queried fresh objectives during a full render
+				-- local worldObjectiveLastElement = RQE.ApplyTrackerObjectiveDisplay(
+					-- WQuestLogIndexButton, questID, WQuestObjectives,
+					-- RQE.WorldQuestsFrame, objectivesText)
+				-- Reset on every full render: a retained hidden bar is not necessarily part of this layout.
+				WQuestLogIndexButton.RQELayoutProgressBar = worldObjectiveLastElement == WQuestLogIndexButton.RQEProgressBar
+					and worldObjectiveLastElement or nil
 
 				-- Untrack World Quest
 				WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
@@ -7010,6 +7532,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQuestLogIndexButton:Show()
 				WQuestObjectives:Show()
 
+				WQuestLogIndexButton.RQEWorldQuestAnchor = lastWorldQuestElement or RQE.WorldQuestsFrame
+				table.insert(RQE.WorldQuestsFrame.RQERenderedWorldRows, WQuestLogIndexButton)
 				lastWorldQuestElement = worldObjectiveLastElement
 
 				-- Set the mouseover tooltip for the World Quest button
@@ -7165,32 +7689,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 		end
 
-		-- Size the section once every row has been laid out.  Resizing inside the
-		-- loop can measure a stale row position and leave the next section anchored
-		-- below the old estimated World Quests height.
-		local function ResizeWorldQuestSection()
-			if not lastWorldQuestElement or not lastWorldQuestElement:IsShown() then
-				return
-			end
-
-			local frameTop = RQE.WorldQuestsFrame:GetTop()
-			local rowBottom = lastWorldQuestElement:GetBottom()
-			if not frameTop or not rowBottom then
-				return
-			end
-
-			local measuredHeight = math.max(80, frameTop - rowBottom + padding)
-			RQE.WorldQuestsFrame.lastMeasuredHeight = measuredHeight
-			RQE.WorldQuestsFrame:SetHeight(measuredHeight)
-			UpdateFrameAnchors()
-		end
-
-		ResizeWorldQuestSection()
-		-- Font-string bounds can settle on the following frame after a quest title
-		-- or objective wraps.  Recheck then so the Bonus Quests header always
-		-- follows the real bottom of the World Quests row.
-		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, ResizeWorldQuestSection)
-		RQE.API.Client.C_Timer.After(0, ResizeWorldQuestSection)
+		-- Share the same geometry measurement with combat progress refreshes.
+		RQE:RefreshWorldQuestSectionLayout()
+		-- A membership redraw can show this section again at its previous height.
+		-- Restore the section chain even when its row geometry did not change.
+		UpdateFrameAnchors()
+		-- Refreshes the world quest section layout.
+		RQE.API.Client.C_Timer.After(0, function() RQE:RefreshWorldQuestSectionLayout() end)
 		RQE.RefreshQuestTrackerScrollRange()
 		RQE:CommitTrackerSyncRender("world")
 	end
@@ -7347,6 +7852,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				button, questID, objectives, taskFrame, taskObjectivesText)
 
 			button:RegisterForClicks("LeftButtonUp")
+			-- Focuses the clicked world quest and refreshes its helper view.
 			button:SetScript("OnClick", function()
 				RQE.ManualSuperTrack = "TQ"
 				RQE.ManualSuperTrackedQuestID = questID
@@ -7430,6 +7936,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Tier Three Importance: CLICKQUESTLOGINDEXBUTTON function
 		if RQE.db.profile.autoClickWaypointButton then
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+			-- Checks the current macro contents.
 			RQE.API.Client.C_Timer.After(3, function()
 				RQE.isCheckingMacroContents = true
 				local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -7440,6 +7947,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				RQEMacro:CreateMacroForCurrentStep()
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				-- Releases the macro-content inspection guard.
 				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
@@ -7457,15 +7965,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.ClickQuestLogIndexButton(randomQuestID)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		-- Activates the current quest step's waypoint button when available.
 		RQE.API.Client.C_Timer.After(0.2, function()
 			RQE.CheckAndClickWButton()
 		end)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+		-- Selects the matching quest-log row in the RQE helper.
 		RQE.API.Client.C_Timer.After(0.3, function()
 			RQE.ClickQuestLogIndexButton(bigQuestID)
 
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			-- Activates the current quest step's waypoint button when available.
 			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.CheckAndClickWButton()
 			end)
@@ -7516,14 +8027,17 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			itemButton:SetAttribute("item", itemLink)
 			-- Register the button for clicks
 			itemButton:RegisterForClicks("AnyUp")
+			-- Shows this control's tooltip while the pointer is over it.
 			itemButton:SetScript("OnEnter", function(self)
 				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 				GameTooltip:SetHyperlink(itemLink)
 				GameTooltip:Show()
 			end)
+			-- Hides the tooltip when the pointer leaves this control.
 			itemButton:SetScript("OnLeave", function(self)
 				GameTooltip:Hide()
 			end)
+			-- Uses the special item belonging to the button's quest-log entry.
 			itemButton:SetScript("PreClick", function(self)
 				-- Use the quest log special item function to ensure the correct usage
 				-- Previous Blizzard call changed 2026.09.25: UseQuestLogSpecialItem(self:GetAttribute("questLogIndex"))
@@ -7555,9 +8069,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
+	-- Forces the refresh and click world quest button.
 	function RQE:ForceRefreshAndClickWorldQuestButton(questID)
 		UpdateRQEWorldQuestFrame()  -- Force a refresh of all buttons
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()  -- Delay to ensure UI updates
+		-- Focuses the selected world quest and displays its helper information.
 		RQE.API.Client.C_Timer.After(1, function()  -- Delay to ensure UI updates
 			self:ClickWorldQuestButton(questID)
 		end)
@@ -7667,6 +8183,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.AchievementHeaderPool = RQE.AchievementHeaderPool or {}
 		RQE.AchievementCriteriaPool = RQE.AchievementCriteriaPool or {}
 		local headerCount, criteriaCount = 0, 0
+		-- Reuses or creates a text region for an achievement criterion.
 		local function AcquireAchievementCriteriaText()
 			criteriaCount = criteriaCount + 1
 			local criteriaText = RQE.AchievementCriteriaPool[criteriaCount]
@@ -7709,6 +8226,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				achievementHeader:SetScript("OnEnter", function(self)
 					RQE.API.ShowTrackedAchievementTooltip(self, id, name, description)
 				end)
+				-- Hides the tracked tooltip.
 				achievementHeader:SetScript("OnLeave", function(self)
 					RQE.API.HideTrackedTooltip()
 				end)
@@ -7716,6 +8234,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				-- Set up the clickable action for the achievement header
 				achievementHeader:EnableMouse(true)
 
+				-- Opens the selected achievement or shows its tracking context actions.
 				achievementHeader:SetScript("OnMouseUp", function(self, button)
 					if button == "LeftButton" then
 						if RQE.API.Client.IsShiftKeyDown() then
