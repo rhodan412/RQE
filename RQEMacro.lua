@@ -76,6 +76,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		RQE.CheckCurrentMacroContents()
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		-- Releases the macro-content inspection guard after the short delay.
 		RQE.API.Client.C_Timer.After(0.2, function()
 			if RQE.isCheckingMacroContents then
 				RQE.isCheckingMacroContents = false
@@ -328,6 +329,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 							"/use " .. source.name,
 						}
 						RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
+						-- Updates the magic button visibility.
 						self.API.Client.C_Timer.After(0.35, function()
 							RQE.Buttons.UpdateMagicButtonVisibility()
 						end)
@@ -359,6 +361,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				macroLines[#macroLines + 1] = "/tm 3"
 			end
 			RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
+			-- Updates the magic button visibility.
 			self.API.Client.C_Timer.After(0.35, function()
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end)
@@ -372,6 +375,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				"/use " .. pickupItem.name,
 			}
 			RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
+			-- Updates the magic button visibility.
 			RQE.API.Client.C_Timer.After(0.35, function()
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end)
@@ -398,6 +402,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+		-- Updates the magic button visibility.
 		RQE.API.Client.C_Timer.After(0.35, function()
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
@@ -589,6 +594,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		self.pendingMacroOperations = {}
 		self.pendingMacroClears = {}
 
+		-- Orders pending macro operations by their original request sequence.
 		table.sort(pending, function(left, right)
 			return left.order < right.order
 		end)
@@ -604,6 +610,51 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 		return #pending > 0
 	end
+
+
+	-- Previous code (commented out 2026.10.31): replaced by existing ClearMacroContentByName/CreateMacroForCurrentStep calls in EventManager's handlePlayerRegenEnabled
+	-- -- Retail and Forever never replay the macro work queued during combat, so the
+	-- -- macro could keep a finished quest's step after combat ended. Macros are
+	-- -- protected and stay unchanged during combat; once combat ends, this discards
+	-- -- the stale queue and sets the macro from what the RQEFrame shows now: the
+	-- -- searched quest's preview macro, the supertracked quest's current step macro,
+	-- -- or nothing when the frame is empty or the step has no macro.
+	-- function RQEMacro:SyncMacroWithFrameAfterCombat()
+	-- 	if RQE.API.Client.InCombatLockdown() then return end
+	-- 	self.pendingMacroSets = {}
+	-- 	self.pendingMacroOperations = {}
+	-- 	self.pendingMacroClears = {}
+	--
+	-- 	-- A searched quest's preview owns the macro while it is displayed
+	-- 	local searchedQuestID = tonumber(RQE.searchedQuestID)
+	-- 	if RQE.CanNavigateSearchedQuestSteps and RQE:CanNavigateSearchedQuestSteps(searchedQuestID) then
+	-- 		self:CreateMacroForCurrentStep()
+	-- 		return
+	-- 	end
+	--
+	-- 	local displayedQuestID = tonumber(RQE.DisplayedQuestID)
+	-- 	if not displayedQuestID or displayedQuestID == 0 then
+	-- 		self:ClearMacroContentByName("RQE Macro")
+	-- 		return
+	-- 	end
+	--
+	-- 	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
+	-- 	if displayedQuestID == superTrackedQuestID then
+	-- 		local questData = RQE.getQuestData(superTrackedQuestID)
+	-- 		local stepIndex = tonumber(RQE.AddonSetStepIndex)
+	-- 		local stepData = questData and stepIndex and questData[stepIndex]
+	-- 		if stepData and (stepData.macro or stepData.macroArray) then
+	-- 			self:CreateMacroForCurrentStep()
+	-- 		else
+	-- 			self:ClearMacroContentByName("RQE Macro")
+	-- 		end
+	-- 	elseif displayedQuestID ~= searchedQuestID then
+	-- 		-- The frame still shows a quest that is neither supertracked nor searched,
+	-- 		-- such as one completed in combat. ShouldClearFrame clears the frame and
+	-- 		-- the macro together when that quest no longer belongs there.
+	-- 		RQE:ShouldClearFrame()
+	-- 	end
+	-- end
 
 
 	-------------------------------------------------------
@@ -632,6 +683,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 	-- Event frame for capturing macro updates
 	RQE.Buttons.EventFrame = CreateFrame("Frame")
 	RQE.Buttons.EventFrame:RegisterEvent("UPDATE_MACROS")
+	-- Updates the magic button icon.
 	RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
 		if event == "UPDATE_MACROS" then
 			RQE.Buttons.UpdateMagicButtonIcon()
@@ -808,6 +860,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 							GameTooltip:Show()
 						end
 					end)
+					-- Hides the tooltip when the pointer leaves this control.
 					MagicButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 					-- ✅ End here so we don't run the old logic afterward
