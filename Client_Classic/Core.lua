@@ -419,6 +419,8 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	local defaults = {
 		profile = {
 			autoClickWaypointButton = true,
+			autoAcceptQuestDetail = false,
+			autoCompleteNoRewardChoices = false,
 			autoQuestProgress = true,
 			autoQuestWatch = true,
 			autoTrackZoneQuests = false,
@@ -842,6 +844,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if RQE.db.profile.enableStepControls then
 			RQE.db.profile.enableStepControls = false
 
+			-- Starts the periodic checks.
 			C_Timer.After(0.45, function()
 				RQE:StartPeriodicChecks()
 			end)
@@ -911,6 +914,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			info.text = "Auto-Track Zone Quests"
 			info.keepShownOnClick = true  -- Keeps the dropdown open after clicking
 			info.isNotRadio = true
+			-- Enables or disables automatic tracking of the current zone's quests.
 			info.func = function()
 				-- RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
 				RQE:SetAutoTrackZoneQuestsEnabled(not RQE.db.profile.autoTrackZoneQuests)
@@ -942,6 +946,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			local campaigns = RQE.GetCampaignsFromQuestLog()
 			for campaignID, campaignName in pairs(campaigns) do
 				info.text = campaignName
+				-- Filters the specific campaign.
 				info.func = function() RQE.filterSpecificCampaign(campaignID) end
 				UIDropDownMenu_AddButton(info, level)
 			end
@@ -1240,6 +1245,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if self.ClassicVirtualQuestTrackerRefreshQueued then return end
 		self.ClassicVirtualQuestTrackerRefreshQueued = true
 
+		-- Updates the RQE quest frame.
 		C_Timer.After(0.2, function()
 			RQE.ClassicVirtualQuestTrackerRefreshQueued = false
 			if UpdateRQEQuestFrame then
@@ -1485,6 +1491,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		self.AutoQuestProgressVirtualWatches[questID] = true
 		self.AutoQuestProgressWatchTokens[questID] = token
 
+		-- Removes the classic virtual quest watch.
 		C_Timer.After(3, function()
 			if RQE.AutoQuestProgressWatchTokens and RQE.AutoQuestProgressWatchTokens[questID] == token then
 				RQE:RemoveClassicVirtualQuestWatch(questID)
@@ -1510,6 +1517,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		local token = (self.VirtualAutoWatchProgressEventTokens[questID] or 0) + 1
 		self.VirtualAutoWatchProgressEventTokens[questID] = token
 
+		-- Updates the RQE quest frame.
 		C_Timer.After(0.15, function()
 			if not RQE.VirtualAutoWatchProgressEventTokens
 				or RQE.VirtualAutoWatchProgressEventTokens[questID] ~= token then
@@ -1575,6 +1583,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if self.AutoQuestWatchObjectiveCheckQueued then return end
 		self.AutoQuestWatchObjectiveCheckQueued = true
 
+		-- Updates the RQE quest frame.
 		C_Timer.After(0.15, function()
 			RQE.AutoQuestWatchObjectiveCheckQueued = false
 			if RQE:AutoWatchQuestsWithChangedObjectives() then
@@ -1867,6 +1876,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				RQE.superY = posY
 			end
 
+			-- Saves the super track data.
 			C_Timer.After(1, function()
 				if RQE.superX == nil or RQE.superY == nil then
 					RQE.SaveSuperTrackData()
@@ -2047,6 +2057,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		self.PendingTrackerStateRestore = true
 		local functionName = "RQE:RestoreSuperTrackedQuestForCharacter()"
 
+		-- Sets the super tracked quest ID.
 		C_Timer.After(0.2, function()
 			local restoredSomething = false
 			local restoredQuestID = nil
@@ -2133,6 +2144,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			RQE.PendingTrackerStateRestore = false
 			if RQE.ResumeTrackerSync then RQE:ResumeTrackerSync() end
 
+			-- Updates the frame.
 			C_Timer.After(0.1, function()
 				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): restore ~~")
 				-- UpdateFrame()
@@ -2157,6 +2169,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					-- its entry restores the same RQE focus/waypoint flow as a player
 					-- selecting the quest manually.
 					if RQE.ClickQuestLogIndexButton then
+						-- Selects the matching quest-log row in the RQE helper.
 						C_Timer.After(0.1, function()
 							RQE.ClickQuestLogIndexButton(restoredQuestID)
 						end)
@@ -2174,6 +2187,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end)
 		end)
 
+		-- Initializes the separate focus waypoints.
 		C_Timer.After(0.35, function()
 			RQE.InitializeSeparateFocusWaypoints()
 		end)
@@ -2348,6 +2362,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			RQE.ToggleDebugLogFrame()
 
 
+			-- Shows the delete confirmation dialog.
 			C_Timer.After(2, function()
 				RQE:ShowDeleteConfirmationDialog()
 			end)
@@ -2368,6 +2383,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			RQE.ToggleDebugLogFrame()
 
 
+			-- Shows the RQE database contribution cleanup confirmation dialog.
 			C_Timer.After(2, function()
 				RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
 			end)
@@ -2585,6 +2601,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- One producer decides whether quest text or pickup metadata can improve.
 		-- Passing the accepted ID keeps delayed captures tied to their own quest.
 		local ok, err = pcall(function()
+			-- Checks the missing quest text data.
 			RQE:CapturePrintedDebugOutput(function()
 				RQE_Contribution:CheckMissingQuestTextData(questID)
 			end)
@@ -2600,6 +2617,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		--local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest() or RQE.isSuperTracking
 		if not isSuperTracking then return end
 
+		-- Prints the focused legacy quest's database coverage after the update settles.
 		C_Timer.After(0.15, function()
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				if RQEFrame and RQEFrame:IsShown() and RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -2643,9 +2661,11 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			text = "Are you sure you want to delete all contribution data? This action is irreversible.",
 			button1 = "Delete Data",
 			button2 = "Cancel",
+			-- Deletes the saved addon data after the user confirms the action.
 			OnAccept = function()
 				RQE:ExecuteDataDeletion()
 			end,
+			-- Clears the database-deletion flag when the confirmation is canceled.
 			OnCancel = function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Data deletion canceled.")
@@ -2670,9 +2690,11 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			text = "Remove contribution data only for quests that already exist in RQEDatabase.Vanilla?\n\nSandbox-only entries will be preserved. This action is irreversible.",
 			button1 = "Remove Entries",
 			button2 = "Cancel",
+			-- Runs the confirmed Contribution database cleanup.
 			OnAccept = function()
 				RQE:ExecuteRQEDatabaseContributionCleanup()
 			end,
+			-- Logs that the Contribution database cleanup confirmation was canceled.
 			OnCancel = function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("RQE Contribution database cleanup canceled.")
@@ -2694,6 +2716,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if RQE_Contribution and RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase then
 			RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase()
 
+			-- Shows the reload confirmation dialog.
 			C_Timer.After(0.2, function()
 				RQE:ShowReloadConfirmationDialog()
 			end)
@@ -2710,9 +2733,11 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			text = "Are you sure you want to reload the UI?",
 			button1 = "Reload",
 			button2 = "Cancel",
+			-- Reloads the game interface after the confirmed action.
 			OnAccept = function()
 				ReloadUI()
 			end,
+			-- Reports that the user declined to reload the interface.
 			OnCancel = function()
 				print("Not Reloading the UI")
 			end,
@@ -2732,6 +2757,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if RQE_Contribution and RQE_Contribution.DeleteAllContributionInfo then
 			RQE_Contribution.DeleteAllContributionInfo()
 			print("All contribution data has been deleted.")
+			-- Shows the reload confirmation dialog.
 			C_Timer.After(0.2, function()
 				RQE:ShowReloadConfirmationDialog()
 			end)
@@ -3882,6 +3908,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 		end
 
+		-- Watches and reports legacy quests whose database entries have no steps.
 		C_Timer.After(0.5, function()
 			for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
@@ -3911,6 +3938,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 		end
 
+		-- Watches and reports legacy quests with authored database steps.
 		C_Timer.After(0.5, function()
 			for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
@@ -3940,6 +3968,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 		end
 
+		-- Watches missing legacy quests and refreshes the search-restore control.
 		C_Timer.After(0.5, function()
 			-- Missing quests use RQE virtual watches instead of Blizzard's limited
 			-- Classic quest-watch list.
@@ -4055,6 +4084,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if RQE._lastSeparateClearReason == "StepIndex changed" or RQE._lastSeparateClearReason == "Quest completed" or RQE._lastSeparateClearReason == "Quest flagged complete" or RQE._lastSeparateClearReason == "QuestID changed" then
 			RQE._lastSeparateClearReason = nil
 
+			-- Updates the separate focus frame.
 			C_Timer.After(0.10, function()
 				if RQE.UpdateSeparateFocusFrame then
 					RQE:UpdateSeparateFocusFrame()
@@ -4226,6 +4256,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			]]
 			UpdateFrame(questID)
 
+			-- Clears the forced frame-refresh flag after the delayed update.
 			C_Timer.After(0.2, function()
 				RQE.UpdateTheFrameNoMatterWhat = false
 			end)
@@ -4647,6 +4678,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 	-- Function to initiate a delayed re-check and clear operation
 	function RQE:DelayedClearCheck()
+		-- Clears the separate focus frame.
 		C_Timer.After(3, function()
 			-- Attempt to directly extract questID from RQE.QuestIDText if available
 			local extractedQuestID
@@ -5043,6 +5075,9 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 	-- UpdateFrame function
 	function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		-- Every UpdateFrame call, including ones that return early below, also saves
+		-- this character's supertracked or searched quest.
+		RQE:SaveSuperTrackedQuestToCharacter()
 		if RQE.DontUpdateFrame then return end
 
 		-- Check if the player is supertracking anything and if not it will run the function to check if the frame should be cleared
@@ -5461,6 +5496,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 		-- If quest exists but has no steps defined, click the "W" button
 		local hasSteps = false
+		-- Activates the waypoint button for index.
 		C_Timer.After(1, function()
 			if InCombatLockdown() then
 				RQE.CheckNClickWButtonAfterCombat = true
@@ -5920,6 +5956,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						print("Supertracking closest quest:", closestQuestID)
 					end
 
+					-- Updates the step distance.
 					C_Timer.After(0.3, function()
 						if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 						if RQE.API.GetSuperTrackedQuestID() ~= closestQuestID then return end
@@ -5949,6 +5986,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						end
 					end)
 
+					-- Activates the current quest step's waypoint button when available.
 					C_Timer.After(0.4, function()
 						if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 						RQE.CheckAndClickWButton()
@@ -7068,11 +7106,13 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 								print("No location data available.")
 							end
 						end)
+						-- Shows this control's tooltip while the pointer is over it.
 						RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 							GameTooltip:SetText("Coordinates: Not Available")
 							GameTooltip:Show()
 						end)
+						-- Hides the tooltip when the pointer leaves this control.
 						RQE.UnknownQuestButton:SetScript("OnLeave", function()
 							GameTooltip:Hide()
 						end)
@@ -7097,6 +7137,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	local frame = CreateFrame("Frame")
 	frame:RegisterEvent("QUEST_TURNED_IN")
 
+	-- Populates the next quest in event series.
 	frame:SetScript("OnEvent", function(self, event, questID)
 		if event == "QUEST_TURNED_IN" then
 			-- Check and populate the next quest if event 324 is active
@@ -7571,8 +7612,10 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					end
 				end)
 
+				-- Hides the tooltip when the pointer leaves this control.
 				Simple:SetScript("OnHyperlinkLeave", function() GameTooltip:Hide() end)
 
+				-- Creates the waypoint.
 				Simple:SetScript("OnHyperlinkClick", function(_, link)
 					if not link:match("^coords:") then return end
 					local x, y, mapID, title =
@@ -7785,6 +7828,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	function RQE:ReleaseActiveCoordblockWaypoint()
 		if not self.ActiveCoordblock then return end
 		self.ActiveCoordblock = nil
+		-- Refreshes the active coordblock links.
 		C_Timer.After(0, function() self:RefreshActiveCoordblockLinks() end)
 	end
 
@@ -7843,6 +7887,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			for href, data in pairs(htmlFrame._rqeCoordblockLinks) do
 				local escapedHref = href:gsub("([^%w])", "%%%1")
 				local pattern = '(<a href="' .. escapedHref .. '">|cff40e0d0)%b[](|r</a>)'
+				-- Replaces the coordinate-block label while preserving surrounding markup.
 				html = html:gsub(pattern, function(before, after)
 					return before .. self:GetCoordblockDisplayLabel(data) .. after
 				end)
@@ -7883,6 +7928,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		displayText = displayText:gsub("{npc:(%d+):([^}]+)}", "|cff66ff66[%2]|r")
 		displayText = displayText:gsub("{object:([%a%d]+):([^}]+)}", "|cffffd700[%2]|r")
 
+		-- Formats coordinate notation as a colored, readable map-position label.
 		displayText = displayText:gsub("{coords:([^}]+)}", function(data)
 			local x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
 
@@ -7932,6 +7978,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		local baseParent = customParent or parentFrame:GetParent() or UIParent
 		local lineHeight = 14
 		if parentFrame.GetLineHeight then
+			-- Returns the line height.
 			local ok, lh = pcall(function() return parentFrame:GetLineHeight() end)
 			if ok and lh then lineHeight = lh end
 		elseif type(size) == "number" then
@@ -7976,6 +8023,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", x, -y)
 
 			if tagType == "item" then
+				-- Shows this control's tooltip while the pointer is over it.
 				hover:SetScript("OnEnter", function(self)
 					GameTooltip:Hide()
 					GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
@@ -7985,6 +8033,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					GameTooltip:Show()
 				end)
 			elseif tagType == "spell" then
+				-- Shows this control's tooltip while the pointer is over it.
 				hover:SetScript("OnEnter", function(self)
 					GameTooltip:Hide()
 					GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
@@ -7992,16 +8041,19 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					GameTooltip:Show()
 				end)
 			elseif tagType == "npc" then
+				-- Shows the NPC preview.
 				hover:SetScript("OnEnter", function()
 					if RQE.ShowNPCPreview then RQE.ShowNPCPreview(hoveredID, tagName, true) end
 				end)
 			elseif tagType == "object" then
+				-- Shows the object image preview.
 				hover:SetScript("OnEnter", function()
 					if RQE.ShowObjectImagePreview then RQE.ShowObjectImagePreview(hoveredID, tagName, nil, true) end
 				end)
 			end
 
 			if tagType == "item" or tagType == "spell" then
+				-- Hides the tooltip when the pointer leaves this control.
 				hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 			end
 			table.insert(parentFrame._rqeSegments, hover)
@@ -8125,9 +8177,11 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 			-- Expand coordinate markup and add ordinary text to the rich-text layout.
 			local function AddPlainText(plainText)
+				-- Formats the coords for layout.
 				plainText = plainText:gsub("{coords:([^}]+)}", function(data)
 					return FormatCoordsForLayout(data, false)
 				end)
+				-- Formats the coords for layout.
 				plainText = plainText:gsub("{coordblock:([^}]+)}", function(data)
 					return FormatCoordsForLayout(data, true)
 				end)
@@ -8193,6 +8247,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						preText = preText
 							:gsub("{item:%d+:([^}]+)}", "[%1]")
 							:gsub("{spell:%d+:([^}]+)}", "[%1]")
+							-- Formats coordinate notation as a plain-text map-position label.
 							:gsub("{coords:([^}]+)}", function(data)
 								local cx, cy, cm = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
 								if cx and cy and cm then
@@ -8200,6 +8255,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 								end
 								return data
 							end)
+							-- Returns the coordblock display label.
 							:gsub("{coordblock:([^}]+)}", function(data)
 								return RQE:GetCoordblockDisplayLabel(data)
 							end)
@@ -8240,16 +8296,19 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						hover:SetSize(tagWidth + 6, lineHeight)
 						hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
 
+						-- Shows this control's tooltip while the pointer is over it.
 						hover:SetScript("OnEnter", function()
 							GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
 							GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
 							GameTooltip:Show()
 						end)
 
+						-- Hides the tooltip when the pointer leaves this control.
 						hover:SetScript("OnLeave", function()
 							GameTooltip:Hide()
 						end)
 
+						-- Creates the waypoint.
 						hover:SetScript("OnMouseDown", function()
 							RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
 							RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
@@ -8280,6 +8339,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						preText = preText
 							:gsub("{item:%d+:([^}]+)}", "[%1]")
 							:gsub("{spell:%d+:([^}]+)}", "[%1]")
+							-- Returns the coordblock display label.
 							:gsub("{coordblock:([^}]+)}", function(data)
 								return RQE:GetCoordblockDisplayLabel(data)
 							end)
@@ -8321,12 +8381,14 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						hover:SetSize(tagWidth + 6, lineHeight)
 						hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
 
+						-- Shows this control's tooltip while the pointer is over it.
 						hover:SetScript("OnEnter", function()
 							GameTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 							GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
 							GameTooltip:Show()
 							RQE._coordblockTooltipOwner = hover
 							RQE:AnchorCoordblockTooltip(hover)
+							-- Anchors the coordblock tooltip.
 							hover:SetScript("OnUpdate", function(self)
 								if RQE._coordblockTooltipOwner ~= self or not GameTooltip:IsShown() then
 									self:SetScript("OnUpdate", nil)
@@ -8336,12 +8398,14 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 							end)
 						end)
 
+						-- Hides the tooltip when the pointer leaves this control.
 						hover:SetScript("OnLeave", function()
 							if RQE._coordblockTooltipOwner == hover then RQE._coordblockTooltipOwner = nil end
 							hover:SetScript("OnUpdate", nil)
 							GameTooltip:Hide()
 						end)
 
+						-- Selects the coordblock waypoint.
 						hover:SetScript("OnMouseDown", function()
 							RQE:SelectCoordblockWaypoint(coordData)
 						end)
@@ -8383,6 +8447,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		hover:SetSize(width or 120, lineHeight)
 		hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
 
+		-- Shows this control's tooltip while the pointer is over it.
 		hover:SetScript("OnEnter", function(self)
 			-- Force a fresh spell tooltip context
 			GameTooltip:Hide()
@@ -8394,6 +8459,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			GameTooltip:Show()
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		hover:SetScript("OnLeave", function(self)
 			if GameTooltip:IsOwned(self) then
 				GameTooltip:Hide()
@@ -8406,6 +8472,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 	-- Utility function for showing item tooltips on hover (for quest descriptions, etc.)
 	function RQE:CreateItemTooltip(frame, itemID)
+		-- Shows this control's tooltip while the pointer is over it.
 		frame:SetScript("OnEnter", function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")  -- follow the mouse
 			GameTooltip:SetItemByID(itemID)
@@ -8421,6 +8488,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			GameTooltip:Show()
 		end)
 
+		-- Hides the tooltip when the pointer leaves this control.
 		frame:SetScript("OnLeave", function(self)
 			GameTooltip:Hide()
 		end)
@@ -8444,6 +8512,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		local editBox = AceGUI:Create("EditBox")
 		editBox:SetLabel("Enter Quest ID, Title, Description or Objective:")
 		editBox:SetWidth(350)
+		-- Searches legacy quest IDs and database text for matching quest entries.
 		editBox:SetCallback("OnEnterPressed", function(widget, event, text)
 			local questID = tonumber(text)
 			local foundQuestIDs = {} -- Initialize the table here to store all found quest IDs
@@ -8508,6 +8577,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
 				local isQuestCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount(foundQuestID)
 
+				-- Prints a matching legacy quest's link and completion state.
 				C_Timer.After(0.2, function()
 					local questLink = GetQuestLink(foundQuestID)
 					if questLink then
@@ -8548,6 +8618,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		examineButton:SetText("Track")
 		examineButton:SetWidth(100)
 
+		-- Clears stale waypoint state and examines the entered legacy quest.
 		examineButton:SetCallback("OnClick", function()
 			local inputText = editBox:GetText()
 			local questID = tonumber(inputText)
@@ -8661,6 +8732,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				-- Track is pressed. Reapply virtual step 0 last so the pickup macro is
 				-- what the player sees immediately after using the Search Frame.
 				if not isQuestInLog and not isWorldQuest then
+					-- Sets the searched quest pickup macro.
 					C_Timer.After(0.15, function()
 						if RQE:CanNavigateSearchedQuestSteps(foundQuestID)
 							and tonumber(RQE.ManualPreviewStepIndex) == 0
@@ -8745,6 +8817,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	function RQE:StartCoordinateDisplayUpdates()
 		if coordinateDisplayTicker then return end
 
+		-- Updates the coordinates.
 		coordinateDisplayTicker = C_Timer.NewTicker(0.10, function()
 			if RQEFrame and RQEFrame:IsShown()
 				and RQE.db and RQE.db.profile and RQE.db.profile.showCoordinates then
@@ -8940,6 +9013,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- Restore the previously selected quest
 		C_QuestLog.SetSelectedQuest(oldSelectedQuest)
 
+		-- Checks the quest info exists.
 		C_Timer.After(1.5, function()
 			RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
 		end)
@@ -9619,6 +9693,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				end
 
 				RQEMacro:CreateMacroForCurrentStep()
+				-- Releases the macro-content inspection guard.
 				C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
@@ -9628,6 +9703,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 		RQE.SetInitialFromAccept = false
 
+		-- Restores the last waypoint selection, deferring again if combat has started.
 		C_Timer.After(1, function()
 			if InCombatLockdown() then
 				RQE.CheckNClickWButtonAfterCombat = true
@@ -9649,6 +9725,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 	-- Function to check and set the final step
 	function RQE.CheckAndSetFinalStep()
+		-- Checks the current macro contents.
 		C_Timer.After(1, function()
 			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -9709,6 +9786,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				return
 			end
 
+			-- Checks the current macro contents.
 			C_Timer.After(1.5, function()
 				if highestCompletedObjectiveIndex == 99 then
 					RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
@@ -9716,6 +9794,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					-- Tier Four Importance: RQE.CHECKANDSETFINALSTEP Function
 					RQE.CreateMacroForCheckAndSetFinalStep = true
 
+					-- Checks the current macro contents.
 					C_Timer.After(0.1, function()
 						RQE.isCheckingMacroContents = true
 						local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -9725,6 +9804,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						end
 
 						RQEMacro:CreateMacroForCurrentStep()
+						-- Releases the macro-content inspection guard.
 						C_Timer.After(0.2, function()
 							RQE.isCheckingMacroContents = false
 						end)
@@ -9864,9 +9944,19 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 		-- Fetch the macro data for the current step
 		local stepData = questData[stepIndex]
-		if not stepData or (not stepData.macro and not stepData.macroArray) then
+		-- Missing data must not erase a valid macro, but a known step without one must.
+		if not stepData then return end
+		if not stepData.macro and not stepData.macroArray then
+			-- Preserve the existing dungeon/raid behavior, including combat queues.
+			if isInInstance and (instanceType == "party" or instanceType == "raid") then return end
+			self:ClearMacroContentByName("RQE Macro")
+			RQE.Buttons.UpdateMagicButtonVisibility()
 			return
 		end
+		-- Previous code (commented out 2026.10.31): kept the previous macro on a known step without macro content
+		-- if not stepData or (not stepData.macro and not stepData.macroArray) then
+			-- return
+		-- end
 
 		-- ✅ Determine if we're using the new macroArray or legacy macro
 		local macroContent
@@ -9960,6 +10050,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		end
 	end
 
+	-- Returns the searched quest item pickup text.
 	function RQE:GetSearchedQuestItemPickupText(questID)
 		local item = self:GetSearchedQuestPickupItem(questID)
 		if not item then return nil end
@@ -9976,6 +10067,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		return "Use " .. name .. "."
 	end
 
+	-- Checks whether the searched quest has usable step navigation.
 	function RQE:CanNavigateSearchedQuestSteps(questID)
 		questID = tonumber(questID)
 		return questID
@@ -10082,6 +10174,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		self._scheduledPeriodicReason = reason
 		self._lastPeriodicQuestID = questID
 
+		-- Queues the periodic checks.
 		self._scheduledPeriodicCheck = C_Timer.NewTimer(delay, function()
 			self._scheduledPeriodicCheck = nil
 
@@ -10135,6 +10228,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			RQE:CheckAndRefreshSeparateFocusFrame()
 		end)
 
+		-- Checks the separate focus has text but RQE frame missing quest.
 		C_Timer.After(1.7, function()
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
@@ -10622,6 +10716,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						RQEMacro:CreateMacroForCurrentStep()
 					end
 
+					-- Releases the macro-content inspection guard.
 					C_Timer.After(0.20, function()
 						RQE.isCheckingMacroContents = false
 					end)
@@ -10658,6 +10753,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 		end
 
+		-- Checks the current macro contents.
 		C_Timer.After(0.15, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -10667,6 +10763,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()
+			-- Releases the macro-content inspection guard.
 			C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
@@ -10690,6 +10787,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 		-- Final cleanup
 		RQE.NewZoneChange = false
+		-- Updates the separate focus frame.
 		C_Timer.After(0.45, function()
 			RQE:UpdateSeparateFocusFrame()
 		end)
@@ -11798,6 +11896,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- Apply faction logic after ensuring state is consistent
 		C_Timer.After(0.7, function()
 			RQE:HandleFactionLogicAfterAdvance()
+			-- Handles the class faction logic after advance.
 			C_Timer.After(1, function()
 				RQE:HandleClassFactionLogicAfterAdvance()
 			end)
@@ -11861,6 +11960,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					RQEMacro:CreateMacroForCurrentStep()
 				end
 
+				-- Creates the unknown quest waypoint.
 				C_Timer.After(0.2, function()
 					if questID then
 						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
@@ -11920,6 +12020,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			-- Apply faction logic after ensuring state is consistent
 			C_Timer.After(0.7, function()
 				RQE:HandleFactionLogicAfterAdvance()
+				-- Handles the class faction logic after advance.
 				C_Timer.After(1, function()
 					RQE:HandleClassFactionLogicAfterAdvance()
 				end)
@@ -11971,6 +12072,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			-- Apply faction logic after ensuring state is consistent
 			C_Timer.After(0.7, function()
 				RQE:HandleFactionLogicAfterAdvance()
+				-- Handles the class faction logic after advance.
 				C_Timer.After(1, function()
 					RQE:HandleClassFactionLogicAfterAdvance()
 				end)
@@ -12458,6 +12560,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						state.settleTimer = nil
 					end
 
+					-- Restarts step checks after aura data settles if the same quest still has focus.
 					state.settleTimer = C_Timer.NewTimer(0.80, function()
 						state.settleTimer = nil
 
@@ -13657,6 +13760,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			print(string.format("CheckDBComplete: Quest %d is %sready for turn-in.", questID, isReady and "" or "NOT "))
 		end
 
+		-- Checks the current macro contents.
 		C_Timer.After(0.1, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -13666,6 +13770,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()
+			-- Releases the final-step macro creation and inspection guards after the delay.
 			C_Timer.After(3, function()
 				RQE.CreateMacroForCheckAndSetFinalStep = false
 				RQE.isCheckingMacroContents = false
@@ -14832,6 +14937,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				table.insert(zoneQuestMenuList, {
 					zoneID = zoneID,  -- Store zoneID for sorting
 					text = zoneID .. ": " .. zoneName,
+					-- Filters the by zone.
 					func = function() RQE.filterByZone(zoneID) end,
 				})
 			end
@@ -14850,6 +14956,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if #zoneQuestMenuList == 0 then
 			table.insert(zoneQuestMenuList, {
 				text = "No zone quests",
+				-- Reports that no zone quests are available for this filter.
 				func = function() print("No zone quests to filter.") end,
 				disabled = true
 			})
@@ -15051,6 +15158,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			table.insert(campaignMenuList, {
 				campaignID = campaignID,  -- Add campaignID key for sorting
 				text = campaignID .. ": " .. campaignName,
+				-- Filters the by campaign.
 				func = function() RQE.filterByCampaign(campaignID) end,
 			})
 		end
@@ -15069,6 +15177,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			-- If there are no campaigns, add a placeholder item
 			table.insert(campaignMenuList, {
 				text = "No active campaigns",
+				-- Reports that no active campaigns are available for this filter.
 				func = function() print("No active campaigns to filter.") end,
 				disabled = true
 			})
@@ -15199,6 +15308,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			-- Include the questLineID before the quest line name
 			table.insert(questLineMenuList, {
 				text = questLineID .. ": " .. questLineData.name,
+				-- Filters the by quest line.
 				func = function() RQE.filterByQuestLine(questLineID) end,
 			})
 		end
@@ -15214,6 +15324,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if #questLineMenuList == 0 then
 			table.insert(questLineMenuList, {
 				text = "No active quest lines to filter.",
+				-- Reports that no active quest lines are available for this filter.
 				func = function() print("No active quest lines to filter.") end,
 				disabled = true  -- Make it non-selectable
 			})
@@ -15275,6 +15386,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			RQE.PrintQuestDetails = 1 -- Initialize state if not set
 		end
 
+		-- Prints the questline details.
 		C_Timer.After(0.4, function()
 			local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
 			local questDetails = {}
@@ -15311,6 +15423,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						RQE.PrintQuestLineFailed = true
 					end
 
+					-- Prints the questline details.
 					C_Timer.After(0.7, function()
 						local questLink = GetQuestLink(questID)
 						if questLink then
@@ -15371,10 +15484,12 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	end
 
 	if type(ChatFrame_OnHyperlinkShow) == "function" then
+		-- Handles the RQE quest tooltip link.
 		hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chatFrame, link, text, button)
 			HandleRQEQuestTooltipLink(link)
 		end)
 	else
+		-- Handles the RQE quest tooltip link.
 		hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
 			HandleRQEQuestTooltipLink(link)
 		end)
@@ -15480,6 +15595,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			table.insert(questTypeMenuList, {
 				sortKey = sortKey,
 				text = (questTypeName == "Misc" and questTypeName) or (questType .. ": " .. questTypeName),
+				-- Filters the by quest type.
 				func = function() RQE.filterByQuestType(questType) end,
 			})
 		end
@@ -15497,6 +15613,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		if #questTypeMenuList == 0 then
 			table.insert(questTypeMenuList, {
 				text = "No quest types",
+				-- Reports that no quest types are available for this filter.
 				func = function() print("No quest types to filter.") end,
 				disabled = true
 			})
@@ -16153,11 +16270,13 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			if playSoundForCompletion then
 				PlaySound(6199) -- Sound for quest completion
 				soundCooldown = true
+				-- Allows the throttled sound to play again after its cooldown.
 				C_Timer.After(5, function() soundCooldown = false end)
 				--RQEMacro:CreateMacroForCurrentStep()
 			elseif playSoundForObjectives then
 				PlaySound(6192) -- Sound for individual objective completion
 				soundCooldown = true
+				-- Allows the throttled sound to play again after its cooldown.
 				C_Timer.After(5, function() soundCooldown = false end)
 				--RQEMacro:CreateMacroForCurrentStep()
 			end
@@ -16167,6 +16286,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 				if questID then
+					-- Starts the periodic checks.
 					C_Timer.After(0.65, function()
 
 						if RQE:DidObjectivesChange(questID) then
@@ -16174,6 +16294,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 								print("Objective Sound Played → objective change → StartPeriodicChecks()")
 							end
 
+							-- Starts the periodic checks.
 							C_Timer.After(0.35, function()
 								RQE:StartPeriodicChecks()
 							end)
@@ -16223,11 +16344,13 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			if playSoundForCompletion then
 				PlaySound(6199) -- Sound for quest completion
 				soundCooldown = true
+				-- Allows the throttled sound to play again after its cooldown.
 				C_Timer.After(5, function() soundCooldown = false end)
 				--RQEMacro:CreateMacroForCurrentStep()
 			elseif playSoundForObjectives then
 				PlaySound(6192) -- Sound for individual objective completion
 				soundCooldown = true
+				-- Allows the throttled sound to play again after its cooldown.
 				C_Timer.After(5, function() soundCooldown = false end)
 				--RQEMacro:CreateMacroForCurrentStep()
 			end
@@ -16237,6 +16360,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 				if questID then
+					-- Starts the periodic checks.
 					C_Timer.After(0.65, function()
 
 						if RQE:DidObjectivesChange(questID) then
@@ -16244,6 +16368,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 								print("Objective Sound Played → objective change → StartPeriodicChecks()")
 							end
 
+							-- Starts the periodic checks.
 							C_Timer.After(0.35, function()
 								RQE:StartPeriodicChecks()
 							end)
@@ -16257,6 +16382,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		end
 	end
 
+	-- Initializes the quest objective completion.
 	eventFrame:SetScript("OnEvent", function(self, event, ...)
 		if event == "PLAYER_LOGIN" then
 			InitializeQuestObjectiveCompletion()
@@ -16328,6 +16454,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			text = message,
 			button1 = "Reload UI",
 			button2 = "Cancel",
+			-- Reloads the game interface after the confirmed action.
 			OnAccept = function()
 				ReloadUI()
 			end,
@@ -16433,6 +16560,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			-- Determine questID based on various fallbacks
 			questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
+			-- Activates the quest button for the currently supertracked quest.
 			C_Timer.After(0.5, function()
 				RQE:ClickSuperTrackedQuestButton()
 				--RQE:CheckAndAdvanceStep(questID)
@@ -16454,12 +16582,14 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			-- Tier Four Importance: RQE.CheckAndBuildMacroIfNeeded function
 			RQE.CreateMacroForCheckAndBuildMacroIfNeed = true
 			RQEMacro:CreateMacroForCurrentStep()
+			-- Releases the macro-build guard after the deferred operation.
 			C_Timer.After(3, function()
 				RQE.CreateMacroForCheckAndBuildMacroIfNeed = false
 			end)
 		end
 
 		if RQE.shouldCheckFinalStep then
+			-- Rechecks quest completion and selects the final step when appropriate.
 			C_Timer.After(1, function()
 				RQE.CheckAndSetFinalStep()
 			end)
@@ -16786,6 +16916,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 	-- Function to obtain the index of a given itemID and pass that onto a function used for purchasing that item
 	function RQE:BuyItemByItemID(itemID, quantity)
+		-- Finds the requested legacy merchant item and prepares its purchase flow.
 		C_Timer.After(1.2, function()
 			local itemFound = false
 
@@ -16845,6 +16976,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			text = string.format("Do you want to buy %d of %s for %s?", quantity, itemDisplay, priceString),
 			button1 = "Yes",
 			button2 = "No",
+			-- Purchases the confirmed legacy item quantity in full and partial stacks.
 			OnAccept = function()
 				if quantity > maxStack then
 					local fullStacks = math.floor(quantity / maxStack)
@@ -16859,6 +16991,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					BuyMerchantItem(index, quantity)
 				end
 			end,
+			-- Adds an item-link hover region to the purchase confirmation text.
 			OnShow = function(self)
 				if itemLink and self.text then
 					-- Create a small clickable region just over the text, not the entire popup
@@ -16872,11 +17005,13 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					-- Do NOT intercept mouse clicks
 					itemFrame:EnableMouse(false)
 
+					-- Shows this control's tooltip while the pointer is over it.
 					itemFrame:SetScript("OnEnter", function()
 						GameTooltip:SetOwner(self, "ANCHOR_TOP")
 						GameTooltip:SetHyperlink(itemLink)
 						GameTooltip:Show()
 					end)
+					-- Hides the tooltip when the pointer leaves this control.
 					itemFrame:SetScript("OnLeave", function()
 						GameTooltip:Hide()
 					end)
@@ -17235,14 +17370,17 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, itemName, GetCoinTextureString(totalCost)),
 				button1 = "Yes",
 				button2 = "No",
+				-- Starts the commodities purchase.
 				OnAccept = function()
 					if isCommodity then
 						C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
+						-- Confirms the pending commodity purchase for the requested item quantity.
 						C_Timer.After(0.5, function()
 							C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
 						end)
 					else
 						C_AuctionHouse.StartItemPurchase(result.auctionID)
+						-- Confirms the pending auction purchase for the selected item.
 						C_Timer.After(0.5, function()
 							C_AuctionHouse.ConfirmItemPurchase(result.auctionID)
 						end)
@@ -17280,6 +17418,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		end
 
 		resultFrame:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
+		-- Selects the lowest-buyout result after the legacy auction search completes.
 		resultFrame:SetScript("OnEvent", function()
 			if completed then
 				return
@@ -17310,6 +17449,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				text = string.format("Confirm your buyout of %d x [%s] for %s.", lowestCount, itemName, GetCoinTextureString(lowestBuyout)),
 				button1 = "Yes",
 				button2 = "No",
+				-- Submits the selected auction bid or buyout amount.
 				OnAccept = function()
 					PlaceAuctionBid("list", lowestIndex, lowestBuyout)
 				end,
@@ -17325,6 +17465,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- requested item rather than every auction containing part of its name.
 		QueryAuctionItems(itemName, nil, nil, 0, false, nil, false, true)
 
+		-- Stops the pending legacy auction search and reports its timeout.
 		C_Timer.After(5, function()
 			if not completed then
 				cleanup()
@@ -17392,6 +17533,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- Sending the search query
 		C_AuctionHouse.SendSearchQuery(itemKey, searchQuery.sorts, false)
 
+		-- Reads loaded commodity auction results on a compatible legacy client.
 		C_Timer.After(1, function()
 			if C_AuctionHouse.HasFullCommoditySearchResults(itemID) then
 				local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
@@ -17433,6 +17575,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- Sending the search query
 		C_AuctionHouse.SendSearchQuery(itemKey, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false}, false)
 
+		-- Calculates the legacy commodity purchase cost and prepares confirmation.
 		C_Timer.After(1, function()
 			local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
 			if numResults > 0 then
@@ -17464,8 +17607,10 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
 						button1 = "Yes",
 						button2 = "No",
+						-- Starts the commodities purchase.
 						OnAccept = function()
 							C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
+							-- Confirms the pending commodity purchase for the requested item quantity.
 							C_Timer.After(1.5, function()  -- Allow for server response time
 								C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
 							end)
@@ -17474,17 +17619,20 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						whileDead = true,
 						hideOnEscape = true,
 						preferredIndex = 3,  -- Avoid taint from UIParent
+					-- Formats the purchase confirmation and attaches an item tooltip.
 					OnShow = function(self)
 						if self.text then
 							self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
 						end
 						local itemFrame = CreateFrame("Frame", nil, self)
 						itemFrame:SetAllPoints(self.text or self)  -- fallback to whole popup if self.text is nil
+						-- Shows this control's tooltip while the pointer is over it.
 						itemFrame:SetScript("OnEnter", function()
 							GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
 							GameTooltip:SetHyperlink(itemLink)
 							GameTooltip:Show()
 						end)
+						-- Hides the tooltip when the pointer leaves this control.
 						itemFrame:SetScript("OnLeave", function()
 							GameTooltip:Hide()
 						end)
@@ -17620,7 +17768,9 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			-- Temporarily remove the quest from the watch list
 			-- print("~~~ Remove Quest Watch: 9462 ~~~")
 			C_QuestLog.RemoveQuestWatch(blacklistedQuestID)
-			RQE.Buttons.ClearButtonPressed()
+			-- Complete the clear before selecting a replacement; delayed clear-button
+			-- retries would otherwise remove the newly selected quest and its macro.
+			RQE.Buttons.ClearButtonPressed(true)
 
 			-- Set the supertracked quest to the next closest non-blacklisted quest
 			-- print("~~~ SetSuperTrack: 9332~~~")
@@ -18490,6 +18640,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 		local x1, y1 = startPos:GetXY()
 
+		-- Samples the player's later position to measure movement during the interval.
 		C_Timer.After(sampleTime, function()
 			local newPos = C_Map.GetPlayerMapPosition(mapID, "player")
 			if not newPos then
@@ -18525,6 +18676,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			text = ("Set a TomTom waypoint to the closest flight master?\n\nNearest: %s"):format(nearestName),
 			button1 = "Yes",
 			button2 = "No",
+			-- Sets the tom tom waypoint to closest flight master.
 			OnAccept = function()
 				RQE:SetTomTomWaypointToClosestFlightMaster()
 				RQE.NearestFlightMasterSet = true
@@ -19206,6 +19358,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			hideOnEscape = true,
 			preferredIndex = 3,
 
+			-- Sets the focus.
 			OnShow = function(self)
 				local editBox = self.editBox or self:GetEditBox()
 				if editBox then
@@ -19223,6 +19376,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				end
 			end,
 
+			-- Prints the coords for quest step.
 			OnAccept = function(self)
 				local editBox = self.editBox or self:GetEditBox()
 				local text = editBox and editBox:GetText() or ""
@@ -19268,6 +19422,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			hideOnEscape = true,
 			preferredIndex = 3,
 
+			-- Sets the focus.
 			OnShow = function(self)
 				local editBox = self.editBox or self:GetEditBox()
 				if editBox then
@@ -19281,6 +19436,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				end
 			end,
 
+			-- Prints the coords for quest step.
 			OnAccept = function(self)
 				local editBox = self.editBox or self:GetEditBox()
 				local stepIndex = tonumber(editBox and editBox:GetText())
