@@ -2,6 +2,7 @@
 -- Keys select images; filename labels supply titles, not hyperlink text.
 RQE = RQE or {}
 RQE.ObjectPreviewCatalog = {
+	["161557"] = { file = "161557 - Milly's Harvest.tga", name = "Milly's Harvest" },
 	["182265"] = { file = "182265 - Bleeding Hollow Supply Crate.tga", name = "Bleeding Hollow Supply Crate" },
 	["182541"] = { file = "182541 - Olemba Cone.tga", name = "Olemba Cone" },
 	["184726"] = { file = "184726 - Thunderlord Clan Drum.tga", name = "Thunderlord Clan Drum" },
@@ -37,6 +38,7 @@ RQE.ObjectPreviewCatalog = {
 	["242522"] = { file = "242522 - Silas' Secret Stash.tga", name = "Silas' Secret Stash" },
 	["456747"] = { file = "456747 - Gig Sheets.tga", name = "Gig Sheets" },
 	["467447"] = { file = "467447 - G.E.T.A. Needs You.tga", name = "G.E.T.A. Needs You" },
+	["83763"] = { file = "83763 - Stolen Books.tga", name = "Stolen Books" },
 	["bm001"] = { file = "bm001 - Marmot Den.tga", name = "Marmot Den" },
 	["bm002"] = { file = "bm002 - Altar of Goc.tga", name = "Altar of Goc" },
 	["bt001"] = { file = "bt001 - Portal to Naxxanar.tga", name = "Portal to Naxxanar" },
