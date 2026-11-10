@@ -984,6 +984,10 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		menu.rootAtCursor = nil
 		BuildMenu(menu, {
 			{ text = "Contribution", kind = "heading" },
+			-- Copies a database NPC table, keeping placeholders when target details are unavailable.
+			{ text = "Copy target NPC table", action = function()
+				self:ShowTargetNPCTableCopy()
+			end },
 			-- Shows the target NPC copy.
 			{ text = "Copy target NPC reference", action = function()
 				self:ShowTargetNPCCopy()
@@ -1032,9 +1036,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			{ text = "Copy player locations", action = function()
 				RQE.DebugPrintPlayerContinentPosition(nil, "locations")
 			end },
+			-- Combines the displayed quest's saved location with the player's continent position.
+			{ text = "Copy player locations from existing", action = function()
+				self:ShowPlayerCoordinatesCopy("locations", true)
+			end },
 			-- Prints the player's continent coordinates for diagnostics.
 			{ text = "Copy player coordinate hotspots", action = function()
 				RQE.DebugPrintPlayerContinentPosition(nil, "coordinateHotspots")
+			end },
+			-- Combines the displayed step's saved coordinates with the player's continent position.
+			{ text = "Copy player coordinate hotspots for existing entry", action = function()
+				self:ShowPlayerCoordinatesCopy("coordinateHotspots", true)
 			end },
 			-- Shows the player zone copy.
 			{ text = "Copy subzone and zone", action = function()
@@ -1276,6 +1288,13 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	-- #7b. Copyable Reference Dialog
 	-------------------------------------------------------
 
+	-- Keeps source text intact and escapes display pipes so copying preserves literal WoW formatting codes.
+	local function SetReferenceCopyValue(frame, value)
+		frame.copyValue = value
+		frame.copyDisplayValue = value:gsub("|", "||")
+		frame.editBox:SetText(frame.copyDisplayValue)
+	end
+
 	-- Creates or updates the movable copy dialog and selects the supplied text.
 	function RQE:ShowCopyableReferenceText(header, title, value, options)
 		if type(header) ~= "string" or header == ""
@@ -1320,8 +1339,8 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.editBox:SetScript("OnEnterPressed", function() frame:Hide() end)
 			-- Queues the reference selection.
 			frame.editBox:SetScript("OnTextChanged", function(box, userInput)
-				if userInput and box:GetText() ~= frame.copyValue then
-					box:SetText(frame.copyValue)
+				if userInput and box:GetText() ~= frame.copyDisplayValue then
+					box:SetText(frame.copyDisplayValue)
 					QueueReferenceSelection(frame)
 				end
 			end)
@@ -1372,6 +1391,12 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.macroQuantityInput:SetPoint("LEFT", frame.macroQuantityLabel, "RIGHT", 8, 0)
 			frame.macroQuantityInput:SetAutoFocus(false)
 			frame.macroQuantityInput:SetMaxLetters(12)
+			-- Updates a manual description count while preserving focus in the quantity input.
+			frame.macroQuantityInput:SetScript("OnTextChanged", function(_, userInput)
+				if userInput and frame.descriptionState then
+					RQE:UpdateContributionDescriptionQuantity(frame, true)
+				end
+			end)
 			frame.macroQuantityButton = CreateFrame("Button", nil, frame.macroQuantityRow, "UIPanelButtonTemplate")
 			frame.macroQuantityButton:SetSize(150, 24)
 			frame.macroQuantityButton:SetPoint("LEFT", frame.macroQuantityInput, "RIGHT", 14, 0)
@@ -1390,6 +1415,20 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			end)
 			-- Releases keyboard focus when Escape is pressed.
 			frame.macroQuantityInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
+			frame.descriptionQuantityModeRow = CreateFrame("Frame", nil, frame.macroControls)
+			frame.descriptionQuantityModeRow:SetHeight(26)
+			frame.descriptionQuantityMode = CreateFrame("CheckButton", nil,
+				frame.descriptionQuantityModeRow, "UICheckButtonTemplate")
+			frame.descriptionQuantityMode:SetSize(24, 24)
+			frame.descriptionQuantityMode:SetPoint("LEFT", frame.descriptionQuantityModeRow, "LEFT", 0, 0)
+			frame.descriptionQuantityModeLabel = frame.descriptionQuantityModeRow:CreateFontString(nil,
+				"OVERLAY", "GameFontHighlightSmall")
+			frame.descriptionQuantityModeLabel:SetPoint("LEFT", frame.descriptionQuantityMode, "RIGHT", 4, 0)
+			frame.descriptionQuantityModeLabel:SetText("Use objective remaining")
+			-- Switches between the literal remaining-objective token and a manual description count.
+			frame.descriptionQuantityMode:SetScript("OnClick", function()
+				RQE:UpdateContributionDescriptionQuantityMode(frame)
+			end)
 			frame.macroObjectRow = CreateFrame("Frame", nil, frame.macroControls)
 			frame.macroObjectRow:SetHeight(26)
 			frame.macroObjectLabel = frame.macroObjectRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1532,6 +1571,12 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		frame.macroControls:SetShown(hasID or hasQuantity or hasObject or hasGossip or hasNPCButton or false)
 		frame.macroIDRow:SetShown(hasID or false)
 		frame.macroQuantityRow:SetShown(hasQuantity or false)
+		frame.descriptionQuantityModeRow:SetShown(descriptionState and hasQuantity or false)
+		local useObjectiveRemaining = descriptionState and hasQuantity and descriptionState.useObjectiveRemaining or false
+		frame.descriptionQuantityMode:SetChecked(useObjectiveRemaining)
+		frame.macroQuantityInput:SetEnabled(not useObjectiveRemaining)
+		frame.macroQuantityButton:SetEnabled(not useObjectiveRemaining)
+		frame.macroQuantityRow:SetAlpha(useObjectiveRemaining and 0.5 or 1)
 		frame.macroObjectRow:SetShown(hasObject or false)
 		frame.macroGossipRow:SetShown(hasGossip or false)
 		frame.macroNPCRow:SetShown(hasNPCButton or false)
@@ -1548,6 +1593,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				rowTop = rowTop - 32
 			end
 			positionRow(frame.macroIDRow, hasID)
+			positionRow(frame.descriptionQuantityModeRow, descriptionState and hasQuantity)
 			positionRow(frame.macroQuantityRow, hasQuantity)
 			positionRow(frame.macroObjectRow, hasObject)
 			positionRow(frame.macroGossipRow, hasGossip)
@@ -1576,8 +1622,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.hint:SetPoint("TOPRIGHT", frame.editBox, "BOTTOMRIGHT", 0, -6)
 		end
 		frame:SetHeight((multiline and 252 or 106) + frame.questTitle:GetStringHeight() + (controlsHeight > 0 and controlsHeight + 10 or 0))
-		frame.copyValue = value
-		frame.editBox:SetText(value)
+		SetReferenceCopyValue(frame, value)
 		frame:Show()
 		SelectReferenceText(frame)
 		QueueReferenceSelection(frame)
@@ -1592,20 +1637,24 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			or ("Quest " .. questID), url)
 	end
 
-	-- Shares one validated Creature/Vehicle target between both authoring templates.
-	local function TargetNPC()
+	-- Reads a Creature/Vehicle target, optionally retaining its name when the NPC ID is unavailable.
+	local function TargetNPC(allowUnknownID)
 		local name = ClientCall("UnitName", "target")
 		local guid = ClientCall("UnitGUID", "target")
-		if (issecretvalue and (issecretvalue(name) or issecretvalue(guid)))
-			or type(name) ~= "string" or name == "" or type(guid) ~= "string" then
+		if (issecretvalue and issecretvalue(name)) or type(name) ~= "string" or name == "" then
 			return
 		end
-		local unitType, idText = guid:match("^([^-]+)%-[^-]*%-[^-]*%-[^-]*%-[^-]*%-(%d+)")
-		local npcID = tonumber(idText)
-		if (unitType ~= "Creature" and unitType ~= "Vehicle") or not npcID or npcID <= 0 then
-			return
+		if issecretvalue and issecretvalue(guid) then guid = nil end
+		if type(guid) == "string" then
+			local unitType = guid:match("^([^-]+)")
+			if unitType ~= "Creature" and unitType ~= "Vehicle" then return end
+			local npcID = tonumber(guid:match("^[^-]+%-[^-]*%-[^-]*%-[^-]*%-[^-]*%-(%d+)"))
+			if npcID and npcID > 0 then return name, npcID end
 		end
-		return name, npcID
+		if allowUnknownID then
+			local isPlayer = ClientCall("UnitIsPlayer", "target")
+			if not (issecretvalue and issecretvalue(isPlayer)) and not isPlayer then return name end
+		end
 	end
 
 	-- Escapes both the NPC name and the outer database macro string without losing quotes.
@@ -1622,6 +1671,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		local escapedName = EscapeLuaString(name)
 		self:ShowCopyableReferenceText("Target NPC reference", name,
 			string.format("{npc:%d:%s}", npcID, escapedName))
+	end
+
+	-- Opens a paste-ready NPC table with an object template or unknown-ID placeholder when needed.
+	function RQE:ShowTargetNPCTableCopy()
+		if not ContributionLoaded() then return end
+		local name, npcID = TargetNPC(true)
+		local field = name and "npc" or "object"
+		local id = npcID and string.format("%d", npcID) or '"x99"'
+		local value = '\t\t\tnpcs = {\n\t\t\t\t{ ' .. field .. ' = "' .. EscapeLuaString(name or "")
+			.. '", id = ' .. id .. ' },\n\t\t\t},'
+		return self:ShowCopyableReferenceText("Target NPC table", name or "Object template", value)
 	end
 
 	-- Ignores icon-only placeholders when deciding whether the macro needs an ID field.
@@ -1708,8 +1768,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	function RQE:RefreshContributionMacroCopy(frame)
 		local state = frame and frame.macroState
 		if not state or not frame:IsShown() then return end
-		frame.copyValue = RenderContributionMacro(state)
-		frame.editBox:SetText(frame.copyValue)
+		SetReferenceCopyValue(frame, RenderContributionMacro(state))
 		SelectReferenceText(frame)
 		QueueReferenceSelection(frame)
 	end
@@ -1867,30 +1926,105 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		})
 	end
 
-	-- Formats the player's current map and usable continent positions as database-ready Lua.
-	function RQE:ShowPlayerCoordinatesCopy(mode)
+	-- Returns a readable finite number for coordinate formatting without inspecting secret values.
+	local function CoordinateCopyNumber(value)
+		if issecretvalue and issecretvalue(value) then return end
+		local number = tonumber(value)
+		if number and number == number and number ~= math.huge and number ~= -math.huge then return number end
+	end
+
+	-- Resolves the displayed quest and its selected DB step, including searches and virtual supertracking.
+	local function CoordinateCopyQuest()
+		local questID = CoordinateCopyNumber(RQE.searchedQuestID)
+		if not questID or questID <= 0 then questID = CoordinateCopyNumber(RQE.DisplayedQuestID) end
+		if not questID or questID <= 0 then questID = CoordinateCopyNumber(RQE.API.GetSuperTrackedQuestID()) end
+		if not questID or questID <= 0 then return end
+		local data = RQE.getQuestData and RQE.getQuestData(questID)
+		if type(data) ~= "table" then return questID end
+		local maxStep = 0
+		for index, step in pairs(data) do
+			if type(index) == "number" and index > maxStep and index % 1 == 0 and type(step) == "table" then
+				maxStep = index
+			end
+		end
+		local stepIndex
+		if RQE.ManualStepPreview and tonumber(RQE.ManualPreviewQuestID) == questID then
+			stepIndex = CoordinateCopyNumber(RQE.ManualPreviewStepIndex)
+		elseif tonumber(RQE.CurrentDisplayedQuestID) == questID then
+			stepIndex = CoordinateCopyNumber(RQE.CurrentDisplayedStepIndex)
+		end
+		stepIndex = stepIndex or CoordinateCopyNumber(RQE.AddonSetStepIndex) or 1
+		if stepIndex > 0 and maxStep > 0 then stepIndex = math.min(stepIndex, maxStep) end
+		return questID, data, stepIndex, maxStep > 0
+	end
+
+	-- Copies player positions or a saved quest/step point paired with the player's current continent position.
+	function RQE:ShowPlayerCoordinatesCopy(mode, fromExisting)
 		if not ContributionLoaded() then return end
 		if mode ~= "locations" and mode ~= "coordinateHotspots" then return end
 		local header = mode == "locations" and "Player locations" or "Player coordinate hotspots"
-		local mapID, x, y = self:GetCurrentPlayerMapPosition()
-		if not mapID or not x or not y then
-			return self:ShowCopyableReferenceText(header, "Current position", "Unable to determine current map position.")
+		local title = "Current position"
+		local sourceMapID, sourceX, sourceY, requireContinent
+		if fromExisting then
+			header = header .. (mode == "locations" and " from existing" or " for existing entry")
+			-- A failed conversion must not leave a previous copy result looking like the new output.
+			if self.QuestReferenceLinkFrame then self.QuestReferenceLinkFrame:Hide() end
+			local questID, data, stepIndex, hasSteps = CoordinateCopyQuest()
+			local source
+			if mode == "locations" then
+				source = data and data.location
+				requireContinent = true
+			elseif hasSteps then
+				local step = data[stepIndex]
+				source = type(step) == "table" and step.coordinates
+				requireContinent = true
+			end
+			if requireContinent then
+				if type(source) == "table" then
+					sourceMapID = CoordinateCopyNumber(source.mapID)
+					sourceX, sourceY = CoordinateCopyNumber(source.x), CoordinateCopyNumber(source.y)
+				end
+				if not sourceMapID or sourceMapID <= 0 or sourceMapID % 1 ~= 0
+					or not sourceX or not sourceY or sourceX < 0 or sourceX > 100 or sourceY < 0 or sourceY > 100 then
+					print(mode == "locations" and "RQE: The displayed quest has no valid single location entry to copy."
+						or "RQE: The displayed quest step has no valid single coordinates entry to copy.")
+					return
+				end
+				title = (data.title or ("Quest " .. questID))
+					.. (mode == "coordinateHotspots" and (" - Step " .. stepIndex) or "")
+			end
 		end
 
-		local continentID, map = nil, mapID
-		while map do
+		local mapID, x, y = self:GetCurrentPlayerMapPosition()
+		if fromExisting and not mapID then mapID = ClientCall("C_Map.GetBestMapForUnit", "player") end
+		mapID, x, y = CoordinateCopyNumber(mapID), CoordinateCopyNumber(x), CoordinateCopyNumber(y)
+		local continentID, map, seen = nil, mapID, {}
+		while map and map > 0 and not seen[map] do
+			seen[map] = true
 			local info = ClientCall("C_Map.GetMapInfo", map)
 			if not info then break end
 			if info.mapType == 2 then
-				continentID = info.mapID
+				continentID = CoordinateCopyNumber(info.mapID) or map
 				break
 			end
-			map = info.parentMapID
+			map = CoordinateCopyNumber(info.parentMapID)
 		end
 		local cx, cy
-		if continentID and continentID ~= mapID then
+		if continentID and (fromExisting or continentID ~= mapID) then
 			local continentPosition = ClientCall("C_Map.GetPlayerMapPosition", continentID, "player")
 			if continentPosition then cx, cy = continentPosition:GetXY() end
+			cx, cy = CoordinateCopyNumber(cx), CoordinateCopyNumber(cy)
+		end
+		if requireContinent and (not cx or not cy) then
+			print("RQE: continentID is n/a for current player position.")
+			return
+		end
+		if sourceMapID then
+			mapID, x, y = sourceMapID, sourceX / 100, sourceY / 100
+		end
+		if not mapID or not x or not y then
+			if fromExisting then print("RQE: Unable to determine current map position."); return end
+			return self:ShowCopyableReferenceText(header, title, "Unable to determine current map position.")
 		end
 
 		local prefix = mode == "locations" and "\t\t\t" or "\t\t\t\t"
@@ -1914,7 +2048,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		else
 			value = prefix .. string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID)
 		end
-		return self:ShowCopyableReferenceText(header, "Current position", value)
+		return self:ShowCopyableReferenceText(header, title, value)
 	end
 
 	-- Resolves the same minimap subzone and map zone for both copy actions.
@@ -1957,6 +2091,13 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	-- Rebuilds the description from its template so each field can be updated separately.
 	local function RenderContributionDescription(state)
 		local description = state.text
+		if state.hasQuantity then
+			local quantity = state.useObjectiveRemaining and "{objectiveRemaining}" or tostring(state.quantity or "##")
+			-- Replaces the template count before inserting names or other user-supplied text.
+			description = description:gsub(state.quantityPlaceholder, function()
+				return "|cFFffcc33" .. quantity .. "|r"
+			end)
+		end
 		if state.npcPlaceholder then
 			local fallback = state.npcPlaceholder == "NPC" and "NPC" or "NPCNAME"
 			local npcReference = state.npcReference or "{npc:NPCID:" .. fallback .. "}"
@@ -1983,15 +2124,6 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				return "{spell:" .. (state.spellID or "SPELLID") .. ":" .. (state.spellName or "SPELL") .. "}"
 			end)
 		end
-		if state.quantity then
-			description = description:gsub("##", tostring(state.quantity))
-			if state.fixedCount then
-				-- Substitutes the chosen quantity while retaining its color formatting.
-				description = description:gsub("|cFFffcc33" .. state.fixedCount .. "|r", function()
-					return "|cFFffcc33" .. state.quantity .. "|r"
-				end, 1)
-			end
-		end
 		if state.objectValue and state.objectPlaceholder then
 			-- Returns the object value.
 			description = description:gsub(state.objectPlaceholder, function() return state.objectValue end)
@@ -2000,13 +2132,14 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	end
 
 	-- Refreshes the contribution description copy.
-	function RQE:RefreshContributionDescriptionCopy(frame)
+	function RQE:RefreshContributionDescriptionCopy(frame, keepQuantityFocus)
 		local state = frame and frame.descriptionState
 		if not state or not frame:IsShown() then return end
-		frame.copyValue = RenderContributionDescription(state)
-		frame.editBox:SetText(frame.copyValue)
-		SelectReferenceText(frame)
-		QueueReferenceSelection(frame)
+		SetReferenceCopyValue(frame, RenderContributionDescription(state))
+		if not keepQuantityFocus then
+			SelectReferenceText(frame)
+			QueueReferenceSelection(frame)
+		end
 	end
 
 	-- Updates the contribution description NPC.
@@ -2073,11 +2206,32 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		end
 	end
 
-	-- Updates the contribution description quantity.
-	function RQE:UpdateContributionDescriptionQuantity(frame)
+	-- Resets the description count and enables manual entry when the remaining-objective option is unchecked.
+	function RQE:UpdateContributionDescriptionQuantityMode(frame)
 		local state = frame and frame.descriptionState
 		if not state or not state.hasQuantity then return end
-		local digits = (frame.macroQuantityInput:GetText() or ""):match("^%s*(%d+)%s*$")
+		state.useObjectiveRemaining = frame.descriptionQuantityMode:GetChecked() == true
+		state.quantity = nil
+		frame.macroQuantityInput:SetText("")
+		frame.macroQuantityInput:SetEnabled(not state.useObjectiveRemaining)
+		frame.macroQuantityButton:SetEnabled(not state.useObjectiveRemaining)
+		frame.macroQuantityRow:SetAlpha(state.useObjectiveRemaining and 0.5 or 1)
+		frame.macroStatus:SetText(state.useObjectiveRemaining and "Using the literal {objectiveRemaining} token."
+			or "Enter a positive whole-number quantity, or keep ## as a placeholder.")
+		self:RefreshContributionDescriptionCopy(frame)
+	end
+
+	-- Updates the manual description count without interrupting typing when requested.
+	function RQE:UpdateContributionDescriptionQuantity(frame, keepQuantityFocus)
+		local state = frame and frame.descriptionState
+		if not state or not state.hasQuantity or state.useObjectiveRemaining then return end
+		local text = frame.macroQuantityInput:GetText() or ""
+		if text:match("^%s*$") then
+			state.quantity = nil
+			frame.macroStatus:SetText("Keeping ## as the quantity placeholder.")
+			return self:RefreshContributionDescriptionCopy(frame, keepQuantityFocus)
+		end
+		local digits = text:match("^%s*(%d+)%s*$")
 		local quantity = digits and tonumber(digits)
 		if not quantity or quantity < 1 then
 			frame.macroStatus:SetText("Enter a positive whole-number quantity.")
@@ -2085,7 +2239,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		end
 		state.quantity = quantity
 		frame.macroStatus:SetText("Updated quantity to " .. quantity .. ".")
-		self:RefreshContributionDescriptionCopy(frame)
+		self:RefreshContributionDescriptionCopy(frame, keepQuantityFocus)
 	end
 
 	-- Updates the contribution description object.
@@ -2112,7 +2266,9 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		local hasNPC = npcPlaceholder ~= nil
 		local objectPlaceholder = template.text:find("OBJECT/NPC", 1, true) and "OBJECT/NPC"
 			or template.text:find("OBJECT", 1, true) and "OBJECT" or nil
-		local fixedCount = template.text:match("|cFFffcc33(%d+)|r")
+		local quantityPlaceholder = template.text:match("|cFFffcc33{objectiveRemaining}|r")
+			or template.text:match("|cFFffcc33##|r") or template.text:match("|cFFffcc33%d+|r")
+			or template.text:match("##")
 		local state = {
 			text = template.text, location = PlayerZoneText() or "SUBZONE, ZONE",
 			npcReference = hasNPC and name and string.format("{npc:%d:%s}", npcID, name) or nil,
@@ -2124,8 +2280,8 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			npcButtonLabel = DescriptionNPCButtonLabel(template.name, objectPlaceholder),
 			idKind = template.text:find("{spell:SPELLID:SPELL}", 1, true) and "spell"
 				or template.text:find("{item:%d+:[^}]+}") and "item" or nil,
-			hasQuantity = template.text:find("##", 1, true) ~= nil or fixedCount ~= nil,
-			fixedCount = fixedCount,
+			hasQuantity = quantityPlaceholder ~= nil, quantityPlaceholder = quantityPlaceholder,
+			useObjectiveRemaining = true,
 			hasObject = objectPlaceholder ~= nil, objectPlaceholder = objectPlaceholder,
 		}
 		return self:ShowCopyableReferenceText(template.name, name or "Description template",
