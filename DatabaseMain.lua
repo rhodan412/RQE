@@ -147,6 +147,15 @@ Cross-client quest database selection, sandbox precedence, and lookup control
 		return cachedDatabaseOrder
 	end
 
+	-- Returns a copy of the client lookup order without exposing the mutable cache or Sandbox overrides.
+	function RQE.GetQuestDatabaseOrder()
+		local order = {}
+		for index, name in ipairs(GetQuestDatabaseOrder()) do
+			order[index] = name
+		end
+		return order
+	end
+
 	-- Garrison data may be unavailable before the world loads, so rebuild after each
 	-- loading screen and garrison change. pcall skips GARRISON_UPDATE on clients
 	-- that do not have it.
@@ -333,6 +342,16 @@ Cross-client quest database selection, sandbox precedence, and lookup control
 			end
 		end
 
-		RQE.debugLog("Quest ID " .. questID .. " was not found in the supported database sections or active sandbox.")
+		-- Optional providers run only after every applicable main section misses, using the cached order directly.
+		if type(RQE.GetSecondaryQuestData) == "function" then
+			local questData = RQE.GetSecondaryQuestData(questID, databaseOrder)
+			if type(questData) == "table" then
+				return questData
+			end
+		end
+
+		RQE.debugLog("Quest ID " .. questID .. " was not found in the supported database sections, optional provider, or active sandbox.")
+		-- Previous code (commented out 2026.11.08): the lookup now also checks an optional provider.
+		-- RQE.debugLog("Quest ID " .. questID .. " was not found in the supported database sections or active sandbox.")
 		return nil
 	end
