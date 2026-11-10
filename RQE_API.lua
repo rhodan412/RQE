@@ -1463,22 +1463,39 @@ end
 -- objective contracts. Keep their complete compatibility behavior in the
 -- quest API section, after Retail's normal definitions.
 if isLegacyClient then
-	-- Returns the super tracked quest ID.
-	RQE.API.GetSuperTrackedQuestID = function()
-		local questID
-		if Has(NativeSuperTrack, "GetSuperTrackedQuestID") then
-			questID = NativeSuperTrack.GetSuperTrackedQuestID()
-		elseif C_QuestSession and type(C_QuestSession.GetSuperTrackedQuest) == "function" then
-			questID = C_QuestSession.GetSuperTrackedQuest()
-		elseif type(GetSuperTrackedQuestID) == "function" then
-			questID = GetSuperTrackedQuestID()
-		end
-
+	-- Accepts live quests, active tasks, deliberate searches, and RQE's independent quest watches.
+	RQE.API.HasLegacyQuestContext = function(questID)
 		questID = tonumber(questID)
-		if questID and questID > 0 then
-			return questID
+		if not questID or questID <= 0 then return false end
+		return RQE.API.IsOnQuest(questID)
+			or RQE.API.IsTaskQuestActive(questID)
+			or tonumber(RQE.searchedQuestID) == questID
+			or (RQE.IsQuestWatched and RQE:IsQuestWatched(questID)) or false
+	end
+
+	-- Reads the client's supertrack without falling back to RQE's cached selection.
+	local function getNativeLegacySuperTrackedQuestID()
+		if Has(NativeSuperTrack, "GetSuperTrackedQuestID") then
+			return tonumber(NativeSuperTrack.GetSuperTrackedQuestID())
+		elseif C_QuestSession and type(C_QuestSession.GetSuperTrackedQuest) == "function" then
+			return tonumber(C_QuestSession.GetSuperTrackedQuest())
+		elseif type(GetSuperTrackedQuestID) == "function" then
+			return tonumber(GetSuperTrackedQuestID())
 		end
-		return tonumber(RQE.ManualSuperTrackedQuestID) or tonumber(RQE.DisplayedQuestID)
+	end
+
+	-- Returns a valid legacy focus, preserving zero as an explicit cleared selection.
+	RQE.API.GetSuperTrackedQuestID = function()
+		local questID = getNativeLegacySuperTrackedQuestID()
+		if RQE.API.HasLegacyQuestContext(questID) then return questID end
+
+		local manualQuestID = tonumber(RQE.ManualSuperTrackedQuestID)
+		if manualQuestID == 0 then return 0 end
+		if RQE.API.HasLegacyQuestContext(manualQuestID) then return manualQuestID end
+
+		local displayedQuestID = tonumber(RQE.DisplayedQuestID)
+		if RQE.API.HasLegacyQuestContext(displayedQuestID) then return displayedQuestID end
+		return 0
 	end
 
 	-- Sets the super tracked quest ID.
@@ -1490,6 +1507,30 @@ if isLegacyClient then
 			return NativeSuperTrack.SetSuperTrackedQuestID(questID)
 		end
 		return questID and questID > 0 or false
+	end
+
+	-- Retires only the removed quest's focus state, preserving replacements and deliberate searches.
+	RQE.API.RetireLegacyQuestFocus = function(questID)
+		questID = tonumber(questID)
+		if not questID or questID <= 0 then return end
+		local nativeQuestID = getNativeLegacySuperTrackedQuestID()
+		if tonumber(RQE.ManualSuperTrackedQuestID) == questID then
+			RQE.ManualSuperTrackedQuestID = 0
+			RQE.ManualSuperTrack = false
+		end
+		if tonumber(RQE.DisplayedQuestID) == questID and tonumber(RQE.searchedQuestID) ~= questID then
+			RQE.DisplayedQuestID = nil
+		end
+		if tonumber(RQE.CurrentlySuperQuestID) == questID then
+			RQE.CurrentlySuperQuestID = nil
+		end
+		if tonumber(RQE.PendingClassicQuestLogDetails) == questID then
+			RQE.PendingClassicQuestLogDetails = nil
+		end
+		-- Bypass the compatibility setter so clearing native A cannot overwrite a newer manual B.
+		if nativeQuestID == questID and Has(NativeSuperTrack, "SetSuperTrackedQuestID") then
+			NativeSuperTrack.SetSuperTrackedQuestID(0)
+		end
 	end
 
 	-- Reports whether the supertracked target is a quest.
@@ -5593,14 +5634,19 @@ do
 		["C_AuctionHouse.ConfirmCommoditiesPurchase"] = "action",
 		["C_AuctionHouse.ConfirmItemPurchase"] = "action",
 		["C_AuctionHouse.GetCommoditySearchResultInfo"] = "none",
+		["C_AuctionHouse.GetItemKeyInfo"] = "none",
 		["C_AuctionHouse.GetItemSearchResultInfo"] = "none",
 		["C_AuctionHouse.GetNumCommoditySearchResults"] = "zero",
 		["C_AuctionHouse.GetNumItemSearchResults"] = "zero",
 		["C_AuctionHouse.GetReplicateItemLink"] = "none",
 		["C_AuctionHouse.HasFullCommoditySearchResults"] = "boolean",
+		["C_AuctionHouse.HasFullItemSearchResults"] = "boolean",
 		["C_AuctionHouse.IsItemCommodity"] = "boolean",
+		["C_AuctionHouse.IsThrottledMessageSystemReady"] = "boolean",
 		["C_AuctionHouse.MakeItemKey"] = "none",
+		["C_AuctionHouse.PlaceBid"] = "action",
 		["C_AuctionHouse.RequestMoreCommoditySearchResults"] = "boolean",
+		["C_AuctionHouse.RequestMoreItemSearchResults"] = "boolean",
 		["C_AuctionHouse.SearchForItemKeys"] = "action",
 		["C_AuctionHouse.SendSearchQuery"] = "action",
 		["C_AuctionHouse.StartCommoditiesPurchase"] = "action",
