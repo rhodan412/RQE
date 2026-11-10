@@ -3714,143 +3714,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return nil
 	end
 
-	-- Normalize mixed pickup sources without changing the stored DB entry.
-	-- Structured entries take precedence; legacy /tar lines remain plain names.
-	function RQE:GetQuestPickupSources(questID)
-		local questData = self.getQuestData(questID)
-		local sources, seen = {}, {}
-		if not questData then return sources end
-
-		-- Adds a distinct quest pickup source with its type and hostility metadata.
-		local function AddSource(kind, name, id, hostile)
-			if type(name) ~= "string" then return end
-			name = name:match("^%s*(.-)%s*$")
-			if name == "" or name:find("[\r\n]") or name:sub(1, 1) == "/" then return end
-			-- x99 marks an unknown pickup ID: retain the name/type, but omit viewer links.
-			if type(id) == "string" and id:match("^%s*(.-)%s*$"):lower() == "x99" then
-				id = nil
-			end
-			if kind == "object" then
-				-- Match authored {object:key:name} tags, including custom keys such as tf001.
-				id = (type(id) == "string" or type(id) == "number") and tostring(id):match("^%s*(.-)%s*$") or nil
-				if not id or not id:match("^[%a%d]+$") then id = nil end
-			else
-				id = tonumber(id)
-				if not id or id <= 0 or id ~= math.floor(id) then id = nil end
-			end
-			local key = kind .. ":" .. name
-			hostile = kind == "npc" and hostile == true or nil
-			if seen[key] then
-				if id then seen[key].id = id end
-				if hostile then seen[key].hostile = true end
-				return
-			end
-			local entry = { kind = kind, name = name, id = id, hostile = hostile }
-			sources[#sources + 1] = entry
-			seen[key] = entry
-		end
-
-		if type(questData.npcs) == "table" then
-			for _, entry in ipairs(questData.npcs) do
-				if type(entry) == "table" then
-					if entry.object ~= nil then
-						AddSource("object", entry.object, entry.id)
-					elseif entry.item ~= nil then
-						AddSource("item", entry.item, entry.id)
-					else
-						AddSource("npc", entry.npc or entry.name, entry.id, entry.hostile)
-					end
-				end
-			end
-		end
-		if #sources == 0 and type(questData.npc) == "table" then
-			for _, legacyName in ipairs(questData.npc) do
-				if type(legacyName) == "string" then
-					for line in legacyName:gmatch("[^\r\n]+") do
-						line = line:match("^%s*(.-)%s*$")
-						AddSource("npc", line:match("^/tar%s+(.+)$") or line:match("^/target%s+(.+)$") or line)
-					end
-				end
-			end
-		end
-		return sources
-	end
-
-	-- Targeting macros retain an NPC-only list even when objects occur between NPCs.
-	function RQE:GetQuestPickupNPCs(questID)
-		local npcs = {}
-		for _, entry in ipairs(self:GetQuestPickupSources(questID)) do
-			if entry.kind == "npc" then npcs[#npcs + 1] = entry end
-		end
-		return npcs
-	end
-
-	-- Returns the quest pickup source text.
-	function RQE:GetQuestPickupSourceText(questID, useLinks, npcOnly, hostileOnly, sourceFilter)
-		local names = {}
-		local sources = npcOnly and self:GetQuestPickupNPCs(questID) or self:GetQuestPickupSources(questID)
-		for _, entry in ipairs(sources) do
-			if (not sourceFilter or (sourceFilter == "item") == (entry.kind == "item"))
-				and (hostileOnly == nil or (entry.hostile == true) == hostileOnly) then
-				names[#names + 1] = useLinks and entry.id
-					and (entry.kind == "object" and string.format("{object:%s:%s}", entry.id, entry.name)
-						or entry.kind == "item" and string.format("{item:%d:%s}", entry.id, entry.name)
-						or string.format("{npc:%d:%s}", entry.id, entry.name)) or entry.name
-			end
-		end
-		if #names <= 1 then return names[1] end
-		return table.concat(names, ", ", 1, #names - 1) .. " or " .. names[#names]
-	end
-
-	-- Preserve the NPC-only text helper for callers that do not display objects.
-	function RQE:GetQuestPickupNPCText(questID, useLinks)
-		return self:GetQuestPickupSourceText(questID, useLinks, true)
-	end
-
-	-- The same pickup text is used by the direction row and virtual focus step 0.
-	function RQE:GetSearchedQuestPickupText(questID)
-		local questData = self.getQuestData(questID)
-		local destination
-		if questData then
-			local _, _, mapID, continentID = self.GetPrimaryLocation(questData)
-			local finalMapID = mapID
-			if not finalMapID and continentID then
-				local playerMapID = self.API.Client.C_Map.GetBestMapForUnit("player")
-				local playerMapInfo = playerMapID and self.API.Client.C_Map.GetMapInfo(playerMapID)
-				if playerMapInfo and playerMapInfo.parentMapID == continentID then
-					finalMapID = continentID
-				end
-			end
-			if finalMapID then
-				local mapInfo = self.API.Client.C_Map.GetMapInfo(finalMapID)
-				if mapInfo then
-					destination = mapInfo.name or "Unknown"
-					local parentInfo = mapInfo.parentMapID and mapInfo.parentMapID > 0
-						and self.API.Client.C_Map.GetMapInfo(mapInfo.parentMapID)
-					if parentInfo and parentInfo.name then
-						destination = destination .. ", " .. parentInfo.name
-					end
-				end
-			end
-		end
-		local sourceText = self:GetQuestPickupSourceText(questID, true, false, false, "nonitem")
-		local hostileText = self:GetQuestPickupSourceText(questID, true, true, true)
-		local itemText = self:GetQuestPickupSourceText(questID, true, false, false, "item")
-		local action = sourceText and ("pick up the quest from " .. sourceText)
-		if hostileText then
-			local killAction = "kill " .. hostileText .. " to start the quest"
-			action = action and (action .. " or " .. killAction) or killAction
-		end
-		if itemText then
-			local useAction = "use " .. itemText
-			action = action and (action .. " or " .. useAction) or useAction
-		end
-		if destination then
-			return "Travel to " .. destination .. (action and (" and " .. action .. ".") or "")
-		end
-		return action and (action:gsub("^%l", string.upper) .. ".") or "Pick up the quest."
-	end
-
 	-- Renders the searched quest pickup direction.
 	function RQE:RenderSearchedQuestPickupDirection(questID)
 		local direction = self.DirectionTextFrame
@@ -4240,16 +4103,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
+		-- Use the same client, Sandbox, and optional-provider priority as the Quest Helper.
+		local questData = RQE.getQuestData(questID)
+		-- Previous code (commented out 2026.11.08): unordered main-only scanning bypassed the shared lookup.
 		-- Check if the quest exists in the database
-		local questData = nil
+		-- local questData = nil
 
 		-- Search the database for the quest ID
-		for expansion, quests in pairs(RQEDatabase) do
-			if quests[questID] then
-				questData = quests[questID]
-				break
-			end
-		end
+		-- for expansion, quests in pairs(RQEDatabase) do
+			-- if quests[questID] then
+				-- questData = quests[questID]
+				-- break
+			-- end
+		-- end
 
 		-- If the quest is not in the database or it has no steps, click the "W" button
 		if not questData then
@@ -15217,14 +15083,246 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		finalQuantity = tonumber(finalQuantity) or 0
 		finalQuantity = math.floor(finalQuantity + 0.5)
 
-		-- Purchase logic
-		-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("CraftSim") then
-		if RQE.API.Client.C_AddOns.IsAddOnLoaded("CraftSim") then
-			RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
-		else
-			RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
-			RQE:ConfirmAndPurchaseCommodity(itemID, finalQuantity)
+		self:PrepareAuctionHousePurchase(itemID, finalQuantity)
+	end
+
+
+	-- Routes commodities to their existing flow and prepares confirmed buyouts for individual item auctions.
+	function RQE:PrepareAuctionHousePurchase(itemID, quantity)
+		local previous = self.PendingAuctionPurchase
+		if previous then previous.Cancel() end
+		StaticPopup_Hide("RQE_CONFIRM_PURCHASE_AUCTION_ITEM")
+		if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+			print("|cFFFF3333[RQE]|r Open the Auction House before requesting a purchase.")
+			return
 		end
+
+		itemID, quantity = tonumber(itemID), tonumber(quantity)
+		if not itemID or itemID <= 0 or itemID % 1 ~= 0
+			or not quantity or quantity <= 0 or quantity % 1 ~= 0 then return end
+		local getKeyInfo = self.API.ResolveClientAPI("C_AuctionHouse.GetItemKeyInfo")
+		if not getKeyInfo then
+			print("|cFFFF3333[RQE]|r Item auction information is unavailable on this client.")
+			return
+		end
+
+		local itemKey = self.API.Client.C_AuctionHouse.MakeItemKey(itemID)
+		if type(itemKey) ~= "table" then return end
+		local request = { phase = "info", itemKey = itemKey }
+		local frame = self.AuctionPurchaseEventFrame or CreateFrame("Frame")
+		self.AuctionPurchaseEventFrame = frame
+		self.PendingAuctionPurchase = request
+		local timeout
+
+		-- Releases this request's events and timer without affecting a newer purchase request.
+		local function CancelRequest()
+			if request.phase == "closed" then return end
+			request.phase = "closed"
+			frame:UnregisterAllEvents()
+			frame:SetScript("OnEvent", nil)
+			if timeout then timeout:Cancel() end
+			if self.PendingAuctionPurchase == request then self.PendingAuctionPurchase = nil end
+		end
+		request.Cancel = CancelRequest
+
+		-- Compares all item-key fields so another variant's search cannot satisfy this request.
+		local function MatchesItemKey(key)
+			if type(key) ~= "table" then return false end
+			for _, field in ipairs({ "itemID", "itemLevel", "itemSuffix", "battlePetSpeciesID" }) do
+				if (key[field] or 0) ~= (itemKey[field] or 0) then return false end
+			end
+			return true
+		end
+
+		-- Accepts grouped single-item auctions for non-stackable items while rejecting larger stack purchases.
+		local function IsEligible(result)
+			local quantityMatches = result and result.quantity == quantity
+			if request.maxStack == 1 then
+				quantityMatches = quantity == 1 and result and (result.quantity or 0) >= 1
+			end
+			return result and result.auctionID and result.buyoutAmount and result.buyoutAmount > 0
+				and quantityMatches and not result.containsOwnerItem and not result.containsAccountItem
+				and (not result.itemKey or MatchesItemKey(result.itemKey))
+		end
+
+		-- Shows a fixed-price confirmation and rechecks the exact auction before spending any gold.
+		local function ShowConfirmation(result)
+			local auctionID, buyout = result.auctionID, result.buyoutAmount
+			if buyout > GetMoney() then
+				CancelRequest()
+				print("|cFFFF3333[RQE]|r Not enough gold for the requested item auction buyout.")
+				return
+			end
+			request.phase = "confirm"
+			if timeout then timeout:Cancel() end
+			local display = result.itemLink or ("item:" .. itemID)
+			StaticPopupDialogs["RQE_CONFIRM_PURCHASE_AUCTION_ITEM"] = {
+				text = string.format("Buy %d x %s for %s?", quantity, display,
+					self.API.Client.GetCoinTextureString(buyout)),
+				button1 = "Yes",
+				button2 = "No",
+				-- Buys only the unchanged auction and price approved by this confirmation click.
+				OnAccept = function()
+					if self.PendingAuctionPurchase ~= request or request.phase ~= "confirm" then return end
+					local valid = AuctionHouseFrame and AuctionHouseFrame:IsShown() and buyout <= GetMoney()
+					local found
+					if valid then
+						for index = 1, self.API.Client.C_AuctionHouse.GetNumItemSearchResults(itemKey) do
+							local current = self.API.Client.C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
+							if IsEligible(current) and current.auctionID == auctionID and current.buyoutAmount == buyout then
+								found = true
+								break
+							end
+						end
+					end
+					CancelRequest()
+					if found then
+						self.API.Client.C_AuctionHouse.PlaceBid(auctionID, buyout)
+					else
+						print("|cFFFF3333[RQE]|r The auction or available gold changed; run the macro again.")
+					end
+				end,
+				OnCancel = CancelRequest,
+				OnHide = CancelRequest,
+				timeout = 0,
+				whileDead = true,
+				hideOnEscape = true,
+				preferredIndex = 3,
+			}
+			if not StaticPopup_Show("RQE_CONFIRM_PURCHASE_AUCTION_ITEM") then
+				CancelRequest()
+				print("|cFFFF3333[RQE]|r Close the active dialog and run the purchase macro again.")
+			end
+		end
+
+		-- Reports whether the server is ready for another search or results-page request.
+		local function CanSendSearch()
+			local ready = self.API.ResolveClientAPI("C_AuctionHouse.IsThrottledMessageSystemReady")
+			return not ready or ready()
+		end
+
+		-- Waits for complete item results, then selects the cheapest eligible auction for the requested quantity.
+		local function ReadItemResults()
+			if request.phase ~= "search" or not request.receivedResults then return end
+			if not self.API.Client.C_AuctionHouse.HasFullItemSearchResults(itemKey) then
+				if not request.morePending and CanSendSearch() then
+					request.morePending = true
+					self.API.Client.C_AuctionHouse.RequestMoreItemSearchResults(itemKey)
+				end
+				if request.phase ~= "search"
+					or not self.API.Client.C_AuctionHouse.HasFullItemSearchResults(itemKey) then return end
+			end
+			local cheapest
+			for index = 1, self.API.Client.C_AuctionHouse.GetNumItemSearchResults(itemKey) do
+				local result = self.API.Client.C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
+				if IsEligible(result) and (not cheapest or result.buyoutAmount < cheapest.buyoutAmount) then
+					cheapest = result
+				end
+			end
+			if cheapest then
+				ShowConfirmation(cheapest)
+			else
+				CancelRequest()
+				print("|cFFFF3333[RQE]|r No buyout auction containing exactly " .. quantity
+					.. " of item " .. itemID .. " is available.")
+			end
+		end
+
+		-- Resolves uncached auction metadata before choosing the commodity or individual-item search path.
+		local function RoutePurchase()
+			if request.phase == "info" then
+				local info = getKeyInfo(itemKey)
+				if not info or type(info.isCommodity) ~= "boolean" then return end
+				if info.isCommodity then
+					CancelRequest()
+					self:SearchAndPrepareAuctionItem(itemID, quantity)
+					if not self.API.Client.C_AddOns.IsAddOnLoaded("CraftSim") then
+						self:ConfirmAndPurchaseCommodity(itemID, quantity)
+					end
+					return
+				end
+				-- Row quantities can combine identical non-stackable auctions; their auction ID still buys one item.
+				local getItemInfo = self.API.ResolveClientAPI("C_Item.GetItemInfo")
+				local maxStack = getItemInfo and select(8, getItemInfo(itemID))
+				if getItemInfo and maxStack == nil then
+					if not request.itemDataRequested then
+						request.itemDataRequested = true
+						local loadItem = self.API.ResolveClientAPI("C_Item.RequestLoadItemDataByID")
+						if loadItem then loadItem(itemID) end
+					end
+					return
+				end
+				request.maxStack = tonumber(maxStack)
+				for _, method in ipairs({ "SendSearchQuery", "HasFullItemSearchResults",
+					"RequestMoreItemSearchResults", "GetNumItemSearchResults", "GetItemSearchResultInfo", "PlaceBid" }) do
+					if not self.API.ResolveClientAPI("C_AuctionHouse." .. method) then
+						CancelRequest()
+						print("|cFFFF3333[RQE]|r Individual item auction purchases are unavailable on this client.")
+						return
+					end
+				end
+				request.phase = "search"
+				request.itemName = info.itemName
+			end
+			if request.phase == "search" and not request.searchSent and CanSendSearch() then
+				request.searchSent = true
+				local itemList = AuctionHouseFrame.ItemBuyFrame and AuctionHouseFrame.ItemBuyFrame.ItemList
+				if type(AuctionHouseFrame.SelectBrowseResult) == "function" and itemList
+					and type(itemList.IsVisible) == "function" and type(itemList.refreshResultsFunc) == "function" then
+					-- A newly shown native list requests its own search; an already visible list needs one refresh.
+					local wasVisible = itemList:IsVisible()
+					AuctionHouseFrame:SelectBrowseResult({ itemKey = itemKey })
+					if request.itemName and type(AuctionHouseFrame.SetSearchText) == "function" then
+						AuctionHouseFrame:SetSearchText(request.itemName)
+					end
+					if wasVisible then itemList.refreshResultsFunc() end
+				else
+					-- Custom auction UIs without the native refresh contract receive one direct item-key query.
+					self.API.Client.C_AuctionHouse.SendSearchQuery(itemKey,
+						{ { sortOrder = Enum.AuctionHouseSortOrder.Buyout, reverseSort = false } }, false)
+				end
+			end
+		end
+
+		frame:RegisterEvent("AUCTION_HOUSE_CLOSED")
+		frame:RegisterEvent("ITEM_KEY_ITEM_INFO_RECEIVED")
+		frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+		frame:RegisterEvent("ITEM_DATA_LOAD_RESULT")
+		frame:RegisterEvent("ITEM_SEARCH_RESULTS_UPDATED")
+		frame:RegisterEvent("ITEM_SEARCH_RESULTS_ADDED")
+		frame:RegisterEvent("AUCTION_HOUSE_THROTTLED_SYSTEM_READY")
+		-- Advances only the active request and cancels outstanding confirmations when the Auction House closes.
+		frame:SetScript("OnEvent", function(_, event, value, success)
+			if self.PendingAuctionPurchase ~= request then return end
+			if event == "AUCTION_HOUSE_CLOSED" then
+				CancelRequest()
+				StaticPopup_Hide("RQE_CONFIRM_PURCHASE_AUCTION_ITEM")
+			elseif event == "ITEM_KEY_ITEM_INFO_RECEIVED" and value == itemID then
+				RoutePurchase()
+			elseif (event == "GET_ITEM_INFO_RECEIVED" or event == "ITEM_DATA_LOAD_RESULT") and value == itemID then
+				if success == false then
+					CancelRequest()
+					print("|cFFFF3333[RQE]|r Item details could not be loaded; run the purchase macro again.")
+				else
+					RoutePurchase()
+				end
+			elseif event == "ITEM_SEARCH_RESULTS_UPDATED" or event == "ITEM_SEARCH_RESULTS_ADDED" then
+				if request.searchSent and MatchesItemKey(value) then
+					request.receivedResults, request.morePending = true, false
+					ReadItemResults()
+				end
+			elseif event == "AUCTION_HOUSE_THROTTLED_SYSTEM_READY" then
+				RoutePurchase()
+				ReadItemResults()
+			end
+		end)
+		-- Stops a stalled metadata or results request without making a purchase.
+		timeout = self.API.Client.C_Timer.NewTimer(15, function()
+			if self.PendingAuctionPurchase ~= request then return end
+			CancelRequest()
+			print("|cFFFF3333[RQE]|r Auction search timed out; run the macro again.")
+		end)
+		RoutePurchase()
 	end
 
 
@@ -15260,7 +15358,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					-- Previous Blizzard call changed 2026.09.25: local resultInfo = C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
 					local resultInfo = RQE.API.Client.C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
 					if resultInfo then
-						print("Result", index, ": Price =", resultInfo.buyoutPrice or "No buyout", "Quantity =", resultInfo.quantity)
+						print("Result", index, ": Price =", resultInfo.buyoutAmount or "No buyout", "Quantity =", resultInfo.quantity)
 					end
 				end
 			else
@@ -17408,10 +17506,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			tprintTabs(string.format('descriptionQuestText = { "%s" },', esc(questData.descriptionQuestText[1])), 3)
 		end
 
-		-- NPC line
-		if questData.npc and questData.npc[1] then
-			tprintTabs(string.format('npc = { "%s" },', esc(questData.npc[1])), 3)
-		end
+		-- Preserve every pickup source and include a structured placeholder when the giver is unknown.
+		RQE.PrintQuestPickupSources(questData)
 
 		-- Steps
 		for index, step in ipairs(questData) do
