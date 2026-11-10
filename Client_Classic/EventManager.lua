@@ -1072,6 +1072,8 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 	function RQE.handlePlayerRegenEnabled()
 		local mythicMode = RQE.db.profile.mythicScenarioMode
 		if RQE.EnforceObjectiveTrackerVisibility then RQE:EnforceObjectiveTrackerVisibility() end
+		-- Recheck orphaned legacy focus even when no supertracked quest remains.
+		RQE:QueueLegacyFocusRecovery()
 
 		-- Complete a Classic quest-log selection that was deferred while in combat.
 		local pendingQuestID = tonumber(RQE.PendingClassicQuestLogDetails)
@@ -1298,10 +1300,12 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				RQE:CheckAndRefreshSeparateFocusFrame()		-- Checks SeparateFocusFrame and refreshes it if RQEFrame has quest data but SeparateFocusFrame is empty when PLAYER_REGEN_ENABLED event fires
 			end)
 
-			-- Checks the separate focus has text but RQE frame missing quest.
-			C_Timer.After(1.75, function()
-				RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()		-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info when PLAYER_REGEN_ENABLED event fires
-			end)
+			if not RQE.API.IsLegacyClient() then
+				-- Checks for orphaned focus after the modern client's combat refresh settles.
+				C_Timer.After(1.75, function()
+					RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+				end)
+			end
 
 			-- Determine the current stepIndex (same general approach you use elsewhere)
 			local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
@@ -6861,6 +6865,10 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end
 			RQE:RemoveInactiveQuestTrackerSearchResult(questID)
 		end
+		if RQE.API.IsLegacyClient() then
+			RQE.API.RetireLegacyQuestFocus(questID)
+			RQE:QueueLegacyFocusRecovery()
+		end
 
 		-- Print Event-specific Args
 		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
@@ -7674,6 +7682,10 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 				RQE:RemoveInactiveQuestTrackerSearchResult(questID)
 			end)
 		end
+		if RQE.API.IsLegacyClient() then
+			RQE.API.RetireLegacyQuestFocus(questID)
+			RQE:QueueLegacyFocusRecovery()
+		end
 
 		if RQE.LastSuperTrackedQuestID == questID then
 			-- SetRaidTarget("target", 0)	-- possible complications in 12.0
@@ -7711,8 +7723,13 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			end)
 		end
 
-		-- Clears the button pressed.
+		-- Rechecks legacy focus or runs the existing modern-client turn-in cleanup.
 		C_Timer.After(0.5, function()
+			-- Revalidate the live selection; delayed full clears can erase its replacement.
+			if RQE.API.IsLegacyClient() then
+				RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+				return
+			end
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 			if not RQE.previousSuperTrackedQuestID then
 				RQE.previousSuperTrackedQuestID = nil
