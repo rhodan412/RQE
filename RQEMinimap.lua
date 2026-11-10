@@ -19,10 +19,8 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 	RQE.hoverTimers = {}
 
 	-------------------------------------------------------
-	-- #1b. Client Mode & Minimap Button Type
+	-- #1b. Minimap Button Type
 	-------------------------------------------------------
-
-	local isRetail = RQE.IsRetail == true
 
 	---@class RQEMinimapButton : Frame
 	---@field hoverTimer any
@@ -71,14 +69,15 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 	-- #3b. Pointer Detection & Menu Dismissal
 	-------------------------------------------------------
 
-	-- Function to safely determine whether the pointer is over a visible frame
+	-- Reports whether the pointer is over a shown frame using the mouse API available on this client.
 	local function isPointerOver(frame)
 		if not frame or not frame.IsShown or not frame:IsShown() then return false end
-		if isRetail and frame.IsMouseOver then
+		if type(frame.IsMouseOver) == "function" then
 			return frame:IsMouseOver()
 		end
 		-- Previous Blizzard call changed 2026.09.25: return MouseIsOver and MouseIsOver(frame) or false
-		return RQE.API.ResolveClientAPI("MouseIsOver") and RQE.API.Client.MouseIsOver(frame) or false
+		local mouseIsOver = RQE.API.ResolveClientAPI("MouseIsOver")
+		return mouseIsOver and mouseIsOver(frame) or false
 	end
 
 	-- Function to close the main launcher menu and any open More Options submenu
@@ -107,6 +106,11 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 		icon = "Interface\\Addons\\RQE\\Textures\\rhodan.tga",
 		-- Handles launcher clicks for frame visibility, logging, settings, and menus
 		OnClick = function(display, button)
+			-- A pending hover-open timer must not toggle a manually opened menu closed later.
+			if RQE.hoverTimers[display] then
+				RQE:CancelTimer(RQE.hoverTimers[display])
+				RQE.hoverTimers[display] = nil
+			end
 
 			-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() and button == "LeftButton" then
 			if RQE.API.Client.IsShiftKeyDown() and button == "LeftButton" then
@@ -131,9 +135,12 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 			if RQE.hoverTimers[display] then
 				RQE:CancelTimer(RQE.hoverTimers[display])
 			end
-			-- Shows the LDB dropdown menu.
+			-- Opens a closed launcher menu after hovering without toggling an already open menu.
 			RQE.hoverTimers[display] = RQE:ScheduleTimer(function()
-				RQE:ShowLDBDropdownMenu()
+				RQE.hoverTimers[display] = nil
+				if not RQE.CustomMenu or not RQE.CustomMenu:IsShown() then
+					RQE:ShowLDBDropdownMenu()
+				end
 			end, 3)
 
 			GameTooltip:SetOwner(display, "ANCHOR_NONE")
@@ -581,25 +588,14 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
 				-- Hides the minimap menu only after the pointer leaves it and its submenu.
 				RQE.API.Client.C_Timer.After(0.1, function()
-					local isMouseOverMenu
-					local isMouseOverMoreOptions
-					if isRetail then
-						isMouseOverMenu = self and self:IsMouseOver()
-						isMouseOverMoreOptions = RQE.MoreOptionsMenu and RQE.MoreOptionsMenu:IsMouseOver()
-					else
-						-- Previous Blizzard call changed 2026.09.25: isMouseOverMenu = self and MouseIsOver(self)
-						isMouseOverMenu = self and RQE.API.Client.MouseIsOver(self)
-						-- Previous Blizzard call changed 2026.09.25: isMouseOverMoreOptions = RQE.MoreOptionsMenu and MouseIsOver(RQE.MoreOptionsMenu)
-						isMouseOverMoreOptions = RQE.MoreOptionsMenu and RQE.API.Client.MouseIsOver(RQE.MoreOptionsMenu)
-					end
-					if isMouseOverMenu or isMouseOverMoreOptions then
+					if isPointerOver(self) or isPointerOver(RQE.MoreOptionsMenu)
+						or isPointerOver(RQE.lastClickedFrame) then
 						-- Do nothing, the mouse is still over the menu or its related submenus
 						return
 					end
 
 					-- Hide the menus if the mouse is not over them
-					self:Hide()
-					if RQE.MoreOptionsMenu then RQE.MoreOptionsMenu:Hide() end
+					RQE:HideLDBDropdownMenus()
 				end)
 			end)
 
@@ -634,6 +630,7 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 		local anchorFrame = RQE.lastClickedFrame
 
 		if anchorFrame then
+			self.CustomMenu.RQEOutsideTime = 0
 			-- Toggle menu visibility using the dynamically determined anchor
 			self.CustomMenu:ToggleMenu(anchorFrame)
 		end
@@ -664,20 +661,9 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
 				-- Hides the submenu only when the pointer also leaves the parent menu.
 				RQE.API.Client.C_Timer.After(0.1, function()
-					local isMouseOverMenu
-					local isMouseOverParent
-					if isRetail then
-						isMouseOverMenu = self:IsMouseOver()
-						isMouseOverParent = parentMenu:IsMouseOver()
-					else
-						-- Previous Blizzard call changed 2026.09.25: isMouseOverMenu = MouseIsOver(self)
-						isMouseOverMenu = RQE.API.Client.MouseIsOver(self)
-						-- Previous Blizzard call changed 2026.09.25: isMouseOverParent = MouseIsOver(parentMenu)
-						isMouseOverParent = RQE.API.Client.MouseIsOver(parentMenu)
-					end
-					if not isMouseOverMenu and not isMouseOverParent then
-						self:Hide()
-						parentMenu:Hide()
+					if not isPointerOver(self) and not isPointerOver(parentMenu)
+						and not isPointerOver(RQE.lastClickedFrame) then
+						RQE:HideLDBDropdownMenus()
 					end
 				end)
 			end)
