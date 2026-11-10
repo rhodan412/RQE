@@ -1616,6 +1616,27 @@ end
 	end
 
 
+	-- Includes independent watches and searched quests when validating a legacy focus.
+	function RQE:IsActiveSeparateFocusQuest(questID)
+		if RQE.API.IsLegacyClient() then
+			return RQE.API.HasLegacyQuestContext(questID)
+		end
+		questID = tonumber(questID)
+		return questID and questID > 0
+			and (RQE.API.IsOnQuest(questID) or RQE.API.IsTaskQuestActive(questID)) or false
+	end
+
+	-- Coalesces legacy quest lifecycle events into one recovery check after the log settles.
+	function RQE:QueueLegacyFocusRecovery()
+		if not RQE.API.IsLegacyClient() or self._legacyFocusRecoveryQueued then return end
+		self._legacyFocusRecoveryQueued = true
+		-- Rechecks live selection state rather than retaining the quest that triggered recovery.
+		C_Timer.After(0.2, function()
+			RQE._legacyFocusRecoveryQueued = nil
+			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+		end)
+	end
+
 	-- Guard function to decide whether it should clear the SeparateFocusFrame
 	function RQE:ShouldClearSeparateFocusFrame()
 		 -- Always refresh the real supertracked quest
@@ -1643,6 +1664,19 @@ end
 		-- If no quest or no DB entry, always clear
 		if not newQuest or not RQE.getQuestData(newQuest) then
 			RQE:LogSeparateFocusClear("Quest missing or not in DB", oldQuest, newQuest, oldStep, newStep)
+			return true
+		end
+
+		-- Validate legacy main-frame ownership without trusting the focus renderer's cached quest ID.
+		if RQE.API.IsLegacyClient() then
+			if not RQE.API.HasLegacyQuestContext(newQuest)
+				and not RQE.API.HasLegacyQuestContext(RQE.DisplayedQuestID) then
+				RQE:LogSeparateFocusClear("Orphaned focus without active quest", oldQuest, newQuest, oldStep, newStep)
+				return true
+			end
+		elseif not RQE:IsActiveSeparateFocusQuest(newQuest)
+			and RQE.DebugRQEFrameContents and not RQE:DebugRQEFrameContents() then
+			RQE:LogSeparateFocusClear("Orphaned focus without active quest", oldQuest, newQuest, oldStep, newStep)
 			return true
 		end
 
@@ -2046,6 +2080,7 @@ end
 		C_Timer.After(0.2, function()
 			local restoredSomething = false
 			local restoredQuestID = nil
+			local restoredSearchedQuestID = nil
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~~ Running RQE:RestoreSuperTrackedQuestForCharacter() ~~~")
 			end
@@ -2099,7 +2134,9 @@ end
 
 			-- 2) If no valid supertracked quest was restored, restore searched quest display
 			if not restoredSomething and RQECharacterDB and RQECharacterDB.searchedQuestID then
-				local searchedQuestID = RQECharacterDB.searchedQuestID
+				local searchedQuestID = tonumber(RQECharacterDB.searchedQuestID)
+				-- Previous code (commented out 2026.11.09): saved search IDs were not normalized.
+				-- local searchedQuestID = RQECharacterDB.searchedQuestID
 
 				-- Optional sanity: only restore if it exists in your DB or has a title
 				local hasTitle = RQE.API.GetTitleForQuestID(searchedQuestID)
@@ -2107,6 +2144,18 @@ end
 
 				if hasTitle or hasDB then
 					RQE.searchedQuestID = searchedQuestID
+					restoredQuestID = searchedQuestID
+					restoredSearchedQuestID = searchedQuestID
+					-- Restore the same pickup state as a fresh Search > Track selection.
+					if type(hasDB) == "table" and not RQE.API.IsOnQuest(searchedQuestID)
+						and not RQE.API.IsWorldQuest(searchedQuestID) then
+						RQE.ManualStepPreview = true
+						RQE.ManualPreviewQuestID = searchedQuestID
+						RQE.ManualPreviewStepIndex = 0
+						RQE.AddonSetStepIndex = 0
+						RQE.CurrentStepIndex = 0
+						RQE.StoredStepIndex = 0
+					end
 					restoredSomething = true
 
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -2135,7 +2184,29 @@ end
 				-- Use the restored ID explicitly. The normal selection path sets this
 				-- flag; setting it here prevents ShouldUpdateFrame from treating the
 				-- login refresh as an unchanged, ignorable update.
-				if restoredQuestID then
+				if restoredSearchedQuestID then
+					-- Refresh only the restored selection; a later player choice must win.
+					if tonumber(RQE.searchedQuestID) ~= restoredSearchedQuestID then return end
+					if RQE:CanNavigateSearchedQuestSteps(restoredSearchedQuestID) then
+						-- Rebuild the restored pickup preview after combat while its selection remains current.
+						local function RefreshRestoredPickupPreview()
+							if not RQE:CanNavigateSearchedQuestSteps(restoredSearchedQuestID)
+								or tonumber(RQE.ManualPreviewQuestID) ~= restoredSearchedQuestID
+								or tonumber(RQE.ManualPreviewStepIndex) ~= 0 then return end
+							if InCombatLockdown() then
+								C_Timer.After(0.25, RefreshRestoredPickupPreview)
+								return
+							end
+							RQE.QuestLogIndexButtonPressed = true
+							RQE:SetDisplayedStepFromStepsList(0)
+						end
+						RefreshRestoredPickupPreview()
+					else
+						UpdateFrame(restoredSearchedQuestID)
+					end
+				elseif restoredQuestID then
+				-- Previous code (commented out 2026.11.09): restored searches skipped preview initialization.
+				-- if restoredQuestID then
 					RQE.QuestLogIndexButtonPressed = true
 					--[[
 					-- On Classic, the saved supertrack is restored after InitializeFrame
@@ -3582,6 +3653,9 @@ end
 
 	-- ClearFrameData function
 	function RQE:ClearFrameData()
+		if self._searchedStepWaypoint and self.ClearSearchedQuestStepWaypoint then
+			self:ClearSearchedQuestStepWaypoint()
+		end
 		if RQE.HideCreatureObjectPreview then RQE.HideCreatureObjectPreview(true) end
 		if self._focusRefreshTimer then
 			self._focusRefreshTimer:Cancel()
@@ -4130,11 +4204,24 @@ end
 
 
 	-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info
-	function RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
-		local separateHasMeaningfulText = false
-		local rqeFrameHasQuest = false
+	function RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest(debugOutput)
+		local debugEnabled = debugOutput == true or RQE.db.profile.debugLevel == "INFO+"
+		local isLegacyClient = RQE.API.IsLegacyClient()
 
+		-- Reports this recovery decision without changing the player's debug setting.
+		local function report(message)
+			if debugEnabled then
+				print("|cff99ccff[RQE Focus Check]|r " .. message)
+			end
+		end
+
+		report("Running SeparateFocusFrame recovery check.")
+		if isLegacyClient and InCombatLockdown() then
+			report("Deferred: legacy window recovery will be checked again after combat.")
+			return false
+		end
 		if not RQE.SeparateContentFrame then
+			report("Skipped: SeparateContentFrame does not exist.")
 			return false
 		end
 
@@ -4142,87 +4229,124 @@ end
 			["1/0: Quest in DB w/o any available steps."] = true,
 			["No step description available"] = true,
 		}
-		--[[
-		-- Previous recovery attempt.  No-step messages are intentionally excluded
-		-- from this watchdog; the normal Classic render path handles them directly.
-		local ignoredTexts = {}
-		]]
 
-		for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
-			if region.GetObjectType and region:GetObjectType() == "FontString" then
-				local text = region:GetText() or ""
-				text = text:gsub("^%s+", ""):gsub("%s+$", "")
-
-				if text ~= "" and not ignoredTexts[text] then
-					separateHasMeaningfulText = true
-
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("|cff99ccff[RQE]|r SeparateFocusFrame meaningful text found:")
-						print("|cff00ff00" .. text .. "|r")
-					end
-
-					break
-				else
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("|cff99ccff[RQE]|r ignoredTexts text found:")
-						print("|cff00ff00" .. text .. "|r")
+		-- Finds focus or retained main text, including legacy placeholders and optionally hidden widgets.
+		local function findMeaningfulText(frame, includeHidden)
+			if not frame or (not includeHidden and frame.IsShown and not frame:IsShown()) then return end
+			-- Main FontStrings use their live text so cleared widgets cannot revive cached rich text.
+			local text = (includeHidden and frame.GetText and frame:GetText())
+				or frame.htmlText or frame._rqeCoordblockHTMLBase or (frame.GetText and frame:GetText())
+			if type(text) == "string" then
+				text = text:gsub("<[^>]+>", ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+				text = text:gsub("%s+", " "):match("^%s*(.-)%s*$") or ""
+				-- Layout fallbacks can remain populated even when there is no quest window to clear.
+				if includeHidden then
+					local normalized = text:lower():gsub("[%.!]+$", "")
+					if (frame == RQE.DirectionTextFrame and normalized == "no direction available")
+						or (frame == RQE.QuestDescription and normalized == "no description available") then
+						return
 					end
 				end
-
-				-- if text ~= "" and not ignoredTexts[text] then
-					-- separateHasMeaningfulText = true
-					-- break
-				-- end
+				if text ~= "" and (isLegacyClient or not ignoredTexts[text]) then return text end
+			end
+			if frame.GetRegions then
+				for _, region in ipairs({ frame:GetRegions() }) do
+					local found = findMeaningfulText(region, includeHidden)
+					if found then return found end
+				end
+			end
+			if frame.GetChildren then
+				for _, child in ipairs({ frame:GetChildren() }) do
+					local found = findMeaningfulText(child, includeHidden)
+					if found then return found end
+				end
 			end
 		end
 
-		if not separateHasMeaningfulText then
+		local focusText = findMeaningfulText(RQE.SeparateStepText)
+			or findMeaningfulText(RQE.SeparateContentFrame)
+		local mainQuestText
+		if isLegacyClient then
+			-- Main quest widgets may retain text after focus cleanup or while hidden by the layout.
+			-- Exclude the live map, coordinate, and distance header from orphan detection.
+			mainQuestText = findMeaningfulText(RQE.QuestIDText, true)
+				or findMeaningfulText(RQE.QuestNameText, true)
+				or findMeaningfulText(RQE.QuestDescription, true)
+				or findMeaningfulText(RQE.QuestObjectives, true)
+				or findMeaningfulText(RQE.DirectionTextFrame, true)
+		end
+		if not focusText and not mainQuestText then
+			report(isLegacyClient and "Skipped: no quest text remains in the main or focus frame."
+				or "Skipped: no visible meaningful focus text was found.")
+			return false
+		end
+		if focusText then
+			report("Visible focus text: " .. focusText)
+		else
+			report("Main quest text remains after focus cleanup: " .. mainQuestText)
+		end
+
+		if isLegacyClient then
+			local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
+			local mainHasQuest = RQE.API.HasLegacyQuestContext(RQE.DisplayedQuestID)
+			report("Main frame has valid quest data: " .. tostring(mainHasQuest)
+				.. "; displayed ID: " .. tostring(RQE.DisplayedQuestID)
+				.. "; supertracked ID: " .. tostring(questID)
+				.. "; manual ID: " .. tostring(RQE.ManualSuperTrackedQuestID)
+				.. "; searched ID: " .. tostring(RQE.searchedQuestID))
+			if mainHasQuest then
+				report("Kept: the main frame has a valid quest context.")
+				return true
+			end
+			-- A newly selected search can be valid before its main-frame widgets have populated.
+			if RQE.API.HasLegacyQuestContext(RQE.searchedQuestID) then
+				report("Kept: a deliberate searched quest owns the window.")
+				return true
+			end
+			if RQE.API.HasLegacyQuestContext(questID) then
+				report("Refreshing the main frame for valid legacy focus " .. tostring(questID) .. ".")
+				RQE.UpdateTheFrameNoMatterWhat = true
+				UpdateFrame(questID)
+				-- Releases the forced-refresh flag after the frame's delayed work.
+				C_Timer.After(0.2, function()
+					RQE.UpdateTheFrameNoMatterWhat = false
+				end)
+				return false
+			end
+
+			-- Explicitly reset the cache even when the filtered getter already reports zero.
+			RQE.searchedQuestID = nil
+			RQE.ClearButtonPressed = true
+			RQE.API.SetSuperTrackedQuestID(0)
+			RQE.Buttons.ClearButtonPressed(true)
+			RQE:SaveSuperTrackedQuestToCharacter()
+			report("Cleared: orphaned legacy focus, main frame, waypoints, and macro; selection reset to zero.")
 			return false
 		end
 
-		if RQE.DebugRQEFrameContents then
-			rqeFrameHasQuest = RQE:DebugRQEFrameContents()
-		end
-
+		local rqeFrameHasQuest = RQE.DebugRQEFrameContents and RQE:DebugRQEFrameContents() or false
+		report("Main frame has quest data: " .. tostring(rqeFrameHasQuest)
+			.. "; displayed ID: " .. tostring(RQE.DisplayedQuestID)
+			.. "; current ID: " .. tostring(RQE.CurrentlySuperQuestID))
 		if rqeFrameHasQuest then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("|cff00ff00[RQE]|r SeparateFocusFrame has text and RQEFrame already contains quest data.")
-			end
-
+			report("Kept: the main RQEFrame already contains quest data.")
 			return true
 		end
 
-		-- if rqeFrameHasQuest then
-			-- return true
-		-- end
-
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("|cFFFF3333[RQE]|r SeparateFocusFrame has text but RQEFrame is missing quest data.")
-			print("|cff99ccff[RQE]|r Forcing UpdateFrame()")
-		end
-
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
-
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("|cff99ccff[RQE]|r SuperTracked QuestID:", tostring(questID))
-		end
-
-		if questID then
+		local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
+		if RQE:IsActiveSeparateFocusQuest(questID) then
+			report("Refreshing the main RQEFrame for active supertracked quest " .. tostring(questID) .. ".")
 			RQE.UpdateTheFrameNoMatterWhat = true
-			--[[
-			-- Previous Classic-specific recovery attempt.  The main clear guard now
-			-- recognizes active Classic supertracks, so keep one common updater.
-			if RQE.API and RQE.API.IsLegacyClient and RQE.API.IsLegacyClient() and RQE.DisplayClassicQuestLogDetails then
-				RQE:DisplayClassicQuestLogDetails(questID)
-			else
-				UpdateFrame(questID)
-			end
-			]]
 			UpdateFrame(questID)
 
+			-- Clears the forced frame-refresh flag after the delayed update.
 			C_Timer.After(0.2, function()
 				RQE.UpdateTheFrameNoMatterWhat = false
 			end)
+		else
+			report("Clearing orphaned focus content; inactive or missing supertracked ID: " .. tostring(questID))
+			-- The clear guard revalidates inactive cached IDs and still defers cleanup during combat.
+			RQE:ClearSeparateFocusFrame()
 		end
 
 		return false
@@ -4513,6 +4637,7 @@ end
 
 	-- Simulates pressing the "Clear Window" Button
 	function RQE:PerformClearActions()
+		RQE:ClearManualStepPreview(false)
 		RQE:ClearFrameData()
 		RQE.searchedQuestID = nil
 		RQE.ManualSuperTrack = nil
@@ -4993,6 +5118,8 @@ end
 	-- Updates only existing RQEFrame text while in combat. Do not add waypoint,
 	-- macro, secure-button, visibility, or layout work to this helper.
 	function RQE:UpdateRQEFrameCombatSafe(questID)
+		-- Keep an existing searched preview intact during unrelated combat updates.
+		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 		questID = RQE:NormalizeQuestID(questID)
 		if not questID then return end
 
@@ -5035,6 +5162,19 @@ end
 	end
 
 
+	-- Renders shared pickup guidance and preserves its NPC, object, and item hover links.
+	function RQE:RenderSearchedQuestPickupDirection(questID)
+		local direction = self.DirectionTextFrame
+		if not direction then return end
+		local text = self:GetSearchedQuestPickupText(questID)
+		local style = self.db.profile.textSettings.DirectionTextFrame or {}
+		RQEFrame.DirectionText = text
+		direction._rqeRenderingPickup = true
+		self.RenderTextWithItemsSteps(direction, text, style.font, style.size, style.color, direction:GetParent())
+		direction._rqeRenderingPickup = nil
+	end
+
+
 	-- UpdateFrame function
 	function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		-- Every UpdateFrame call, including ones that return early below, also saves
@@ -5054,9 +5194,16 @@ end
 
 		RQE:CheckSuperTrackedQuestAndStep()
 
-		-- Priority: explicit param > search override > current super-tracked
+		-- A valid search preview takes priority over explicit background refreshes and the current supertrack.
 		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-		questID = RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		-- A searched preview retains display ownership during unrelated quest-log refreshes.
+		local isSearchedPreview = RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)
+		questID = isSearchedPreview and tonumber(RQE.searchedQuestID)
+			or RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
+		-- Previous code (commented out 2026.11.09): an explicit background quest ID could replace the searched preview.
+		-- questID = RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		-- A delayed refresh must not repaint a removed quest after another selection becomes active.
+		if RQE.API.IsLegacyClient() and not RQE.API.HasLegacyQuestContext(questID) then return end
 		local wasDisplayingQuest = RQE.DisplayedQuestID == questID
 		-- questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
 
@@ -5188,8 +5335,10 @@ end
 			RQE.debugLog("RQE.QuestObjectives is not initialized.")
 		end
 
-		-- Fetch the next waypoint text for the quest
-		if RQE.searchedQuestID
+		-- Fetch the next waypoint text for the quest.
+		if RQE:CanNavigateSearchedQuestSteps(questID) then
+			RQE:RenderSearchedQuestPickupDirection(questID)
+		elseif RQE.searchedQuestID
 			and tonumber(RQE.searchedQuestID) ~= tonumber(RQE.API.GetSuperTrackedQuestID()) then
 			RQEFrame.DirectionText = DirectionText  -- Save to addon table
 
@@ -5279,7 +5428,21 @@ end
 			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
 
 			-- When the RQEFrame is updated for a searched quest that is not in the player's quest log
-			if not isQuestInLog and not isWorldQuest then  -- If the quest is not in the log and not a World Quest, update the texts accordingly
+			-- Pickup guidance belongs in the direction and focus rows; story text remains in the quest tooltip.
+			if RQE:CanNavigateSearchedQuestSteps(questID) then
+				if RQE.QuestDescription then RQE.QuestDescription:SetText("") end
+				if RQE.QuestObjectives then
+					RQE.QuestObjectives:SetText(isQuestCompleted and "Quest has been marked as completed for player" or "")
+					local style = RQE.db.profile.textSettings.QuestObjectives or {}
+					if isQuestCompleted then
+						RQE.QuestObjectives:SetTextColor(0, 1, 0)
+					else
+						RQE.QuestObjectives:SetTextColor(unpack(style.color or { 1, 1, 1 }))
+					end
+				end
+			elseif not isQuestInLog and not isWorldQuest then
+			-- Previous code (commented out 2026.11.09): every searched quest used the redundant legacy pickup status.
+			-- if not isQuestInLog and not isWorldQuest then  -- If the quest is not in the log and not a World Quest, update the texts accordingly
 				if RQE.QuestDescription then
 					RQE.QuestDescription:SetText("")  -- Leave blank
 				end
@@ -5429,16 +5592,19 @@ end
 			return
 		end
 
+		-- Use the same client, Sandbox, and optional-provider priority as the Quest Helper.
+		local questData = RQE.getQuestData(questID)
+		-- Previous code (commented out 2026.11.08): unordered main-only scanning bypassed the shared lookup.
 		-- Check if the quest exists in the database
-		local questData = nil
+		-- local questData = nil
 
 		-- Search the database for the quest ID
-		for expansion, quests in pairs(RQEDatabase) do
-			if quests[questID] then
-				questData = quests[questID]
-				break
-			end
-		end
+		-- for expansion, quests in pairs(RQEDatabase) do
+			-- if quests[questID] then
+				-- questData = quests[questID]
+				-- break
+			-- end
+		-- end
 
 		-- If the quest is not in the database or it has no steps, click the "W" button
 		if not questData then
@@ -8648,7 +8814,14 @@ end
 				if questData then
 					local questInfo = RQE.getQuestData(foundQuestID)
 					RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 4927 ~~")
-					UpdateFrame(foundQuestID, questInfo, {}, {}, {}) -- Assuming UpdateFrame handles empty tables gracefully
+					-- Initialize text, focus, macro, and waypoint together for the virtual pickup step.
+					if RQE:CanNavigateSearchedQuestSteps(foundQuestID) then
+						RQE:SetDisplayedStepFromStepsList(0)
+					else
+						UpdateFrame(foundQuestID, questInfo, {}, {}, {})
+					end
+					-- Previous code (commented out 2026.11.09): the search initialized only the main helper frame.
+					-- UpdateFrame(foundQuestID, questInfo, {}, {}, {}) -- Assuming UpdateFrame handles empty tables gracefully
 				end
 
 				-- UpdateFrame and its deferred event work may set another macro after
@@ -9945,44 +10118,32 @@ end
 	-- Searched quests which are not yet in the quest log expose a virtual step 0:
 	-- the quest giver/pickup state. Normal quest-log step controls still require
 	-- the profile option.
+	-- Returns the first normalized item pickup source, including its explicit Auction House opt-out.
 	function RQE:GetSearchedQuestPickupItem(questID)
-		local questData = self.getQuestData(questID)
-		if not questData or type(questData.npcs) ~= "table" then return nil end
-		for _, entry in ipairs(questData.npcs) do
-			if type(entry) == "table" and type(entry.item) == "string" then
-				local name = entry.item:match("^%s*(.-)%s*$")
-				if name ~= "" and not name:find("[\r\n]") then
-					local id = tonumber(entry.id)
-					if not id or id <= 0 or id ~= math.floor(id) then id = nil end
-					return { name = name, id = id }
-				end
-			end
+		for _, source in ipairs(self:GetQuestPickupSources(questID)) do
+			if source.kind == "item" then return source end
 		end
 	end
 
+	-- Returns shared pickup wording, including mixed sources and conditional Auction House advice.
 	function RQE:GetSearchedQuestItemPickupText(questID)
-		local item = self:GetSearchedQuestPickupItem(questID)
-		if not item then return nil end
-		local name = item.id and string.format("{item:%d:%s}", item.id, item.name) or item.name
-		local questData = self.getQuestData(questID)
-		local _, _, mapID = self.GetPrimaryLocation(questData)
-		local mapInfo = mapID and C_Map.GetMapInfo(mapID)
-		if mapInfo then
-			local parent = mapInfo.parentMapID and C_Map.GetMapInfo(mapInfo.parentMapID)
-			local destination = mapInfo.name or "Unknown"
-			if parent and parent.name then destination = destination .. ", " .. parent.name end
-			return "Travel to " .. destination .. " and use " .. name .. "."
-		end
-		return "Use " .. name .. "."
+		if not self:GetSearchedQuestPickupItem(questID) then return nil end
+		return self:GetSearchedQuestPickupText(questID)
 	end
 
 	function RQE:CanNavigateSearchedQuestSteps(questID)
 		questID = tonumber(questID)
-		return questID
+		return questID and questID > 0
 			and tonumber(RQE.searchedQuestID) == questID
 			and not RQE.API.IsOnQuest(questID)
 			and not RQE.API.IsWorldQuest(questID)
 			and type(RQE.getQuestData(questID)) == "table"
+		-- Previous code (commented out 2026.11.09): zero IDs were not explicitly rejected.
+		-- return questID
+			-- and tonumber(RQE.searchedQuestID) == questID
+			-- and not RQE.API.IsOnQuest(questID)
+			-- and not RQE.API.IsWorldQuest(questID)
+			-- and type(RQE.getQuestData(questID)) == "table"
 	end
 
 
@@ -9997,13 +10158,24 @@ end
 		local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 		if not RQE:CanUseStepControlsForQuest(questID) then return end
 
+		stepIndex = tonumber(stepIndex)
 		local questData = questID and RQE.getQuestData(questID)
-		local isSearchedStepZero = stepIndex == 0 and RQE:CanNavigateSearchedQuestSteps(questID)
-		if not questData or (not isSearchedStepZero and not questData[stepIndex]) then return end
-		if self.ActiveCoordblock and self.ActiveCoordblock.stepIndex
-			and self.ActiveCoordblock.stepIndex ~= tonumber(stepIndex) then
+		local isSearchedQuest = RQE:CanNavigateSearchedQuestSteps(questID)
+		local isSearchedStepZero = stepIndex == 0 and isSearchedQuest
+		if not questData or not stepIndex or (not isSearchedStepZero and not questData[stepIndex]) then return end
+		-- Previous code (commented out 2026.11.09): step input was not normalized before selecting the preview.
+		-- local questData = questID and RQE.getQuestData(questID)
+		-- local isSearchedStepZero = stepIndex == 0 and RQE:CanNavigateSearchedQuestSteps(questID)
+		-- if not questData or (not isSearchedStepZero and not questData[stepIndex]) then return end
+		if self.ActiveCoordblock and (tonumber(self.ActiveCoordblock.questID) ~= tonumber(questID)
+			or self.ActiveCoordblock.stepIndex ~= stepIndex) then
 			self:ReleaseActiveCoordblockWaypoint()
 		end
+		-- Previous code (commented out 2026.11.09): an old quest's coordblock could survive a preview selection.
+		-- if self.ActiveCoordblock and self.ActiveCoordblock.stepIndex
+			-- and self.ActiveCoordblock.stepIndex ~= tonumber(stepIndex) then
+			-- self:ReleaseActiveCoordblockWaypoint()
+		-- end
 
 		RQE.ManualStepPreview = true
 		RQE.ManualPreviewQuestID = questID
@@ -10013,17 +10185,25 @@ end
 		RQE.CurrentStepIndex = stepIndex
 		RQE.StoredStepIndex = stepIndex
 
-		if stepIndex > 0 and RQE.WaypointButtons and RQE.WaypointButtons[stepIndex] then
-			RQE.LastClickedButtonRef = RQE.WaypointButtons[stepIndex]
-		end
+		RQE.LastClickedButtonRef = RQE.WaypointButtons and RQE.WaypointButtons[stepIndex] or nil
+		-- Previous code (commented out 2026.11.09): returning to pickup left a stale numbered-step button.
+		-- if stepIndex > 0 and RQE.WaypointButtons and RQE.WaypointButtons[stepIndex] then
+			-- RQE.LastClickedButtonRef = RQE.WaypointButtons[stepIndex]
+		-- end
 
 		if UpdateFrame then UpdateFrame(questID, questData) end
 		if isSearchedStepZero then
 			-- RQE:GenerateNpcMacroIfNeeded(questID)
 			-- Step 0 must overwrite any currently displayed DB-step macro even when
 			-- a Classic API reports a transient quest-log entry.
-			RQE:SetSearchedQuestPickupMacro(questID)
-		elseif RQE:CanNavigateSearchedQuestSteps(questID) and RQEMacro and RQEMacro.SetQuestStepMacro then
+			if not RQE:SetSearchedQuestPickupMacro(questID) and RQEMacro and RQEMacro.SetQuestStepMacro then
+				RQEMacro:SetQuestStepMacro(questID, 0, {}, true)
+				RQE.Buttons.UpdateMagicButtonVisibility()
+			end
+		elseif isSearchedQuest and RQEMacro and RQEMacro.SetQuestStepMacro then
+			-- Previous code (commented out 2026.11.09): a pickup without a usable action could retain the previous step's macro.
+			-- RQE:SetSearchedQuestPickupMacro(questID)
+		-- elseif RQE:CanNavigateSearchedQuestSteps(questID) and RQEMacro and RQEMacro.SetQuestStepMacro then
 			local stepMacro = questData[stepIndex].macroArray or questData[stepIndex].macro
 			RQEMacro:SetQuestStepMacro(questID, stepIndex, stepMacro, false)
 			RQE.Buttons.UpdateMagicButtonVisibility()
@@ -10031,6 +10211,7 @@ end
 			RQEMacro:CreateMacroForCurrentStep()
 		end
 		if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+		if isSearchedQuest then RQE:CreateSearchedQuestStepWaypoint(questID, stepIndex) end
 
 		if RQE.Buttons.RefreshStepNavigationTooltips then
 			RQE.Buttons.RefreshStepNavigationTooltips()
@@ -10040,7 +10221,12 @@ end
 
 	-- Clears manual step preview mode and optionally resumes automatic quest progress evaluation.
 	function RQE:ClearManualStepPreview(runChecks)
-		if not RQE.db.profile.enableStepControls then return end
+		-- Search previews also require cleanup when ordinary manual controls are disabled.
+		if self._searchedStepWaypoint and self.ClearSearchedQuestStepWaypoint then
+			self:ClearSearchedQuestStepWaypoint()
+		end
+		-- Previous code (commented out 2026.11.09): prevented search-preview cleanup with manual controls disabled.
+		-- if not RQE.db.profile.enableStepControls then return end
 
 		RQE.ManualStepPreview = false
 		RQE.ManualPreviewQuestID = nil
@@ -10121,6 +10307,8 @@ end
 
 	-- Periodic check setup comparing with entry in RQEDatabase
 	function RQE:StartPeriodicChecks(newlyFocusedQuestID)
+		-- Preview steps have no live progress; resume automatic checks after acceptance or clearing.
+		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 		if InCombatLockdown() then
 			self.RunPeriodicChecksAfterCombat = true
 			return
@@ -19462,10 +19650,8 @@ end
 			tprintTabs(string.format('descriptionQuestText = { "%s" },', esc(questData.descriptionQuestText[1])), 3)
 		end
 
-		-- NPC line
-		if questData.npc and questData.npc[1] then
-			tprintTabs(string.format('npc = { "%s" },', esc(questData.npc[1])), 3)
-		end
+		-- Preserve every pickup source and include a structured placeholder when the giver is unknown.
+		RQE.PrintQuestPickupSources(questData)
 
 		-- Steps
 		for index, step in ipairs(questData) do
