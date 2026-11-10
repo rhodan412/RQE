@@ -375,7 +375,8 @@ local function InitializeSandbox()
 
 		if questData.objectivesQuestText then print(string.format("\t\t\tobjectivesQuestText = { %s },", FormatSandboxExportStringList(questData.objectivesQuestText))) end
 		if questData.descriptionQuestText then print(string.format("\t\t\tdescriptionQuestText = { %s },", FormatSandboxExportStringList(questData.descriptionQuestText))) end
-		if questData.npc then print(string.format("\t\t\tnpc = { %s },", FormatSandboxExportStringList(questData.npc))) end
+		print('\t\t\tcreateFlag = { "" },')
+		RQE.PrintQuestPickupSources(questData, print, EscapeSandboxExportString)
 		if questData.canEdit ~= nil then print("\t\t\tcanEdit = " .. tostring(questData.canEdit) .. ",") end
 
 		local stepIndices = {}
