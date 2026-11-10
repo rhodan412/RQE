@@ -233,6 +233,11 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Main function to determine which method to use based on waypoint text
 	function RQE:CreateUnknownQuestWaypoint(questID, mapID)
+		-- Search previews own navigation even while another log quest remains supertracked.
+		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
+			return self:CreateSearchedQuestWaypoint(self.searchedQuestID, mapID)
+		end
 		if self:IsCoordblockWaypointProtected() then return end
 		-- print("~~~ Waypoint Creation Function: 92 ~~~")
 
@@ -267,7 +272,12 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 		RQE.superMapID = nil
 
 		-- Creates the searched quest waypoint.
+		-- Refreshes the current route after the map settles without replacing a newer search preview.
 		C_Timer.After(0.5, function()
+			if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+				if questID and tonumber(questID) ~= tonumber(RQE.searchedQuestID) then return end
+				return RQE:CreateSearchedQuestWaypoint(RQE.searchedQuestID, mapID)
+			end
 			if RQE:IsCoordblockWaypointProtected() then return end
 			if not questID then
 				if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -316,6 +326,12 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint when searching for a quest based on the location coordinates in the DB file
 	function RQE:CreateSearchedQuestWaypoint(questID, mapID)
+		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			if tonumber(questID) ~= tonumber(self.searchedQuestID) then return false end
+			local stepIndex = tonumber(self.ManualPreviewQuestID) == tonumber(questID)
+				and tonumber(self.ManualPreviewStepIndex) or 0
+			return self:CreateSearchedQuestStepWaypoint(questID, stepIndex, mapID)
+		end
 		-- print("~~~ Waypoint Creation Function: 132 ~~~")
 
 		if not RQEFrame:IsShown() then return end
@@ -426,34 +442,143 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 	-- Create a waypoint for a searched quest's virtual pickup step (0) or one of
 	-- its DB steps. Searched quests are not Blizzard-supertracked in Classic, so
 	-- they cannot use the normal supertrack-only step coordinate resolver.
-	function RQE:CreateSearchedQuestStepWaypoint(questID, stepIndex)
-		local questData = RQE.getQuestData(questID)
-		if not questData then return end
+	-- Previous code (commented out 2026.11.09): pickup recursed through the location-only creator.
+	-- function RQE:CreateSearchedQuestStepWaypoint(questID, stepIndex)
+	-- 	local questData = RQE.getQuestData(questID)
+	-- 	if not questData then return end
+	-- 
+	-- 	if stepIndex == 0 then
+	-- 		return RQE:CreateSearchedQuestWaypoint(questID, C_Map.GetBestMapForUnit("player"))
+	-- 	end
+	-- 
+	-- 	local stepData = questData[stepIndex]
+	-- 	if not stepData then return end
+	-- 
+	-- 	local mapID, x, y
+	-- 	if RQE.WPUtil and RQE.WPUtil.SelectBestHotspot and stepData.coordinateHotspots then
+	-- 		mapID, x, y = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, stepData)
+	-- 	end
+	-- 	if not (mapID and x and y) and stepData.coordinates then
+	-- 		mapID = stepData.coordinates.mapID
+	-- 		x = stepData.coordinates.x
+	-- 		y = stepData.coordinates.y
+	-- 		if x and x > 1 then x = x / 100 end
+	-- 		if y and y > 1 then y = y / 100 end
+	-- 	end
+	-- 	if not (mapID and x and y) then return end
+	-- 
+	-- 	RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mapID
+	-- 	RQE.isForcedWaypoint = true
+	-- 	RQE:CreateWaypoint(x, y, mapID, RQE.FormatStepDescription(questID, stepData) or questData.title)
+	-- 	RQE.isForcedWaypoint = nil
+	-- end
 
-		if stepIndex == 0 then
-			return RQE:CreateSearchedQuestWaypoint(questID, C_Map.GetBestMapForUnit("player"))
+	-- Removes only RQE's previous preview route and clears its coordinate and distance state.
+	function RQE:ClearSearchedQuestStepWaypoint()
+		if self._currentTomTomUID and TomTom then
+			if TomTom.RemoveWaypoint then
+				TomTom:RemoveWaypoint(self._currentTomTomUID)
+			elseif TomTom.ClearWaypoint then
+				TomTom:ClearWaypoint(nil, self._currentTomTomUID)
+			end
 		end
+		self._currentTomTomUID = nil
+		if self._searchedCarboniteUID and Nx and Nx.TTRemoveWaypoint then
+			Nx:TTRemoveWaypoint(self._searchedCarboniteUID)
+		end
+		self._searchedCarboniteUID = nil
+		local previous = self._searchedStepWaypoint or self._lastWP
+		local getPin = self.API.ResolveClientAPI("C_Map.GetUserWaypoint")
+		local clearPin = self.API.ResolveClientAPI("C_Map.ClearUserWaypoint")
+		local pin = previous and getPin and getPin()
+		if pin and pin.uiMapID == previous.mapID and pin.position and clearPin then
+			local position = pin.position
+			local px, py
+			if position.GetXY then px, py = position:GetXY()
+			else px, py = position.x, position.y end
+			if px and py and math.abs(px - previous.x) < 0.0001
+				and math.abs(py - previous.y) < 0.0001 then clearPin() end
+		end
+		self._lastWP, self._searchedStepWaypoint, self._currentHotspotIdx = nil, nil, nil
+		self.WPxPos, self.WPyPos, self.WPmapID = nil, nil, nil
+		self.DatabaseSuperX, self.DatabaseSuperY, self.DatabaseSuperMapID = nil, nil, nil
+		self.superX, self.superY, self.superMapID = nil, nil, nil
+		self.x, self.y, self.MapID = nil, nil, nil
+		if self.UpdateStepDistance then self:UpdateStepDistance() end
+	end
 
-		local stepData = questData[stepIndex]
-		if not stepData then return end
 
+	-- Returns normalized preview coordinates for both waypoint creation and its tooltips.
+	function RQE:GetSearchedQuestStepCoordinates(questID, stepIndex, targetMapID)
+		questID, stepIndex = tonumber(questID), tonumber(stepIndex)
+		local questData = questID and self.getQuestData(questID)
+		if not questData or not stepIndex then return nil end
 		local mapID, x, y
-		if RQE.WPUtil and RQE.WPUtil.SelectBestHotspot and stepData.coordinateHotspots then
-			mapID, x, y = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, stepData)
+		if stepIndex == 0 then
+			local continentID
+			x, y, mapID, continentID = self.GetPrimaryLocation(questData,
+				targetMapID or self.API.Client.C_Map.GetBestMapForUnit("player"))
+			mapID = mapID or continentID
+		else
+			local stepData = questData[stepIndex]
+			if not stepData then return nil end
+			if self.WPUtil and self.WPUtil.SelectBestHotspot and stepData.coordinateHotspots then
+				mapID, x, y = self.WPUtil.SelectBestHotspot(questID, stepIndex, stepData)
+			end
+			if not self:IsValidWaypointCoord(x, y, mapID) and type(stepData.coordinates) == "table" then
+				local coords = stepData.coordinates
+				x, y, mapID = coords.x, coords.y, coords.mapID or coords.continentID
+			end
 		end
-		if not (mapID and x and y) and stepData.coordinates then
-			mapID = stepData.coordinates.mapID
-			x = stepData.coordinates.x
-			y = stepData.coordinates.y
-			if x and x > 1 then x = x / 100 end
-			if y and y > 1 then y = y / 100 end
-		end
-		if not (mapID and x and y) then return end
+		if not self:IsValidWaypointCoord(x, y, mapID) then return nil end
+		x, y, mapID = tonumber(x), tonumber(y), tonumber(mapID)
+		if x > 1 then x = x / 100 end
+		if y > 1 then y = y / 100 end
+		return mapID, x, y
+	end
 
-		RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mapID
-		RQE.isForcedWaypoint = true
-		RQE:CreateWaypoint(x, y, mapID, RQE.FormatStepDescription(questID, stepData) or questData.title)
-		RQE.isForcedWaypoint = nil
+
+	-- Resolves pickup step 0 from quest locations and numbered previews from their own hotspots.
+	function RQE:CreateSearchedQuestStepWaypoint(questID, stepIndex, targetMapID)
+		questID, stepIndex = tonumber(questID), tonumber(stepIndex)
+		if not self:CanNavigateSearchedQuestSteps(questID) then return false end
+		if not (RQEFrame and RQEFrame:IsShown()) then return false end
+		if self:IsCoordblockWaypointProtected(questID, stepIndex)
+			or self:IsManualFlightMasterWaypointProtected() then return false end
+		if self.db.profile.enableTravelSuggestions and self.NearestFlightMasterSet then return false end
+		local questData = self.getQuestData(questID)
+		if not questData or not stepIndex then return false end
+
+		local mapID, x, y = self:GetSearchedQuestStepCoordinates(questID, stepIndex, targetMapID)
+		if not self:IsValidWaypointCoord(x, y, mapID) then
+			self:ClearSearchedQuestStepWaypoint()
+			return false
+		end
+		x, y, mapID = tonumber(x), tonumber(y), tonumber(mapID)
+		if x > 1 then x = x / 100 end
+		if y > 1 then y = y / 100 end
+		local stepData = questData[stepIndex]
+		local label = stepData and self.FormatStepDescription(questID, stepData)
+			or ("Waypoint for " .. (questData.title or tostring(questID)))
+
+		self:ClearSearchedQuestStepWaypoint()
+		local wasForced = self.isForcedWaypoint
+		self.isForcedWaypoint = true
+		local waypoint = self:CreateWaypoint(x, y, mapID, label)
+		self.isForcedWaypoint = wasForced
+		if TomTom and TomTom.AddWaypoint then
+			self._currentTomTomUID = waypoint
+		elseif not waypoint and Nx and Nx.TTAddWaypoint and Nx.TTRemoveWaypoint
+			and self.db.profile.enableCarboniteCompatibility then
+			-- Carbonite exposes TomTom-compatible IDs; keep only the preview's own removable target.
+			self._searchedCarboniteUID = Nx:TTAddWaypoint(mapID, x, y, { title = label, from = "RQE" })
+		end
+		self._lastWP = { mapID = mapID, x = x, y = y, title = label }
+		self._searchedStepWaypoint = { questID = questID, stepIndex = stepIndex, mapID = mapID, x = x, y = y }
+		self.WPxPos, self.WPyPos, self.WPmapID = x, y, mapID
+		self.DatabaseSuperX, self.DatabaseSuperY, self.DatabaseSuperMapID = x, y, mapID
+		if self.UpdateStepDistance then self:UpdateStepDistance() end
+		return true
 	end
 
 
@@ -463,6 +588,10 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint when there is Direction Text available
 	function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
+		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
+			return self:CreateSearchedQuestWaypoint(self.searchedQuestID, mapID)
+		end
 		if self:IsCoordblockWaypointProtected() then return end
 		-- print("~~~ Waypoint Creation Function: 276 ~~~")
 
@@ -733,6 +862,10 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint when there is No Direction Text available
 	function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
+		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
+			return self:CreateSearchedQuestWaypoint(self.searchedQuestID, mapID)
+		end
 		if self:IsCoordblockWaypointProtected() then return end
 		if not RQEFrame:IsShown() then return end
 
@@ -783,7 +916,9 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 			waypointTitle = "Quest Start: " .. questData.title
 		else
 			-- Fetch coordinates using super tracking data
+			-- Keeps delayed route work from replacing an active search preview.
 			C_Timer.After(0.1, function()
+				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 				if RQE:IsCoordblockWaypointProtected() then return end
 				local extractedQuestID = nil
 
@@ -952,7 +1087,9 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 				end
 
 				-- Adds the delayed legacy quest waypoint while respecting protected routes.
+				-- Keeps delayed route work from replacing an active search preview.
 				C_Timer.After(0.5, function()
+					if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 					if RQE:IsCoordblockWaypointProtected() then return end
 					if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
 						waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText
@@ -1011,6 +1148,10 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint when there is No Direction Text available
 	function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
+		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
+			return self:CreateSearchedQuestWaypoint(self.searchedQuestID, mapID)
+		end
 		if self:IsCoordblockWaypointProtected() then return end
 		-- print("~~~ Waypoint Creation Function: 559 ~~~")
 		if RQE.db.profile.enableTravelSuggestions then
@@ -1086,7 +1227,9 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 			-- TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 			-- Adds the delayed TomTom waypoint when its quest step still permits replacement.
+			-- Keeps delayed route work from replacing an active search preview.
 			C_Timer.After(0.5, function()
+				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 				if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 				if mapID and x and y then
 					RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
@@ -1130,6 +1273,10 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint for a specific quest step using questID and stepIndex
 	function RQE:CreateWaypointForStep(questID, stepIndex)
+		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			if tonumber(questID) ~= tonumber(self.searchedQuestID) then return false end
+			return self:CreateSearchedQuestStepWaypoint(questID, stepIndex)
+		end
 		if self:IsCoordblockWaypointProtected(questID, stepIndex) then return end
 		-- print("~~~ Waypoint Creation Function: 645 ~~~")
 		if RQE.db.profile.enableTravelSuggestions then
@@ -1195,7 +1342,9 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 		end
 
 		-- Set a timer to handle waypoint setting (with delay for compatibility reasons)
+		-- Keeps delayed route work from replacing an active search preview.
 		C_Timer.After(0.5, function()
+			if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 			if RQE:IsCoordblockWaypointProtected() then return end
 			if RQE.DescriptionText and RQE.DescriptionText ~= "No direction available." then
 				waypointTitle = waypointTitle .. "\n" .. RQE.DescriptionText -- Append DirectionText on a new line if available
@@ -1580,6 +1729,8 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Force the waypoint for the currently super-tracked quest using the intended priority.
 	function RQE:ForceWaypointForSupertracked(qid, mapID)
+		-- The current preview keeps its arrow until search ownership ends.
+		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then return end
 		if self:IsCoordblockWaypointProtected() then return end
 		-- print("~~~ Waypoint Creation Function: 1137 ~~~")
 		if not RQEFrame:IsShown() then return end
