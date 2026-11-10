@@ -612,7 +612,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- Ensures the arrow points at the *current* chosen hotspot; switches only if the chosen index changed
 	function RQE:EnsureWaypointForSupertracked()
 		-- The displayed search owns navigation while the old log quest remains supertracked.
-		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		-- Previous code (commented out 2026.11.09): limited preview ownership to Retail.
+		-- if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		if RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return true end
 		if self:IsCoordblockWaypointProtected() then return end
 		if not RQEFrame:IsShown() then return end
@@ -1648,7 +1650,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- links; authored coordblocks retain their description order on every map.
 	function RQE:GetCurrentHeaderWaypointSelection()
 		-- The displayed search owns navigation while the old log quest remains supertracked.
-		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		-- Previous code (commented out 2026.11.09): exposed the previous log quest's route controls in Classic.
+		-- if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		if RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return nil end
 		local questID = self.API and self.API.GetSuperTrackedQuestID
 			and tonumber(self.API.GetSuperTrackedQuestID())
@@ -2018,7 +2022,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- completed prefix for this quest/step.
 	function RQE:SyncCoordOrderWaypoint()
 		-- The displayed search owns navigation while the old log quest remains supertracked.
-		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		-- Previous code (commented out 2026.11.09): allowed old Classic log routes to replace a search waypoint.
+		-- if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		if RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return false end
 		if self._settingCoordOrderWaypoint or self._settingManualFlightMasterWaypoint
 			or not (RQEFrame and RQEFrame:IsShown()) then return false end
@@ -2228,7 +2234,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	end
 	-- Polls ordered-route progress and advances its active waypoint when appropriate.
 	coordOrderPoll:SetScript("OnUpdate", function(self, elapsed)
-		if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		-- Previous code (commented out 2026.11.09): paused automatic route movement only for Retail previews.
+		-- if RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		if RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 		self.elapsed = self.elapsed + elapsed
 		if self.elapsed < 0.35 then return end
@@ -2295,7 +2303,9 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 
 	-- Function to update distance to waypoint display
 	function RQE:UpdateStepDistance()
-		local isSearchedPreview = RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		-- Previous code (commented out 2026.11.09): Classic measured the unrelated supertracked quest.
+		-- local isSearchedPreview = RQE.IsRetail and RQE.CanNavigateSearchedQuestSteps
+		local isSearchedPreview = RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)
 		if not RQE.StepDistanceOverride and not isSearchedPreview then
 			-- Previous Blizzard call changed 2026.09.25: if not IsPlayerMoving() then return end
