@@ -89,7 +89,9 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 	function RQE.CheckCurrentMacroContents()
 		-- Search previews own their macro until pickup or an explicit step change.
 		-- Do not compare them to the unrelated Blizzard super-tracked quest.
-		if isRetail and RQE.CanNavigateSearchedQuestSteps
+		-- Previous condition (2026.11.09): only Retail protected searched preview macros.
+		-- if isRetail and RQE.CanNavigateSearchedQuestSteps
+		if RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return true end
 
 		-- Prevent re-entry if the function is already in progress
@@ -243,7 +245,9 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 	function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
 		-- Timer callbacks captured before Search > Track can still arrive here.
 		-- Only the active searched quest and selected preview step may replace it.
-		if isRetail and RQE.CanNavigateSearchedQuestSteps
+		-- Previous condition (2026.11.09): only Retail rejected stale search/step callbacks.
+		-- if isRetail and RQE.CanNavigateSearchedQuestSteps
+		if RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 			local selectedStep = tonumber(RQE.ManualPreviewStepIndex or RQE.AddonSetStepIndex) or 0
 			if tonumber(questID) ~= tonumber(RQE.searchedQuestID) or tonumber(stepIndex) ~= selectedStep then return end
@@ -311,8 +315,378 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 
 	-------------------------------------------------------
-	-- #3b. Searched Quest Pickup Macro
+	-- #3b. Shared Pickup Sources, Item Binding & Macros
 	-------------------------------------------------------
+
+	-- Exports pickup arrays without changing saved sources; unknown givers retain a blank NPC placeholder.
+	function RQE.PrintQuestPickupSources(questData, emit, escapeText)
+		emit = emit or print
+		questData = type(questData) == "table" and questData or {}
+		-- Escapes pickup names and IDs when the caller has no specialized string serializer.
+		local function EscapeText(value)
+			if escapeText then return escapeText(value) end
+			return tostring(value or ""):gsub("\\", "\\\\"):gsub("\r\n", "\n")
+				:gsub("\r", "\n"):gsub("\n", "\\n"):gsub("\t", "\\t"):gsub('"', '\\"')
+		end
+		local sources = {}
+		-- Copies supported pickup metadata and normalizes an unknown source ID to x99.
+		local function AddSource(kind, name, id, source)
+			if type(name) ~= "string" then return end
+			name = name:match("^%s*(.-)%s*$")
+			if name == "" then return end
+			local numericID = tonumber(id)
+			if numericID and numericID > 0 and numericID < math.huge and numericID % 1 == 0 then
+				id = numericID
+			elseif kind == "object" and type(id) == "string" and id:match("^[%w_-]+$")
+				and id:lower() ~= "x99" then
+				-- Named object IDs remain strings for the object viewer.
+			else
+				id = "x99"
+			end
+			sources[#sources + 1] = {
+				kind = kind, name = name, id = id,
+				hostile = kind == "npc" and source and source.hostile,
+				auction = kind == "item" and source and source.auction,
+			}
+		end
+		for _, source in ipairs(type(questData.npcs) == "table" and questData.npcs or {}) do
+			if type(source) == "table" then
+				local kind = source.object ~= nil and "object" or (source.item ~= nil and "item" or "npc")
+				local name = source[kind]
+				if kind == "npc" and name == nil then name = source.name end
+				AddSource(kind, name, source.id, source)
+			end
+		end
+		if #sources == 0 then
+			local legacy = type(questData.npc) == "table" and questData.npc or { questData.npc }
+			for _, name in ipairs(legacy) do
+				if type(name) == "string" then
+					for rawLine in name:gsub("\\n", "\n"):gmatch("[^\r\n]+") do
+						local line = rawLine:match("^%s*(.-)%s*$"):gsub("^/tar%s+", ""):gsub("^/target%s+", "")
+						if line:sub(1, 1) ~= "/" then AddSource("npc", line) end
+					end
+				end
+			end
+		end
+		if #sources == 0 then sources[1] = { kind = "npc", name = "", id = "x99" } end
+		emit("\t\t\tnpcs = {")
+		for index, source in ipairs(sources) do
+			local id = type(source.id) == "number" and string.format("%.0f", source.id)
+				or ('"' .. EscapeText(source.id) .. '"')
+			local metadata = source.hostile == true and ", hostile = true" or ""
+			if source.kind == "item" and type(source.auction) == "boolean" then
+				metadata = metadata .. ", auction = " .. tostring(source.auction)
+			end
+			local separator = index < #sources and "," or ""
+			emit(string.format('\t\t\t\t{ %s = "%s", id = %s%s }%s',
+				source.kind, EscapeText(source.name), id, metadata, separator))
+		end
+		emit("\t\t\t},")
+	end
+
+	-- Normalize mixed pickup sources without changing the stored DB entry.
+	-- Structured entries take precedence; legacy /tar lines remain plain names.
+	function RQE:GetQuestPickupSources(questID)
+		local questData = self.getQuestData(questID)
+		local sources, seen = {}, {}
+		if not questData then return sources end
+
+		-- Adds a distinct pickup source while preserving hostility and explicit AH opt-outs.
+		local function AddSource(kind, name, id, hostile, auction)
+			if type(name) ~= "string" then return end
+			name = name:match("^%s*(.-)%s*$")
+			if name == "" or name:find("[\r\n]") or name:sub(1, 1) == "/" then return end
+			-- x99 marks an unknown pickup ID: retain the name/type, but omit viewer links.
+			if type(id) == "string" and id:match("^%s*(.-)%s*$"):lower() == "x99" then
+				id = nil
+			end
+			if kind == "object" then
+				-- Match authored {object:key:name} tags, including custom keys such as tf001.
+				id = (type(id) == "string" or type(id) == "number") and tostring(id):match("^%s*(.-)%s*$") or nil
+				if not id or not id:match("^[%a%d]+$") then id = nil end
+			else
+				id = tonumber(id)
+				if not id or id <= 0 or id ~= math.floor(id) then id = nil end
+			end
+			local key = kind .. ":" .. name
+			hostile = kind == "npc" and hostile == true or nil
+			if seen[key] then
+				if id then seen[key].id = id end
+				if hostile then seen[key].hostile = true end
+				if auction == false then seen[key].auction = false end
+				return
+			end
+			local entry = { kind = kind, name = name, id = id, hostile = hostile }
+			if kind == "item" and auction == false then entry.auction = false end
+			sources[#sources + 1] = entry
+			seen[key] = entry
+		end
+
+		if type(questData.npcs) == "table" then
+			for _, entry in ipairs(questData.npcs) do
+				if type(entry) == "table" then
+					if entry.object ~= nil then
+						AddSource("object", entry.object, entry.id)
+					elseif entry.item ~= nil then
+						AddSource("item", entry.item, entry.id, nil, entry.auction)
+					else
+						AddSource("npc", entry.npc or entry.name, entry.id, entry.hostile)
+					end
+				end
+			end
+		end
+		if #sources == 0 and type(questData.npc) == "table" then
+			for _, legacyName in ipairs(questData.npc) do
+				if type(legacyName) == "string" then
+					for line in legacyName:gmatch("[^\r\n]+") do
+						line = line:match("^%s*(.-)%s*$")
+						AddSource("npc", line:match("^/tar%s+(.+)$") or line:match("^/target%s+(.+)$") or line)
+					end
+				end
+			end
+		end
+		return sources
+	end
+
+	-- Targeting macros retain an NPC-only list even when objects occur between NPCs.
+	function RQE:GetQuestPickupNPCs(questID)
+		local npcs = {}
+		for _, entry in ipairs(self:GetQuestPickupSources(questID)) do
+			if entry.kind == "npc" then npcs[#npcs + 1] = entry end
+		end
+		return npcs
+	end
+
+	-- Returns the quest pickup source text. noAuctionAdvice omits the Auction House suffix from item sources.
+	function RQE:GetQuestPickupSourceText(questID, useLinks, npcOnly, hostileOnly, sourceFilter, noAuctionAdvice)
+	-- Previous code (commented out 2026.11.02): added noAuctionAdvice so kill-and-loot wording can omit the AH suffix
+	-- function RQE:GetQuestPickupSourceText(questID, useLinks, npcOnly, hostileOnly, sourceFilter)
+		local names = {}
+		local sources = npcOnly and self:GetQuestPickupNPCs(questID) or self:GetQuestPickupSources(questID)
+		for _, entry in ipairs(sources) do
+			if (not sourceFilter or (sourceFilter == "item") == (entry.kind == "item"))
+				and (hostileOnly == nil or (entry.hostile == true) == hostileOnly) then
+				if entry.kind == "item" then
+					-- Pass the suffix opt-out through to the item formatter.
+					names[#names + 1] = self:GetQuestPickupItemText(entry, questID, useLinks, noAuctionAdvice)
+					-- Previous code (commented out 2026.11.02): item text always carried the AH suffix
+					-- names[#names + 1] = self:GetQuestPickupItemText(entry, questID, useLinks)
+				else
+					names[#names + 1] = useLinks and entry.id
+						and (entry.kind == "object" and string.format("{object:%s:%s}", entry.id, entry.name)
+							or string.format("{npc:%d:%s}", entry.id, entry.name)) or entry.name
+				end
+			end
+		end
+		if #names <= 1 then return names[1] end
+		return table.concat(names, ", ", 1, #names - 1) .. " or " .. names[#names]
+	end
+
+	-- Preserve the NPC-only text helper for callers that do not display objects.
+	function RQE:GetQuestPickupNPCText(questID, useLinks)
+		return self:GetQuestPickupSourceText(questID, useLinks, true)
+	end
+
+	-- The same pickup text is used by the direction row and virtual focus step 0.
+	function RQE:GetSearchedQuestPickupText(questID)
+		local questData = self.getQuestData(questID)
+		local sourceText = self:GetQuestPickupSourceText(questID, true, false, false, "nonitem")
+		local hostileText = self:GetQuestPickupSourceText(questID, true, true, true)
+		local itemText = self:GetQuestPickupSourceText(questID, true, false, false, "item")
+		-- Looted quest starters come from the kill itself, so kill-and-loot wording omits the AH suffix.
+		local lootItemText = self:GetQuestPickupSourceText(questID, true, false, false, "item", true)
+		local destination
+		if questData then
+			local _, _, mapID, continentID = self.GetPrimaryLocation(questData)
+			-- Item-source guidance prefers a listed zone when the primary resolver selected only a continent.
+			if itemText and not mapID and type(questData.locations) == "table" then
+				for _, location in ipairs(questData.locations) do
+					if type(location) == "table" and location.mapID then
+						mapID, continentID = location.mapID, nil
+						break
+					end
+				end
+			end
+			local finalMapID = mapID
+			if not finalMapID and continentID then
+				local playerMapID = self.API.Client.C_Map.GetBestMapForUnit("player")
+				local playerMapInfo = playerMapID and self.API.Client.C_Map.GetMapInfo(playerMapID)
+				if playerMapInfo and playerMapInfo.parentMapID == continentID then
+					finalMapID = continentID
+				end
+			end
+			if finalMapID then
+				local mapInfo = self.API.Client.C_Map.GetMapInfo(finalMapID)
+				if mapInfo then
+					destination = mapInfo.name or "Unknown"
+					local parentInfo = mapInfo.parentMapID and mapInfo.parentMapID > 0
+						and self.API.Client.C_Map.GetMapInfo(mapInfo.parentMapID)
+					if parentInfo and parentInfo.name then
+						destination = destination .. ", " .. parentInfo.name
+					end
+				end
+			end
+		end
+		if itemText and not sourceText and not hostileText then
+			return "Pick up the quest from clicking on the " .. itemText .. "."
+		end
+		-- Hostile NPCs paired with items describe a kill-and-loot source rather than independent pickup alternatives.
+		if itemText and hostileText and not sourceText then
+			-- Kill-and-loot sentences use the suffix-free item text.
+			return "Kill the " .. hostileText .. (destination and (" at " .. destination) or "")
+				.. ", loot and interact with the " .. lootItemText .. "."
+			-- Previous code (commented out 2026.11.02): itemText carried the AH suffix into the kill sentence
+			-- return "Kill the " .. hostileText .. (destination and (" at " .. destination) or "")
+			--	.. ", loot and interact with the " .. itemText .. "."
+		end
+		local action = sourceText and ("pick up the quest from " .. sourceText)
+		if hostileText then
+			-- Kill-and-loot alternatives use the suffix-free item text.
+			local killAction = itemText and ("kill the " .. hostileText .. ", loot and interact with the " .. lootItemText)
+				or ("kill " .. hostileText .. " to start the quest")
+			-- Previous code (commented out 2026.11.02): itemText carried the AH suffix into the kill alternative
+			-- local killAction = itemText and ("kill the " .. hostileText .. ", loot and interact with the " .. itemText)
+			--	or ("kill " .. hostileText .. " to start the quest")
+			action = action and (action .. " or " .. killAction) or killAction
+		end
+		if itemText and not hostileText then
+			local useAction = "interacting with the " .. itemText
+			action = action and (action .. " or " .. useAction) or useAction
+		end
+		if destination then
+			return "Travel to " .. destination .. (action and ((itemText and ", and " or " and ") .. action .. ".") or "")
+		end
+		return action and (action:gsub("^%l", string.upper) .. ".") or "Pick up the quest."
+	end
+
+	-- Refreshes loaded item guidance only while its original quest pickup is still displayed.
+	function RQE:RefreshQuestPickupItemData(questID, expectedData)
+		questID = tonumber(questID)
+		if not questID or tonumber(self.searchedQuestID) ~= questID
+			or not self:CanNavigateSearchedQuestSteps(questID)
+			or self.getQuestData(questID) ~= expectedData then return end
+		if self.ManualPreviewQuestID and tonumber(self.ManualPreviewQuestID) ~= questID then return end
+		local step = tonumber(self.ManualPreviewStepIndex or self.AddonSetStepIndex
+			or self.CurrentDisplayedStepIndex) or 0
+		if step ~= 0 then return end
+		local displayed = tonumber(self.DisplayedQuestID or self.CurrentDisplayedQuestID)
+		if displayed and displayed ~= questID then return end
+		if self.API.Client.InCombatLockdown() then
+			self.PendingPickupItemRefreshes = self.PendingPickupItemRefreshes or {}
+			self.PendingPickupItemRefreshes[questID] = expectedData
+			self:GetQuestPickupItemLoadFrame():RegisterEvent("PLAYER_REGEN_ENABLED")
+			return
+		end
+		if self.DirectionTextFrame and self.RenderTextWithItemsSteps then
+			local text = self:GetSearchedQuestPickupText(questID)
+			local style = self.db.profile.textSettings.DirectionTextFrame or {}
+			RQEFrame.DirectionText = text
+			self.DirectionTextFrame._rqeRenderingPickup = true
+			self.RenderTextWithItemsSteps(self.DirectionTextFrame, text, style.font, style.size,
+				style.color, self.DirectionTextFrame:GetParent())
+			self.DirectionTextFrame._rqeRenderingPickup = nil
+		end
+		if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
+		self:SetSearchedQuestPickupMacro(questID)
+	end
+
+	-- Reuses one item-data listener and discards late updates for replaced quests or preview steps.
+	function RQE:GetQuestPickupItemLoadFrame()
+		if self.PickupItemLoadFrame then return self.PickupItemLoadFrame end
+		local frame = CreateFrame("Frame")
+		self.PickupItemLoadFrame = frame
+		-- Rebuilds eligible pickup views after item loading or deferred combat work completes.
+		frame:SetScript("OnEvent", function(_, event, itemID, success)
+			if event == "PLAYER_REGEN_ENABLED" then
+				local pending = self.PendingPickupItemRefreshes or {}
+				self.PendingPickupItemRefreshes = nil
+				for questID, data in pairs(pending) do self:RefreshQuestPickupItemData(questID, data) end
+			else
+				local requests = self.PickupItemLoadRequests or {}
+				local pending = requests[itemID]
+				if pending then
+					local getInfo = self.API.ResolveClientAPI("C_Item.GetItemInfo")
+					local bindType = getInfo and select(14, getInfo(itemID))
+					if bindType ~= nil or success == false then
+						requests[itemID] = nil
+						if bindType ~= nil then
+							for questID, data in pairs(pending) do self:RefreshQuestPickupItemData(questID, data) end
+						end
+					end
+				end
+			end
+			if not next(self.PickupItemLoadRequests or {}) and not next(self.PendingPickupItemRefreshes or {}) then
+				frame:UnregisterAllEvents()
+			end
+		end)
+		return frame
+	end
+
+	-- Requests uncached item metadata once and records each quest that needs its binding information.
+	function RQE:RequestQuestPickupItemData(itemID, questID)
+		questID = tonumber(questID)
+		if not questID then return end
+		self.PickupItemLoadRequests = self.PickupItemLoadRequests or {}
+		local requests = self.PickupItemLoadRequests
+		local existing = requests[itemID]
+		local pending = existing or {}
+		pending[questID] = self.getQuestData(questID)
+		requests[itemID] = pending
+		local frame = self:GetQuestPickupItemLoadFrame()
+		frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+		frame:RegisterEvent("ITEM_DATA_LOAD_RESULT")
+		if not existing then
+			local requestLoad = self.API.ResolveClientAPI("C_Item.RequestLoadItemDataByID")
+			if requestLoad then requestLoad(itemID) end
+		end
+	end
+
+	-- Allows AH pickup advice only for known unbound, bind-on-equip, or bind-on-use items without an opt-out.
+	function RQE:IsQuestPickupItemAuctionEligible(source, questID)
+		local id = tonumber(source.id)
+		if source.auction == false or not id or id <= 0 or id % 1 ~= 0 then return false end
+		local getInfo = self.API.ResolveClientAPI("C_Item.GetItemInfo")
+		if not getInfo then return false end
+		local bindType = select(14, getInfo(id))
+		if bindType == nil then
+			self:RequestQuestPickupItemData(id, questID)
+			return false
+		end
+		return bindType == 0 or bindType == 2 or bindType == 3
+	end
+
+	-- Formats one pickup item and adds conditional AH advice using the same policy as its generated macro.
+	-- Retail says "available"; pre-Cataclysm clients say "purchasable". noAuctionAdvice skips the suffix entirely.
+	function RQE:GetQuestPickupItemText(source, questID, useLinks, noAuctionAdvice)
+	-- Previous code (commented out 2026.11.02): one suffix wording for every client and no way to omit it
+	-- function RQE:GetQuestPickupItemText(source, questID, useLinks)
+		local text = useLinks and source.id
+			and string.format("{item:%d:%s}", source.id, source.name) or source.name
+		-- Eligibility is always evaluated so uncached item data is still requested for later refreshes.
+		local eligible = self:IsQuestPickupItemAuctionEligible(source, questID)
+		if eligible and not noAuctionAdvice then
+			text = text .. (self.IsRetail and " (may be available from Auction House)"
+				or " (may be purchasable from Auction House)")
+		end
+		-- Previous code (commented out 2026.11.02): see above
+		-- if self:IsQuestPickupItemAuctionEligible(source, questID) then
+		--	text = text .. " (may be purchasable from Auction House)"
+		-- end
+		return text
+	end
+
+	-- Builds the exact pickup-item macro shared by step-0 generation and Magic Button tooltip recognition.
+	function RQE:GetQuestPickupItemMacro(source, questID)
+		local id = source.id
+		local lines = { "#showtooltip item:" .. (id or (self.IsRetail and 153541 or 1165)) }
+		if self:IsQuestPickupItemAuctionEligible(source, questID) then
+			lines[#lines + 1] = string.format(
+				"/run if RQE.API.Client.C_Item.GetItemCount(%d)==0 then RQE:SearchPreparePurchaseConfirmAH(%d,1) end",
+				id, id)
+		end
+		lines[#lines + 1] = id and ("/use item:" .. id) or ("/use " .. source.name)
+		return table.concat(lines, "\n")
+	end
 
 	-- Pickup is virtual step 0; actual DB steps retain their own macros.
 	function RQE:SetSearchedQuestPickupMacro(questID)
@@ -324,10 +698,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			if #npcs == 0 then
 				for _, source in ipairs(self:GetQuestPickupSources(questID)) do
 					if source.kind == "item" then
-						local macroLines = {
-							source.id and ("#showtooltip item:" .. source.id) or "#showtooltip item:153541",
-							"/use " .. source.name,
-						}
+						local macroLines = self:GetQuestPickupItemMacro(source, questID)
 						RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
 						-- Updates the magic button visibility.
 						self.API.Client.C_Timer.After(0.35, function()
@@ -368,12 +739,13 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			return true
 		end
 
+		-- Classic pickup refreshes must still belong to the selected quest and virtual pickup step.
+		if not self.CanNavigateSearchedQuestSteps or not self:CanNavigateSearchedQuestSteps(questID) then return false end
+		local selectedStep = tonumber(self.ManualPreviewStepIndex or self.AddonSetStepIndex) or 0
+		if selectedStep ~= 0 then return false end
 		local pickupItem = RQE.GetSearchedQuestPickupItem and RQE:GetSearchedQuestPickupItem(questID)
 		if pickupItem then
-			local macroLines = {
-				pickupItem.id and ("#showtooltip item:" .. pickupItem.id) or "#showtooltip item:1165",
-				"/use " .. pickupItem.name,
-			}
+			local macroLines = self:GetQuestPickupItemMacro(pickupItem, questID)
 			RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
 			-- Updates the magic button visibility.
 			RQE.API.Client.C_Timer.After(0.35, function()
@@ -382,23 +754,42 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			return true
 		end
 
-		local questData = RQE.getQuestData(questID)
-		if not questData or not questData.npc or #questData.npc == 0 or questData.npc[1] == "" then
+		-- Retain item-first Classic behavior, then resolve structured or legacy NPC alternatives.
+		local npcs = self:GetQuestPickupNPCs(questID)
+		if #npcs == 0 then
+			RQEMacro:SetQuestStepMacro(questID, 0, {}, true)
+			RQE.Buttons.UpdateMagicButtonVisibility()
 			return false
 		end
 
-		local npcName = questData.npc[1]
-		if not npcName or npcName == "" then return false end
-
-		local macroLines = {
-			"#showtooltip item:1165",
-			"/tar " .. npcName,
-			"/tm 3",
-		}
-
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Creating macro for searched NPC:", npcName)
+		local macroLines = { "#showtooltip item:1165" }
+		local hasAlternatives = #npcs > 1
+		local hasHostile, hasFriendly = false, false
+		for _, entry in ipairs(npcs) do
+			if entry.hostile then hasHostile = true else hasFriendly = true end
 		end
+		if hasAlternatives and hasFriendly then macroLines[#macroLines + 1] = "/cleartarget" end
+		for _, entry in ipairs(npcs) do
+			local targetCommand = hasAlternatives and "/tar [noexists][dead] " or "/tar "
+			macroLines[#macroLines + 1] = targetCommand .. entry.name
+		end
+		if hasHostile then
+			macroLines[#macroLines + 1] = "/cleartarget [dead]"
+			macroLines[#macroLines + 1] = hasFriendly and "/tm [harm] ~8; 3" or "/tm ~8"
+		else
+			macroLines[#macroLines + 1] = "/tm 3"
+		end
+		-- Previous code (2026.11.09): only the first legacy npc entry produced a pickup macro.
+		-- local questData = RQE.getQuestData(questID)
+		-- if not questData or not questData.npc or #questData.npc == 0 or questData.npc[1] == "" then
+		-- 	return false
+		-- end
+		-- local npcName = questData.npc[1]
+		-- if not npcName or npcName == "" then return false end
+		-- local macroLines = { "#showtooltip item:1165", "/tar " .. npcName, "/tm 3" }
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- 	print("Creating macro for searched NPC:", npcName)
+		-- end
 		RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
@@ -422,9 +813,10 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			return -- Player already has or completed the quest
 		end
 
-		if not isRetail then
-			return RQE:SetSearchedQuestPickupMacro(questID)
-		end
+		-- Previous code (2026.11.09): Classic returned before validating the selected preview step.
+		-- if not isRetail then
+		-- 	return RQE:SetSearchedQuestPickupMacro(questID)
+		-- end
 
 		-- Delayed search/event refreshes must not replace a manually selected
 		-- preview step's macro with the pickup targets.
@@ -821,7 +1213,9 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 		-- >>> NEW: check if current macroArray step defines a spell tooltip
 		local questID = RQE.API.GetSuperTrackedQuestID()
-		if isRetail and RQE.CanNavigateSearchedQuestSteps
+		-- Previous condition (2026.11.09): Classic tooltip lookup used the unrelated tracked quest.
+		-- if isRetail and RQE.CanNavigateSearchedQuestSteps
+		if RQE.CanNavigateSearchedQuestSteps
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 			questID = tonumber(RQE.searchedQuestID)
 		end
@@ -934,8 +1328,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				if isRetail and #RQE:GetQuestPickupNPCs(pickupQuestID) == 0 then
 					for _, source in ipairs(RQE:GetQuestPickupSources(pickupQuestID)) do
 						if source.kind == "item" then
-							local expected = (source.id and ("#showtooltip item:" .. source.id)
-								or "#showtooltip item:153541") .. "\n/use " .. source.name
+							local expected = RQE:GetQuestPickupItemMacro(source, pickupQuestID)
 							if macroBody == expected then pickupItem = source end
 							break
 					end
@@ -943,8 +1336,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				elseif not isRetail and RQE.GetSearchedQuestPickupItem then
 					local source = RQE:GetSearchedQuestPickupItem(pickupQuestID)
 					if source then
-						local expected = (source.id and ("#showtooltip item:" .. source.id)
-								or "#showtooltip item:1165") .. "\n/use " .. source.name
+						local expected = RQE:GetQuestPickupItemMacro(source, pickupQuestID)
 						if macroBody == expected then pickupItem = source end
 					end
 				end
