@@ -741,6 +741,11 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	local oldSetDirectionText = RQE.DirectionTextFrame.SetText
 	-- Wrap direction updates so every new value also refreshes the shared Quest Helper layout.
 	function RQE.DirectionTextFrame:SetText(text)
+		-- Plain direction updates must release hover regions from the previous pickup guidance.
+		if not self._rqeRenderingPickup then
+			RQE.API.ReleaseRichTextHovers(self)
+			self._rqeRichText = nil
+		end
 		local result = oldSetDirectionText(self, text)
 		if RQE.RefreshQuestHelperTextLayout then
 			RQE:RefreshQuestHelperTextLayout()
@@ -2139,11 +2144,20 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					-- RQE:ClickWaypointButtonForIndex(i)
 				-- end
 
-				if RQE.db.profile.enableStepControls then
+				-- Searched previews select their own focus, macro, and waypoint even when manual controls are off.
+				local previewQuestID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+				if RQE:CanUseStepControlsForQuest(previewQuestID) then
 					if not RQE._autoClickingWaypointButton then
 						RQE:SetDisplayedStepFromStepsList(i)
 					end
+					if RQE:CanNavigateSearchedQuestSteps(previewQuestID) then return end
 				end
+				-- Previous code (commented out 2026.11.09): listed-step previews depended on the global manual-control option.
+				-- if RQE.db.profile.enableStepControls then
+					-- if not RQE._autoClickingWaypointButton then
+						-- RQE:SetDisplayedStepFromStepsList(i)
+					-- end
+				-- end
 
 				-- Code for RWButton functionality here
 				local extractedQuestID
@@ -2384,7 +2398,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 	-- Fetch the Objective Index for a particular quest
 	function RQE:GetCurrentObjectiveIndex(questID)
-		local questData = RQEDatabase[questID]
+		-- Resolve the displayed quest through its client section, Sandbox override, or optional provider.
+		local questData = RQE.getQuestData(questID)
+		-- Previous code (commented out 2026.11.08): quest IDs are nested under database sections.
+		-- local questData = RQEDatabase[questID]
 		if not questData then
 			RQE.infoLog("No data found for questID:", questID)
 			return 0  -- Return 0 or an appropriate default value if no data is found
@@ -3176,25 +3193,27 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				if RQE.UpdateSeparateContentHeight then RQE.UpdateSeparateContentHeight() end
 			end
 
-			-- Decide which quest SeparateFocus should display
-			-- Only update for REAL quests (quest log or active world quest).
-			-- If the RQEFrame is showing a searched quest that's not in the log/WQ, do NOT update SeparateFocus.
+			-- A valid search preview owns the focus until accepted, cleared, or replaced.
 			local displayedQuestID
 
-			-- If we're in "searched quest mode" and it's not a real quest, bail out early (freeze SeparateFocus)
-			local searchedID = RQE.searchedQuestID
-			local isSearchedStepPreview = searchedID
-				and not RQE.API.IsOnQuest(searchedID)
-				and not RQE.API.IsWorldQuest(searchedID)
-				and RQE.ManualStepPreview
-				and RQE.ManualPreviewQuestID == searchedID
-				and tonumber(RQE.ManualPreviewStepIndex)
-				and (RQE.ManualPreviewStepIndex > 0
-					or (RQE.ManualPreviewStepIndex == 0 and RQE:GetSearchedQuestPickupItem(searchedID)))
+			-- Otherwise, the focus continues to follow the active quest.
+			-- Every valid searched pickup source owns the focus panel, including restored step-zero previews.
+			local searchedID = tonumber(RQE.searchedQuestID)
+			local isSearchedStepPreview = RQE:CanNavigateSearchedQuestSteps(searchedID)
+			-- Previous code (commented out 2026.11.09): only item starters could populate the searched pickup focus.
+			-- local searchedID = RQE.searchedQuestID
+			-- local isSearchedStepPreview = searchedID
+				-- and not RQE.API.IsOnQuest(searchedID)
+				-- and not RQE.API.IsWorldQuest(searchedID)
+				-- and RQE.ManualStepPreview
+				-- and RQE.ManualPreviewQuestID == searchedID
+				-- and tonumber(RQE.ManualPreviewStepIndex)
+				-- and (RQE.ManualPreviewStepIndex > 0
+					-- or (RQE.ManualPreviewStepIndex == 0 and RQE:GetSearchedQuestPickupItem(searchedID)))
 
 			if searchedID and not RQE.API.IsOnQuest(searchedID) and not RQE.API.IsWorldQuest(searchedID) and not isSearchedStepPreview then
 			--if searchedID and not C_QuestLog.IsOnQuest(searchedID) and not C_QuestLog.IsWorldQuest(searchedID) then
-				-- Non-item pickup step 0 retains its existing empty Separate Focus.
+				-- Invalid search entries cannot populate a pickup preview.
 				if RQE.ManualPreviewQuestID == searchedID and tonumber(RQE.ManualPreviewStepIndex) == 0 then
 					RQE:ClearSeparateFocusFrame()
 				end
@@ -3202,7 +3221,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				return
 			end
 
-			-- A searched quest preview follows its selected DB step. All other
+			-- A searched quest preview follows its pickup or selected DB step. All other
 			-- contexts continue to follow the active Blizzard/RQE supertrack.
 			if isSearchedStepPreview then
 				displayedQuestID = searchedID
@@ -3251,6 +3270,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 			-- ✅ Improved quest data handling (for DB-less quests)
 			local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
+			if isSearchedStepPreview then
+				stepIndex = tonumber(RQE.ManualPreviewQuestID) == searchedID
+					and tonumber(RQE.ManualPreviewStepIndex) or 0
+			end
 			local questID = displayedQuestID
 			-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			local questData = RQE.getQuestData(questID)
@@ -3259,12 +3282,17 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			local stepData = nil
 
 			-- ✅ Quest handling logic
-			local isItemPickupPreview = questData and stepIndex == 0
-				and RQE:CanNavigateSearchedQuestSteps(questID)
-				and RQE:GetSearchedQuestPickupItem(questID)
-			if isItemPickupPreview then
+			local isPickupPreview = isSearchedStepPreview and stepIndex == 0
+			if isPickupPreview then
 				totalSteps = #questData
-				stepData = { description = RQE:GetSearchedQuestItemPickupText(questID) }
+				stepData = { description = RQE:GetSearchedQuestPickupText(questID) }
+			-- Previous code (commented out 2026.11.09): the pickup focus accepted item sources only.
+			-- local isItemPickupPreview = questData and stepIndex == 0
+				-- and RQE:CanNavigateSearchedQuestSteps(questID)
+				-- and RQE:GetSearchedQuestPickupItem(questID)
+			-- if isItemPickupPreview then
+				-- totalSteps = #questData
+				-- stepData = { description = RQE:GetSearchedQuestItemPickupText(questID) }
 				RQE.CurrentDisplayedStepIndex = 0
 				RQE.CurrentDisplayedQuestID = questID
 			elseif not questData then
@@ -3329,7 +3357,9 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				print(("DBG: has |c=%s, has ||c=%s, text=%s"):format(tostring(hasSingle), tostring(hasDouble), visible))
 			end
 
-			local formattedText = isItemPickupPreview
+			local formattedText = isPickupPreview
+			-- Previous code (commented out 2026.11.09): the Pickup Quest label was limited to item starters.
+			-- local formattedText = isItemPickupPreview
 				and ("|cff80e5ffPickup Quest:|r " .. stepDescription)
 				or string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription)
 			formattedText = formattedText:gsub("||c", "|c"):gsub("||r", "|r"):gsub("||H", "|H"):gsub("||h", "|h")
@@ -3827,6 +3857,12 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 			-- Add the click event for the Waypoint Button
 			RQE.SeparateWaypointButton:SetScript("OnClick", function()
+				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+					local stepIndex = tonumber(RQE.ManualPreviewQuestID) == tonumber(RQE.searchedQuestID)
+						and tonumber(RQE.ManualPreviewStepIndex) or 0
+					RQE:CreateSearchedQuestStepWaypoint(RQE.searchedQuestID, stepIndex)
+					return
+				end
 				local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
 				local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
 				local questData = questID and RQE.getQuestData(questID)
@@ -3946,10 +3982,28 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	-- #8i. Coordinate-Block Tooltip Data
 	-------------------------------------------------------
 
-	-- Resolve tooltip text and coordinates for the active coordinate-block button.
+	-- Reports the pickup or selected preview coordinates, otherwise the active quest's current hotspot.
 	function RQE.GetTooltipDataForCButton()
 		local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex) or 1
 		local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
+		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+			questID = tonumber(RQE.searchedQuestID)
+			stepIndex = tonumber(RQE.ManualPreviewQuestID) == questID
+				and tonumber(RQE.ManualPreviewStepIndex) or 0
+			local point = RQE._searchedStepWaypoint
+			local mapID, x, y
+			if point and point.questID == questID and point.stepIndex == stepIndex then
+				mapID, x, y = point.mapID, point.x, point.y
+			elseif RQE.GetSearchedQuestStepCoordinates then
+				mapID, x, y = RQE:GetSearchedQuestStepCoordinates(questID, stepIndex)
+			end
+			if mapID and x and y then
+				local text = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x * 100, y * 100, mapID)
+				RQE.SeparateFocusCoordData = text
+				return text
+			end
+			return "Coordinates unavailable for searched quest."
+		end
 		local questData = questID and RQE.getQuestData(questID)
 
 		if questData and questData[stepIndex] then
