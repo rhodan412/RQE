@@ -2448,7 +2448,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Fetch the Objective Index for a particular quest
 	function RQE:GetCurrentObjectiveIndex(questID)
-		local questData = RQEDatabase[questID]
+		-- Resolve the displayed quest through its client section, Sandbox override, or optional provider.
+		local questData = RQE.getQuestData(questID)
+		-- Previous code (commented out 2026.11.08): quest IDs are nested under database sections.
+		-- local questData = RQEDatabase[questID]
 		if not questData then
 			RQE.infoLog("No data found for questID:", questID)
 			return 0  -- Return 0 or an appropriate default value if no data is found
