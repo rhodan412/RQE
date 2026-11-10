@@ -170,6 +170,16 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			RQE.hoveringOnRQEFrameAndButton = true
 
 			local searchedQuestID = RQE.searchedQuestID
+			-- Classic search tooltips follow the displayed pickup or step without triggering old quest refreshes.
+			if not isRetail and RQE.CanNavigateSearchedQuestSteps
+				and RQE:CanNavigateSearchedQuestSteps(searchedQuestID) and RQE.GetTooltipDataForCButton then
+				GameTooltip:SetOwner(self, "ANCHOR_NONE")
+				GameTooltip:ClearAllPoints()
+				GameTooltip:SetPoint("TOPRIGHT", self, "TOPRIGHT", 0, 33)
+				GameTooltip:SetText(RQE.GetTooltipDataForCButton())
+				GameTooltip:Show()
+				return
+			end
 			if searchedQuestID then
 				local dbEntry = RQE.getQuestData(searchedQuestID)
 				local isComplete
@@ -1536,12 +1546,16 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 					if targetStep >= 0 and (targetStep >= 1 or RQE:CanNavigateSearchedQuestSteps(questID)) then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
-						-- Retail searched previews install their waypoint during the display change.
-						if isRetail and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
+						-- Searched previews install their waypoint during the display change on every client.
+						if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
+						-- Previous code (commented out 2026.11.09): Classic also installs its preview waypoint immediately.
+						-- if isRetail and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
 						-- Creates the searched quest step waypoint.
 						RQE.API.Client.C_Timer.After(0.2, function()
+							-- A search started after this ordinary-step click owns its own waypoint.
+							if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 							local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
 								if RQE:CanNavigateSearchedQuestSteps(questID) then
@@ -1643,12 +1657,16 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 					if questData and questData[targetStep] then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
-						-- Retail searched previews install their waypoint during the display change.
-						if isRetail and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
+						-- Searched previews install their waypoint during the display change on every client.
+						if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
+						-- Previous code (commented out 2026.11.09): Classic also installs its preview waypoint immediately.
+						-- if isRetail and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
 						-- Creates the searched quest step waypoint.
 						RQE.API.Client.C_Timer.After(0.2, function()
+							-- A search started after this ordinary-step click owns its own waypoint.
+							if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 							local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
 								if RQE:CanNavigateSearchedQuestSteps(questID) then
@@ -1763,10 +1781,16 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local nextButton = RQE.NextStepButton
 		if not closeButton or not prevButton or not nextButton then return end
 
+		-- A searched DB quest exposes pickup and step navigation without changing normal quest preferences.
 		local stepControlsVisible = RQE.db and RQE.db.profile
 			and (RQE.db.profile.enableStepControls == true
-				 or (isRetail and RQE.CanNavigateSearchedQuestSteps
+				 or (RQE.CanNavigateSearchedQuestSteps
 					 and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)))
+		-- Previous code (commented out 2026.11.09): searched preview controls were automatically visible only on Retail.
+		-- local stepControlsVisible = RQE.db and RQE.db.profile
+		-- 	and (RQE.db.profile.enableStepControls == true
+		-- 		 or (isRetail and RQE.CanNavigateSearchedQuestSteps
+		-- 			 and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)))
 		if stepControlsVisible then
 			nextButton:ClearAllPoints()
 			nextButton:SetPoint("TOPRIGHT", navigationAnchor, "TOPLEFT", -3, 0)
