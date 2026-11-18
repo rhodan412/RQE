@@ -246,6 +246,11 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			RQE.NearestFlightMasterSet = false
 		end
 
+		if self.CanRunHybridNavigation and self:CanRunHybridNavigation() then
+			if not self.db.profile.autoClickWaypointButton then return end
+			if self:IsHybridManualStepPreview(questID) then return self:ActivateHybridWaypoint(false) end
+		end
+
 		-- If the player manually selected a step, create the waypoint from that displayed step only.
 		if RQE.db.profile.enableStepControls then
 			if RQE.ManualStepPreview
@@ -268,9 +273,11 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		RQE.superY = nil
 		RQE.superMapID = nil
 
+		local hybridToken = self.GetHybridCallbackToken and self:GetHybridCallbackToken()
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
-		-- Creates the searched quest waypoint.
+		-- Creates the searched quest waypoint unless the player has entered Hybrid since it was scheduled.
 		RQE.API.Client.C_Timer.After(0.5, function()
+			if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(hybridToken) then return end
 			if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if questID and tonumber(questID) ~= tonumber(RQE.searchedQuestID) then return end
 				return RQE:CreateSearchedQuestWaypoint(RQE.searchedQuestID, mapID)
@@ -1244,9 +1251,12 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			RQE._currentTomTomUID = nil
 		end
 
+		local hybridToken = self.GetHybridCallbackToken and self:GetHybridCallbackToken()
 		-- Set a timer to handle waypoint setting (with delay for compatibility reasons)
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		-- Apply the captured waypoint only while its Hybrid quest and selection remain current.
 		RQE.API.Client.C_Timer.After(0.5, function()
+			if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(hybridToken) then return end
 			if RQE:IsCoordblockWaypointProtected() then return end
 			if RQE.DescriptionText and RQE.DescriptionText ~= "No direction available." then
 				waypointTitle = waypointTitle .. "\n" .. RQE.DescriptionText -- Append DirectionText on a new line if available
