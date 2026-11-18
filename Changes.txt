@@ -1,4 +1,4 @@
-12.1.5.4
+12.1.5.4 (2026.11.18)
 
 	**HIGHLIGHTS**
 		- Separate Focus now defaults to a tighter 5-unit line gap, adjustable from 0 to 20 under Frame Settings > Quest Helper Layout in both Blizzard AddOn Settings and RQE's configuration window on every supported client.
