@@ -508,7 +508,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 					autoCompleteNoRewardChoices = {
 						type = "toggle",
 						name = "Auto-Complete when No Reward Choices",
-						desc = "Allow the Contribution turn-in macro to select the supertracked quest and complete it when there is no reward choice. Multiple reward choices or a required payment remain manual. Reopen the Contribution menu to copy the updated macro.",
+						desc = "Automatically complete the quest shown by a quest giver when no reward choice is needed. Multiple reward choices or a required payment remain manual. Also allows the Contribution turn-in macro to select and complete the supertracked quest.",
 						order = 10.5,
 						-- Reads the saved auto complete no reward choices setting.
 						get = function() return RQE.db.profile.autoCompleteNoRewardChoices end,
@@ -1793,7 +1793,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 			-- Shows this control's tooltip while the pointer is over it.
 			checkbox:SetCallback("OnEnter", function(widget)
 				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-				GameTooltip:SetText("Allow the Contribution turn-in macro to complete the supertracked quest when no reward choice is needed. Multiple reward choices or a required payment remain manual. Reopen the Contribution menu to copy the updated macro.", nil, nil, nil, nil, true)
+				GameTooltip:SetText("Automatically complete the quest shown by a quest giver when no reward choice is needed. Multiple reward choices or a required payment remain manual. Also allows the Contribution turn-in macro to select and complete the supertracked quest.", nil, nil, nil, nil, true)
 				GameTooltip:Show()
 			end)
 			-- Hides the tooltip when the pointer leaves this control.
