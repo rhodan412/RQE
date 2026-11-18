@@ -40,6 +40,10 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	local OBJECT_IMAGE_ROOT = "Interface\\AddOns\\RQE\\Media\\ObjectPreviews\\"
 	local MIN_NPC_ZOOM = 0.35
 	local MAX_NPC_ZOOM = 3
+	local NPC_ROTATION_STEP = math.pi / 4
+	local NPC_ROTATION_HOLD_DELAY = 0.25
+	local NPC_ROTATION_HOLD_SPEED = math.pi / 2
+	local NPC_CONTROL_ROW_HEIGHT = 28
 	local MIN_OBJECT_ZOOM = 1
 	local MAX_OBJECT_ZOOM = 5
 
@@ -137,6 +141,85 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		options.viewY = tonumber(options.viewY) or 0
 		options.scale = Clamp(tonumber(options.scale) or 1, MIN_NPC_ZOOM, MAX_NPC_ZOOM)
 		return options
+	end
+
+	-- Stops hold updates, retaining click suppression until release or the next fresh press.
+	local function StopNPCRotationHold(button, cancelClick)
+		if cancelClick and button.rotationPressToken then button.suppressRotationClick = true end
+		button.rotationPressStart = nil
+		button.rotationLastElapsed = nil
+		button:SetScript("OnUpdate", nil)
+	end
+
+	-- Reserves an NPC-only control row and enables rotation only for a ready, supported model.
+	local function UpdateNPCRotationControls(frame)
+		if not frame.RotationControls then return end
+		local isNPC = frame.previewKind == "npc"
+		local extraHeight = isNPC and NPC_CONTROL_ROW_HEIGHT or 0
+		-- Grow the NPC window with the row so its original model viewport and framing stay intact.
+		frame:SetHeight(PREVIEW_HEIGHT + extraHeight)
+		frame.Content:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -MODEL_INSET, 28 + extraHeight)
+		frame.RotationControls:SetShown(isNPC)
+		local enabled = isNPC and frame.previewReady and frame.Model and frame.Model:IsShown()
+			and type(frame.Model.SetFacing) == "function" and not frame.rotationUnavailable
+		for _, button in ipairs(frame.RotationControls.Buttons) do
+			if enabled then
+				button:Enable()
+			else
+				StopNPCRotationHold(button, true)
+				button:Disable()
+			end
+			button:SetAlpha(enabled and 1 or 0.35)
+		end
+	end
+
+	-- Turns the ready NPC by the requested angle, or restores its default facing without changing pan or zoom.
+	local function RotateNPCPreview(frame, delta)
+		local model = frame.Model
+		if not frame:IsShown() or frame.previewKind ~= "npc" or not frame.previewReady
+			or not model or not model:IsShown() or frame.rotationUnavailable then return end
+		local options = GetModelViewOptions(model)
+		local facing = RQE.API.DEFAULT_CREATURE_PREVIEW_FACING
+		if delta then
+			facing = ((tonumber(options.facing) or facing) + delta + math.pi) % (2 * math.pi) - math.pi
+		end
+		if RQE.API.SetCreaturePreviewFacing(model, facing) then
+			options.facing = facing
+		else
+			frame.rotationUnavailable = true
+			UpdateNPCRotationControls(frame)
+		end
+	end
+
+	-- Applies only time beyond the hold delay, including the final interval before release.
+	local function ApplyNPCRotationHold(button)
+		if not button.rotationPressStart then return end
+		local frame = button:GetParent():GetParent()
+		if not button:IsEnabled() or not frame:IsShown() or frame.previewKind ~= "npc"
+			or not frame.previewReady or frame.rotationUnavailable
+			or button.rotationPressToken ~= frame.requestToken
+			or not frame.Model or not frame.Model:IsShown() then
+			StopNPCRotationHold(button, true)
+			return
+		end
+		local elapsed = math.max(0, RQE.API.Client.GetTime() - button.rotationPressStart)
+		local heldTime = math.max(0, elapsed - NPC_ROTATION_HOLD_DELAY)
+		local previousHeldTime = math.max(0, (button.rotationLastElapsed or 0) - NPC_ROTATION_HOLD_DELAY)
+		button.rotationLastElapsed = elapsed
+		if elapsed >= NPC_ROTATION_HOLD_DELAY then button.suppressRotationClick = true end
+		if heldTime > previousHeldTime then
+			local direction = button.rotationDelta / NPC_ROTATION_STEP
+			RotateNPCPreview(frame, direction * NPC_ROTATION_HOLD_SPEED * (heldTime - previousHeldTime))
+		end
+	end
+
+	-- Advances a held arrow while the physical mouse button remains down.
+	local function UpdateNPCRotationHold(button)
+		if not RQE.API.Client.IsMouseButtonDown("LeftButton") then
+			StopNPCRotationHold(button, true)
+			return
+		end
+		ApplyNPCRotationHold(button)
 	end
 
 	-------------------------------------------------------
@@ -261,7 +344,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	end
 
 	-- Moving between wrapped fragments of the same link must not reload the model
-	-- or reset the player's pan/zoom. Failed loads remain retryable on the next hover.
+	-- or reset the player's pan, zoom, or rotation. Failed loads remain retryable on the next hover.
 	local function IsCurrentPreview(frame, key, kind, title, questBound, source)
 		if not frame:IsShown() or frame.previewKey ~= key or frame.previewKind ~= kind
 			or frame.Title:GetText() ~= title or frame.previewSource ~= source
@@ -366,6 +449,73 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	-- Refreshes the creature object preview theme.
 	function RQE.RefreshCreatureObjectPreviewTheme()
 		ApplyPreviewTheme(previewFrame)
+	end
+
+	-- Hides only the tooltip owned by a rotation button when the pointer or preview leaves it.
+	local function HideRotationButtonTooltip(button)
+		if GameTooltip:IsOwned(button) then GameTooltip:Hide() end
+	end
+
+	-- Cancels a departed or hidden arrow press and releases its owned tooltip.
+	local function CancelNPCRotationButton(button)
+		StopNPCRotationHold(button, true)
+		HideRotationButtonTooltip(button)
+	end
+
+	-- Creates an icon button that turns the NPC or restores its original facing.
+	local function CreateNPCRotationButton(frame, offset, label, texture, pushedTexture, delta)
+		local button = CreateFrame("Button", nil, frame.RotationControls)
+		button:SetSize(24, 24)
+		button:SetPoint("CENTER", frame.RotationControls, "CENTER", offset, 0)
+		button:SetNormalTexture(texture)
+		button:SetPushedTexture(pushedTexture or texture)
+		button:SetDisabledTexture(texture)
+		button:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+		button:RegisterForClicks("LeftButtonUp")
+		button.rotationDelta = delta
+		if delta then
+			-- Starts timing a fresh arrow press against the current preview request.
+			button:SetScript("OnMouseDown", function(self, mouseButton)
+				if mouseButton ~= "LeftButton" or not self:IsEnabled() or not frame.previewReady then return end
+				self.suppressRotationClick = nil
+				self.rotationPressToken = frame.requestToken
+				self.rotationPressStart = RQE.API.Client.GetTime()
+				self.rotationLastElapsed = 0
+				self:SetScript("OnUpdate", UpdateNPCRotationHold)
+			end)
+			-- Finishes the held interval without allowing release to add an extra click step.
+			button:SetScript("OnMouseUp", function(self, mouseButton)
+				if mouseButton ~= "LeftButton" then return end
+				ApplyNPCRotationHold(self)
+				StopNPCRotationHold(self, false)
+			end)
+		end
+		-- Applies one step for a short click, suppresses a completed hold, or restores the front view.
+		button:SetScript("OnClick", function(self)
+			if delta then
+				ApplyNPCRotationHold(self)
+				local suppressed = self.suppressRotationClick
+					or (self.rotationPressToken and self.rotationPressToken ~= frame.requestToken)
+				StopNPCRotationHold(self, false)
+				self.rotationPressToken, self.suppressRotationClick = nil, nil
+				if suppressed then return end
+			end
+			RotateNPCPreview(frame, delta)
+		end)
+		-- Explains the rotation direction or default-facing reset above the hovered icon.
+		button:SetScript("OnEnter", function(self)
+			GameTooltip:SetOwner(self, "ANCHOR_TOP")
+			GameTooltip:SetText(label, 1, 0.843, 0)
+			if delta then
+				GameTooltip:AddLine("Click: turn 45 degrees.\nHold: rotate continuously.", 1, 1, 1)
+			end
+			GameTooltip:Show()
+		end)
+		button:SetScript("OnLeave", CancelNPCRotationButton)
+		button:SetScript("OnHide", CancelNPCRotationButton)
+		button:Disable()
+		button:SetAlpha(0.35)
+		return button
 	end
 
 	-- Creates the reusable preview window, interaction controls, model widget, and image region.
@@ -539,6 +689,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 				RQE.API.ConfigureCreaturePreviewModel(model, model.RQEPreviewOptions)
 				frame.Status:Hide()
 				model:SetAlpha(1)
+				UpdateNPCRotationControls(frame)
 			end)
 		end
 
@@ -559,6 +710,20 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		frame.Help:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
 		frame.Help:SetText("Drag view  •  Wheel zoom  •  Title moves window")
 
+		frame.RotationControls = CreateFrame("Frame", nil, frame)
+		frame.RotationControls:SetSize(88, 24)
+		frame.RotationControls:SetPoint("BOTTOM", frame, "BOTTOM", 0, 28)
+		frame.RotateLeftButton = CreateNPCRotationButton(frame, -32, "Rotate left",
+			"Interface\\Buttons\\UI-RotationLeft-Button-Up", "Interface\\Buttons\\UI-RotationLeft-Button-Down",
+			-NPC_ROTATION_STEP)
+		frame.ResetFacingButton = CreateNPCRotationButton(frame, 0, "Restore front view (keeps pan and zoom)",
+			"Interface\\Buttons\\UI-RefreshButton")
+		frame.RotateRightButton = CreateNPCRotationButton(frame, 32, "Rotate right",
+			"Interface\\Buttons\\UI-RotationRight-Button-Up", "Interface\\Buttons\\UI-RotationRight-Button-Down",
+			NPC_ROTATION_STEP)
+		frame.RotationControls.Buttons = { frame.RotateLeftButton, frame.ResetFacingButton, frame.RotateRightButton }
+		frame.RotationControls:Hide()
+
 		-- Stops preview dragging and cancels pending model loading when hidden.
 		frame:SetScript("OnHide", function(self)
 			CancelPreviewLoad(self)
@@ -566,6 +731,8 @@ Reusable creature-model and object-image preview window, interaction controls, a
 			self.requestToken = (self.requestToken or 0) + 1
 			self.previewReady, self.previewSource = nil, nil
 			self.previewKind = nil
+			self.rotationUnavailable = nil
+			UpdateNPCRotationControls(self)
 			self.previewKey = nil
 			self.previewQuestID = nil
 			self.previewStepIndex = nil
@@ -648,6 +815,8 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		local token = frame.requestToken
 		frame.Title:SetText(title)
 		frame.previewKind = "npc"
+		frame.rotationUnavailable = nil
+		UpdateNPCRotationControls(frame)
 		frame.previewRequiresQuest = questBound == true
 		frame.objectZoom, frame.objectPanX, frame.objectPanY = 1, 0, 0
 		frame.Status:SetText("Loading preview…")
@@ -701,10 +870,15 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		frame.requestToken = (frame.requestToken or 0) + 1
 		frame.Title:SetText(title)
 		frame.previewKind = "object"
+		UpdateNPCRotationControls(frame)
 		frame.previewRequiresQuest = questBound == true
 		frame.objectZoom, frame.objectPanX, frame.objectPanY = 1, 0, 0
 		frame.Status:SetText(unavailableMessage or "Object preview image is unavailable.")
-		frame.Status:Show()
+		if unavailableMessage == "" then
+			frame.Status:Hide()
+		else
+			frame.Status:Show()
+		end
 		frame:Show()
 
 		if frame.Model then
@@ -791,9 +965,11 @@ Reusable creature-model and object-image preview window, interaction controls, a
 			title = previewName and previewName ~= "" and (previewName .. "\n(Object " .. objectKey .. ")") or ("Object " .. objectKey)
 		end
 		local expectedName = entry and entry.file or (objectKey .. (fileLabel and (" - " .. fileLabel) or "") .. ".tga")
+		-- An unknown-object placeholder intentionally has no picture; other missing assets retain their notice.
+		local unavailableMessage = objectKey:lower() == "x99" and ""
+			or ("No bundled image was found for object " .. objectKey .. ".\nExpected: Media/ObjectPreviews/" .. expectedName)
 		return BeginImagePreview(title, "object:" .. objectKey, texturePaths,
-			"No bundled image was found for object " .. objectKey .. ".\nExpected: Media/ObjectPreviews/" .. expectedName,
-			questBound)
+			unavailableMessage, questBound)
 	end
 
 	-------------------------------------------------------
