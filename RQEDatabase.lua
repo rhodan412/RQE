@@ -48127,9 +48127,7 @@ RQEDatabase = {
 		},
 		[92904] = {
 			title = "Return to Zul'Aman", -- Objectives: Return to Zul'Aman with Zul'jan and Loa Speaker Kinduru.
-			locations = {
-				{ x = 34.89, y = 44.05, mapID = 2413 },
-			},
+			location = { x = 34.89, y = 44.05, mapID = 2413 },
 			objectivesQuestText = { "Return to Zul'Aman with Zul'jan and Loa Speaker Kinduru." },
 			descriptionQuestText = { "I have heard de story since I was a child! De Amani were outnumbered and still dey fought on! Dey claimed victory through sheer will! Orweyna says de visions cannot lie. Uncle thinks details of de battle could have been lost. Dey would question everything it means to be Amani. <Zul'jan scowls.> I must find de truth of dis. Uncle says if anyone would know, it would be de loa. De loa have said nothing of dis before, but we must start somewhere. It's time to go home." },
 			createFlag = { "" },
@@ -61890,9 +61888,7 @@ RQEDatabase = {
 			},
 			[1] = {
 				description = "Turn in the quest to {npc:248328:Void Researcher Anomander} at The Howling Ridge, Voidstorm.",
-				coordinateHotspots = {
-					{ x = 52.58, y = 72.90, mapID = 2405, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },
-				},
+				coordinates = { x = 52.58, y = 72.90, mapID = 2405 },
 				check = { "94470" },
 				neededAmt = { "1" },
 				funct = "CheckDBComplete",
@@ -68607,9 +68603,7 @@ RQEDatabase = {
 		},
 		[97640] = {
 			title = "Vaults of Atal'Utek: One Coin Too Many", -- Objectives: Find Er'inye.
-			locations = {
-				{ x = 47.24, y = 60.79, mapID = 2509 },
-			},
+			location = { x = 47.24, y = 60.79, mapID = 2509 },
 			objectivesQuestText = { "Find Er'inye." },
 			descriptionQuestText = { "You don't look so good, PLAYER. <As Abdumati examines you grimly, your heart starts pounding and your vision goes green. The weight of the coin in your pocket feels overwhelming.> You found something out dere, huh? De vaults are full of treasure, most of it cursed. I don't trust her, but dat spirit-witch you saw knows all de secrets of dis horrid place. If anyone can help, it's her." },
 			createFlag = { "" },
@@ -68877,9 +68871,7 @@ RQEDatabase = {
 		},
 		[98388] = {
 			title = "Into the Vaults of Atal'Utek", -- Objectives: Find what's become of Naz'ara the Brave, Hawkeye Socho, and Commander Gazba.
-			locations = {
-				{ x = 47.24, y = 60.79, mapID = 2509 },
-			},
+			location = { x = 47.24, y = 60.79, mapID = 2509 },
 			objectivesQuestText = { "Find what's become of Naz'ara the Brave, Hawkeye Socho, and Commander Gazba." },
 			descriptionQuestText = { "Past dis bulwark, there's nothin but snakes, spirits, and venomous death. We've lost three lieutenants dis week. Strong ones. Brave ones. Maybe stronger and braver than you. <Mok'sa the Stone looks you over with a weary eye.> If you want to fling yaself into de abyss, be my guest. Bring back de scouts, if you can find dem amongst de bones. But watch your step. Dat venom will swallow you whole." },
 			createFlag = { "" },
@@ -69125,9 +69117,7 @@ RQEDatabase = {
 		},
 		[99312] = {
 			title = "On the Trail of Kindo'jan", -- Objectives: Speak to Kul'amara in Tokka's Landing.
-			locations = {
-				{ x = 51.19, y = 45.35, mapID = 2545 },
-			},
+			location = { x = 51.19, y = 45.35, mapID = 2545 },
 			objectivesQuestText = { "Speak to Kul'amara in Tokka's Landing." },
 			descriptionQuestText = { "The dusty tablet, cracked and worn with age, speaks of a sacred, hidden place and a single name: Kindo'jan. Perhaps one of your contacts among the Amani might know more?" },
 			createFlag = { "" },
