@@ -93,16 +93,17 @@ Debug message capture, filtering, display, export, and legacy print integration
 		end
 		local sourceKind = payload:match('^%s*{%s*(%a+)%s*=%s*"')
 		return (sourceKind == "npc" or sourceKind == "object")
-			and payload:match('"%s*,%s*id%s*=%s*.-}%s*,%s*$') ~= nil
+			and payload:match('"%s*,%s*id%s*=%s*.-}%s*,?%s*$') ~= nil
 	end
 
 
-	-- Function to identify objectives, description, or NPC text contribution lines
+	-- Identifies quest text, creation flags, and pickup-source contribution lines.
 	local function IsTextQuestPayload(message)
 		-- Field names remain stable even when the producer changes its display colour.
 		local payload = tostring(message):gsub("^|c%x%x%x%x%x%x%x%x", "")
 		if payload:match("^%s*objectivesQuestText%s*=")
-			or payload:match("^%s*descriptionQuestText%s*=") then
+			or payload:match("^%s*descriptionQuestText%s*=")
+			or payload:match("^%s*createFlag%s*=") then
 			pickupSourceBlockOpen = nil
 			return true
 		end
@@ -118,8 +119,13 @@ Debug message capture, filtering, display, export, and legacy print integration
 	end
 
 
-	-- Function to identify NPC contribution lines within the active capture block
+	-- Identifies creation flags and NPC contribution lines within the active capture block.
 	local function IsNPCQuestPayload(message)
+		local payload = tostring(message):gsub("^|c%x%x%x%x%x%x%x%x", "")
+		if payload:match("^%s*createFlag%s*=") then
+			pickupSourceBlockOpen = nil
+			return true
+		end
 		return IsPickupSourcePayload(message)
 	end
 
