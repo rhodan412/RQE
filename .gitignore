@@ -7,6 +7,8 @@ Duplicates.txt
 QuestSortReport.txt
 StepCoordsFlag.txt
 find_duplicate_quests.py
+annotate_contribution_quests.py
+annotate_duplicate_quests.py
 sort_rqe_database.py
 sync_tbc_anniversary.py
 copy_rqe_database.py
