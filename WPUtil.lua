@@ -99,6 +99,13 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				end			
 			end
 
+			if RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation() then
+				local manual = RQE.UnknownQuestButton.hybridPlayerPress
+				RQE.UnknownQuestButton.hybridPlayerPress = nil
+				RQE:ActivateHybridWaypoint(manual)
+				return
+			end
+
 			if RQE.hoveringOnRQEFrameAndButton then
 				if not RQE.db.profile.enableStepControls then
 					RQE:StartPeriodicChecks()		-- keeping this in place means that if player is manually tracking a step that differs from what is part of the "automatic" or true step the "W" button won't generate the waypoint for the manually set stepIndex
