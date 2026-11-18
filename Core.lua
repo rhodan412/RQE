@@ -424,6 +424,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			autoClickWaypointButton = true,
 			autoAcceptQuestDetail = false,
 			autoCompleteNoRewardChoices = false,
+			autoSuperTrackNewestQuest = false,
 			autoQuestProgress = true,
 			autoQuestWatch = true,
 			autoTrackZoneQuests = false,
@@ -476,7 +477,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				relativePoint = "TOPLEFT",
 				x = -12,
 				y = -105,
-				scale = 1,
+				scale = 0.8,
 			},
 			minimapButtonAngle = 175,
 			mythicScenarioMode = false,
@@ -508,6 +509,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			ScenarioCompleted = false,
 			ScenarioCriteriaUpdate = false,
 			ScenarioUpdate = false,
+			separateFocusLineGap = 5,
 			showAddonLoaded = false,
 			showArgPayloadInfo = false,
 			showCoordinates = true,
@@ -849,8 +851,24 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:ToggleAutoClickWaypointButton()
 	end
 
+	-- Routes legacy automatic movers through Hybrid's independent progression when that mode is active.
+	local function RouteHybridStepCheck(self, reason)
+		if self._stepEvaluationContext or not self.IsHybridStepNavigation or not self:IsHybridStepNavigation() then
+			return false
+		end
+		if self.CanRunHybridNavigation and not self:CanRunHybridNavigation() then return false end
+		if self.QueueHybridPeriodicChecks then
+			self:QueueHybridPeriodicChecks(reason, 0.05, self.API.GetSuperTrackedQuestID())
+		end
+		return true
+	end
+
 	-- This function will enable/disable the step controls
 	function RQE:ToggleStepControls()
+		if self.IsHybridStepNavigation and self:IsHybridStepNavigation() then
+			self:SetStepNavigationMode("automatic")
+			return
+		end
 		if RQE.db.profile.enableStepControls then
 			RQE.db.profile.enableStepControls = false
 
@@ -2301,6 +2319,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Profile Refresh Function
 	function RQE:RefreshConfig()
+		if self.CancelNewestQuestSelection then self:CancelNewestQuestSelection() end
+		if self.IsRetail and self.ResetHybridNavigation then self:ResetHybridNavigation() end
 		-- Copy/reset can change settings without replacing the profile table.
 		self.ProfileSettingsChanged = true
 		-- Share startup/profile-switch protection, including deferred combat work.
@@ -2944,17 +2964,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.SeparateFocusSlider:Hide()
 		end
 
-		if RQE._lastSeparateClearReason == "StepIndex changed" or RQE._lastSeparateClearReason == "Quest completed" or RQE._lastSeparateClearReason == "Quest flagged complete" or RQE._lastSeparateClearReason == "QuestID changed" then
-			RQE._lastSeparateClearReason = nil
-
-			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.10, function()
-			-- Updates the separate focus frame.
-			RQE.API.Client.C_Timer.After(0.10, function()
-				if RQE.UpdateSeparateFocusFrame then
-					RQE:UpdateSeparateFocusFrame()
-				end
-			end)
-		end
+		-- Every actual clear gets a delayed check, including clears inside normal rebuilds.
+		self:QueueSeparateFocusRecovery()
 
 		RQE.ClearButtonPressed = false
 	end
@@ -2963,33 +2974,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- #9e. Separate Focus Consistency Checks
 	-------------------------------------------------------
 
-	-- Checks SeparateFocusFrame and refreshes it if RQEFrame has quest data but SeparateFocusFrame is empty
+	-- Restores an empty focus panel only when a quest is still supertracked.
 	function RQE:CheckAndRefreshSeparateFocusFrame()
-		local separateHasContent = false
-		local rqeFrameHasQuest = false
-
-		if RQE.DebugSeparateFocusFrameContents then
-			separateHasContent = RQE:DebugSeparateFocusFrameContents()
-		end
-
-		if separateHasContent then
-			return true
-		end
-
-		if RQE.DebugRQEFrameContents then
-			rqeFrameHasQuest = RQE:DebugRQEFrameContents()
-		end
-
-		if rqeFrameHasQuest then
-			if RQE.UpdateSeparateFocusFrame then
-				RQE:UpdateSeparateFocusFrame()
-				RQE.InitializeSeparateFocusWaypoints()
-			end
-
-			return true
-		end
-
-		return false
+		return self:RecoverSeparateFocusFrame()
 	end
 
 	-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info
@@ -3149,7 +3136,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("Text Entries:", visibleTextEntries)
 		end
 
-		if visibleChildren == 0 and visibleFontStrings == 0 and visibleTextEntries == 0 then
+		-- Widget counts are diagnostic only; hidden text and empty controls do not fill the panel.
+		if not self:HasSeparateFocusContent() then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("|cFFFF3333RESULT: SeparateFocusFrame appears EMPTY.|r")
 				print("|cff99ccff=====================================|r")
@@ -3303,6 +3291,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Early exit if there's still no valid questID
 		if not extractedQuestID or extractedQuestID == 0 then
+			-- A rebuilding main frame must not clear an active quest or searched preview.
+			if self:GetSeparateFocusRecoveryQuestID()
+				or (self.CanNavigateSearchedQuestSteps and self:CanNavigateSearchedQuestSteps(self.searchedQuestID)) then
+				if not self:HasSeparateFocusContent() then self:QueueSeparateFocusRecovery() end
+				return
+			end
 			RQE.AllFramesShouldUpdate = true
 			RQE:ClearSeparateFocusFrame()	-- Clears progress focus frame if nothing is being tracked
 			RQEMacro:ClearMacroContentByName("RQE Macro")	-- Clears macro if nothing is being supertracked
@@ -3396,6 +3390,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			-- Early exit if there's still no valid questID
 			if not extractedQuestID or extractedQuestID == 0 then
+				-- Recheck live ownership instead of treating missing main text as lost tracking.
+				if self:GetSeparateFocusRecoveryQuestID()
+					or (self.CanNavigateSearchedQuestSteps and self:CanNavigateSearchedQuestSteps(self.searchedQuestID)) then
+					if not self:HasSeparateFocusContent() then self:QueueSeparateFocusRecovery() end
+					return
+				end
 				RQE:ClearSeparateFocusFrame()
 				return
 			end
@@ -4405,6 +4405,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Select Retail watches by objective distance, with optional level-specific, same-map campaign priority.
 	function RQE:GetRetailClosestTrackedQuest()
+		if self:ShouldWaitForNewestQuestSelection() then return end
 		local profile, client = self.db.profile, self.API.Client
 		local movement = profile.enableAutoSuperTrackSwap
 		if not movement and not profile.enableNearestSuperTrack then return end
@@ -4474,6 +4475,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to find the closest quest currently being tracked
 	function RQE:GetClosestTrackedQuest()
+		if self:ShouldWaitForNewestQuestSelection() then return end
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 		if self.IsRetail then return self:GetRetailClosestTrackedQuest() end
 		local closestQuestID, closestDistance = nil, math.huge
@@ -4559,13 +4561,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to Auto Supertrack the Nearest Watched Quest
 	function RQE:AutoSuperTrackClosestQuest()
+		if self:ShouldWaitForNewestQuestSelection() then return end
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 		if RQE.IsRetail and RQE.PendingUnfocusedQuestSelection then return end
 		-- Previous Blizzard call changed 2026.09.25: if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
 		if not RQE.db.profile.enableAutoSuperTrackSwap or RQE.API.Client.InCombatLockdown() or RQE.API.Client.UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
 		-- Automatic nearest-quest changes never interrupt a numbered route.
 		if self:HasCurrentCoordOrderStep() then return end
-		if self.IsRetail then
+		-- Keep established focus intact while choosing a movement replacement in newest-pickup mode.
+		if self.IsRetail or self:IsNewestQuestSelectionEnabled() then
 			if self.CanNavigateSearchedQuestSteps and self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then return end
 			local questID = self:GetClosestTrackedQuest()
 			if questID and questID ~= self.API.GetSuperTrackedQuestID()
@@ -4595,6 +4599,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				-- Forces the super track quest properly.
 				RQE.API.Client.C_Timer.After(0.3, function()
 					if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
+					if RQE:ShouldWaitForNewestQuestSelection() then return end
 					if RQE.IsRetail and (RQE.PendingUnfocusedQuestSelection
 						or selectionRevision ~= (RQE.QuestFocusRevision or 0)) then return end
 					if RQE:HasCurrentCoordOrderStep() then return end
@@ -4628,6 +4633,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Helper function to RQE:AutoSuperTrackClosestQuest() to force the nearest quest to be supertracked
 	function RQE:ForceSuperTrackQuestProperly(questID)
+		if self:ShouldWaitForNewestQuestSelection() then return end
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 		if RQE.IsRetail and RQE.PendingUnfocusedQuestSelection then return end
 		if not questID or questID == 0 then return end
@@ -4687,6 +4693,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Reapply only while the original request still owns focus and no acceptance batch has begun.
 		RQE.API.Client.C_Timer.After(0.1, function()
 			if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
+			if RQE:ShouldWaitForNewestQuestSelection() then return end
 			if RQE.IsRetail and (RQE.PendingUnfocusedQuestSelection
 				or selectionRevision ~= (RQE.QuestFocusRevision or 0)) then return end
 			local selected = RQE:AutoSetSuperTrackedQuestID(questID, true)
@@ -4701,6 +4708,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to supertrack the first watched quest matching the player's current map ID
 	function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
+		if self:ShouldWaitForNewestQuestSelection() then return end
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 		if RQE.IsRetail and RQE.PendingUnfocusedQuestSelection then return end
 		-- Get the player's current map ID
@@ -4871,6 +4879,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function that tracks the closest quest on certain events in the Event Manager
 	function RQE.TrackClosestQuest()
+		if RQE:ShouldWaitForNewestQuestSelection() then return end
 		if RQE.API.IsAutomaticQuestSelectionBlocked() then return end
 		if RQE.IsRetail and RQE.PendingUnfocusedQuestSelection then return end
 		if RQE.IsRetail and not (RQE.db.profile.enableAutoSuperTrackSwap or RQE.db.profile.enableNearestSuperTrack) then
@@ -5145,6 +5154,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function that removes a quest from being super tracked but not actually removing the watch
 	function RQE:RemoveSuperTrackingFromQuest()
+		if self.CancelNewestQuestSelection then self:CancelNewestQuestSelection() end
 		-- Step 1: Get the currently super-tracked quest ID
 		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
@@ -6119,10 +6129,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- #13b. Rich-Text Item Tag Parsing
 	-------------------------------------------------------
 
-	-- Parse one {item:id:name} or [item:id:name] tag (returns itemID and display name)
+	-- Returns the item ID and label from an item or combined tag, including legacy [item:id:name] notation.
 	function RQE.ParseItemTag(text)
 		if not text or text == "" then return nil end
-		local id, name = text:match("{item:(%d+):([^}]+)}")
+		local combinedStart, _, combined = RQE.API.FindObjectItemTag(text)
+		local itemStart, _, id, name = text:find("{item:(%d+):([^}]+)}")
+		if combinedStart and (not itemStart or combinedStart < itemStart) then
+			return combined.itemID, combined.itemName
+		end
 		if id then return tonumber(id), name end
 		id, name = text:match("%[item:(%d+):([^%]]+)%]")
 		if id then return tonumber(id), name end
@@ -6132,6 +6146,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Render text by replacing tags with colored [Name]
 	function RQE.RenderTextWithItemTags(text)
 		if not text then return text end
+		text = RQE.API.ReplaceObjectItemTags(text, RQE.API.ObjectItemLinkColor)
 		text = text:gsub("{item:(%d+):([^}]+)}", "|cffffffff[%2]|r")
 		text = text:gsub("%[item:(%d+):([^%]]+)%]", "|cffffffff[%2]|r")
 		return text
@@ -6140,20 +6155,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Converts rich text into properly spaced SimpleHTML content
 	function RQE.BuildHTMLFromRichText(raw)
 		if not raw or raw == "" then
-			return '<html><body><p>No description available.</p></body></html>'
+			return '<html><body><p>No description available.</p></body></html>', {}
 		end
 
-		local html = raw
+		local html, objectItemLinks = RQE.API.BuildObjectItemHTML(raw)
 
 		-- Items
 		html = html:gsub("{item:(%d+):([^}]+)}", function(itemID, name)
-			local shown = string.format("|cffff66cc[%s]|r", name)
+			local shown = string.format("|cffff66cc[%s]|r", RQE.API.EscapeRichTextHTML(name))
 			return string.format('<a href="item:%s">%s</a>', itemID, shown)
 		end)
 
 		-- Spells
 		html = html:gsub("{spell:(%d+):([^}]+)}", function(spellID, name)
-			local shown = string.format("|cff66ccff[%s]|r", name)
+			local shown = string.format("|cff66ccff[%s]|r", RQE.API.EscapeRichTextHTML(name))
 			return string.format('<a href="spell:%s">%s</a>', spellID, shown)
 		end)
 
@@ -6197,78 +6212,99 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Fixes possibly "scrunching":
 		html = html:gsub("\n+", "<br><br><font color='#000000'>.</font><br><br>")
 
-		-- Wrap the body content
-		return string.format('<html><body><p>%s</p></body></html>', html)
+		-- Wrap the body content and keep object metadata separate from the visible item label.
+		return string.format('<html><body><p>%s</p></body></html>', html), objectItemLinks
 	end
 
 	-- ✅ Renders the HTML with proper spacing and working coords/items/spells used in the Separate Focus Frame and dealing with coords using SimpleHTML
 	function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor, customParent)
-		if not rawText or rawText == "" or not parentFrame then return end
+		if not parentFrame then return end
+		if GameTooltip and GameTooltip.GetOwner and GameTooltip:GetOwner() == parentFrame then
+			GameTooltip:Hide()
+		end
+		parentFrame._rqeObjectItemLinks = nil
+		parentFrame.htmlText = nil
+		if not rawText or rawText == "" then
+			parentFrame:SetText("")
+			return
+		end
 
 		-- Determine if HTML is needed
-		if rawText:match("{item:") or rawText:match("{spell:") or rawText:match("{coords:") or rawText:match("{coordblock:") then
+		if rawText:match("{objectitem:") or rawText:match("{item:") or rawText:match("{spell:")
+			or rawText:match("{coords:") or rawText:match("{coordblock:") then
 		-- if rawText:match("{item:") or rawText:match("{spell:") or rawText:match("{coords:") then
 			local baseParent = customParent or parentFrame:GetParent() or UIParent
-			local html = RQE.BuildHTMLFromRichText(rawText)
+			local html, objectItemLinks = RQE.BuildHTMLFromRichText(rawText)
+			local Simple = parentFrame
+			local createdSimple = parentFrame:GetObjectType() ~= "SimpleHTML"
 
-			if parentFrame:GetObjectType() ~= "SimpleHTML" then
+			if createdSimple then
 				parentFrame:Hide()
-				local Simple = CreateFrame("SimpleHTML", nil, baseParent)
+				Simple = CreateFrame("SimpleHTML", nil, baseParent)
 				Simple:SetFontObject("p", GameFontNormal)
 				Simple:SetJustifyH("p", "LEFT")
-				Simple:SetHyperlinksEnabled(true)
 				Simple:SetWidth(baseParent:GetWidth() - 60)
 				Simple:SetTextColor("p", unpack(textColor or {1, 1, 0.8}))
 				Simple:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, 0)
-				Simple:SetText(html)
-				Simple.htmlText = html
+			end
+			Simple:SetHyperlinksEnabled(true)
+			Simple:SetText(html)
+			Simple.htmlText = html
+			Simple._rqeObjectItemLinks = objectItemLinks
 
-				-- Tooltip & click handling
-				Simple:SetScript("OnHyperlinkEnter", function(_, link)
-					local linkType, id = link:match("^(%a+):(.+)$")
-					if linkType == "item" then
-						GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
-						GameTooltip:SetItemByID(tonumber(id))
-						-- Previous Blizzard call changed 2026.09.25: local count = C_Item.GetItemCount(id) or 0
-						local count = RQE.API.Client.C_Item.GetItemCount(id) or 0
-						GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
-						GameTooltip:Show()
-					elseif linkType == "spell" then
-						GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
-						GameTooltip:SetSpellByID(tonumber(id))
-						GameTooltip:Show()
-					elseif linkType == "coords" then
-						GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
-						GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
-						GameTooltip:Show()
-					end
-				end)
+			-- Tooltip & click handling
+			-- Shows the tooltip and optional object preview associated with the current hyperlink.
+			Simple:SetScript("OnHyperlinkEnter", function(self, link)
+				if type(link) ~= "string" then return end
+				local linkType, id = link:match("^(%a+):(.+)$")
+				if linkType == "rqeobjectitem" then
+					local combined = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
+					if combined then RQE.API.ShowObjectItemTooltip(self, combined) end
+				elseif linkType == "item" then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
+					GameTooltip:SetItemByID(tonumber(id))
+					-- Previous Blizzard call changed 2026.09.25: local count = C_Item.GetItemCount(id) or 0
+					local count = RQE.API.Client.C_Item.GetItemCount(id) or 0
+					GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+					GameTooltip:Show()
+				elseif linkType == "spell" then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
+					GameTooltip:SetSpellByID(tonumber(id))
+					GameTooltip:Show()
+				elseif linkType == "coords" then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
+					GameTooltip:Show()
+				end
+			end)
 
-				-- Hides the tooltip when the pointer leaves this control.
-				Simple:SetScript("OnHyperlinkLeave", function() GameTooltip:Hide() end)
+			-- Hides the tooltip when the pointer leaves this control.
+			Simple:SetScript("OnHyperlinkLeave", function() GameTooltip:Hide() end)
 
-				-- Creates the waypoint.
-				Simple:SetScript("OnHyperlinkClick", function(_, link)
-					if not link:match("^coords:") then return end
-					local x, y, mapID, title =
-						link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+);title:(.+)")
-					if not x then
-						x, y, mapID = link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+)")
-					end
-					if x and y and mapID then
-						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
-						RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID),
-							title and title:gsub("\"", "") or "Custom Waypoint")
-						print(string.format(
-							"|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s",
-							x, y, mapID,
-							(title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""
-						))
-					end
-				end)
+			-- Creates the waypoint.
+			Simple:SetScript("OnHyperlinkClick", function(_, link)
+				if not link:match("^coords:") then return end
+				local x, y, mapID, title =
+					link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+);title:(.+)")
+				if not x then
+					x, y, mapID = link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+				if x and y and mapID then
+					RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+					RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID),
+						title and title:gsub("\"", "") or "Custom Waypoint")
+					print(string.format(
+						"|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s",
+						x, y, mapID,
+						(title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""
+					))
+				end
+			end)
 
+			if createdSimple then
 				-- Auto height fix
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+				-- Sizes a newly created HTML frame after its text has been laid out.
 				RQE.API.Client.C_Timer.After(0.05, function()
 					local h = Simple:GetContentHeight() or 20
 					Simple:SetHeight(h + 6)
@@ -6277,12 +6313,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if parentFrame == RQE.SeparateStepText then
 					RQE.SeparateStepText = Simple
 				end
-				return
-			else
-				parentFrame:SetText(html)
-				parentFrame.htmlText = html
-				return
 			end
+			return
 		end
 
 		-- 🧾 Fallback to plain text for normal lines
@@ -6559,7 +6591,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		parentFrame._rqeSegments = parentFrame._rqeSegments or {}
 
 		-- Replace rich entity tags with [name] visually.
-		local displayText = rawText
+		local displayText = RQE.API.ReplaceObjectItemTags(rawText, RQE.API.ObjectItemLinkColor)
 		displayText = displayText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
 		displayText = displayText:gsub("{spell:(%d+):([^}]+)}", "|cff66ccff[%2]|r")	-- ✨ NEW (color for spells)
 		displayText = displayText:gsub("{npc:(%d+):([^}]+)}", "|cff66ff66[%2]|r")
@@ -6663,7 +6695,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			hover:SetSize(width, lineHeight)
 			hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", x, -y)
 
-			if tagType == "item" then
+			if tagType == "objectitem" then
+				-- Shows the item's tooltip and the associated quest-bound object preview together.
+				hover:SetScript("OnEnter", function(self)
+					RQE.API.ShowObjectItemTooltip(self, hoveredID)
+				end)
+			elseif tagType == "item" then
 				-- Shows this control's tooltip while the pointer is over it.
 				hover:SetScript("OnEnter", function(self)
 					GameTooltip:Hide()
@@ -6694,7 +6731,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end)
 			end
 
-			if tagType == "item" or tagType == "spell" then
+			if tagType == "objectitem" or tagType == "item" or tagType == "spell" then
 				-- Hides the tooltip when the pointer leaves this control.
 				hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 			end
@@ -6832,8 +6869,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			local rawPosition = 1
 			while rawPosition <= #text do
+				local combinedStart, combinedEnd, combined = RQE.API.FindObjectItemTag(text, rawPosition)
 				local tagStart, tagEnd, tagType, tagID, tagName =
 					text:find("{([%a]+):([%a%d]+):([^}]+)}", rawPosition)
+				if combinedStart and (not tagStart or combinedStart <= tagStart) then
+					tagStart, tagEnd = combinedStart, combinedEnd
+					tagType, tagID, tagName = "objectitem", combined, combined.itemName
+				end
 				if not tagStart then
 					AddPlainText(text:sub(rawPosition))
 					break
@@ -6841,7 +6883,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				AddPlainText(text:sub(rawPosition, tagStart - 1))
 				local numericTag = tagType == "item" or tagType == "spell" or tagType == "npc"
-				local supportedTag = (numericTag and tonumber(tagID)) or (tagType == "object" and tagID:match("^[%a%d]+$"))
+				local supportedTag = (tagType == "objectitem" and type(tagID) == "table")
+					or (numericTag and tonumber(tagID)) or (tagType == "object" and tagID:match("^[%a%d]+$"))
 				if supportedTag then
 					-- FontString word wrapping keeps punctuation directly after a rich tag
 					-- with the tag's final word (for example, "Parchment]).").  Include
@@ -6855,7 +6898,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end
 
 					AddVisibleText("[" .. tagName .. "]" .. adjacentSuffix, tagType,
-						tagType == "object" and tagID or tonumber(tagID), tagName)
+						(tagType == "objectitem" or tagType == "object") and tagID or tonumber(tagID), tagName)
 					rawPosition = tagEnd + 1 + #adjacentSuffix
 				else
 					AddPlainText(text:sub(tagStart, tagEnd))
@@ -6886,7 +6929,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 					if x and y and mapID then
 						local preText = rawLine:sub(1, startTag - 1)
-						preText = preText
+						preText = RQE.API.ReplaceObjectItemTags(preText)
 							:gsub("{item:%d+:([^}]+)}", "[%1]")
 							:gsub("{spell:%d+:([^}]+)}", "[%1]")
 							-- Formats coordinate notation as a plain-text map-position label.
@@ -6978,7 +7021,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 					if x and y and mapID then
 						local preText = rawLine:sub(1, startTag - 1)
-						preText = preText
+						preText = RQE.API.ReplaceObjectItemTags(preText)
 							:gsub("{item:%d+:([^}]+)}", "[%1]")
 							:gsub("{spell:%d+:([^}]+)}", "[%1]")
 							-- Returns the coordblock display label.
@@ -8610,7 +8653,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Checks whether step controls are available for the displayed quest.
 	function RQE:CanUseStepControlsForQuest(questID)
-		return RQE.db.profile.enableStepControls or RQE:CanNavigateSearchedQuestSteps(questID)
+		return RQE.db.profile.enableStepControls
+			or (self.IsHybridStepNavigation and self:IsHybridStepNavigation())
+			or RQE:CanNavigateSearchedQuestSteps(questID)
 	end
 
 	-- Displays a DB step, or the searched quest's virtual pickup step 0.
@@ -8623,6 +8668,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local isSearchedQuest = RQE:CanNavigateSearchedQuestSteps(questID)
 		local isPickupStep = isSearchedQuest and stepIndex == 0
 		if not questData or not stepIndex or (not isPickupStep and not questData[stepIndex]) then return end
+		if not isSearchedQuest and self.IsHybridStepNavigation and self:IsHybridStepNavigation() then
+			if self:BeginHybridManualPreview(questID, stepIndex) == false then return end
+			RQE.LastClickedIdentifier = stepIndex
+		end
 		if self.ActiveCoordblock and (tonumber(self.ActiveCoordblock.questID) ~= tonumber(questID)
 			or self.ActiveCoordblock.stepIndex ~= stepIndex) then
 			self:ReleaseActiveCoordblockWaypoint()
@@ -8671,6 +8720,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Scheduler to help with CPU load when calling RQE:StartPeriodicChecks()
 	function RQE:QueuePeriodicChecks(reason, delay, questID)
+		if self._stepEvaluationContext then return end
+		if self.IsHybridStepNavigation and self:IsHybridStepNavigation()
+			and (not self.CanRunHybridNavigation or self:CanRunHybridNavigation()) then
+			return self:QueueHybridPeriodicChecks(reason, delay, questID)
+		end
 		delay = delay or 0.20
 		questID = questID or RQE.API.GetSuperTrackedQuestID()
 
@@ -8723,8 +8777,110 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-	-- Periodic check setup comparing with entry in RQEDatabase
-	function RQE:StartPeriodicChecks(newlyFocusedQuestID)
+	-- Copies only the observation state needed by Hybrid checks, without sharing live tables or timer handles.
+	local function CopyStepEvaluationState(source)
+		local state = { combinedBuffObjectives = {} }
+		for key, value in pairs((source and source.combinedBuffObjectives) or {}) do
+			if type(value) == "table" then
+				state.combinedBuffObjectives[key] = {
+					objectiveProgress = value.objectiveProgress,
+					settleUntil = value.settleUntil,
+				}
+			end
+		end
+		return state
+	end
+
+	-- Runs the existing step rules against an explicit starting step without changing live navigation or UI.
+	function RQE:EvaluateStepCandidate(questID, seedStep, options)
+		options = options or {}
+		questID, seedStep = tonumber(questID), tonumber(seedStep)
+		local questData = questID and self.getQuestData(questID)
+		if not questData or not seedStep or not questData[seedStep] then return nil, "Invalid quest or step" end
+		local context = {
+			questID = questID,
+			seedStep = seedStep,
+			candidate = seedStep,
+			probeOnly = options.probeOnly == true,
+			normalComplete = false,
+			objectiveFlag = self.ObjectiveFlag,
+			evaluationState = CopyStepEvaluationState(options.state),
+		}
+		local previousContext = self._stepEvaluationContext
+		self._stepEvaluationContext = context
+		-- Restore the enclosing context even if a database check fails during speculative evaluation.
+		local ok, result = pcall(function()
+			if options.vehicleUpdate and not context.probeOnly and seedStep > 1 then
+				-- Identifies the buff and debuff requirements used by vehicle action-bar recovery.
+				local function IsAuraCheck(checkData)
+					return checkData and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff")
+				end
+				-- Includes direct aura requirements and the grouped checks on a step.
+				local function StepHasAuraCheck(stepData)
+					if not stepData then return false end
+					if IsAuraCheck(stepData) then return true end
+					for _, checkData in ipairs(stepData.checks or {}) do
+						if IsAuraCheck(checkData) then return true end
+					end
+					return false
+				end
+				local previousStep = questData[seedStep - 1]
+				if not StepHasAuraCheck(questData[seedStep]) and StepHasAuraCheck(previousStep) then
+					local probe, probeError = self:EvaluateStepCandidate(questID, seedStep,
+						{probeOnly = true, state = context.evaluationState})
+					if not probe then error(probeError or "Unable to evaluate the vehicle action step") end
+					context.evaluationState, context.settleAt = probe.evaluationState, probe.settleAt
+					if probe.normalComplete then
+						context.startAtSeed = true
+					elseif not probe.retryFailed then
+						-- Tests positive aura gates without letting their internal bookkeeping affect live state.
+						local function PositiveAuraCheckFailed(checkData)
+							if not IsAuraCheck(checkData) or checkData.mod == "NOT" or checkData.logic == "NOT" then
+								return false
+							end
+							if type(checkData.check) ~= "table" or #checkData.check == 0
+								or type(checkData.neededAmt) ~= "table" or #checkData.neededAmt == 0 then return false end
+							return not self[checkData.funct](self, questID, seedStep - 1, checkData.check, checkData.neededAmt)
+						end
+						local previousGateFailed = PositiveAuraCheckFailed(previousStep)
+						for _, checkData in ipairs(previousStep.checks or {}) do
+							if PositiveAuraCheckFailed(checkData) then previousGateFailed = true; break end
+						end
+						if previousGateFailed then context.seedStep, context.candidate = seedStep - 1, seedStep - 1 end
+					end
+				end
+			end
+			local candidate = self:StartPeriodicChecks(options.newlyFocusedQuestID, context)
+			if candidate == nil then return nil end
+			context.candidate = questData[candidate] and candidate or seedStep
+			if not context.probeOnly then
+				for _ = 1, #questData do
+					local previousCandidate = context.candidate
+					self:HandleFactionLogicAfterAdvance()
+					self:HandleClassFactionLogicAfterAdvance()
+					if context.candidate == previousCandidate or not questData[context.candidate] then break end
+				end
+			end
+			return {
+				candidate = questData[context.candidate] and context.candidate or seedStep,
+				normalComplete = context.normalComplete,
+				retryFailed = context.retryFailed,
+				retryTarget = context.retryTarget,
+				settleAt = context.settleAt,
+				evaluationState = context.evaluationState,
+			}
+		end)
+		self._stepEvaluationContext = previousContext
+		if not ok then return nil, result end
+		return result
+	end
+
+	-- Evaluates database steps; Hybrid computation returns a candidate before applying navigation effects.
+	function RQE:StartPeriodicChecks(newlyFocusedQuestID, evaluationContext)
+		if not evaluationContext and self.IsHybridStepNavigation and self:IsHybridStepNavigation()
+			and (not self.CanRunHybridNavigation or self:CanRunHybridNavigation()) then
+			return self:StartHybridPeriodicChecks(newlyFocusedQuestID)
+		end
 		-- Preview steps have no live objective progress. Leave automatic mode
 		-- configured as-is and resume its normal checks when the preview ends.
 		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
@@ -8734,18 +8890,23 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Checks to make sure that the SeparateFocusFrame contains information when it should
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.1, function()
-		RQE.API.Client.C_Timer.After(1.1, function()
-			RQE:CheckAndRefreshSeparateFocusFrame()
-		end)
+		if not evaluationContext then
+			-- Restores missing focus content after a normal live evaluation.
+			RQE.API.Client.C_Timer.After(1.1, function()
+				RQE:CheckAndRefreshSeparateFocusFrame()
+			end)
 
-		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.7, function()
-		-- Checks the separate focus has text but RQE frame missing quest.
-		RQE.API.Client.C_Timer.After(1.7, function()
-			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
-		end)
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.7, function()
+			-- Checks the separate focus has text but RQE frame missing quest.
+			-- Repairs mismatched helper and focus text after a normal live evaluation.
+			RQE.API.Client.C_Timer.After(1.7, function()
+				RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+			end)
+		end
 
 		-- The displayed tracker quest is not necessarily the focused quest.
-		local superTrackedQuestID = tonumber(RQE.API.GetSuperTrackedQuestID())
+		local superTrackedQuestID = evaluationContext and evaluationContext.questID
+			or tonumber(RQE.API.GetSuperTrackedQuestID())
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
 			print("RQE StartPeriodicChecks: questID", tostring(superTrackedQuestID))
 		end
@@ -8756,7 +8917,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		if not superTrackedQuestID or superTrackedQuestID <= 0 then return end
 
-		RQE.CheckAndClickSeparateWaypointButtonButton()	-- If this button exists and is valid it will click the button automatically at start, but might need to check that a waypoint doesn't already exist before running this call
+		if not evaluationContext then
+			RQE.CheckAndClickSeparateWaypointButtonButton()	-- Preserve normal live waypoint activation.
+		end
 
 		-- Define the function map for parent functions
 		local functionMap = {
@@ -8776,24 +8939,27 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local questData = self.getQuestData(superTrackedQuestID)
 		if not questData then
 			if RQE.db.profile.debugLevel == "INFO+" then
-				RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the initial waypoint if there is direction text that leads the player to a different zone
+				if not evaluationContext then
+					RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the live waypoint when direction text is available.
+				end
 				print("No quest data for superTrackedQuestID:", superTrackedQuestID)
 			end
 			return
 		end
 
 		-- Explicitly resume automatic progression
-		if RQE.db.profile.enableStepControls then
+		if not evaluationContext and RQE.db.profile.enableStepControls then
 			if RQE.ManualStepOverrideQLIB or (RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex) then
 				RQE:ClearManualStepPreview(false)
 				RQE.ManualStepOverrideQLIB = false
 			end
 		end
 
-		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+		local stepIndex = evaluationContext and evaluationContext.seedStep
+			or (self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex) or 1
 		-- A pooled button reference may lag the displayed index after a redraw.
 		-- Prefer the active numeric index for steps that opt in to retry checks.
-		local activeRetryIndex = tonumber(RQE.AddonSetStepIndex)
+		local activeRetryIndex = evaluationContext and evaluationContext.seedStep or tonumber(RQE.AddonSetStepIndex)
 		local activeRetryStep = activeRetryIndex and questData[activeRetryIndex]
 		if activeRetryStep and (activeRetryStep.failedcheck or activeRetryStep.failedchecks) then
 			stepIndex = activeRetryIndex
@@ -8808,7 +8974,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local questReadyForTurnIn = RQE.API.Client.C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
 		local readyTurnInStepIndex
 		local initialReadyStepScan = false
-		if questReadyForTurnIn then
+		if evaluationContext and evaluationContext.probeOnly and questReadyForTurnIn then
+			evaluationContext.normalComplete = true
+		end
+		if questReadyForTurnIn and not (evaluationContext and evaluationContext.probeOnly) then
 			local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
 			if hasCheckDBComplete then
 				-- On a new focus, a ready quest can still have an intermediate DB
@@ -8820,6 +8989,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					selectedStepIndex = 1
 				else
 					readyTurnInStepIndex = finalStepIndex
+					if evaluationContext then return finalStepIndex end
 					-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
 					local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(superTrackedQuestID)
 					if not waypointText then
@@ -8868,6 +9038,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			firstStepToEvaluate = selectedStepIndex
 		end
 		local lastStepToEvaluate = initialReadyStepScan and (#questData - 1) or #questData
+		if evaluationContext and evaluationContext.startAtSeed and not readyTurnInStepIndex then
+			firstStepToEvaluate = selectedStepIndex
+		end
+		if evaluationContext and evaluationContext.probeOnly then
+			firstStepToEvaluate = questReadyForTurnIn and (#questData + 1) or selectedStepIndex
+			lastStepToEvaluate = selectedStepIndex
+		end
 		for i = firstStepToEvaluate, lastStepToEvaluate do
 			local stepData = questData[i]
 			if not stepData then break end
@@ -8888,7 +9065,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
 						end
 						-- Only advance if result is true
-						RQE.OkayWaypointButtonToMove = true
+						if not evaluationContext then RQE.OkayWaypointButtonToMove = true end
 						stepIndex = i + 1
 					else
 						if RQE.db.profile.debugLevel == "INFO+" then
@@ -8986,7 +9163,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Conditional triggered; auto-passing stepIndex:", i)
 					end
-					RQE.OkayWaypointButtonToMove = true
+					if not evaluationContext then RQE.OkayWaypointButtonToMove = true end
 					stepIndex = i + 1
 					break
 				end
@@ -8998,7 +9175,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("All checks succeeded for stepIndex:", i, ". Advancing to the next step.")
 					end
-					RQE.OkayWaypointButtonToMove = true
+					if not evaluationContext then RQE.OkayWaypointButtonToMove = true end
 					stepIndex = i + 1
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -9007,6 +9184,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					break
 				end
 			end
+		end
+
+		if evaluationContext and stepIndex > selectedStepIndex then
+			evaluationContext.normalComplete = true
 		end
 
 		-- Only the selected step may opt in to a backward retry. Evaluate its
@@ -9156,16 +9337,23 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end
 				end
 
-				if validFailedChecks and failedIndex
-					and not self:CombineCheckResults(failedResults, { checks = failedChecks }) then
+				local retryFailed = validFailedChecks and failedIndex
+					and not self:CombineCheckResults(failedResults, { checks = failedChecks })
+				if evaluationContext and validFailedChecks then
+					evaluationContext.retryFailed = retryFailed == true
+					evaluationContext.retryTarget = retryFailed and failedIndex or nil
+				end
+				if retryFailed then
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Failed step checks; returning to stepIndex:", failedIndex)
 					end
 					stepIndex = failedIndex
-					RQE.OkayWaypointButtonToMove = true
+					if not evaluationContext then RQE.OkayWaypointButtonToMove = true end
 				end
 			end
 		end
+
+		if evaluationContext then return stepIndex end
 
 		-- Early-return if waypoint text exists AND current step is not a zone-change step
 		-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
@@ -9471,6 +9659,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Helper function to find the x, y and mapID that exists for the RQE.CheckCoordinateDistance() conditional in the DB file
 	function RQE:CheckCoordinateDistanceConditional()
+		if RouteHybridStepCheck(self, "COORDINATE_DISTANCE") then return end
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
@@ -9503,7 +9692,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							print(string.format("RQE: Within %.0f yards of target — advancing step %d.", args[4] or 0, stepIndex))
 						end
 						self:ClickWaypointButtonForIndex(stepIndex + 1)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
-						RQE.isMonitoringCoordinateDistance = false
+						if not self._stepEvaluationContext then RQE.isMonitoringCoordinateDistance = false end
 						break
 					end
 				end
@@ -10156,6 +10345,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to check the current quest step and perform actions accordingly
 	function RQE.CheckThatQuestStep()
+		if RouteHybridStepCheck(RQE, "QUEST_STEP_CORRECTION") then return end
 		-- Retrieve the questID from the RQEFrame
 		local questID = RQE.searchedQuestID or (RQE.QuestIDText and tonumber(RQE.QuestIDText:GetText():match("%d+"))) or RQE.API.GetSuperTrackedQuestID()
 
@@ -10296,6 +10486,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function advances the quest step by simulating a click on the corresponding WaypointButton
 	function RQE:AdvanceQuestStep(questID, stepIndex)
+		local evaluationContext = self._stepEvaluationContext
+		if evaluationContext then
+			evaluationContext.candidate = evaluationContext.objectiveFlag and stepIndex or (stepIndex + 1)
+			evaluationContext.objectiveFlag = nil
+			return
+		end
+		if RouteHybridStepCheck(self, "ADVANCE_QUEST_STEP") then return end
 		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Running AdvanceQuestStep for questID:", questID, "at stepIndex:", stepIndex)
@@ -10380,6 +10577,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function that handles button clicks based on changes to the stepText
 	function RQE:ClickWaypointButtonForIndex(index)
+		if self._stepEvaluationContext then
+			self._stepEvaluationContext.candidate = tonumber(index) or self._stepEvaluationContext.candidate
+			return
+		end
+		if RouteHybridStepCheck(self, "AUTOMATIC_STEP_SELECTION") then return end
 		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 		if self.ActiveCoordblock and self.ActiveCoordblock.stepIndex
 			and self.ActiveCoordblock.stepIndex ~= tonumber(index) then
@@ -10544,18 +10746,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function that handles the check to see if the player is Alliance or Horde when needed to be called
 	function RQE:HandleFactionLogicAfterAdvance()
+		if RouteHybridStepCheck(self, "FACTION_STEP_CHECK") then return end
+		local evaluationContext = self._stepEvaluationContext
 		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("~~ Running RQE:HandleFactionLogicAfterAdvance ~~")
 		end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()
+		local questID = evaluationContext and evaluationContext.questID or RQE.API.GetSuperTrackedQuestID()
 		if not questID then return end
 
 		local questData = RQE.getQuestData(questID)
 		if not questData then return end
 
-		local stepIndex = RQE.AddonSetStepIndex
+		local stepIndex = evaluationContext and evaluationContext.candidate or RQE.AddonSetStepIndex
 		local stepData = questData[stepIndex]
 		if not stepData then return end
 
@@ -10568,14 +10772,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Player is not Alliance. Skipping stepIndex:", stepIndex)
 			end
-			RQE.AddonSetStepIndex = stepIndex + 1
-			self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+			if not evaluationContext then RQE.AddonSetStepIndex = stepIndex + 1 end
+			self:ClickWaypointButtonForIndex(stepIndex + 1)
 		elseif description:find("^HORDE:") and englishFaction ~= "Horde" then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Player is not Horde. Skipping stepIndex:", stepIndex)
 			end
-			RQE.AddonSetStepIndex = stepIndex + 1
-			self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+			if not evaluationContext then RQE.AddonSetStepIndex = stepIndex + 1 end
+			self:ClickWaypointButtonForIndex(stepIndex + 1)
 		end
 
 		-- StartPeriodicChecks evaluates retry conditions after normal step checks.
@@ -10584,6 +10788,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Handles description prefixes like "PALADIN-A:", "PRIEST-N:", "WARLOCK-H:".
 	-- Intended to be called AFTER RQE:HandleFactionLogicAfterAdvance().
 	function RQE:HandleClassFactionLogicAfterAdvance()
+		if RouteHybridStepCheck(self, "CLASS_STEP_CHECK") then return end
+		local evaluationContext = self._stepEvaluationContext
 		if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 		-- Allow both INFO and INFO+ to show debug
 		local debug = (RQE.db.profile.debugLevel == "INFO+")
@@ -10592,7 +10798,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("~~ Running RQE:HandleClassFactionLogicAfterAdvance ~~")
 		end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()
+		local questID = evaluationContext and evaluationContext.questID or RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if debug then print("ClassLogic: No supertracked quest, aborting.") end
 			return
@@ -10614,7 +10820,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Current step index
-		local stepIndex = RQE.AddonSetStepIndex or 1
+		local stepIndex = evaluationContext and evaluationContext.candidate or RQE.AddonSetStepIndex or 1
 
 		if debug then
 			print(string.format(
@@ -10697,7 +10903,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		while ShouldSkipClassStep(stepIndex) do
 			skippedAny = true
 			stepIndex = stepIndex + 1
-			RQE.AddonSetStepIndex = stepIndex
+			if evaluationContext then
+				evaluationContext.candidate = stepIndex
+			else
+				RQE.AddonSetStepIndex = stepIndex
+			end
 
 			if debug then
 				print("ClassLogic: Advanced to stepIndex (class/faction logic):", stepIndex)
@@ -10717,7 +10927,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if debug then
 				print("ClassLogic: skipped one or more steps; clicking waypoint for stepIndex", RQE.AddonSetStepIndex)
 			end
-			self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
+			self:ClickWaypointButtonForIndex(evaluationContext and evaluationContext.candidate or RQE.AddonSetStepIndex)
 		else
 			if debug then
 				print("ClassLogic: no class-based skipping performed on stepIndex", stepIndex)
@@ -10727,6 +10937,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to handle failedfunc logic for CheckDBZoneChange
 	function RQE:HandleFailedFunction(questID, stepIndex)
+		if RouteHybridStepCheck(self, "FAILED_STEP_CHECK") then return end
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("~~ Running RQE:HandleFailedFunction ~~")
 		end
@@ -10766,7 +10977,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if failFuncResult then
 				-- If failed function triggers, move to the failedIndex
 				local failedIndex = stepData.failedIndex or 1 -- Default to step 1 if not provided
-				RQE.AddonFailedSetStepIndex = failedIndex
+				if not self._stepEvaluationContext then RQE.AddonFailedSetStepIndex = failedIndex end
 
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Failure condition met. Reverting to failedIndex:", failedIndex)
@@ -10801,6 +11012,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function will check if the player currently has any of the buffs specified
 	-- in the quest's check or checks field.
 	function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
+		local evaluationContext = self._stepEvaluationContext
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("~~ Running RQE:CheckDBBuff ~~")
 		end
@@ -10850,8 +11062,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Stores the most recently observed objective progress for combined checks.
 		-- This prevents a newly delivered objective amount from being added to an
 		-- aura count that Blizzard has not removed yet.
-		RQE.CombinedBuffObjectiveStates =
-			RQE.CombinedBuffObjectiveStates or {}
+		local combinedStates
+		if evaluationContext then
+			combinedStates = evaluationContext.evaluationState.combinedBuffObjectives
+		else
+			RQE.CombinedBuffObjectiveStates = RQE.CombinedBuffObjectiveStates or {}
+			combinedStates = RQE.CombinedBuffObjectiveStates
+		end
 
 		-- Evaluates a buff against either its stack count or its combined
 		-- stack count plus objective progress.
@@ -10890,7 +11107,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					.. ":"
 					.. tostring(buffName)
 
-				local state = RQE.CombinedBuffObjectiveStates[stateKey]
+				local state = combinedStates[stateKey]
 
 				if not state then
 					state = {
@@ -10898,7 +11115,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						settleUntil = nil,
 					}
 
-					RQE.CombinedBuffObjectiveStates[stateKey] = state
+					combinedStates[stateKey] = state
 				elseif state.objectiveProgress ~= objectiveProgress then
 					-- Objective progress changed. The aura count may still contain
 					-- the NPCs that were just delivered, so temporarily prevent the
@@ -10906,6 +11123,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					state.objectiveProgress = objectiveProgress
 					-- Previous Blizzard call changed 2026.09.25: state.settleUntil = GetTime() + 0.75
 					state.settleUntil = RQE.API.Client.GetTime() + 0.75
+					if evaluationContext then
+						local settleAt = state.settleUntil + 0.05
+						evaluationContext.settleAt = math.min(evaluationContext.settleAt or settleAt, settleAt)
+						return false
+					end
 
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print(
@@ -10955,6 +11177,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if state.settleUntil then
 					-- Previous Blizzard call changed 2026.09.25: if GetTime() < state.settleUntil then
 					if RQE.API.Client.GetTime() < state.settleUntil then
+						if evaluationContext then
+							local settleAt = state.settleUntil + 0.05
+							evaluationContext.settleAt = math.min(evaluationContext.settleAt or settleAt, settleAt)
+						end
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print(
 								"CheckDBBuff() - Combined check still settling:",
@@ -11704,6 +11930,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Previous Blizzard call changed 2026.09.25: local isReady = C_QuestLog.ReadyForTurnIn(questID)
 		local isReady = RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID)
+		if self._stepEvaluationContext then return isReady end
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print(string.format("CheckDBComplete: Quest %d is %sready for turn-in.", questID, isReady and "" or "NOT "))
@@ -11735,6 +11962,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- dependency quests whose completion is not retained by Blizzard's flag API.
 	function RQE:GetQuestDependencyCompletionStore()
 		if not self.db or not self.db.char then return nil end
+		if self._stepEvaluationContext then return self.db.char.questDependencyCompletions end
 		self.db.char.questDependencyCompletions = self.db.char.questDependencyCompletions or {}
 		return self.db.char.questDependencyCompletions
 	end
@@ -12108,7 +12336,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			if objective then
 				if objective.finished or objective.numFulfilled >= neededAmount then
-					RQE.OkayWaypointButtonToMove = true
+					if not self._stepEvaluationContext then RQE.OkayWaypointButtonToMove = true end
 					correctStepIndex = i + 1
 				elseif objective.numFulfilled < neededAmount then
 					correctStepIndex = i
@@ -12171,7 +12399,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		}
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	]]
-	-- Evaluate a database condition without advancing or otherwise mutating quest-step state.
+	-- Evaluates conditional database checks, recording advancement in the active computation context when present.
 	function RQE:CheckDBConditionalsOnly(questID, stepIndex, check, neededAmt)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("~~ Running RQE:CheckDBConditionalsOnly() ~~")
@@ -14456,6 +14684,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- This function will handle the auto clicking of WaypointButton for the super tracked QuestLogIndexButton
 	function RQE:AutoClickQuestLogIndexWaypointButton()
+		if self._stepEvaluationContext then return end
+		if RouteHybridStepCheck(self, "AUTOMATIC_WAYPOINT_CLICK") then return end
 		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then return end
 		if RQE.API.Client.InCombatLockdown() then return end
 
@@ -15016,7 +15246,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local questData = RQE.getQuestData and RQE.getQuestData(questID)
 			local stepIndex = tonumber(RQE.AddonSetStepIndex) or tonumber(RQE.CurrentDisplayedStepIndex)
 			local step = questData and stepIndex and questData[stepIndex]
-			local itemTag = "{item:" .. tostring(itemID) .. ":"
 
 			-- Returns how much progress is still required for the chosen objective.
 			local function RemainingForObjective(objectiveIndex, needed)
@@ -15050,7 +15279,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- The selected step binds the item to its objective without cached names.
 			local objectiveIndex = step and tonumber(step.objectiveIndex)
 			if step and type(step.description) == "string"
-				and step.description:find(itemTag, 1, true)
+				and RQE.API.RichTextContainsItem(step.description, itemID)
 				and objectiveIndex and objectiveIndex > 0 and objectiveIndex ~= 99 then
 				local needed = type(step.neededAmt) == "table" and tonumber(step.neededAmt[1])
 				finalQuantity = RemainingForObjective(objectiveIndex, needed)
