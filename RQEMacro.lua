@@ -56,6 +56,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 	local function QueuePendingMacroOperation(self, queue, operation)
 		self.pendingMacroSequence = self.pendingMacroSequence + 1
 		operation.order = self.pendingMacroSequence
+		operation.hybridToken = RQE.GetHybridCallbackToken and RQE:GetHybridCallbackToken()
 		table.insert(queue, operation)
 	end
 
@@ -243,6 +244,11 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Function to create or update a macro for a quest step
 	function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
+		-- Older quest callbacks may only refresh the currently displayed Hybrid quest and step.
+		if RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation() then
+			if tonumber(questID) ~= tonumber(RQE.API.GetSuperTrackedQuestID())
+				or tonumber(stepIndex) ~= tonumber(RQE.AddonSetStepIndex) then return end
+		end
 		-- Timer callbacks captured before Search > Track can still arrive here.
 		-- Only the active searched quest and selected preview step may replace it.
 		-- Previous condition (2026.11.09): only Retail rejected stale search/step callbacks.
@@ -993,10 +999,13 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 		for _, entry in ipairs(pending) do
 			local operation = entry.operation
-			if entry.kind == "clear" then
-				self:ActuallyClearMacroContentByName(operation.name)
-			else
-				self:ActuallySetMacro(operation.name, operation.iconFileID, operation.body, operation.perCharacter)
+			-- Legacy queues may outlive the quest, preview, profile, or navigation mode that created them.
+			if not RQE.IsHybridCallbackCurrent or RQE:IsHybridCallbackCurrent(operation.hybridToken) then
+				if entry.kind == "clear" then
+					self:ActuallyClearMacroContentByName(operation.name)
+				else
+					self:ActuallySetMacro(operation.name, operation.iconFileID, operation.body, operation.perCharacter)
+				end
 			end
 		end
 
