@@ -122,10 +122,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			return
 		end
 
+		-- Builds quest actions and navigation-mode controls for the helper's context menu.
 		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			local isPlayerInGroup = IsInGroup()
-			-- local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
-			local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
+			local isQuestShareable = RQE.API.IsPushableQuest(questID)
 			local questLabel = questID and tostring(questID) or RQE.searchedQuestID or RQE.CurrentDisplayedQuestID or "<Nothing Tracked>"
 
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
@@ -147,11 +147,17 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 
 			if isPlayerInGroup and isQuestShareable then
-				rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+				-- Shares this quest after rechecking its current log entry and group eligibility.
+				rootDescription:CreateButton("Share Quest", function() RQE.API.ShareQuest(questID) end)
 			end
 
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-				if RQE.db.profile.enableStepControls then
+				if RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation() then
+					-- Returns to Automatic navigation without changing automatic waypoint creation.
+					rootDescription:CreateContributionButton("Exit Hybrid: Use Automatic Step Navigation", function()
+						RQE:SetStepNavigationMode("automatic")
+					end)
+				elseif RQE.db.profile.enableStepControls then
 					rootDescription:CreateContributionButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
 					rootDescription:CreateContributionButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
 				else
@@ -212,6 +218,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			return
 		end
 
+		-- Builds general helper actions and navigation-mode controls for the context menu.
 		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID() or RQE.CurrentDisplayedQuestID
 			local questLabel = questID and tostring(questID) or "<Nothing Tracked>"
@@ -228,7 +235,12 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				end
 				rootDescription:CreateContributionButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-				if RQE.db.profile.enableStepControls then
+				if RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation() then
+					-- Returns to Automatic navigation without changing automatic waypoint creation.
+					rootDescription:CreateContributionButton("Exit Hybrid: Use Automatic Step Navigation", function()
+						RQE:SetStepNavigationMode("automatic")
+					end)
+				elseif RQE.db.profile.enableStepControls then
 					rootDescription:CreateContributionButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
 					rootDescription:CreateContributionButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
 				else
@@ -678,9 +690,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	RQE.QuestNameText:EnableMouse(true)
 
 
-	-- TBC's GetQuestLogTimeLeft reads the selected quest rather than taking a
-	-- quest ID. Keep its countdown on this single-quest helper instead of trying
-	-- to attach that state to every row in the multi-quest tracker.
+	-- Share the quest-specific deadline with the tracker so both views show the same countdown.
 	RQE.QuestStatusText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -12)
 	RQE.QuestStatusText:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
@@ -763,9 +773,9 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 		if themed and searchGroupShown then
 			-- Keep timer/failure status clear of the two-button W/SG stack without
 			-- shifting the shared text column noticeably farther right.
-			RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 8, -8)
+			RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 5, -8)
 		else
-			RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", noGroupTextOffset, -12)
+			RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", noGroupTextOffset, -20)
 		end
 		RQE.DirectionTextFrame:ClearAllPoints()
 		if hasStatus then
@@ -782,69 +792,29 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	end
 
 
-	-- Identify recurring or world quests whose expiration is availability data rather than a failure countdown.
-	local function IsQuestHelperAvailabilityTimer(questID)
-		if RQE.API.IsWorldQuest and RQE.API.IsWorldQuest(questID) then
-			return true
+	-- Read the visible quest header so a cleared or stale cached ID cannot hide or misassign its timer.
+	local function GetQuestHelperDisplayedQuestID()
+		if RQE.QuestIDText and RQE.QuestIDText.GetText then
+			local headerText = RQE.QuestIDText:GetText()
+			if type(headerText) ~= "string" then return nil end
+			headerText = headerText:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+			local questID = tonumber(headerText:match("^Quest ID:%s*(%d+)%s*$"))
+			return questID and questID > 0 and questID or nil
 		end
-		local questLogIndex = RQE.API.GetLogIndexForQuestID
-			and RQE.API.GetLogIndexForQuestID(questID)
-		local questInfo = questLogIndex and RQE.API.GetQuestLogInfo
-			and RQE.API.GetQuestLogInfo(questLogIndex)
-		local frequency = questInfo and tonumber(questInfo.frequency)
-		local frequencyEnum = Enum and Enum.QuestFrequency
-		local daily = frequencyEnum and tonumber(frequencyEnum.Daily) or 1
-		local weekly = frequencyEnum and tonumber(frequencyEnum.Weekly) or 2
-		local scheduled = frequencyEnum and tonumber(frequencyEnum.ResetByScheduler) or 3
-		return frequency ~= nil
-			and (frequency == daily or frequency == weekly or frequency == scheduled)
-	end
-
-
-	local legacyQuestTimerState = { questID = nil, expiresAt = nil, nextProbe = 0 }
-
-	-- Cache and periodically resynchronize a legacy quest timer while deriving smooth seconds remaining locally.
-	local function GetLegacyQuestTimerSeconds(questID)
-		local now = GetTime()
-		if legacyQuestTimerState.questID ~= questID then
-			legacyQuestTimerState.questID = questID
-			legacyQuestTimerState.expiresAt = nil
-			legacyQuestTimerState.nextProbe = 0
-		end
-
-		-- Resynchronize occasionally so completing, restarting, or extending a
-		-- timer is reflected without selecting the quest every rendered second.
-		if now >= legacyQuestTimerState.nextProbe then
-			local secondsLeft = RQE.API.GetQuestTimeRemainingSeconds(questID)
-			legacyQuestTimerState.nextProbe = now + 5
-			legacyQuestTimerState.expiresAt = secondsLeft ~= nil and (now + secondsLeft) or nil
-		end
-
-		return legacyQuestTimerState.expiresAt
-			and math.max(0, legacyQuestTimerState.expiresAt - now) or nil
+		local questID = tonumber(RQE.DisplayedQuestID)
+		return questID and questID > 0 and questID or nil
 	end
 
 
 	-- Refresh the legacy-client quest failure or countdown status and reposition the direction row beneath it.
 	local function UpdateLegacyQuestStatusText()
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID
-			and RQE.API.GetSuperTrackedQuestID()
-		local questID = tonumber(RQE.searchedQuestID)
-			or tonumber(RQE.DisplayedQuestID)
-			or tonumber(superTrackedQuestID)
+		local questID = GetQuestHelperDisplayedQuestID()
 		local statusText, isFailed, isUrgent
-		local suppressAvailabilityTimer = questID
-			and IsQuestHelperAvailabilityTimer(questID)
 
 		if questID and RQE.API.IsQuestFailed and RQE.API.IsQuestFailed(questID) then
 			statusText, isFailed = FAILED or "Failed", true
-			legacyQuestTimerState.expiresAt = nil
-			legacyQuestTimerState.nextProbe = 0
-		elseif suppressAvailabilityTimer then
-			legacyQuestTimerState.expiresAt = nil
-			legacyQuestTimerState.nextProbe = 0
 		elseif questID and RQE.API.GetQuestTimeRemainingSeconds then
-			local secondsLeft = GetLegacyQuestTimerSeconds(questID)
+			local secondsLeft = RQE.API.GetQuestTimeRemainingSeconds(questID)
 			if secondsLeft ~= nil then
 				local displaySeconds = math.max(0, math.ceil(secondsLeft))
 				local timeText = SecondsToTime and SecondsToTime(displaySeconds)
@@ -877,6 +847,12 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 	local questStatusUpdater = CreateFrame("Frame", nil, RQEFrame)
 	questStatusUpdater.elapsed = 0
+	-- Refresh immediately when the helper reopens so hidden countdowns cannot retain stale text.
+	questStatusUpdater:SetScript("OnShow", function(self)
+		self.elapsed = 0
+		UpdateLegacyQuestStatusText()
+	end)
+	-- Update the legacy quest status text once per second.
 	questStatusUpdater:SetScript("OnUpdate", function(self, elapsed)
 		self.elapsed = self.elapsed + elapsed
 		if self.elapsed < 1 then return end
@@ -1349,7 +1325,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				:gsub("%s+", " ")				  -- collapse whitespace
 				:match("^%s*(.-)%s*$") or ""	   -- trim
 
-			return text
+			return RQE.API.UnescapeRichTextHTML(text)
 		end
 
 		-- 2) Plain FontString path (what you had originally)
@@ -1537,43 +1513,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			end
 
 			-- Party Members' Quest Progress
-			if IsInGroup() and not IsInRaid() then
-				-- GetQuestPartyProgress is a Retail tooltip API and is not present in
-				-- Classic Era.  Leave party-progress details out when it is unavailable.
-				local tooltipData = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress and C_TooltipInfo.GetQuestPartyProgress(questID)
-				if tooltipData and tooltipData.lines then
-					local player_name = UnitName("player")
-					local isFirstPartyMember = true
-					local skipPlayerLines = false
-					local skipQuestNameLine = false  -- Flag to skip quest name lines
-
-					for _, line in ipairs(tooltipData.lines) do
-						if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
-							skipQuestNameLine = true
-						end
-
-						if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
-							skipPlayerLines = true
-							isFirstPartyMember = false
-						end
-
-						if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
-							skipPlayerLines = false
-							skipQuestNameLine = false  -- Reset for the next quest
-							if isFirstPartyMember then
-								GameTooltip:AddLine(" ")
-								isFirstPartyMember = false
-							end
-						end
-
-						if not skipPlayerLines and not skipQuestNameLine then
-							local text = line.leftText
-							local r, g, b = line.leftColor:GetRGB()
-							GameTooltip:AddLine(text, r, g, b, true)
-						end
-					end
-				end
-			end
+			RQE.API.AddQuestPartyProgressTooltip(GameTooltip, questID)
 		end
 
 		GameTooltip:AddLine(" ")
@@ -1869,7 +1809,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			local hasCoords = raw:match("{coords:") or raw:match("{coordblock:")
 			local hasCoordblock = raw:find("{coordblock:", 1, true) ~= nil
 			-- local hasCoords = raw:match("{coords:")
-			local hasHoverables = raw:match("{item:") or raw:match("{spell:")
+			local hasHoverables = raw:match("{objectitem:") or raw:match("{item:") or raw:match("{spell:")
 				or raw:match("{npc:") or raw:match("{object:")
 
 			local StepText
@@ -2135,6 +2075,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			-- Hide the tooltip when the mouse leaves
 			WaypointButton:SetScript("OnLeave", function()
 				RQE.WaypointButtonHover = false
+				WaypointButton.hybridPlayerPress = nil
 				GameTooltip:Hide()
 			end)
 
@@ -2144,6 +2085,14 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					-- RQE:ClickWaypointButtonForIndex(i)
 				-- end
 
+				-- Physical Hybrid clicks select a preview; automatic clicks only refresh its waypoint.
+				if RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation() then
+					local manual = WaypointButton.hybridPlayerPress
+					WaypointButton.hybridPlayerPress = nil
+					if manual then RQE:SetDisplayedStepFromStepsList(i) end
+					RQE:ActivateHybridWaypoint(manual)
+					return
+				end
 				-- Searched previews select their own focus, macro, and waypoint even when manual controls are off.
 				local previewQuestID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 				if RQE:CanUseStepControlsForQuest(previewQuestID) then
@@ -2278,6 +2227,8 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 			-- Add a mouse down event to simulate a button press
 			WaypointButton:SetScript("OnMouseDown", function(self, button)
+				self.hybridPlayerPress = button == "LeftButton"
+					and RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()
 				if button == "LeftButton" then
 					bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 				end
@@ -2803,8 +2754,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	CreateSearchFrame()
 
 	-- Event to update text widths when the frame is resized
+	-- Refreshes content widths, adaptive navigation, and saved size after either frame dimension changes.
 	RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
 		AdjustRQEFrameWidths()
+		if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then RQE.Buttons.UpdateHeaderNavigation() end
 		SaveRQEFrameSize()
 	end)
 
@@ -3168,6 +3121,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			local focusTextWidth = math.max(1, RQE.SeparateContentFrame:GetWidth() - focusTextInset - 15)
 			local focusTextNarrowWidth = math.max(1, RQE.SeparateContentFrame:GetWidth() - focusTextInset - 25)
 			local stepStyle = RQE.UI:GetStepTextSettings()
+			local lineGap = math.max(0, math.min(20, tonumber(RQE.db.profile.separateFocusLineGap) or 5))
 
 			-- Coordblock selection belongs only to the current Blizzard supertrack.
 			-- Clear it even when the newly selected quest has no coordblocks to render.
@@ -3386,14 +3340,19 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			local hasCoords = formattedText:match("{coords:") or formattedText:match("{coordblock:")
 			local routeStartOffset
 
+			-- Count every authored newline so consecutive breaks add consecutive gaps.
+			local paragraphs, paragraphBreaks = {}, {}
+			local cleaned = formattedText:gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("\\n", "\n")
+			for paragraph, breaks in cleaned:gmatch("([^\n]+)(\n*)") do
+				paragraphs[#paragraphs + 1] = paragraph
+				paragraphBreaks[#paragraphBreaks + 1] = #breaks
+			end
+			if #paragraphs == 0 then
+				paragraphs[1], paragraphBreaks[1] = cleaned, 0
+			end
+
 			if hasCoords then
 				-- ✅ Always use SimpleHTML for the first paragraph; use FontStrings only for additional lines
-				local paragraphs = {}
-				local cleaned = formattedText:gsub("\r\n", "\n"):gsub("\r", "\n")
-				for p in cleaned:gmatch("([^\n]+)") do
-					table.insert(paragraphs, p)
-				end
-				if #paragraphs == 0 then table.insert(paragraphs, cleaned) end
 
 				-- 🧭 Create SimpleHTML for the first paragraph
 				local StepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "SimpleHTML")
@@ -3412,22 +3371,27 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				local html = paragraphs[1]
 				StepText._rqeCoordblockLinks = {}
 				StepText._rqeCoordblockByPoint = {}
+				-- Keep each object's identity separate from its visible item label.
+				html, StepText._rqeObjectItemLinks = RQE.API.BuildObjectItemHTML(html)
 
 				-- 🔗 Replace {item}, {spell}, {coords}
 				html = html:gsub("{item:(%d+):([^}]+)}", function(id, name)
-					return string.format('<a href="item:%s">|cffff66cc[%s]|r</a>', id, name)
+					return string.format('<a href="item:%s">|cffff66cc[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
 				end)
 
+				-- Converts spell notation into a colored, clickable spell link.
 				html = html:gsub("{spell:(%d+):([^}]+)}", function(id, name)
-					return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', id, name)
+					return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
 				end)
 
+				-- Converts NPC notation into a colored preview link.
 				html = html:gsub("{npc:(%d+):([^}]+)}", function(id, name)
-					return string.format('<a href="rqenpc:%s">|cff66ff66[%s]|r</a>', id, name)
+					return string.format('<a href="rqenpc:%s">|cff66ff66[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
 				end)
 
+				-- Converts object notation into a colored preview link.
 				html = html:gsub("{object:([%a%d]+):([^}]+)}", function(id, name)
-					return string.format('<a href="rqeobject:%s">|cffffd700[%s]|r</a>', id, name)
+					return string.format('<a href="rqeobject:%s">|cffffd700[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
 				end)
 
 				html = html:gsub("{coordblock:([^}]+)}", function(data)
@@ -3530,13 +3494,17 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					end
 				end)
 
+				-- Shows the tooltip matching a hyperlink in the separate-focus text.
 				StepText:SetScript("OnHyperlinkEnter", function(self, link, text)
 					if RQE._coordblockTooltipOwner == self then RQE._coordblockTooltipOwner = nil end
 					self:SetScript("OnUpdate", nil)
 					if type(link) ~= "string" then return end
 
 					local linkType, id = link:match("^(%a+):(.+)$")
-					if linkType == "item" then
+					if linkType == "rqeobjectitem" then
+						local entry = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
+						if entry then RQE.API.ShowObjectItemTooltip(self, entry) end
+					elseif linkType == "item" then
 						local itemID = tonumber(id)
 						if itemID then
 							GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
@@ -3599,7 +3567,8 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					end
 
 					local h = StepText:GetContentHeight() or 20
-					StepText:SetHeight(h + 6)
+					-- Keep the HTML hit area out of the next row, including when the gap is zero.
+					StepText:SetHeight(h)
 				end)
 
 				-- ✅ Handle following paragraphs (if \n exists)
@@ -3614,8 +3583,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 						end
 
 						local htmlHeight = StepText:GetContentHeight() or StepText:GetHeight() or 20
-						local extraPadding = math.max(20, htmlHeight * 0.3) -- at least 20px, scales a bit with height
-						local yOffset = -(htmlHeight + extraPadding)
+						local yOffset = -7 - htmlHeight - paragraphBreaks[1] * lineGap
 
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print(string.format("RQE DEBUG: SimpleHTML height calculated as %.2f, yOffset set to %.2f", htmlHeight, yOffset))
@@ -3646,7 +3614,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 							end
 
 							local h2 = fs.GetStringHeight and fs:GetStringHeight() or 16
-							yOffset = yOffset - (h2 + 8)
+							yOffset = yOffset - (h2 + paragraphBreaks[i] * lineGap)
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print(string.format("RQE DEBUG: FontString height %.2f, next yOffset %.2f", h2, yOffset))
 							end
@@ -3659,19 +3627,8 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					print("RQE DEBUG: Entered SeparateFocusFrame FontString (no coords) block")
 				end
 
-				-- Normalize and split by newline
-				local paragraphs = {}
-				local cleaned = formattedText:gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("\\n", "\n")
-				for p in cleaned:gmatch("([^\n]+)") do
-					table.insert(paragraphs, p)
-				end
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("RQE DEBUG: FontString paragraph count:", #paragraphs)
-				end
-
-				-- Safety: if no paragraphs found, treat whole thing as one
-				if #paragraphs == 0 then
-					table.insert(paragraphs, cleaned)
 				end
 
 				local yOffset = -7
@@ -3695,14 +3652,15 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					-- Handle hover-capable markup for item/spell tags even when no coords exist
 					RQE.RenderTextWithItemsSteps(StepText, line, stepStyle.font, stepStyle.size, stepStyle.color, RQE.SeparateContentFrame)
 
-					-- Measure line height and step down
+					-- Add the measured text height and one configured gap for each following newline.
 					local h = StepText.GetStringHeight and StepText:GetStringHeight() or 16
-					yOffset = yOffset - (h + 8)
+					yOffset = yOffset - (h + paragraphBreaks[i] * lineGap)
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("RQE DEBUG: FontString paragraph height:", h)
 					end
 				end
-				routeStartOffset = yOffset - 8
+				-- Keep route-button padding separate from the authored text breaks.
+				routeStartOffset = yOffset - lineGap - 8
 			end
 
 			-- RQE.SeparateStepText:Show()
@@ -3855,12 +3813,23 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			number:SetText("*")
 			number:SetTextColor(1, 1, 0)
 
+			-- Recognize physical focus-waypoint presses independently of automatic button activation.
+			RQE.SeparateWaypointButton:SetScript("OnMouseDown", function(button, mouseButton)
+				button.hybridPlayerPress = mouseButton == "LeftButton"
+					and RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()
+			end)
 			-- Add the click event for the Waypoint Button
 			RQE.SeparateWaypointButton:SetScript("OnClick", function()
 				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 					local stepIndex = tonumber(RQE.ManualPreviewQuestID) == tonumber(RQE.searchedQuestID)
 						and tonumber(RQE.ManualPreviewStepIndex) or 0
 					RQE:CreateSearchedQuestStepWaypoint(RQE.searchedQuestID, stepIndex)
+					return
+				end
+				if RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation() then
+					local manual = RQE.SeparateWaypointButton.hybridPlayerPress
+					RQE.SeparateWaypointButton.hybridPlayerPress = nil
+					RQE:ActivateHybridWaypoint(manual)
 					return
 				end
 				local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
@@ -3918,6 +3887,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 			-- Hide the tooltip when leaving the "C" button
 			RQE.SeparateWaypointButton:SetScript("OnLeave", function(self)
+				self.hybridPlayerPress = nil
 				GameTooltip:Hide()
 			end)
 			-- Install themed hover hooks after the tooltip's mouse scripts.
@@ -4100,6 +4070,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 		-- Hide tooltip when leaving the button
 		RQE.SeparateWaypointButton:SetScript("OnLeave", function()
+			RQE.SeparateWaypointButton.hybridPlayerPress = nil
 			GameTooltip:Hide()
 		end)
 	end
