@@ -632,8 +632,9 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Hide the tooltip when the mouse leaves
 	RQE.HideUnknownButtonTooltip = function()
-		-- Hides the tooltip when the pointer leaves this control.
+		-- Hides the tooltip and discards a physical press abandoned outside the waypoint button.
 		RQE.UnknownQuestButton:SetScript("OnLeave", function()
+			RQE.UnknownQuestButton.hybridPlayerPress = nil
 			RQE.hoveringOnRQEFrameAndButton = false
 			GameTooltip:Hide()
 		end)
@@ -641,9 +642,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Add a mouse down event to simulate a button press
 	RQE.UnknownQuestButtonMouseDown = function()
-		-- Creates or selects the unknown-quest waypoint for the clicked mouse action.
+		-- Records a physical waypoint request and prepares its destination without changing the selected step.
 		RQE.UnknownQuestButton:SetScript("OnMouseDown", function(self, button)
 			if button ~= "LeftButton" then return end
+			self.hybridPlayerPress = RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()
+			if self.hybridPlayerPress and RQE.API.Client.InCombatLockdown() then return end
 
 			-- A physical "W" press is an explicit destination choice: remove the
 			-- nearest-flight-master waypoint so the OnClick handler can create the
@@ -1010,6 +1013,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			-- Code for ClearButton functionality here
 			RQE.Buttons.ClearButtonPressed()
 			RQE.searchedQuestID = nil
+			RQE.Buttons.UpdateHeaderNavigation()
 			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
 			-- Saves the super tracked quest to character.
 			RQE.API.Client.C_Timer.After(0.3, function()
@@ -1079,6 +1083,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RQE.isSuperTracking = false			-- This is the variable that gets checked when RQE.isPlayerSuperTrackingQuest() runs
 		RQE.CurrentlySuperQuestID = nil		-- This is the variable that gets saved when RQE.isPlayerSuperTrackingQuest() runs and a quest is being super tracked
 		RQE:RemoveSuperTrackingFromQuest()
+		RQE.Buttons.UpdateHeaderNavigation()
 		RQE:UpdateRQEFrameVisibility()
 
 		-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
@@ -1359,8 +1364,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Returns the currently displayed stepIndex, preferring manual preview over automatic progress.
 	function RQE:GetDisplayedStepIndex()
-		if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
-			if not RQE.db.profile.enableStepControls then return end
+		if (isRetail or (RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()))
+			and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+			if not RQE.db.profile.enableStepControls
+				and not (RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()) then return end
 		else
 			local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 			if not RQE:CanUseStepControlsForQuest(questID) then return end
@@ -1371,11 +1378,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			or 1
 	end
 
-	-- Returns whether the manual step controls have a valid adjacent step in each
-	-- direction. Searched quests include the synthetic pickup step 0.
+	-- Returns adjacent-step availability and the displayed index/total, including searched pickup step 0.
 	local function GetStepNavigationAvailability()
 		local questID
-		if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+		if (isRetail or (RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()))
+			and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 			questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 		else
 			questID = RQE.searchedQuestID or RQE.DisplayedQuestID
@@ -1383,7 +1390,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 
 		local questData = questID and RQE.getQuestData(questID)
-		local currentStep = tonumber(RQE:GetDisplayedStepIndex())
+		local displayedStep = RQE:GetDisplayedStepIndex()
+		local currentStep = tonumber(displayedStep)
 		if not questData or not currentStep then return false, false end
 
 		local firstStep = 1
@@ -1396,11 +1404,20 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local canGoBack = currentStep > firstStep
 			and (previousStep == 0 or questData[previousStep] ~= nil)
 		local canGoForward = questData[currentStep + 1] ~= nil
-		return canGoBack, canGoForward
+		return canGoBack, canGoForward, currentStep, #questData
+	end
+
+	-- Explains the step-count asterisk only while the current quest has a Hybrid preview.
+	local function AddHybridStepPreviewTooltip(questID)
+		if not (RQE.IsHybridManualStepPreview and RQE:IsHybridManualStepPreview(questID)) then return end
+		local stepIndex = RQE:GetDisplayedStepIndex()
+		if not stepIndex then return end
+		GameTooltip:AddLine(string.format("* Previewing step %d. Automatic following resumes when the automatic step changes "
+			.. "or a new retry failure occurs.", stepIndex), nil, nil, nil, true)
 	end
 
 	-------------------------------------------------------
-	-- #3g. Quest Helper Close Button
+	-- #3g. Quest Helper Settings, Contribution & Close Buttons
 	-------------------------------------------------------
 
 	-- The target-reference launcher shares the filter menu's themed flyout and
@@ -1410,6 +1427,29 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		if not button then return end
 		button:SetShown(IsContributionAddonLoaded() and true or false)
 		if RQE.Buttons.UpdateHeaderNavigation then RQE.Buttons.UpdateHeaderNavigation() end
+	end
+
+	-- Creates the cogwheel that opens RQE's standalone configuration window on every client.
+	function RQE.Buttons.CreateSettingsButton(RQEFrame)
+		if RQE.SettingsButton then return RQE.SettingsButton end
+		local button = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
+		local icon = "Interface\\AddOns\\RQE\\Media\\UI\\Icons\\AzureGold_Settings.tga"
+		button:SetSize(18, 18)
+		button:SetText("")
+		button:SetNormalTexture(icon)
+		button:SetHighlightTexture(icon, "ADD")
+		button:SetPushedTexture(icon)
+		button:SetFrameStrata("MEDIUM")
+		button:SetFrameLevel(3)
+		button:SetPoint("TOPRIGHT", RQE.CloseButton, "TOPLEFT", -3, 0)
+		button.RQEThemeBorderOpacityTarget = true
+		RQE.SettingsButton = button
+		-- Opens or hides the same configuration window used by the minimap launcher.
+		button:SetScript("OnClick", function() RQE:ToggleConfigFrame() end)
+		CreateTooltip(button, "Open/Close RQE Configuration")
+		CreateBorder(button)
+		if RQE.UI then RQE.UI:StyleIconButton(button, "Settings") end
+		return button
 	end
 
 	-- Creates the target NPC button.
@@ -1423,7 +1463,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		button:SetHighlightTexture(interactIcon, "ADD")
 		button:SetFrameStrata("MEDIUM")
 		button:SetFrameLevel(3)
-		button:SetPoint("TOPRIGHT", RQE.CloseButton, "TOPLEFT", -3, 0)
+		button:SetPoint("TOPRIGHT", RQE.SettingsButton or RQE.CloseButton, "TOPLEFT", -3, 0)
 		button.RQEThemeBorderOpacityTarget = true
 		button:Hide()
 		RQE.TargetNPCButton = button
@@ -1465,6 +1505,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		CreateTooltip(CloseButton, "Close/Hide Frame")
 		CreateBorder(CloseButton)
 		if RQE.UI then RQE.UI:StyleIconButton(CloseButton, "Close") end
+		RQE.Buttons.CreateSettingsButton(RQEFrame)
 		RQE.Buttons.CreateTargetNPCButton(RQEFrame)
 
 		return CloseButton
@@ -1474,11 +1515,20 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	-- #3h. Manual Previous & Next Step Controls
 	-------------------------------------------------------
 
+	-- Raises native arrow text inside its button so Basic matches the themed navigation alignment.
+	local function RaiseNavigationGlyph(button)
+		local glyph = button:GetFontString()
+		if not glyph then return end
+		glyph:ClearAllPoints()
+		glyph:SetPoint("CENTER", button, "CENTER", 0, 2)
+	end
+
 	-- Creates the Previous Step button for manual step preview navigation.
 	function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 		local PrevStepButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
 		PrevStepButton:SetSize(18, 18)
 		PrevStepButton:SetText("<")
+		RaiseNavigationGlyph(PrevStepButton)
 		RQE.PrevStepButton = PrevStepButton
 
 		PrevStepButton:SetFrameStrata("MEDIUM")
@@ -1487,14 +1537,17 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Shows this control's tooltip while the pointer is over it.
 		PrevStepButton:SetScript("OnEnter", function(self)
-			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
-				if RQE.db.profile.enableStepControls then
+			if (isRetail or (RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()))
+				and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+				if RQE.db.profile.enableStepControls
+					or (RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()) then
 					local curStep = RQE:GetDisplayedStepIndex()
 					local targetStep = curStep - 1
 
 					if targetStep >= 1 then
 						GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 						GameTooltip:SetText(targetStep == 0 and "Return to quest pickup" or ("Go back to step " .. targetStep))
+						AddHybridStepPreviewTooltip(RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID())
 						GameTooltip:Show()
 					end
 				end
@@ -1520,13 +1573,20 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Selects the previous eligible quest step and updates its waypoint.
 		PrevStepButton:SetScript("OnClick", function()
-			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
-				if RQE.db.profile.enableStepControls then
+			if (isRetail or (RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()))
+				and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+				if RQE.db.profile.enableStepControls
+					or (RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()) then
 					local curStep = RQE:GetDisplayedStepIndex()
 					local targetStep = curStep - 1
 
 					if targetStep >= 1 then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
+						if RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation() then
+							-- Preserve this explicit waypoint request even when combat defers the step selection.
+							RQE:ActivateHybridWaypoint(true)
+							return
+						end
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
 						-- Creates the unknown quest waypoint.
@@ -1580,16 +1640,20 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local NextStepButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
 		NextStepButton:SetSize(18, 18)
 		NextStepButton:SetText(">")
+		RaiseNavigationGlyph(NextStepButton)
 		RQE.NextStepButton = NextStepButton
 
 		NextStepButton:SetFrameStrata("MEDIUM")
 		NextStepButton:SetFrameLevel(3)
-		NextStepButton:SetPoint("TOPRIGHT", RQE.TargetNPCButton:IsShown() and RQE.TargetNPCButton or RQE.CloseButton, "TOPLEFT", -3, 0)
+		local anchor = RQE.TargetNPCButton:IsShown() and RQE.TargetNPCButton or RQE.SettingsButton or RQE.CloseButton
+		NextStepButton:SetPoint("TOPRIGHT", anchor, "TOPLEFT", -3, 0)
 
 		-- Shows this control's tooltip while the pointer is over it.
 		NextStepButton:SetScript("OnEnter", function(self)
-			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
-				if RQE.db.profile.enableStepControls then
+			if (isRetail or (RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()))
+				and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+				if RQE.db.profile.enableStepControls
+					or (RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()) then
 					local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 					local questData = questID and RQE.getQuestData(questID)
 					local curStep = RQE:GetDisplayedStepIndex()
@@ -1598,6 +1662,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					if questData and questData[targetStep] then
 						GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 						GameTooltip:SetText("Advance to step " .. targetStep)
+						AddHybridStepPreviewTooltip(questID)
 						GameTooltip:Show()
 					end
 				else
@@ -1628,8 +1693,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Selects the next eligible quest step and updates its waypoint.
 		NextStepButton:SetScript("OnClick", function()
-			if isRetail and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
-				if RQE.db.profile.enableStepControls then
+			if (isRetail or (RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()))
+				and not RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
+				if RQE.db.profile.enableStepControls
+					or (RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()) then
 					local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 					local questData = questID and RQE.getQuestData(questID)
 					local curStep = RQE:GetDisplayedStepIndex()
@@ -1637,6 +1704,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 					if questData and questData[targetStep] then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
+						if RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation() then
+							-- Preserve this explicit waypoint request even when combat defers the step selection.
+							RQE:ActivateHybridWaypoint(true)
+							return
+						end
 
 						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
 						-- Creates the unknown quest waypoint.
@@ -1697,6 +1769,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local BackButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
 		BackButton:SetSize(18, 18)
 		BackButton:SetText("<<")
+		RaiseNavigationGlyph(BackButton)
 		BackButton:SetFrameStrata("MEDIUM")
 		BackButton:SetFrameLevel(3)
 		RQE.HeaderWaypointBackButton = BackButton
@@ -1714,6 +1787,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local ForwardButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
 		ForwardButton:SetSize(18, 18)
 		ForwardButton:SetText(">>")
+		RaiseNavigationGlyph(ForwardButton)
 		ForwardButton:SetFrameStrata("MEDIUM")
 		ForwardButton:SetFrameLevel(3)
 		RQE.HeaderWaypointForwardButton = ForwardButton
@@ -1768,24 +1842,205 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		BackButton:Hide()
 		Status:Hide()
 		ForwardButton:Hide()
+		RQE.Buttons.CreateHeaderNavigationRow(RQEFrame)
 		return BackButton, Status, ForwardButton
+	end
+
+	-- Creates the reusable overflow toolbar and watches header size without changing the outer frame.
+	function RQE.Buttons.CreateHeaderNavigationRow(mainFrame)
+		if RQE.HeaderNavigationRow then return RQE.HeaderNavigationRow end
+		local row = CreateFrame("Frame", nil, mainFrame)
+		row:SetHeight(32)
+		row:SetFrameLevel(mainFrame:GetFrameLevel() + 1)
+		row:EnableMouse(false)
+		row.Background = row:CreateTexture(nil, "BACKGROUND")
+		row.Background:SetAllPoints(row)
+		row.TopLine = row:CreateTexture(nil, "ARTWORK")
+		row.TopLine:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+		row.TopLine:SetPoint("TOPRIGHT", row, "TOPRIGHT", 0, 0)
+		row.TopLine:SetHeight(1)
+		row.BottomLine = row:CreateTexture(nil, "ARTWORK")
+		row.BottomLine:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 0, 0)
+		row.BottomLine:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+		row.BottomLine:SetHeight(1)
+		row.Separator = row:CreateTexture(nil, "ARTWORK")
+		row.Separator:SetSize(1, 18)
+		row.WaypointLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		row.WaypointLabel:SetText("Waypoints")
+		row.StepLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		row.StepLabel:SetText("Steps")
+		row.StepStatus = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+		row.StepStatus:SetWordWrap(false)
+		row.TitleMeasure = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		row.TitleMeasure:Hide()
+		row:Hide()
+		RQE.HeaderNavigationRow = row
+		RQE.HeaderNavigationRowHeight = 0
+		local header = RQE.RQEFrameHeader
+		if header then
+			-- Rechecks title space after frame resizing or a theme's header-height change.
+			header:HookScript("OnSizeChanged", function() RQE.Buttons.UpdateHeaderNavigation() end)
+		end
+		return row
+	end
+
+	-- Moves navigation below a crowded title while keeping the helper's saved size and position intact.
+	function RQE.Buttons.LayoutHeaderNavigation(stepControlsVisible, showWaypoints)
+		local mainFrame = RQE.RQEFrame or RQEFrame or _G["RQE.RQEFrame"]
+		local header, title = RQE.RQEFrameHeader, RQE.headerText
+		if not (mainFrame and header and title) then return end
+		local row = RQE.Buttons.CreateHeaderNavigationRow(mainFrame)
+		local themed = RQE.UI and RQE.UI:IsEnabled()
+		local navigationAnchor = RQE.TargetNPCButton and RQE.TargetNPCButton:IsShown()
+			and RQE.TargetNPCButton or RQE.SettingsButton or RQE.CloseButton
+		local prevButton, nextButton = RQE.PrevStepButton, RQE.NextStepButton
+		local backButton, forwardButton = RQE.HeaderWaypointBackButton, RQE.HeaderWaypointForwardButton
+		local status = RQE.HeaderWaypointStatus
+
+		-- Measure the hypothetical single row, even when navigation is currently in the overflow row.
+		local leftWidth, rightWidth = 0, 0
+		local leftAnchor = header
+		for _, key in ipairs({ "ClearButton", "RWButton", "SearchButton",
+			"RQEContributionButton", "ContributionWaypointButton" }) do
+			local button = RQE[key]
+			if button and button:IsShown() then
+				leftWidth = leftWidth + (leftWidth > 0 and 3 or 0) + button:GetWidth()
+				leftAnchor = button
+			end
+		end
+		for _, key in ipairs({ "CloseButton", "SettingsButton", "TargetNPCButton" }) do
+			local button = RQE[key]
+			if button and button:IsShown() then
+				rightWidth = rightWidth + (rightWidth > 0 and 3 or 0) + button:GetWidth()
+			end
+		end
+		local navigationWidth = 0
+		if stepControlsVisible then navigationWidth = prevButton:GetWidth() + nextButton:GetWidth() + 6 end
+		if showWaypoints then
+			navigationWidth = navigationWidth + backButton:GetWidth() + status:GetWidth()
+				+ forwardButton:GetWidth() + 5
+		end
+		local font, size, flags = title:GetFont()
+		row.TitleMeasure:SetFont(font, size, flags)
+		row.TitleMeasure:SetText(title:GetText() or "RQE Quest Helper")
+		local titleWidth = row.TitleMeasure:GetStringWidth()
+		local availableWidth = mainFrame:GetWidth() - (themed and 28 or 12)
+			- leftWidth - rightWidth - navigationWidth - 16
+		local previousHeight = RQE.HeaderNavigationRowHeight or 0
+		local fitMargin = previousHeight > 0 and 12 or 2
+		local profile = RQE.db and RQE.db.profile
+		local showLocation = RQE.LocationInfoBar and profile and (profile.showMapID or profile.showCoordinates)
+		local contentTop = themed and (showLocation and 84 or 52) or (showLocation and 62 or 40)
+		-- Very short frames keep one row rather than inverting or eliminating the content viewport.
+		local hasVerticalRoom = mainFrame:GetHeight() >= contentTop + 32 + 10 + 20
+		local overflow = (stepControlsVisible or showWaypoints) and hasVerticalRoom
+			and availableWidth < titleWidth + fitMargin
+		RQE.HeaderNavigationRowHeight = overflow and 32 or 0
+
+		local rightAnchor = navigationAnchor
+		if overflow then
+			row:ClearAllPoints()
+			row:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, -header:GetHeight())
+			row:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", themed and -20 or -30, -header:GetHeight())
+			local colors = themed and RQE.UI.Colors
+			local fill = colors and colors.charcoalRaised or { 0.04, 0.04, 0.04 }
+			local accent = colors and colors.azureBright or { 0.45, 0.45, 0.45 }
+			local gold = colors and colors.gold or { 1, 0.82, 0 }
+			row.Background:SetColorTexture(fill[1], fill[2], fill[3], 0.9)
+			row.TopLine:SetColorTexture(accent[1], accent[2], accent[3], 0.9)
+			row.BottomLine:SetColorTexture(gold[1], gold[2], gold[3], 0.78)
+			row.Separator:SetColorTexture(gold[1], gold[2], gold[3], 0.78)
+			for _, label in ipairs({ row.WaypointLabel, row.StepLabel }) do
+				label:SetFont("Fonts\\FRIZQT__.TTF", 12, "")
+				label:SetTextColor(gold[1], gold[2], gold[3])
+			end
+			local _, _, currentStep, totalSteps = GetStepNavigationAvailability()
+			local displayedQuestID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+			local preview = RQE.IsHybridManualStepPreview and RQE:IsHybridManualStepPreview(displayedQuestID)
+			row.StepStatus:SetText(currentStep and totalSteps > 0
+				and string.format("%d/%d%s", currentStep, totalSteps, preview and "*" or "") or "-/-")
+			local statusFont, statusSize, statusFlags = RQE.HeaderWaypointStatusText:GetFont()
+			row.StepStatus:SetFont(statusFont, statusSize, statusFlags)
+			row.StepStatus:SetTextColor(gold[1], gold[2], gold[3])
+			row.StepStatus:SetShown(stepControlsVisible)
+			local stepStatusWidth = math.max(26, row.StepStatus:GetStringWidth() + 8)
+			row.StepStatus:SetWidth(stepStatusWidth)
+			-- Balance the complete groups with equal outer margins and a divider centered in their remaining gap.
+			local rowWidth = mainFrame:GetWidth() - (themed and 30 or 40)
+			local bothGroups = showWaypoints and stepControlsVisible
+			local padding = 12
+			local waypointWidth = backButton:GetWidth() + status:GetWidth() + forwardButton:GetWidth() + 2
+			local stepWidth = prevButton:GetWidth() + stepStatusWidth + nextButton:GetWidth() + 2
+			local waypointLabelWidth = row.WaypointLabel:GetStringWidth() + 8
+			local stepLabelWidth = row.StepLabel:GetStringWidth() + 18
+			local labeledWidth = (showWaypoints and waypointWidth + waypointLabelWidth or 0)
+				+ (stepControlsVisible and stepWidth + stepLabelWidth or 0)
+			local showLabels = rowWidth >= labeledWidth + padding * 2 + (bothGroups and 32 or 0)
+			if not showLabels then waypointLabelWidth, stepLabelWidth = 0, 0 end
+			local waypointRight = padding + waypointWidth + waypointLabelWidth
+			local stepLeft = rowWidth - padding - stepWidth - stepLabelWidth
+			row.WaypointLabel:SetShown(showWaypoints and showLabels)
+			row.StepLabel:SetShown(stepControlsVisible and showLabels)
+			if showWaypoints then
+				row.WaypointLabel:ClearAllPoints()
+				row.WaypointLabel:SetPoint("LEFT", row, "LEFT", padding, 0)
+				backButton:ClearAllPoints()
+				backButton:SetPoint("LEFT", row, "LEFT", padding + waypointLabelWidth, 0)
+				status:ClearAllPoints()
+				status:SetPoint("LEFT", backButton, "RIGHT", 1, 0)
+				forwardButton:ClearAllPoints()
+				forwardButton:SetPoint("LEFT", status, "RIGHT", 1, 0)
+			end
+			if stepControlsVisible then
+				row.StepLabel:ClearAllPoints()
+				row.StepLabel:SetPoint("LEFT", row, "LEFT", stepLeft, 0)
+				prevButton:ClearAllPoints()
+				prevButton:SetPoint("LEFT", row, "LEFT", stepLeft + stepLabelWidth, 0)
+				row.StepStatus:ClearAllPoints()
+				row.StepStatus:SetPoint("LEFT", prevButton, "RIGHT", 1, 0)
+				nextButton:ClearAllPoints()
+				nextButton:SetPoint("LEFT", row.StepStatus, "RIGHT", 1, 0)
+			end
+			row.Separator:ClearAllPoints()
+			row.Separator:SetPoint("CENTER", row, "LEFT", (waypointRight + stepLeft) / 2, 0)
+			row.Separator:SetShown(bothGroups and stepLeft - waypointRight >= 8)
+			row:Show()
+		else
+			row:Hide()
+			if showWaypoints then rightAnchor = backButton
+			elseif stepControlsVisible then rightAnchor = prevButton end
+		end
+
+		-- Center the title inside the space that remains between the left utility buttons and right controls.
+		title:ClearAllPoints()
+		title:SetWordWrap(false)
+		title:SetJustifyH("CENTER")
+		title:SetPoint("LEFT", leftAnchor, "RIGHT", 8, 0)
+		title:SetPoint("RIGHT", rightAnchor, "LEFT", -8, 0)
+		if previousHeight ~= RQE.HeaderNavigationRowHeight and RQE.UI then RQE.UI:RefreshLocationInfoBar() end
 	end
 
 	-- Updates visibility, enabled state, and anchoring for both header navigation
 	-- groups. Waypoint controls close the gap left by hidden step controls.
 	function RQE.Buttons.UpdateHeaderNavigation()
+		if RQE.ProfileApplyPending and not RQE.ApplyingProfile then return end
 		local closeButton = RQE.CloseButton
+		local settingsButton = RQE.SettingsButton
 		local targetButton = RQE.TargetNPCButton
-		local navigationAnchor = targetButton and targetButton:IsShown() and targetButton or closeButton
+		local navigationAnchor = targetButton and targetButton:IsShown() and targetButton or settingsButton or closeButton
 		local prevButton = RQE.PrevStepButton
 		local nextButton = RQE.NextStepButton
 		if not closeButton or not prevButton or not nextButton then return end
 
+		-- An empty helper has no navigation, even when manual options or old route state remain enabled.
+		local searchedPreview = RQE.CanNavigateSearchedQuestSteps
+			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)
+		local trackedQuestID = RQE.API.GetSuperTrackedQuestID()
+		local hasQuestContext = searchedPreview or (tonumber(trackedQuestID) or 0) > 0
 		-- A searched DB quest exposes pickup and step navigation without changing normal quest preferences.
-		local stepControlsVisible = RQE.db and RQE.db.profile
-			and (RQE.db.profile.enableStepControls == true
-				 or (RQE.CanNavigateSearchedQuestSteps
-					 and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID)))
+		local stepControlsVisible = hasQuestContext and RQE.db and RQE.db.profile
+			and (RQE.db.profile.enableStepControls == true or searchedPreview
+				or (RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()))
 		-- Previous code (commented out 2026.11.09): searched preview controls were automatically visible only on Retail.
 		-- local stepControlsVisible = RQE.db and RQE.db.profile
 		-- 	and (RQE.db.profile.enableStepControls == true
@@ -1814,7 +2069,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local ForwardButton = RQE.HeaderWaypointForwardButton
 		if not (BackButton and Status and StatusText and ForwardButton) then return end
 
-		local selection = RQE.GetCurrentHeaderWaypointSelection
+		local selection = hasQuestContext and RQE.GetCurrentHeaderWaypointSelection
 			and RQE:GetCurrentHeaderWaypointSelection()
 		local showWaypoints = selection and selection.total and selection.total > 0
 		if showWaypoints then
@@ -1842,27 +2097,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			ForwardButton:Hide()
 		end
 
-		-- Center the title inside the space that remains between the left utility
-		-- buttons and whichever navigation group currently begins on the right.
-		if RQE.headerText and RQE.RQEFrameHeader then
-			local captureButton = RQE.ContributionWaypointButton
-			local leftAnchor = (captureButton and captureButton:IsShown() and captureButton)
-				or RQE.ContributeButton or RQE.SearchButton or RQE.RQEFrameHeader
-			local rightAnchor
-			if showWaypoints then
-				rightAnchor = BackButton
-			elseif stepControlsVisible then
-				rightAnchor = prevButton
-			else
-				rightAnchor = navigationAnchor
-			end
-
-			RQE.headerText:ClearAllPoints()
-			RQE.headerText:SetWordWrap(false)
-			RQE.headerText:SetJustifyH("CENTER")
-			RQE.headerText:SetPoint("LEFT", leftAnchor, "RIGHT", 8, 0)
-			RQE.headerText:SetPoint("RIGHT", rightAnchor, "LEFT", -8, 0)
-		end
+		RQE.Buttons.LayoutHeaderNavigation(stepControlsVisible, showWaypoints)
 	end
 
 
