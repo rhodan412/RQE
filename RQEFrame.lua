@@ -166,7 +166,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-				if RQE.db.profile.enableStepControls then
+				if RQE.IsRetail and RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation() then
+					-- Returns to Automatic navigation without changing automatic waypoint creation.
+					rootDescription:CreateContributionButton("Exit Hybrid: Use Automatic Step Navigation", function()
+						RQE:SetStepNavigationMode("automatic")
+					end)
+				elseif RQE.db.profile.enableStepControls then
 					-- Toggles the auto click and step controls.
 					rootDescription:CreateContributionButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
 					-- Toggles the step controls.
@@ -258,7 +263,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				rootDescription:CreateContributionButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
 				-- Provides an empty callback where no action is required.
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-				if RQE.db.profile.enableStepControls then
+				if RQE.IsRetail and RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation() then
+					-- Returns to Automatic navigation without changing automatic waypoint creation.
+					rootDescription:CreateContributionButton("Exit Hybrid: Use Automatic Step Navigation", function()
+						RQE:SetStepNavigationMode("automatic")
+					end)
+				elseif RQE.db.profile.enableStepControls then
 					-- Toggles the auto click and step controls.
 					rootDescription:CreateContributionButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
 					-- Toggles the step controls.
@@ -837,40 +847,28 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	end
 
 
-	-- Identify recurring or world quests whose expiration is availability data rather than a failure countdown.
-	local function IsQuestHelperAvailabilityTimer(questID)
-		if RQE.API.IsWorldQuest and RQE.API.IsWorldQuest(questID) then
-			return true
+	-- Read the visible quest header so a cleared or stale cached ID cannot hide or misassign its timer.
+	local function GetQuestHelperDisplayedQuestID()
+		if RQE.QuestIDText and RQE.QuestIDText.GetText then
+			local headerText = RQE.QuestIDText:GetText()
+			if type(headerText) ~= "string" then return nil end
+			headerText = headerText:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+			local questID = tonumber(headerText:match("^Quest ID:%s*(%d+)%s*$"))
+			return questID and questID > 0 and questID or nil
 		end
-		local questLogIndex = RQE.API.GetLogIndexForQuestID
-			and RQE.API.GetLogIndexForQuestID(questID)
-		local questInfo = questLogIndex and RQE.API.GetQuestLogInfo
-			and RQE.API.GetQuestLogInfo(questLogIndex)
-		local frequency = questInfo and tonumber(questInfo.frequency)
-		local frequencyEnum = Enum and Enum.QuestFrequency
-		local daily = frequencyEnum and tonumber(frequencyEnum.Daily) or 1
-		local weekly = frequencyEnum and tonumber(frequencyEnum.Weekly) or 2
-		local scheduled = frequencyEnum and tonumber(frequencyEnum.ResetByScheduler) or 3
-		return frequency ~= nil
-			and (frequency == daily or frequency == weekly or frequency == scheduled)
+		local questID = tonumber(RQE.DisplayedQuestID)
+		return questID and questID > 0 and questID or nil
 	end
 
 
 	-- Refresh the Retail quest failure or countdown status and reposition the direction row beneath it.
 	local function UpdateRetailQuestStatusText()
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID
-			and RQE.API.GetSuperTrackedQuestID()
-		local questID = tonumber(RQE.searchedQuestID)
-			or tonumber(RQE.DisplayedQuestID)
-			or tonumber(superTrackedQuestID)
+		local questID = GetQuestHelperDisplayedQuestID()
 		local statusText, isFailed, isUrgent
-		local suppressAvailabilityTimer = questID
-			and IsQuestHelperAvailabilityTimer(questID)
 
 		if questID and RQE.API.IsQuestFailed and RQE.API.IsQuestFailed(questID) then
 			statusText, isFailed = FAILED or "Failed", true
-		elseif questID and not suppressAvailabilityTimer
-			and RQE.API.GetQuestTimeRemainingSeconds then
+		elseif questID and RQE.API.GetQuestTimeRemainingSeconds then
 			local secondsLeft = RQE.API.GetQuestTimeRemainingSeconds(questID)
 			if secondsLeft ~= nil then
 				local displaySeconds = math.max(0, math.ceil(secondsLeft))
@@ -904,6 +902,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	local questStatusUpdater = CreateFrame("Frame", nil, RQEFrame)
 	questStatusUpdater.elapsed = 0
+	-- Refresh immediately when the helper reopens so hidden countdowns cannot retain stale text.
+	questStatusUpdater:SetScript("OnShow", function(self)
+		self.elapsed = 0
+		UpdateRetailQuestStatusText()
+	end)
 	-- Updates the retail quest status text.
 	questStatusUpdater:SetScript("OnUpdate", function(self, elapsed)
 		self.elapsed = self.elapsed + elapsed
@@ -1398,7 +1401,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				:gsub("%s+", " ")				  -- collapse whitespace
 				:match("^%s*(.-)%s*$") or ""	   -- trim
 
-			return text
+			return RQE.API.UnescapeRichTextHTML(text)
 		end
 
 		-- 2) Plain FontString path (what you had originally)
@@ -1921,7 +1924,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			local hasCoords = raw:match("{coords:") or raw:match("{coordblock:")
 			local hasCoordblock = raw:find("{coordblock:", 1, true) ~= nil
 			-- local hasCoords = raw:match("{coords:")
-			local hasHoverables = raw:match("{item:") or raw:match("{spell:")
+			local hasHoverables = raw:match("{objectitem:") or raw:match("{item:") or raw:match("{spell:")
 				or raw:match("{npc:") or raw:match("{object:")
 
 			local StepText
@@ -2190,6 +2193,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			-- Hide the tooltip when the mouse leaves
 			WaypointButton:SetScript("OnLeave", function()
 				RQE.WaypointButtonHover = false
+				WaypointButton.hybridPlayerPress = nil
 				GameTooltip:Hide()
 			end)
 
@@ -2201,6 +2205,13 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					if not RQE._autoClickingWaypointButton then
 						RQE:SetDisplayedStepFromStepsList(i)
 					end
+					return
+				end
+				if RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation() then
+					local manual = WaypointButton.hybridPlayerPress
+					WaypointButton.hybridPlayerPress = nil
+					if manual then RQE:SetDisplayedStepFromStepsList(i) end
+					RQE:ActivateHybridWaypoint(manual)
 					return
 				end
 				-- if RQE.WaypointButtonHover then
@@ -2327,6 +2338,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 			-- Add a mouse down event to simulate a button press
 			WaypointButton:SetScript("OnMouseDown", function(self, button)
+				self.hybridPlayerPress = button == "LeftButton"
+					and RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()
 				if button == "LeftButton" then
 					bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 				end
@@ -2817,8 +2830,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	CreateSearchFrame()
 
 	-- Event to update text widths when the frame is resized
+	-- Refreshes content widths, adaptive navigation, and saved size after either frame dimension changes.
 	RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
 		AdjustRQEFrameWidths()
+		if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then RQE.Buttons.UpdateHeaderNavigation() end
 		SaveRQEFrameSize()
 	end)
 
@@ -3202,6 +3217,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			local focusTextWidth = math.max(1, RQE.SeparateContentFrame:GetWidth() - focusTextInset - 15)
 			local focusTextNarrowWidth = math.max(1, RQE.SeparateContentFrame:GetWidth() - focusTextInset - 25)
 			local stepStyle = RQE.UI:GetStepTextSettings()
+			local lineGap = math.max(0, math.min(20, tonumber(RQE.db.profile.separateFocusLineGap) or 5))
 
 			-- Coordblock selection belongs only to the current Blizzard supertrack.
 			-- Clear it even when the newly selected quest has no coordblocks to render.
@@ -3376,14 +3392,19 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			local hasCoords = formattedText:match("{coords:") or formattedText:match("{coordblock:")
 			local routeStartOffset
 
+			-- Count every authored newline so consecutive breaks add consecutive gaps.
+			local paragraphs, paragraphBreaks = {}, {}
+			local cleaned = formattedText:gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("\\n", "\n")
+			for paragraph, breaks in cleaned:gmatch("([^\n]+)(\n*)") do
+				paragraphs[#paragraphs + 1] = paragraph
+				paragraphBreaks[#paragraphBreaks + 1] = #breaks
+			end
+			if #paragraphs == 0 then
+				paragraphs[1], paragraphBreaks[1] = cleaned, 0
+			end
+
 			if hasCoords then
 				-- ✅ Always use SimpleHTML for the first paragraph; use FontStrings only for additional lines
-				local paragraphs = {}
-				local cleaned = formattedText:gsub("\r\n", "\n"):gsub("\r", "\n")
-				for p in cleaned:gmatch("([^\n]+)") do
-					table.insert(paragraphs, p)
-				end
-				if #paragraphs == 0 then table.insert(paragraphs, cleaned) end
 
 				-- 🧭 Create SimpleHTML for the first paragraph
 				local StepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "SimpleHTML")
@@ -3402,25 +3423,27 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				local html = paragraphs[1]
 				StepText._rqeCoordblockLinks = {}
 				StepText._rqeCoordblockByPoint = {}
+				-- Keep each object's identity separate from its visible item label.
+				html, StepText._rqeObjectItemLinks = RQE.API.BuildObjectItemHTML(html)
 
 				-- 🔗 Replace {item}, {spell}, {coords}
 				html = html:gsub("{item:(%d+):([^}]+)}", function(id, name)
-					return string.format('<a href="item:%s">|cffff66cc[%s]|r</a>', id, name)
+					return string.format('<a href="item:%s">|cffff66cc[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
 				end)
 
 				-- Converts spell notation into a colored, clickable spell link.
 				html = html:gsub("{spell:(%d+):([^}]+)}", function(id, name)
-					return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', id, name)
+					return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
 				end)
 
 				-- Converts NPC notation into a colored preview link.
 				html = html:gsub("{npc:(%d+):([^}]+)}", function(id, name)
-					return string.format('<a href="rqenpc:%s">|cff66ff66[%s]|r</a>', id, name)
+					return string.format('<a href="rqenpc:%s">|cff66ff66[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
 				end)
 
 				-- Converts object notation into a colored preview link.
 				html = html:gsub("{object:([%a%d]+):([^}]+)}", function(id, name)
-					return string.format('<a href="rqeobject:%s">|cffffd700[%s]|r</a>', id, name)
+					return string.format('<a href="rqeobject:%s">|cffffd700[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
 				end)
 
 				-- Converts coordinate-block notation into a waypoint link for the focus view.
@@ -3534,7 +3557,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					if type(link) ~= "string" then return end
 
 					local linkType, id = link:match("^(%a+):(.+)$")
-					if linkType == "item" then
+					if linkType == "rqeobjectitem" then
+						local entry = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
+						if entry then RQE.API.ShowObjectItemTooltip(self, entry) end
+					elseif linkType == "item" then
 						local itemID = tonumber(id)
 						if itemID then
 							GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
@@ -3591,6 +3617,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 				-- Adjust height after rendering
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+				-- Sizes the HTML block to its rendered content after layout settles.
 				RQE.API.Client.C_Timer.After(0.05, function()
 					-- Ignore stale delayed callbacks from older rebuilds
 					if buildToken ~= RQE._SeparateFocusBuildToken then
@@ -3601,7 +3628,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					end
 
 					local h = StepText:GetContentHeight() or 20
-					StepText:SetHeight(h + 6)
+					-- Keep the HTML hit area out of the next row, including when the gap is zero.
+					StepText:SetHeight(h)
 				end)
 
 				-- ✅ Handle following paragraphs (if \n exists)
@@ -3618,8 +3646,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 						end
 
 						local htmlHeight = StepText:GetContentHeight() or StepText:GetHeight() or 20
-						local extraPadding = math.max(20, htmlHeight * 0.3) -- at least 20px, scales a bit with height
-						local yOffset = -(htmlHeight + extraPadding)
+						local yOffset = -7 - htmlHeight - paragraphBreaks[1] * lineGap
 
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print(string.format("RQE DEBUG: SimpleHTML height calculated as %.2f, yOffset set to %.2f", htmlHeight, yOffset))
@@ -3650,7 +3677,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 							end
 
 							local h2 = fs.GetStringHeight and fs:GetStringHeight() or 16
-							yOffset = yOffset - (h2 + 8)
+							yOffset = yOffset - (h2 + paragraphBreaks[i] * lineGap)
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print(string.format("RQE DEBUG: FontString height %.2f, next yOffset %.2f", h2, yOffset))
 							end
@@ -3663,19 +3690,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					print("RQE DEBUG: Entered SeparateFocusFrame FontString (no coords) block")
 				end
 
-				-- Normalize and split by newline
-				local paragraphs = {}
-				local cleaned = formattedText:gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("\\n", "\n")
-				for p in cleaned:gmatch("([^\n]+)") do
-					table.insert(paragraphs, p)
-				end
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("RQE DEBUG: FontString paragraph count:", #paragraphs)
-				end
-
-				-- Safety: if no paragraphs found, treat whole thing as one
-				if #paragraphs == 0 then
-					table.insert(paragraphs, cleaned)
 				end
 
 				local yOffset = -7
@@ -3699,14 +3715,15 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					-- Handle hover-capable markup for item/spell tags even when no coords exist
 					RQE.RenderTextWithItemsSteps(StepText, line, stepStyle.font, stepStyle.size, stepStyle.color, RQE.SeparateContentFrame)
 
-					-- Measure line height and step down
+					-- Add the measured text height and one configured gap for each following newline.
 					local h = StepText.GetStringHeight and StepText:GetStringHeight() or 16
-					yOffset = yOffset - (h + 8)
+					yOffset = yOffset - (h + paragraphBreaks[i] * lineGap)
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("RQE DEBUG: FontString paragraph height:", h)
 					end
 				end
-				routeStartOffset = yOffset - 8
+				-- Keep route-button padding separate from the authored text breaks.
+				routeStartOffset = yOffset - lineGap - 8
 			end
 
 			-- RQE.SeparateStepText:Show()
@@ -3864,11 +3881,22 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			number:SetText("*")
 			number:SetTextColor(1, 1, 0)
 
+			-- Recognize physical focus-waypoint presses independently of automatic button activation.
+			RQE.SeparateWaypointButton:SetScript("OnMouseDown", function(button, mouseButton)
+				button.hybridPlayerPress = mouseButton == "LeftButton"
+					and RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()
+			end)
 			-- Add the click event for the Waypoint Button
 			RQE.SeparateWaypointButton:SetScript("OnClick", function()
 				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 					RQE:CreateSearchedQuestStepWaypoint(RQE.searchedQuestID,
 						tonumber(RQE.ManualPreviewStepIndex) or 0)
+					return
+				end
+				if RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation() then
+					local manual = RQE.SeparateWaypointButton.hybridPlayerPress
+					RQE.SeparateWaypointButton.hybridPlayerPress = nil
+					RQE:ActivateHybridWaypoint(manual)
 					return
 				end
 				local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
@@ -3931,6 +3959,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 			-- Hide the tooltip when leaving the "C" button
 			RQE.SeparateWaypointButton:SetScript("OnLeave", function(self)
+				self.hybridPlayerPress = nil
 				GameTooltip:Hide()
 			end)
 			-- Install themed hover hooks after the tooltip's mouse scripts.
@@ -4068,6 +4097,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 		-- Hide tooltip when leaving the button
 		RQE.SeparateWaypointButton:SetScript("OnLeave", function()
+			RQE.SeparateWaypointButton.hybridPlayerPress = nil
 			GameTooltip:Hide()
 		end)
 	end
