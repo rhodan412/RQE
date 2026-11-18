@@ -207,10 +207,23 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		ScarletCrusade = "cathedralGlass",
 	}
 
-	-- Resolves a semantic icon name through the selected theme's asset prefix.
+	-- These shipped icon sets already include a cogwheel; new themes may supply textures.settingsIcon.
+	local SETTINGS_ICON_PREFIXES = {
+		AzureGold_ = true, AstralCartographer_ = true, RoundTable_ = true,
+		BurningLegion_ = true, TitanArchive_ = true, EmeraldDream_ = true,
+		Voidbound_ = true, PandarenScroll_ = true, GoblinWorkshop_ = true,
+	}
+
+	-- Resolves themed icons, with a bundled cogwheel fallback for themes without Settings artwork.
 	function UI:GetIconTexture(iconName, themeKey)
 		local theme = themeKey and self.Themes[themeKey]
 		local textures = (theme and theme.textures) or self.Textures
+		if iconName == "Settings" then
+			if textures and textures.settingsIcon then return textures.settingsIcon end
+			if not textures or not textures.icons or not SETTINGS_ICON_PREFIXES[textures.iconPrefix] then
+				return ROOT .. "Icons\\AzureGold_Settings.tga"
+			end
+		end
 		return textures.icons .. (textures.iconPrefix or "") .. iconName .. ".tga"
 	end
 
@@ -1086,7 +1099,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		if RQE.UpdateSeparateContentHeight then RQE.UpdateSeparateContentHeight() end
 	end
 
-	-- Applies the theme fonts.
+	-- Applies theme fonts and adjusts header navigation to the resulting title width.
 	function UI:ApplyThemeFonts()
 		local profile = RQE.db and RQE.db.profile
 		local settings = profile and profile.textSettings
@@ -1114,6 +1127,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 			end
 		end
 		self:RefreshStepTextStyles()
+		if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then RQE.Buttons.UpdateHeaderNavigation() end
 	end
 
 	local originalConfigurationChanged = RQE.ConfigurationChanged
@@ -1709,7 +1723,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		if self:IsEnabled() then self:_ApplyLocationInfoBar(bar) end
 	end
 
-	-- Reapplies the active theme to the registered location-information bar.
+	-- Positions the location bar and scroll viewport below the header's navigation rows.
 	function UI:RefreshLocationInfoBar()
 		-- Location visibility also changes scroll-frame anchors. Do not apply the
 		-- selected profile's bar layout ahead of its combat-deferred frame geometry.
@@ -1722,19 +1736,21 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		local showCoordinates = profile and profile.showCoordinates == true
 		local showBar = bar and (showMap or showCoordinates)
 		local themed = self:IsEnabled()
-		local layoutKey = table.concat({ themed and "theme" or "legacy", showMap and "map" or "", showCoordinates and "coords" or "" }, ":")
+		local navigationRowHeight = RQE.HeaderNavigationRowHeight or 0
+		local layoutKey = table.concat({ themed and "theme" or "legacy", showMap and "map" or "",
+			showCoordinates and "coords" or "", navigationRowHeight }, ":")
 		if bar and bar.RQELocationLayoutKey == layoutKey then return end
 		if bar then bar.RQELocationLayoutKey = layoutKey end
 
 		if bar then
 			bar:ClearAllPoints()
 			if themed then
-				bar:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, -50)
-				bar:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -20, -50)
+				bar:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, -50 - navigationRowHeight)
+				bar:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -20, -50 - navigationRowHeight)
 				bar:SetHeight(28)
 			else
-				bar:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, -32)
-				bar:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -30, -32)
+				bar:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, -32 - navigationRowHeight)
+				bar:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -30, -32 - navigationRowHeight)
 				bar:SetHeight(24)
 			end
 			if bar.MapIDText then bar.MapIDText:SetShown(showMap) end
@@ -1747,6 +1763,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		local topOffset
 		if themed then topOffset = showBar and -84 or -52
 		else topOffset = showBar and -62 or -40 end
+		topOffset = topOffset - navigationRowHeight
 		RQE.ScrollFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, topOffset)
 		RQE.ScrollFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", themed and -20 or -30, 10)
 		if RQE.slider then
@@ -1757,6 +1774,7 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 				RQE.UpdateQuestHelperScrollbarVisual(RQE.content and RQE.content:GetHeight())
 			end
 		end
+		if RQE.UpdateContentSize then RQE:UpdateContentSize() end
 	end
 
 
@@ -1929,6 +1947,11 @@ Theme registry, native-state restoration, control styling, and live UI theme app
 		local opticalOffset = (themeOffsets and themeOffsets[iconName]) or ICON_OPTICAL_OFFSETS[iconName]
 		local offsetX = opticalOffset and opticalOffset[1] or 0
 		local offsetY = opticalOffset and opticalOffset[2] or 0
+		-- Raise navigation glyphs while retaining each built-in or companion theme's optical corrections.
+		if iconName == "PreviousWaypoint" or iconName == "NextWaypoint"
+			or iconName == "PreviousStep" or iconName == "NextStep" then
+			offsetY = offsetY + 2
+		end
 		-- The W control shares WaypointTarget art with the header shortcut, but
 		-- only its glyph needs a rightward correction with the heraldic icons.
 		if button == RQE.UnknownQuestButton then
