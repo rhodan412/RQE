@@ -233,6 +233,18 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Main function to determine which method to use based on waypoint text
 	function RQE:CreateUnknownQuestWaypoint(questID, mapID)
+		if self.CanRunHybridNavigation and self:CanRunHybridNavigation() then
+			if self.API.Client.InCombatLockdown() then return end
+			if self:IsCoordblockWaypointProtected() then return end
+			if not RQEFrame:IsShown() then return end
+			if self.db.profile.enableTravelSuggestions and self.NearestFlightMasterSet then return end
+			if questID and tonumber(questID) ~= tonumber(self.API.GetSuperTrackedQuestID()) then return end
+			if not self.db.profile.autoClickWaypointButton then return end
+			if self:IsHybridManualStepPreview(self.API.GetSuperTrackedQuestID()) then
+				return self:ActivateHybridWaypoint(false)
+			end
+		end
+		local hybridToken = self.GetHybridCallbackToken and self:GetHybridCallbackToken()
 		-- Search previews own navigation even while another log quest remains supertracked.
 		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
 			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
@@ -274,6 +286,9 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 		-- Creates the searched quest waypoint.
 		-- Refreshes the current route after the map settles without replacing a newer search preview.
 		C_Timer.After(0.5, function()
+			if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(hybridToken) then return end
+			if hybridToken and RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation()
+				and RQE.API.Client.InCombatLockdown() then return end
 			if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 				if questID and tonumber(questID) ~= tonumber(RQE.searchedQuestID) then return end
 				return RQE:CreateSearchedQuestWaypoint(RQE.searchedQuestID, mapID)
@@ -588,6 +603,17 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint when there is Direction Text available
 	function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
+		if self.CanRunHybridNavigation and self:CanRunHybridNavigation() then
+			if self.API.Client.InCombatLockdown() then return end
+			if self:IsCoordblockWaypointProtected() then return end
+			if not RQEFrame:IsShown() then return end
+			if self.db.profile.enableTravelSuggestions and self.NearestFlightMasterSet then return end
+			if questID and tonumber(questID) ~= tonumber(self.API.GetSuperTrackedQuestID()) then return end
+			if not self.db.profile.autoClickWaypointButton then return end
+			if self:IsHybridManualStepPreview(self.API.GetSuperTrackedQuestID()) then
+				return self:ActivateHybridWaypoint(false)
+			end
+		end
 		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
 			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
 			return self:CreateSearchedQuestWaypoint(self.searchedQuestID, mapID)
@@ -862,6 +888,16 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint when there is No Direction Text available
 	function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
+		if self.CanRunHybridNavigation and self:CanRunHybridNavigation() then
+			if self.API.Client.InCombatLockdown() then return end
+			if self:IsCoordblockWaypointProtected() then return end
+			if not RQEFrame:IsShown() then return end
+			if self.db.profile.enableTravelSuggestions and self.NearestFlightMasterSet then return end
+			if questID and tonumber(questID) ~= tonumber(self.API.GetSuperTrackedQuestID()) then return end
+			if not self.db.profile.autoClickWaypointButton then return end
+			return self:ActivateHybridWaypoint(false)
+		end
+		local hybridToken = self.GetHybridCallbackToken and self:GetHybridCallbackToken()
 		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
 			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
 			return self:CreateSearchedQuestWaypoint(self.searchedQuestID, mapID)
@@ -918,6 +954,7 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 			-- Fetch coordinates using super tracking data
 			-- Keeps delayed route work from replacing an active search preview.
 			C_Timer.After(0.1, function()
+				if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(hybridToken) then return end
 				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 				if RQE:IsCoordblockWaypointProtected() then return end
 				local extractedQuestID = nil
@@ -1089,6 +1126,7 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 				-- Adds the delayed legacy quest waypoint while respecting protected routes.
 				-- Keeps delayed route work from replacing an active search preview.
 				C_Timer.After(0.5, function()
+					if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(hybridToken) then return end
 					if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 					if RQE:IsCoordblockWaypointProtected() then return end
 					if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
@@ -1148,6 +1186,16 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint when there is No Direction Text available
 	function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
+		if self.CanRunHybridNavigation and self:CanRunHybridNavigation() then
+			if self.API.Client.InCombatLockdown() then return end
+			if self:IsCoordblockWaypointProtected() then return end
+			if not RQEFrame:IsShown() then return end
+			if self.db.profile.enableTravelSuggestions and self.NearestFlightMasterSet then return end
+			if questID and tonumber(questID) ~= tonumber(self.API.GetSuperTrackedQuestID()) then return end
+			if not self.db.profile.autoClickWaypointButton then return end
+			return self:ActivateHybridWaypoint(false)
+		end
+		local hybridToken = self.GetHybridCallbackToken and self:GetHybridCallbackToken()
 		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
 			if questID and tonumber(questID) ~= tonumber(self.searchedQuestID) then return end
 			return self:CreateSearchedQuestWaypoint(self.searchedQuestID, mapID)
@@ -1229,6 +1277,7 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 			-- Adds the delayed TomTom waypoint when its quest step still permits replacement.
 			-- Keeps delayed route work from replacing an active search preview.
 			C_Timer.After(0.5, function()
+				if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(hybridToken) then return end
 				if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 				if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 				if mapID and x and y then
@@ -1273,6 +1322,16 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 
 	-- Create a Waypoint for a specific quest step using questID and stepIndex
 	function RQE:CreateWaypointForStep(questID, stepIndex)
+		if self.CanRunHybridNavigation and self:CanRunHybridNavigation() then
+			if self.API.Client.InCombatLockdown() then return end
+			if self:IsCoordblockWaypointProtected() then return end
+			if self.db.profile.enableTravelSuggestions and self.NearestFlightMasterSet then return end
+			if questID and tonumber(questID) ~= tonumber(self.API.GetSuperTrackedQuestID()) then return end
+			if tonumber(stepIndex) ~= tonumber(self.AddonSetStepIndex) then return end
+			if not self.db.profile.autoClickWaypointButton then return end
+			return self:ActivateHybridWaypoint(false)
+		end
+		local hybridToken = self.GetHybridCallbackToken and self:GetHybridCallbackToken()
 		if self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
 			if tonumber(questID) ~= tonumber(self.searchedQuestID) then return false end
 			return self:CreateSearchedQuestStepWaypoint(questID, stepIndex)
@@ -1344,6 +1403,7 @@ Classic waypoint creation, quest-route resolution, provider integration, and map
 		-- Set a timer to handle waypoint setting (with delay for compatibility reasons)
 		-- Keeps delayed route work from replacing an active search preview.
 		C_Timer.After(0.5, function()
+			if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(hybridToken) then return end
 			if RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
 			if RQE:IsCoordblockWaypointProtected() then return end
 			if RQE.DescriptionText and RQE.DescriptionText ~= "No direction available." then
