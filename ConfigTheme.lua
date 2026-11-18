@@ -1136,6 +1136,31 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		local tracking = createOptionGroup("SearchGroup", "Smart Tracking", 4)
 		placeOption(tracking.args, source, used, "enableAutoSuperTrackSwap", "Nearest quest while moving", 1, 1.55)
 		placeOption(tracking.args, source, used, "enableNearestSuperTrack", "Choose a quest when none is focused", 2, 1.9)
+		local chooseWhenEmpty = tracking.args.enableNearestSuperTrack
+		if chooseWhenEmpty then
+			chooseWhenEmpty.desc = "When no quest is focused, choose an eligible watched quest. Enable Auto Supertrack Newest Quest to wait for your next newly accepted quest instead, regardless of distance. Existing focus and manual choices are preserved. Pauses inside instances."
+			local setChooseWhenEmpty = chooseWhenEmpty.set
+			-- Applies the parent setting and refreshes dependent controls in both settings windows.
+			chooseWhenEmpty.set = function(info, value)
+				setChooseWhenEmpty(info, value)
+				if not value and RQE.CancelNewestQuestSelection then RQE:CancelNewestQuestSelection() end
+				LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Main")
+			end
+			tracking.args.autoSuperTrackNewestQuest = {
+				type = "toggle", name = "Auto Supertrack Newest Quest", order = 2.5, width = 1.9,
+				desc = "When no quest is focused, wait for a newly accepted quest and focus the most recently accepted one, regardless of distance. Nearest quest while moving will not take the initial focus while you are picking up quests. Existing focus and manual choices are preserved. Disabled by default.",
+				-- Reads the profile's newest-quest preference, treating an unset value as disabled.
+				get = function() return RQE.db.profile.autoSuperTrackNewestQuest == true end,
+				-- Saves the preference and cancels any pending selection when it is disabled.
+				set = function(_, value)
+					RQE.db.profile.autoSuperTrackNewestQuest = value
+					if not value and RQE.CancelNewestQuestSelection then RQE:CancelNewestQuestSelection() end
+					LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE_Main")
+				end,
+				-- Shows the newest-quest preference only while empty-focus selection is enabled.
+				hidden = function() return not RQE.db.profile.enableNearestSuperTrack end,
+			}
+		end
 		placeOption(tracking.args, source, used, "enableNearestSuperTrackCampaign", "Prefer campaign quests at max level", 3, 1.9)
 		placeOption(tracking.args, source, used, "enableNearestSuperTrackCampaignLevelingOnly", "Prefer campaign quests while leveling", 4, 2.05)
 		placeOption(tracking.args, source, used, "enableQuestTypeDisplay", "Quest-type badges", 5, 1.3)
@@ -1188,7 +1213,7 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		end
 	end
 
-	-- Reorganizes frame behavior, geometry, and tracker-order controls into the Frame page.
+	-- Organizes frame behavior, layout, Separate Focus spacing, and tracker order on the Frame page.
 	local function composeFramePage(page)
 		local source = page.args
 		local used = { framePosition = true, QuestFramePosition = true, trackerSectionOrder = true, useModernTheme = true }
@@ -1196,12 +1221,48 @@ Shared configuration presentation, custom controls, option composition, and Sett
 		placeOption(behavior.args, source, used, "toggleBlizzObjectiveTracker", "Blizzard Objective Tracker", 1, 1.5)
 		placeOption(behavior.args, source, used, "enableDugiGuidesCompatibility", "Dugi Guides compatibility", 1.5, 1.85)
 		placeOption(behavior.args, source, used, "mythicScenarioMode", "Use Blizzard tracker in scenarios", 2, 1.85)
-		placeOption(behavior.args, source, used, "enableStepControls", "Manual step navigation", 3, 1.5)
+		if RQE.GetStepNavigationMode and RQE.SetStepNavigationMode then
+			used.enableStepControls = true
+			behavior.args.stepNavigationMode = {
+				type = "select", name = "Step navigation mode", order = 3, width = 1.5,
+				values = { automatic = "Automatic", manual = "Manual", hybrid = "Hybrid" },
+				sorting = { "automatic", "manual", "hybrid" },
+				desc = "Automatic and Manual keep their existing navigation behavior. "
+					.. "Hybrid lets you preview another step while RQE follows quest progress. "
+					.. "Automatic following resumes when the automatic step changes or a new retry failure occurs. "
+					.. "The automatic waypoint option is unchanged.",
+				-- Reads the selected mode without opting an existing profile into Hybrid.
+				get = function() return RQE:GetStepNavigationMode() end,
+				-- Applies the chosen mode through the shared navigation-state handler.
+				set = function(_, value) RQE:SetStepNavigationMode(value) end,
+			}
+		else
+			placeOption(behavior.args, source, used, "enableStepControls", "Manual step navigation", 3, 1.5)
+		end
 		placeOption(behavior.args, source, used, "creatureObjectPreview", "Creature and object previews", 5, "full")
 		appendRemaining(behavior, source, used, 5)
 
 		configurePositionGroup(source.framePosition, "WaypointTarget", "Quest Helper Layout")
 		configurePositionGroup(source.QuestFramePosition, "QuestWorld", "Quest Tracker Layout")
+		source.framePosition.args.separateFocusLineGap = {
+			type = "range", min = 0, max = 20, step = 1,
+			name = "Separate Focus line gap",
+			desc = "Extra space per explicit line break in Separate Focus. Two consecutive breaks add twice this value. "
+				.. "Wrapped lines and the steps list keep their normal spacing. "
+				.. "Saved for this profile across themes. Default: 5.",
+			order = 9, width = "full",
+			-- Reads the profile's extra space between Separate Focus paragraphs.
+			get = function()
+				return math.max(0, math.min(20, tonumber(RQE.db.profile.separateFocusLineGap) or 5))
+			end,
+			-- Saves the paragraph gap and rebuilds the visible Separate Focus text immediately.
+			set = function(_, value)
+				RQE.db.profile.separateFocusLineGap = math.max(0, math.min(20, math.floor(value + 0.5)))
+				if RQE.SeparateContentFrame and RQE.UpdateSeparateFocusFrame then
+					RQE:UpdateSeparateFocusFrame()
+				end
+			end,
+		}
 		source.framePosition.order = 2
 		source.QuestFramePosition.order = 3
 		if source.trackerSectionOrder then
