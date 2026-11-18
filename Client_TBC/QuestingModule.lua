@@ -1198,6 +1198,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 				button.QuestLevelAndName:SetWidth(frameWidth - basePadding.QuestLevelAndName)
 			end
 
+			if button.QuestStatusInfo then
+				button.QuestStatusInfo:SetWidth(frameWidth - basePadding.QuestObjectives)
+			end
+
 			if button.QuestZoneInfo then
 				button.QuestZoneInfo:SetWidth(frameWidth - basePadding.QuestObjectives)
 			end
@@ -2228,13 +2232,14 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdown(self, questID)
+		-- Builds the tracker quest's share, navigation, and context actions.
 		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			local isPlayerInGroup = IsInGroup()
-			-- local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
-			local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
+			local isQuestShareable = RQE.API.IsPushableQuest(questID)
 
 			if isPlayerInGroup and isQuestShareable then
-				rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+				-- Shares this quest after rechecking its current log entry and group eligibility.
+				rootDescription:CreateButton("Share Quest", function() RQE.API.ShareQuest(questID) end)
 			end
 
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
@@ -2980,6 +2985,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		-- Clearing regular quest buttons
 		for i, QuestLogIndexButton in pairs(RQE.QuestLogIndexButtons or {}) do
 			if QuestLogIndexButton then
+				QuestLogIndexButton:SetScript("OnUpdate", nil)
+				QuestLogIndexButton.rqeQuestStatusQuestID = nil
+				QuestLogIndexButton.rqeQuestStatusElapsed = 0
+				QuestLogIndexButton.rqeQuestHasStatus = nil
 				QuestLogIndexButton:Hide()
 				if QuestLogIndexButton.QuestLevelAndName then
 					QuestLogIndexButton.QuestLevelAndName:Hide()
@@ -2991,6 +3000,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 					QuestLogIndexButton.QuestZoneInfo:Hide()
 				end
 				if QuestLogIndexButton.QuestStatusInfo then
+					QuestLogIndexButton.QuestStatusInfo:SetText("")
 					QuestLogIndexButton.QuestStatusInfo:Hide()
 				end
 			end
@@ -2998,51 +3008,71 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	end
 
 
-	-- TBC's timer API reports only the currently selected quest, so countdowns
-	-- belong to the single-quest RQEFrame. The multi-quest tracker still shows a
-	-- failure line between the affected quest's name and zone/distance line.
+	-- Returns the quest's cached countdown or failure message, with failure taking precedence.
 	local function GetTrackedQuestStatusText(questID)
 		if RQE.API.IsQuestFailed and RQE.API.IsQuestFailed(questID) then
 			return FAILED or "Failed", true
 		end
-		return nil, false
+
+		local secondsLeft = RQE.API.GetQuestTimeRemainingSeconds
+			and RQE.API.GetQuestTimeRemainingSeconds(questID)
+		if secondsLeft ~= nil then
+			local displaySeconds = math.max(0, math.ceil(secondsLeft))
+			local timeText = SecondsToTime and SecondsToTime(displaySeconds)
+				or tostring(displaySeconds)
+			return (TIME_REMAINING or "Time Remaining:") .. " " .. timeText, false, displaySeconds <= 59
+		end
+
+		return nil, false, false
 	end
 
 
+	-- Updates the tracked quest status line.
 	local function UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
 		local statusLine = questButton and questButton.QuestStatusInfo
 		if not statusLine or not questNameLine or not followingLine then return end
 
-		local statusText, isFailed = GetTrackedQuestStatusText(questID)
+		local statusText, isFailed, isUrgent = GetTrackedQuestStatusText(questID)
 		statusLine:SetText(statusText or "")
 		if isFailed then
 			statusLine:SetTextColor(1, 51/255, 51/255)
+		elseif isUrgent then
+			statusLine:SetTextColor(1, 102/255, 51/255)
 		else
 			statusLine:SetTextColor(1, 209/255, 0)
 		end
-		statusLine:SetShown(statusText ~= nil)
+		local hasStatus = statusText ~= nil
+		local previousHasStatus = questButton.rqeQuestHasStatus
+		questButton.rqeQuestHasStatus = hasStatus
+		questButton.rqeQuestStatusInterval = hasStatus and not isFailed and 0.25 or 1
+		statusLine:SetShown(hasStatus)
 
 		followingLine:ClearAllPoints()
 		followingLine:SetPoint("TOPLEFT", statusText and statusLine or questNameLine, "BOTTOMLEFT", 0, -3)
-		return statusText ~= nil, isFailed
+		-- Reflow the section only when a status line enters or leaves an already rendered row.
+		if previousHasStatus ~= nil and previousHasStatus ~= hasStatus and RQE.RequestQuestTrackerRefresh then
+			RQE:RequestQuestTrackerRefresh()
+		end
+		return hasStatus, isFailed
 	end
 
 
+	-- Keeps visible quest rows current, including timers that arrive after the first render.
 	local function StartTrackedQuestStatusUpdates(questButton, questID, questNameLine, followingLine)
-		local hasStatus, isFailed = UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
-		if not hasStatus or isFailed then
-			questButton:SetScript("OnUpdate", nil)
-			return
-		end
+		questButton.rqeQuestStatusQuestID = questID
+		questButton.rqeQuestHasStatus = nil
+		UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
 		questButton.rqeQuestStatusElapsed = 0
+		-- Reads the shared timer cache and ignores callbacks for a row's former quest.
 		questButton:SetScript("OnUpdate", function(self, elapsed)
-			self.rqeQuestStatusElapsed = (self.rqeQuestStatusElapsed or 0) + elapsed
-			if self.rqeQuestStatusElapsed < 0.25 then return end
-			self.rqeQuestStatusElapsed = 0
-			local stillHasStatus, nowFailed = UpdateTrackedQuestStatusLine(self, questID, questNameLine, followingLine)
-			if not stillHasStatus or nowFailed then
+			if self.questID ~= questID or self.rqeQuestStatusQuestID ~= questID then
 				self:SetScript("OnUpdate", nil)
+				return
 			end
+			self.rqeQuestStatusElapsed = (self.rqeQuestStatusElapsed or 0) + elapsed
+			if self.rqeQuestStatusElapsed < self.rqeQuestStatusInterval then return end
+			self.rqeQuestStatusElapsed = 0
+			UpdateTrackedQuestStatusLine(self, questID, questNameLine, followingLine)
 		end)
 	end
 
@@ -4232,6 +4262,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 					-- Quest Watch List
 					QuestLogIndexButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
+					-- Handles physical quest-row selection while preserving Hybrid and searched-preview ownership.
 					QuestLogIndexButton:SetScript("OnMouseDown", function(self, button, confirmed)
 						local shiftLeftClick = not confirmed and IsShiftKeyDown()
 							and button == "LeftButton"
@@ -4243,6 +4274,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 									local handler = self:GetScript("OnMouseDown")
 									if handler then handler(self, button, true) end
 								end) then return end
+						-- A physical row selection restarts Hybrid, including a reselected quest.
+						if not shiftLeftClick and RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()
+							and RQE:SelectHybridTrackedQuest(questID) then return end
+						local rowNavigationToken
 					RQE.QuestLogIndexButtonPressed = true
 					-- QuestLogIndexButton:SetScript("OnClick", function(self, button)	-- changed as was causing issues when Mythic/Scenario mode was enabled the button wouldn't click
 						RQE.OkaytoUpdateCreateSteps = true
@@ -4376,12 +4411,16 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 								RQE.shouldCheckFinalStep = true
 								RQE.CheckAndSetFinalStep()
+								-- Run delayed selection work only while the original navigation context remains current.
 								C_Timer.After(0.1, function()
+									if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(rowNavigationToken) then return end
 									RQE.ClickUnknownQuestButton()
 									RQE.NearestFlightMasterSet = false
 
 									if RQE.db.profile.enableTravelSuggestions then
+										-- Run delayed selection work only while the original navigation context remains current.
 										C_Timer.After(0.8, function()
+											if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(rowNavigationToken) then return end
 											RQE:RecommendFastestTravelMethod()
 										end)
 									end
@@ -4396,7 +4435,9 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 									--RQE.ResumeAutomaticFromManualPreview = true
 									if RQE.db.profile.autoClickWaypointButton then
+										-- Run delayed selection work only while the original navigation context remains current.
 										C_Timer.After(0.1, function()
+											if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(rowNavigationToken) then return end
 											if not sameQuestReselect then RQE.AddonSetStepIndex = 1 end
 											RQE:StartPeriodicChecks()
 										end)
@@ -4458,8 +4499,12 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 							end
 							RQE:SaveSuperTrackedQuestToCharacter()
 
+							rowNavigationToken = RQE.GetHybridCallbackToken and RQE:GetHybridCallbackToken()
+
 							-- Allow time for the UI to update and for the super track to register
+							-- Refresh the macro only while this row's original navigation context is still active.
 							C_Timer.After(1, function()
+								if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(rowNavigationToken) then return end
 								-- Fetch the quest data here
 								local questData = RQE.getQuestData(questID)
 								if not questData then
@@ -4800,42 +4845,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 						-- Party Members' Quest Progress
-						if IsInGroup() and not IsInRaid() then
-							-- GetQuestPartyProgress is unavailable in Classic Era.
-							local tooltipData = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress and C_TooltipInfo.GetQuestPartyProgress(questID)
-							if tooltipData and tooltipData.lines then
-								local player_name = UnitName("player")
-								local isFirstPartyMember = true
-								local skipPlayerLines = false
-								local skipQuestNameLine = false  -- Flag to skip quest name lines
-
-								for _, line in ipairs(tooltipData.lines) do
-									if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
-										skipQuestNameLine = true
-									end
-
-									if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
-										skipPlayerLines = true
-										isFirstPartyMember = false
-									end
-
-									if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
-										skipPlayerLines = false
-										skipQuestNameLine = false  -- Reset for the next quest
-										if isFirstPartyMember then
-											GameTooltip:AddLine(" ")
-											isFirstPartyMember = false
-										end
-									end
-
-									if not skipPlayerLines and not skipQuestNameLine then
-										local text = line.leftText
-										local r, g, b = line.leftColor:GetRGB()
-										GameTooltip:AddLine(text, r, g, b, true)
-									end
-								end
-							end
-						end
+						RQE.API.AddQuestPartyProgressTooltip(GameTooltip, questID)
 
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
@@ -4843,6 +4853,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						RQE.UI:ApplyTooltipBackground("questName")
 					end)
 
+					-- Shows quest details and party progress when hovering over the objectives.
 					QuestObjectivesOrDescription:SetScript("OnEnter", function(self)
 						-- Explicitly clear the shared tooltip so rewards from the previously
 						-- hovered tracked quest cannot carry over to this quest.
@@ -4893,43 +4904,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 						-- Party Members' Quest Progress
-						if IsInGroup() and not IsInRaid() then
-							GameTooltip:AddLine(" ")
-							-- GetQuestPartyProgress is unavailable in Classic Era.
-							local tooltipData = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress and C_TooltipInfo.GetQuestPartyProgress(questID)
-							if tooltipData and tooltipData.lines then
-								local player_name = UnitName("player")
-								local isFirstPartyMember = true
-								local skipPlayerLines = false
-								local skipQuestNameLine = false  -- Flag to skip quest name lines
-
-								for _, line in ipairs(tooltipData.lines) do
-									if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
-										skipQuestNameLine = true
-									end
-
-									if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
-										skipPlayerLines = true
-										isFirstPartyMember = false
-									end
-
-									if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
-										skipPlayerLines = false
-										skipQuestNameLine = false  -- Reset for the next quest
-										if isFirstPartyMember then
-											GameTooltip:AddLine(" ")
-											isFirstPartyMember = false
-										end
-									end
-
-									if not skipPlayerLines and not skipQuestNameLine then
-										local text = line.leftText
-										local r, g, b = line.leftColor:GetRGB()
-										GameTooltip:AddLine(text, r, g, b, true)
-									end
-								end
-							end
-						end
+						RQE.API.AddQuestPartyProgressTooltip(GameTooltip, questID)
 
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
@@ -5492,43 +5467,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 					-- render: it wrote party lines into whatever tooltip was open and, in a
 					-- raid, stopped the render after the first world quest. Party progress
 					-- is only available outside raid groups.
-					if IsInGroup() and not IsInRaid() then
-						GameTooltip:AddLine(" ")
-						-- GetQuestPartyProgress is unavailable in Classic Era.
-						local tooltipData = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress and C_TooltipInfo.GetQuestPartyProgress(questID)
-						if tooltipData and tooltipData.lines then
-							local player_name = UnitName("player")
-							local isFirstPartyMember = true
-							local skipPlayerLines = false
-							local skipQuestNameLine = false  -- Flag to skip quest name lines
-
-							for _, line in ipairs(tooltipData.lines) do
-								if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
-									skipQuestNameLine = true
-								end
-
-								if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
-									skipPlayerLines = true
-									isFirstPartyMember = false
-								end
-
-								if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
-									skipPlayerLines = false
-									skipQuestNameLine = false  -- Reset for the next quest
-									if isFirstPartyMember then
-										GameTooltip:AddLine(" ")
-										isFirstPartyMember = false
-									end
-								end
-
-								if not skipPlayerLines and not skipQuestNameLine then
-									local text = line.leftText
-									local r, g, b = line.leftColor:GetRGB()
-									GameTooltip:AddLine(text, r, g, b, true)
-								end
-							end
-						end
-					end
+					RQE.API.AddQuestPartyProgressTooltip(GameTooltip, questID)
 
 					-- Add the quest ID
 					GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)  -- Aquamarine color
