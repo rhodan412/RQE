@@ -122,6 +122,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 		--"QUEST_LOOT_RECEIVED",			-- ONLY AVAILABLE in RETAIL (7.0.3+)
 		-- "QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
+		"QUEST_PROGRESS",
 		"QUEST_REMOVED",
 		"QUEST_TURNED_IN",
 		"QUEST_WATCH_LIST_CHANGED",		-- Frequent fires... trying to move bits out of this function into better locations that won't trigger as frequently
@@ -349,6 +350,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
 			QUEST_LOOT_RECEIVED = RQE.handleQuestLootReceived,
 			-- QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
+			QUEST_PROGRESS = RQE.handleQuestProgress,
 			QUEST_REMOVED = RQE.handleQuestRemoved,
 			QUEST_TURNED_IN = RQE.handleQuestTurnIn,
 			QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
@@ -550,21 +552,21 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when GOSSIP_CLOSED event fires acting as a fail safe for some "gossip' quests that may not trigger what is necessary to update this frame otherwise
 
 		-- THE FOLLOWING SECTION BROKE AFTER WOW 12.0 PATCH
-		-- -- Clear the raid marker from the current target only if it's circle or "2" for the idx
-		-- if UnitExists("target") then
-			-- local idx = GetRaidTargetIndex("target")
-			-- if idx == 2 then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("Clearing raid marker 2 on target after GOSSIP_CLOSED")
-				-- end
-				-- SetRaidTarget("target", 0)
-				-- -- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("Not clearing following GOSSIP_CLOSED as the index for the raid marker is " .. idx)
-				-- end
-			-- end
-		-- end
+		-- Clear the raid marker from the current target only if it's circle or "2" for the idx
+		if UnitExists("target") then
+			local idx = GetRaidTargetIndex("target")
+			if idx == 2 then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Clearing raid marker 2 on target after GOSSIP_CLOSED")
+				end
+				SetRaidTarget("target", 0)
+				-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Not clearing following GOSSIP_CLOSED as the index for the raid marker is " .. idx)
+				end
+			end
+		end
 
 		-- Get the currently super-tracked quest
 		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1064,8 +1066,16 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	function RQE.handlePlayerRegenEnabled()
 		local mythicMode = RQE.db.profile.mythicScenarioMode
 		if RQE.EnforceObjectiveTrackerVisibility then RQE:EnforceObjectiveTrackerVisibility() end
+
+		-- Reapply current tracker visibility after combat without changing the selected quest.
+		if RQE.UpdateTrackerVisibilityAfterCombat then
+			RQE.UpdateTrackerVisibilityAfterCombat = nil
+			RQE:UpdateTrackerVisibility()
+		end
+
 		-- Recheck orphaned legacy focus even when no supertracked quest remains.
 		RQE:QueueLegacyFocusRecovery()
+		if RQE.PendingUnfocusedQuestSelection then RQE:QueueUnfocusedQuestSelection() end
 
 		-- Complete a Classic quest-log selection that was deferred while in combat.
 		local pendingQuestID = tonumber(RQE.PendingClassicQuestLogDetails)
@@ -3393,8 +3403,101 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	-- #5k. Super-Tracking, Quest Acceptance, Vehicle & Zone Events
 	-------------------------------------------------------
 
+	-- Restores focus upkeep without selecting a step; returns any quest chosen to replace empty focus.
+	function RQE:RefreshHybridFocusMaintenance(questID, previousQuestID)
+		if not self.IsHybridStepNavigation or not self:IsHybridStepNavigation()
+			or self.API.Client.InCombatLockdown() then return false end
+		questID, previousQuestID = tonumber(questID) or 0, tonumber(previousQuestID)
+		if (tonumber(self.API.GetSuperTrackedQuestID()) or 0) ~= questID then return false end
+		if self.CanNavigateSearchedQuestSteps and self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			return false
+		end
+
+		local wasManual = self.ManualSuperTrack
+		self.ManualSuperTrack = nil
+		self.QuestTrackerHiddenSuperTrackedPressed = false
+		if questID > 0 and previousQuestID == questID then return true end
+
+		local stepIndex = tonumber(self.AddonSetStepIndex) or tonumber(self.StoredStepIndex) or 1
+		local active = self.ActiveCoordblock
+		if active and (tonumber(active.questID) ~= questID
+			or (active.stepIndex and tonumber(active.stepIndex) ~= stepIndex)) then
+			self:ReleaseActiveCoordblockWaypoint()
+		end
+		local ownsCoordblock = self.ActiveCoordblock ~= nil
+		local ownsFlightMaster = self.IsManualFlightMasterWaypointProtected
+			and self:IsManualFlightMasterWaypointProtected()
+		self.SuperTrackChangeToDifferentQuestOccurred = questID > 0
+		self.lastClickedObjectiveIndex = 0
+		self.OkayCheckBonusQuests = false
+
+		if questID > 0 then
+			if not ownsCoordblock and self.WPUtil and self.WPUtil.ClearHotspotState then
+				self.WPUtil.ClearHotspotState(questID, stepIndex, false)
+			end
+			if self.GetStepCoordinates then
+				local x, y, mapID = self:GetStepCoordinates(stepIndex)
+				self.WPxPos, self.WPyPos, self.WPmapID = x, y, mapID
+			end
+			if self.SaveSuperTrackData then self.SaveSuperTrackData() end
+			-- The common Hybrid renderer performs the redraw after this helper prepares its flags.
+			if self.RQEQuestFrame and not self.RQEQuestFrame:IsShown() then self.AllFramesShouldUpdate = true end
+		else
+			if self.ClearWaypointButtonData then self:ClearWaypointButtonData() end
+			-- The existing cleanup excludes flight-master pins; an active coordinate block keeps its owned pin.
+			if not ownsCoordblock and self.ClearRQETomTomWaypoints then self:ClearRQETomTomWaypoints() end
+			if not ownsCoordblock and not ownsFlightMaster then self._lastWP = nil end
+			self.superQuestID, self.superQuestTitle, self.superMapID = nil, nil, nil
+			self.superX, self.superY, self.WPxPos, self.WPyPos, self.WPmapID = nil, nil, nil, nil, nil
+		end
+		if self.SaveSuperTrackedQuestToCharacter then self:SaveSuperTrackedQuestToCharacter() end
+
+		if self.UpdateStepDistance then
+			local previousOverride = self.StepDistanceOverride
+			self.StepDistanceOverride = true
+			-- Restore the caller's distance-refresh flag even if the display provider is unavailable.
+			local ok, err = pcall(function() self:UpdateStepDistance() end)
+			self.StepDistanceOverride = previousOverride
+			if not ok then error(err) end
+		end
+		if RQEFrame and not RQEFrame:IsMouseOver() and self.ScrollFrameToTop then self.ScrollFrameToTop() end
+		if self.FocusScrollFrameToTop then self.FocusScrollFrameToTop() end
+		if wasManual and questID > 0 and self.QuestType then self:QuestType() end
+
+		if questID == 0 then
+			local explicitlyCleared = self.ClearButtonPressed
+			if explicitlyCleared then self.ClearButtonPressed = false end
+			if self.db.profile.enableNearestSuperTrack and not explicitlyCleared
+				and not self.API.IsAutomaticQuestSelectionBlocked()
+				and RQEFrame and RQEFrame:IsShown() then
+				local closestQuestID = self:GetClosestTrackedQuest()
+				local selected
+				if closestQuestID then
+					if self.AutoSetSuperTrackedQuestID then
+						selected = self:AutoSetSuperTrackedQuestID(closestQuestID, true)
+					else
+						-- Legacy clients cache focus without Retail's automatic-supertracking helper or event.
+						self.API.SetSuperTrackedQuestID(closestQuestID)
+						selected = tonumber(self.API.GetSuperTrackedQuestID()) == tonumber(closestQuestID)
+					end
+				end
+				if selected then
+					if self.SaveTrackedQuestsToCharacter then self:SaveTrackedQuestsToCharacter() end
+					if self.SaveSuperTrackedQuestToCharacter then self:SaveSuperTrackedQuestToCharacter() end
+					return true, closestQuestID
+				end
+			end
+		end
+		return true
+	end
+
 	-- Synchronize RQE quest, frame, waypoint, and macro state with Blizzard super-tracking changes.
 	function RQE.handleSuperTracking()
+		-- Hybrid owns supported DB focus changes while searched previews keep their independent selection.
+		if RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation() then
+			if RQE.CanNavigateSearchedQuestSteps and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then return end
+			if RQE:HandleHybridSuperTracking() then return end
+		end
 		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 			-- startTime = debugprofilestop()  -- Start timer
 		-- end
@@ -3710,12 +3813,12 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			-- end
 		-- end)
 
-		-- Check if the objective is a progress bar
+		-- Read objective progress through the client bridge when legacy globals are unavailable.
 		local stepIndex = RQE.AddonSetStepIndex or 1
 		if RQE.currentSuperTrackedQuestID then
-			local _, objectiveType, _, fulfilled, required = GetQuestObjectiveInfo(RQE.currentSuperTrackedQuestID, stepIndex, false)
+			local _, objectiveType, _, fulfilled, required = RQE.API.Client.GetQuestObjectiveInfo(RQE.currentSuperTrackedQuestID, stepIndex, false)
 			if objectiveType == "progressbar" then
-				local progress = GetQuestProgressBarPercent(RQE.currentSuperTrackedQuestID)
+				local progress = RQE.API.Client.GetQuestProgressBarPercent(RQE.currentSuperTrackedQuestID)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print(string.format(">> Checking progress bar for quest %s at step %s", RQE.currentSuperTrackedQuestID, stepIndex))
 				end
@@ -3932,7 +4035,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			local questInfo = RQE.API.GetQuestLogInfo(acceptedQuestLogIndex)
 			questID = questInfo and tonumber(questInfo.questID) or nil
 		end
-		local focusedQuestAtAcceptance = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0
+		RQE:QueueUnfocusedQuestSelection(questID, "accepted")
 		RQE:AuditQuestPickupNPCID(questID, "accepted")
 
 		if questID and RQE.ClearQuestDependencyCompletions then
@@ -4052,8 +4155,9 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		RQE.QuestAcceptedToSuperTrackOkay = true
 		RQE.SetInitialFromAccept = true
 
+		-- Leaves a newest-quest pickup in focus until an actual movement update requests another quest.
 		C_Timer.After(1.3, function()
-			RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
+			if not RQE:IsNewestQuestSelectionEnabled() then RQE:AutoSuperTrackClosestQuest() end
 		end)
 
 		if RQE.db.profile.debugLevel == "INFO" then
@@ -4077,7 +4181,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 
 		-- Clear the raid marker from the current target
 		if UnitExists("target") then
-			-- SetRaidTarget("target", 0)	-- possible complications in 12.0
+			SetRaidTarget("target", 0)	-- possible complications in 12.0
 			-- RemoveRaidTargets()
 		end
 
@@ -4192,18 +4296,6 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		RQE:UpdateRQEQuestFrameVisibility()
 
 		RQE.CheckClickWButtonPossible = true
-
-		-- Delay to check for a blank RQEFrame and attempt to click the QuestLogIndexButton if necessary
-		if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
-			C_Timer.After(2, function()
-				if focusedQuestAtAcceptance > 0
-					or (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0 then return end
-				RQE.infoLog("RQEFrame appears blank, attempting to click QuestLogIndexButton for questID:", questID)
-				RQE.ClickQuestLogIndexButton(questID)	-- May need to remove if issues
-			end)
-		else
-			RQE.infoLog("RQEFrame is not blank, skipping QuestLogIndexButton click.")
-		end
 
 		-- Update Frame with the newly accepted quest if nothing is super tracked
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
@@ -6020,6 +6112,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	-- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
 	-- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 	function RQE.handleQuestStatusUpdate()
+		RQE:QueueUnfocusedQuestSelection()
 		if RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLog then
 			-- RQE:AutoWatchQuestsWithChangedObjectives()
 			-- Objective values may still be stale during this event on Classic.
@@ -6253,7 +6346,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 					end
-					-- SetRaidTarget("target", 0)	-- REMOVED AS A RESULT OF PROTECTED CODE FOLLOWING PATCH 12.0
+					SetRaidTarget("target", 0)	-- REMOVED AS A RESULT OF PROTECTED CODE FOLLOWING PATCH 12.0
 					-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -6358,7 +6451,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 					end
-					-- SetRaidTarget("target", 0)	-- possible complications in 12.0
+					SetRaidTarget("target", 0)	-- possible complications in 12.0
 					-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -6444,11 +6537,14 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		RQE.alreadyPrintedSchematics = false
 
 		if RQE.ReEnableRQEFrames then
+			-- Restores both RQE frames after the quest dialog opens.
 			C_Timer.After(2.5, function()
 				RQE.ToggleBothFramesfromLDB()
 			end)
 			RQE.ReEnableRQEFrames = false
 		end
+
+		RQE.API.AutoComplete(true)
 
 		local extractedQuestID
 
@@ -6678,6 +6774,12 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				RQE.isRestoringWorldQuests = false
 			end)
 		end)
+	end
+
+
+	-- Advances the displayed quest's turn-in dialog when automatic completion is enabled.
+	function RQE.handleQuestProgress()
+		RQE.API.AutoComplete(true)
 	end
 
 
@@ -6991,20 +7093,9 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 					end
 				end
 			end
-		elseif RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked()
-			and not isSuperTracking
-			and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
-			-- print("~~~ SetSuperTrack: 4783~~~")
-			-- C_SuperTrack.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
-			RQE.API.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
-			-- print("~~~ SaveTrackedQuestsToCharacter: 4849 ~~~")
-			RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_UPDATE event fires
-			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_UPDATE event fires
-
-			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
-				local superTrackedQuestName = RQE.API.GetTitleForQuestID(RQE.currentSuperTrackedQuestID) or "Unknown Quest"
-				DEFAULT_CHAT_FRAME:AddMessage("Now super tracking quest: " .. superTrackedQuestName, 0.56, 0.93, 0.56)	-- Light Green
-			end
+		elseif not isSuperTracking then
+			-- Share acceptance ordering and full focus initialization instead of setting only the cached quest ID.
+			RQE:QueueUnfocusedQuestSelection(questID, "watch-list")
 		end
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
@@ -7173,9 +7264,19 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				end)
 			end
 
+			-- Refreshes the selected quest after objective updates settle.
 			C_Timer.After(0.5, function()
 				if RQE.QuestWatchUpdateFired then
 					RQE.QuestWatchUpdateFired = false	-- Reset the flag to false if it is currently marked as true
+				end
+				-- Keep unrelated progress from claiming display ownership before empty-focus selection finishes.
+				if RQE.PendingUnfocusedQuestSelection
+					and tonumber(RQE.API.GetSuperTrackedQuestID()) ~= tonumber(questID) then return end
+				-- Late progress must not repaint another quest after the newest pickup has taken focus.
+				if RQE:IsNewestQuestSelectionEnabled() then
+					local displayedFocus = tonumber(RQE.searchedQuestID) or 0
+					if displayedFocus <= 0 then displayedFocus = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0 end
+					if tonumber(questID) ~= displayedFocus then return end
 				end
 				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end)
@@ -7250,6 +7351,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		-- debounced tracker rebuild runs after the last change in the burst
 		if added == true then
 			RQE.QuestAddedForWatchListChanged = true
+			RQE:QueueUnfocusedQuestSelection(questID, "watch-list")
 			-- print("Frame updating with questID " .. questID)
 			RQE:RequestQuestTrackerRefresh()
 			-- Previous code (commented out 2026.10.30): rebuilt the tracker immediately on every watch change
@@ -7400,48 +7502,6 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				end
 			end
 
-			-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-			if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() then
-				if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
-					if not RQEFrame:IsShown() then return end
-					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
-					if closestQuestID then
-						-- print("~~~ SetSuperTrack: 5034~~~")
-						-- C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-						RQE.API.SetSuperTrackedQuestID(closestQuestID)
-						RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
-						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-							DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
-						end
-					else
-						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-							DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)		-- Pink
-						end
-					end
-					RQE.TrackClosestQuest()
-				end
-
-				-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_WATCH_LIST_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-				if RQEFrame and not RQEFrame:IsMouseOver() then
-					RQE.ScrollFrameToTop()
-				end
-				RQE.FocusScrollFrameToTop()
-			end
-
-			-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
-			if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked()
-				and RQE.QuestAddedForWatchListChanged
-				and not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
-				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
-				if not isWorldQuest then
-					-- print("~~~ SetSuperTrack: 5059~~~")
-					-- C_SuperTrack.SetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
-					RQE.API.SetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
-					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
-					UpdateFrame()
-				end
-			end
-
 			C_Timer.After(1.2, function()
 				RQE.UpdateScenarioFrame()
 				C_Timer.After(0.15, function()
@@ -7522,7 +7582,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		end
 
 		if RQE.LastSuperTrackedQuestID == questID then
-			-- SetRaidTarget("target", 0)	-- possible complications in 12.0
+			SetRaidTarget("target", 0)	-- possible complications in 12.0
 			-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 		end
 
@@ -7758,7 +7818,6 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			-- 	DEFAULT_CHAT_FRAME:AddMessage("QuestID (displayed): " .. tostring(questID), 0.46, 0.82, 0.95)	-- Sky Blue
 			-- end
 			DEFAULT_CHAT_FRAME:AddMessage(messagePrefix, 0.46, 0.82, 0.95) -- Sky Blue
-			return
 		end
 
 		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
@@ -7827,6 +7886,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				end
 			end
 		end
+		RQE.API.AutoAcceptQuestDetail()
 	end
 
 
@@ -7835,40 +7895,11 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	function RQE.handleQuestFinished()
 		-- print("~~~ Running Event Function: RQE.handleQuestFinished() ~~~")
 		-- Clear the raid marker from the current target
-		-- if UnitExists("target") then
-			-- SetRaidTarget("target", 0)
-		-- end
-
-		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-		if RQE.db.profile.enableNearestSuperTrack and not RQE.API.IsAutomaticQuestSelectionBlocked() then
-			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-			if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
-				if not RQEFrame:IsShown() then return end
-				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
-				if closestQuestID then
-					-- print("~~~ SetSuperTrack: 5269~~~")
-					-- C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-					RQE.API.SetSuperTrackedQuestID(closestQuestID)
-					-- print("~~~ SaveTrackedQuestsToCharacter: 5344 ~~~")
-					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_FINISHED event fires
-					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_FINISHED event fires
-					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-						DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
-					end
-				else
-					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-						DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)		-- Pink
-					end
-				end
-				RQE.TrackClosestQuest()
-			end
-
-			-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_FINISHED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-			if RQEFrame and not RQEFrame:IsMouseOver() then
-				RQE.ScrollFrameToTop()
-			end
-			RQE.FocusScrollFrameToTop()
+		if UnitExists("target") then
+			SetRaidTarget("target", 0)
 		end
+
+		RQE:QueueUnfocusedQuestSelection()
 
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
