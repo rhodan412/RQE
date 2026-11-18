@@ -244,6 +244,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Cancel pending empty-focus work even when the player reselects the same quest or clears an empty helper.
 	function RQE:CancelUnfocusedQuestSelection()
+		if self.CancelNewestQuestSelection then self:CancelNewestQuestSelection() end
 		if not self.IsRetail then return end
 		self.QuestFocusRevision = (self.QuestFocusRevision or 0) + 1
 		self.PendingUnfocusedQuestSelection = nil
@@ -280,6 +281,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Resolve each pickup burst using movement policy first, otherwise the first eligible accepted quest.
 	function RQE:ProcessUnfocusedQuestSelection(request)
 		if not self.IsRetail or self.PendingUnfocusedQuestSelection ~= request then return end
+		if self:IsNewestQuestSelectionEnabled() then
+			self.PendingUnfocusedQuestSelection = nil
+			return
+		end
 		local now = self.API.Client.GetTime()
 		local movement = self.db.profile.enableAutoSuperTrackSwap
 		if not (movement or self.db.profile.enableNearestSuperTrack) or self.API.IsAutomaticQuestSelectionBlocked()
@@ -332,6 +337,11 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Combine Retail accept/watch events before choosing empty focus according to the enabled tracking mode.
 	function RQE:QueueUnfocusedQuestSelection(questID, reason)
+		if self:IsNewestQuestSelectionEnabled() then
+			self.PendingUnfocusedQuestSelection = nil
+			if reason == "accepted" then self:QueueNewestQuestSelection(questID) end
+			return
+		end
 		if not self.IsRetail or not (self.db.profile.enableNearestSuperTrack or self.db.profile.enableAutoSuperTrackSwap)
 			or self.API.IsAutomaticQuestSelectionBlocked()
 			or (tonumber(self.API.GetSuperTrackedQuestID()) or 0) > 0 then return end
@@ -407,6 +417,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Set or defer automatic super-tracking so World Map interaction cannot immediately overwrite the choice.
 	function RQE:AutoSetSuperTrackedQuestID(questID, isNearestSelection, selectionContext)
+		if isNearestSelection and self:ShouldWaitForNewestQuestSelection() then return false end
 		if not questID then
 			return false
 		end
@@ -2895,6 +2906,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	function RQE.handleVehicleActionBar()
 		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then return end
+		if RQE.CanRunHybridNavigation and RQE:CanRunHybridNavigation() then
+			RQE:QueueHybridPeriodicChecks("UPDATE_VEHICLE_ACTIONBAR", 0.4, questID)
+			return
+		end
 
 		-- Vehicle and override bar updates can arrive together. Keep only the latest
 		-- vehicle callback and let the player's aura state settle before inspecting it.
@@ -3587,6 +3602,84 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- #5k. Super-Tracking, Quest Acceptance, Vehicle & Zone Events
 	-------------------------------------------------------
 
+	-- Restores focus upkeep without selecting a step; returns any quest chosen to replace empty focus.
+	function RQE:RefreshHybridFocusMaintenance(questID, previousQuestID)
+		if not self.IsHybridStepNavigation or not self:IsHybridStepNavigation()
+			or self.API.Client.InCombatLockdown() then return false end
+		questID, previousQuestID = tonumber(questID) or 0, tonumber(previousQuestID)
+		if (tonumber(self.API.GetSuperTrackedQuestID()) or 0) ~= questID then return false end
+		if self.CanNavigateSearchedQuestSteps and self:CanNavigateSearchedQuestSteps(self.searchedQuestID) then
+			return false
+		end
+
+		local wasManual = self.ManualSuperTrack
+		self.ManualSuperTrack = nil
+		self.QuestTrackerHiddenSuperTrackedPressed = false
+		if questID > 0 and previousQuestID == questID then return true end
+
+		local stepIndex = tonumber(self.AddonSetStepIndex) or tonumber(self.StoredStepIndex) or 1
+		local active = self.ActiveCoordblock
+		if active and (tonumber(active.questID) ~= questID
+			or (active.stepIndex and tonumber(active.stepIndex) ~= stepIndex)) then
+			self:ReleaseActiveCoordblockWaypoint()
+		end
+		local ownsCoordblock = self.ActiveCoordblock ~= nil
+		local ownsFlightMaster = self.IsManualFlightMasterWaypointProtected
+			and self:IsManualFlightMasterWaypointProtected()
+		self.SuperTrackChangeToDifferentQuestOccurred = questID > 0
+		self.lastClickedObjectiveIndex = 0
+		self.OkayCheckBonusQuests = false
+
+		if questID > 0 then
+			if not ownsCoordblock and self.WPUtil and self.WPUtil.ClearHotspotState then
+				self.WPUtil.ClearHotspotState(questID, stepIndex, false)
+			end
+			if self.GetStepCoordinates then
+				local x, y, mapID = self:GetStepCoordinates(stepIndex)
+				self.WPxPos, self.WPyPos, self.WPmapID = x, y, mapID
+			end
+			if self.SaveSuperTrackData then self.SaveSuperTrackData() end
+			-- The common Hybrid renderer performs the redraw after this helper prepares its flags.
+			if self.RQEQuestFrame and not self.RQEQuestFrame:IsShown() then self.AllFramesShouldUpdate = true end
+		else
+			if self.ClearWaypointButtonData then self:ClearWaypointButtonData() end
+			-- The existing cleanup excludes flight-master pins; an active coordinate block keeps its owned pin.
+			if not ownsCoordblock and self.ClearRQETomTomWaypoints then self:ClearRQETomTomWaypoints() end
+			if not ownsCoordblock and not ownsFlightMaster then self._lastWP = nil end
+			self.superQuestID, self.superQuestTitle, self.superMapID = nil, nil, nil
+			self.superX, self.superY, self.WPxPos, self.WPyPos, self.WPmapID = nil, nil, nil, nil, nil
+		end
+		if self.SaveSuperTrackedQuestToCharacter then self:SaveSuperTrackedQuestToCharacter() end
+
+		if self.UpdateStepDistance then
+			local previousOverride = self.StepDistanceOverride
+			self.StepDistanceOverride = true
+			-- Restore the caller's distance-refresh flag even if the display provider is unavailable.
+			local ok, err = pcall(function() self:UpdateStepDistance() end)
+			self.StepDistanceOverride = previousOverride
+			if not ok then error(err) end
+		end
+		if RQEFrame and not RQEFrame:IsMouseOver() and self.ScrollFrameToTop then self.ScrollFrameToTop() end
+		if self.FocusScrollFrameToTop then self.FocusScrollFrameToTop() end
+		if wasManual and questID > 0 and self.QuestType then self:QuestType() end
+
+		if questID == 0 then
+			local explicitlyCleared = self.ClearButtonPressed
+			if explicitlyCleared then self.ClearButtonPressed = false end
+			if self.db.profile.enableNearestSuperTrack and not explicitlyCleared
+				and not self.API.IsAutomaticQuestSelectionBlocked()
+				and RQEFrame and RQEFrame:IsShown() then
+				local closestQuestID = self:GetClosestTrackedQuest()
+				if closestQuestID and self:AutoSetSuperTrackedQuestID(closestQuestID, true) then
+					if self.SaveTrackedQuestsToCharacter then self:SaveTrackedQuestsToCharacter() end
+					if self.SaveSuperTrackedQuestToCharacter then self:SaveSuperTrackedQuestToCharacter() end
+					return true, closestQuestID
+				end
+			end
+		end
+		return true
+	end
+
 	-- Handling SUPER_TRACKING_CHANGED Event
 	-- Fired when the actively tracked location is changed
 	function RQE.handleSuperTracking()
@@ -3603,6 +3696,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			and RQE:CanNavigateSearchedQuestSteps(RQE.searchedQuestID) then
 			return
 		end
+		if RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()
+			and RQE:HandleHybridSuperTracking() then return end
 		local newQID = RQE.API.GetSuperTrackedQuestID()
 		RQE.LastSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local oldQID = RQE.previousSuperTrackedQuestID
@@ -4079,7 +4174,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		local questID = secondQuestPayload or firstQuestPayload
 		local focusedQuestAtAcceptance = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0
 		-- Reserve empty focus before this handler adds watches or schedules other automatic selectors.
-		if RQE.IsRetail then RQE:QueueUnfocusedQuestSelection(questID, "accepted") end
+		if RQE.IsRetail or RQE:IsNewestQuestSelectionEnabled() then
+			RQE:QueueUnfocusedQuestSelection(questID, "accepted")
+		end
 		RQE:AuditQuestPickupNPCID(questID, "accepted")
 
 		if questID and RQE.ClearQuestDependencyCompletions then
@@ -4194,7 +4291,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Focuses the closest eligible quest when automatic selection is allowed.
 		RQE.API.Client.C_Timer.After(1.3, function()
 			-- Retail acceptance uses the guarded batch; pickup must not invoke the movement-swap setting.
-			if not RQE.IsRetail then RQE:AutoSuperTrackClosestQuest() end
+			if not RQE.IsRetail and not RQE:IsNewestQuestSelectionEnabled() then RQE:AutoSuperTrackClosestQuest() end
 		end)
 
 		if RQE.db.profile.debugLevel == "INFO" then
@@ -4322,12 +4419,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE.CheckClickWButtonPossible = true
 
 		-- Non-Retail root-file clients retain their existing helper fallback; Retail uses live quest state above.
-		if not RQE.IsRetail then
+		if not RQE.IsRetail and not RQE:IsNewestQuestSelectionEnabled() then
 			if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
 				-- Selects the accepted quest only if no quest has gained focus in the meantime.
 				RQE.API.Client.C_Timer.After(2, function()
-					if focusedQuestAtAcceptance > 0
+					if RQE:IsNewestQuestSelectionEnabled() or focusedQuestAtAcceptance > 0
 						or (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0 then return end
 					RQE.infoLog("RQEFrame appears blank, attempting to click QuestLogIndexButton for questID:", questID)
 					RQE.ClickQuestLogIndexButton(questID)	-- May need to remove if issues
@@ -6776,6 +6873,12 @@ local function StepUsesAuraCheck(step)
 			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE.QuestWatchUpdateFired then
 					RQE.QuestWatchUpdateFired = false	-- Reset the flag to false if it is currently marked as true
+				end
+				-- Late progress must not repaint another quest after the newest pickup has taken focus.
+				if RQE:IsNewestQuestSelectionEnabled() then
+					local displayedFocus = tonumber(RQE.searchedQuestID) or 0
+					if displayedFocus <= 0 then displayedFocus = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0 end
+					if tonumber(questID) ~= displayedFocus then return end
 				end
 				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end)
