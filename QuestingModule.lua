@@ -1404,6 +1404,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				button.QuestLevelAndName:SetWidth(frameWidth - basePadding.QuestLevelAndName)
 			end
 
+			if button.QuestStatusInfo then
+				button.QuestStatusInfo:SetWidth(frameWidth - basePadding.QuestObjectives)
+			end
+
 			if button.QuestObjectives then
 				-- Match the objective width assigned when the quest row is rendered
 				local dynamicPadding = basePadding.QuestObjectives
@@ -4780,6 +4784,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Clearing regular quest buttons
 		for i, QuestLogIndexButton in pairs(RQE.QuestLogIndexButtons or {}) do
 			if QuestLogIndexButton then
+				QuestLogIndexButton:SetScript("OnUpdate", nil)
+				QuestLogIndexButton.rqeQuestStatusQuestID = nil
+				QuestLogIndexButton.rqeQuestStatusElapsed = 0
+				QuestLogIndexButton.rqeQuestHasStatus = nil
 				QuestLogIndexButton:Hide()
 				if QuestLogIndexButton.QuestLevelAndName then
 					QuestLogIndexButton.QuestLevelAndName:Hide()
@@ -4788,6 +4796,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					QuestLogIndexButton.QuestObjectivesOrDescription:Hide()
 				end
 				if QuestLogIndexButton.QuestStatusInfo then
+					QuestLogIndexButton.QuestStatusInfo:SetText("")
 					QuestLogIndexButton.QuestStatusInfo:Hide()
 				end
 				if QuestLogIndexButton.RQEProgressBar then
@@ -4832,31 +4841,38 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		else
 			statusLine:SetTextColor(1, 209/255, 0)
 		end
-		statusLine:SetShown(statusText ~= nil)
+		local hasStatus = statusText ~= nil
+		local previousHasStatus = questButton.rqeQuestHasStatus
+		questButton.rqeQuestHasStatus = hasStatus
+		questButton.rqeQuestStatusInterval = hasStatus and not isFailed and 0.25 or 1
+		statusLine:SetShown(hasStatus)
 
 		followingLine:ClearAllPoints()
 		followingLine:SetPoint("TOPLEFT", statusText and statusLine or questNameLine, "BOTTOMLEFT", 0, -3)
-		return statusText ~= nil, isFailed
+		-- Reflow the section only when a status line enters or leaves an already rendered row.
+		if previousHasStatus ~= nil and previousHasStatus ~= hasStatus and RQE.RequestQuestTrackerRefresh then
+			RQE:RequestQuestTrackerRefresh()
+		end
+		return hasStatus, isFailed
 	end
 
 
-	-- Starts the tracked quest status updates.
+	-- Keeps visible quest rows current, including timers that arrive after the first render.
 	local function StartTrackedQuestStatusUpdates(questButton, questID, questNameLine, followingLine)
-		local hasStatus, isFailed = UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
-		if not hasStatus or isFailed then
-			questButton:SetScript("OnUpdate", nil)
-			return
-		end
+		questButton.rqeQuestStatusQuestID = questID
+		questButton.rqeQuestHasStatus = nil
+		UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
 		questButton.rqeQuestStatusElapsed = 0
-		-- Updates the tracked quest status line.
+		-- Reads the shared timer cache and ignores callbacks for a row's former quest.
 		questButton:SetScript("OnUpdate", function(self, elapsed)
-			self.rqeQuestStatusElapsed = (self.rqeQuestStatusElapsed or 0) + elapsed
-			if self.rqeQuestStatusElapsed < 0.25 then return end
-			self.rqeQuestStatusElapsed = 0
-			local stillHasStatus, nowFailed = UpdateTrackedQuestStatusLine(self, questID, questNameLine, followingLine)
-			if not stillHasStatus or nowFailed then
+			if self.questID ~= questID or self.rqeQuestStatusQuestID ~= questID then
 				self:SetScript("OnUpdate", nil)
+				return
 			end
+			self.rqeQuestStatusElapsed = (self.rqeQuestStatusElapsed or 0) + elapsed
+			if self.rqeQuestStatusElapsed < self.rqeQuestStatusInterval then return end
+			self.rqeQuestStatusElapsed = 0
+			UpdateTrackedQuestStatusLine(self, questID, questNameLine, followingLine)
 		end)
 	end
 
@@ -6118,6 +6134,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 									local handler = self:GetScript("OnMouseDown")
 									if handler then handler(self, button, true) end
 								end) then return end
+						-- A physical row selection restarts Hybrid's automatic trajectory, including same-quest selections.
+						if not shiftLeftClick and RQE.IsHybridStepNavigation and RQE:IsHybridStepNavigation()
+							and RQE:SelectHybridTrackedQuest(questID) then return end
+						local rowNavigationToken
 					RQE.QuestLogIndexButtonPressed = true
 						RQE.OkaytoUpdateCreateSteps = true
 						RQE.AllFramesShouldUpdate = true
@@ -6218,6 +6238,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 								-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
 								-- Activates the unknown quest button.
 								RQE.API.Client.C_Timer.After(0.1, function()
+									if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(rowNavigationToken) then return end
 									RQE.ClickUnknownQuestButton()
 									RQE.NearestFlightMasterSet = false
 
@@ -6225,6 +6246,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 										-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.8, function()
 										-- Compares available travel choices for the selected destination.
 										RQE.API.Client.C_Timer.After(0.8, function()
+											if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(rowNavigationToken) then return end
 											RQE:RecommendFastestTravelMethod()
 										end)
 									end
@@ -6241,6 +6263,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 										-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
 										-- Starts the periodic checks.
 										RQE.API.Client.C_Timer.After(0.1, function()
+											if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(rowNavigationToken) then return end
 											if not sameQuestReselect then RQE.AddonSetStepIndex = 1 end
 											RQE:StartPeriodicChecks()
 										end)
@@ -6299,10 +6322,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 								RQE._coordOrderReselect.armed = true
 							end
 							RQE:SaveSuperTrackedQuestToCharacter()
+							rowNavigationToken = RQE.GetHybridCallbackToken and RQE:GetHybridCallbackToken()
 
 							-- Allow time for the UI to update and for the super track to register
 							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+							-- Refresh the selected quest macro only while its original navigation context is still active.
 							RQE.API.Client.C_Timer.After(1, function()
+								if RQE.IsHybridCallbackCurrent and not RQE:IsHybridCallbackCurrent(rowNavigationToken) then return end
 								-- Fetch the quest data here
 								local questData = RQE.getQuestData(questID)
 								if not questData then
@@ -6327,6 +6353,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 							-- Check if MagicButton should be visible based on macro body
 							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+							-- Update the protected action button's visibility through its existing combat-safe helper.
 							RQE.API.Client.C_Timer.After(1, function()
 								RQE.Buttons.UpdateMagicButtonVisibility()
 							end)
