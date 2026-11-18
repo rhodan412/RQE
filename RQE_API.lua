@@ -66,9 +66,11 @@ function RQE.API.ReleaseRenderObject(object)
 		object:SetText("")
 	end
 	object.htmlText = nil
+	object._rqeCoordblockHTMLBase = nil
 	object._rqeRichText, object._rqeRichFont, object._rqeRichFontSize = nil, nil, nil
 	object._rqeRichColor, object._rqeRichParent = nil, nil
 	object._rqeCoordblockLinks, object._rqeCoordblockByPoint = nil, nil
+	object._rqeObjectItemLinks = nil
 	object.questID, object.stepIndex, object.index, object.point, object.route = nil, nil, nil, nil, nil
 	if pool then
 		pool.active[object] = nil
@@ -81,7 +83,12 @@ end
 function RQE.API.ReleaseRenderGroup(parent, group)
 	local pool = parent and parent._rqeRenderPools and parent._rqeRenderPools[group]
 	if not pool then return end
+	local hadContent = next(pool.active) ~= nil
 	for object in pairs(pool.active) do RQE.API.ReleaseRenderObject(object) end
+	-- Normal rebuilds release focus directly before the guarded Core clear can decide to skip.
+	if hadContent and parent == RQE.SeparateContentFrame and group == "focus" then
+		RQE:QueueSeparateFocusRecovery()
+	end
 end
 
 -- Acquires a reusable UI object from the owner's render pool.
@@ -135,6 +142,239 @@ function RQE:QueueSeparateFocusRefresh()
 		self._focusRefreshTimer = nil
 		if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
 	end)
+end
+
+-- Returns the current virtual or native quest focus, never a stale displayed quest ID.
+function RQE:GetSeparateFocusRecoveryQuestID()
+	local questID = self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
+	if not questID or questID <= 0 then return nil end
+	if self.API.IsSuperTrackingQuest and not self.API.IsSuperTrackingQuest() then return nil end
+	return questID
+end
+
+-- Checks shown quest text rather than decorative widgets or hidden measurement regions.
+function RQE:HasSeparateFocusContent()
+	local content = self.SeparateContentFrame
+	if not content then return false end
+
+	-- Accepts nonblank plain or HTML text only while its rendered object is shown.
+	local function hasShownText(object)
+		if not object or not object.IsShown or not object:IsShown() then return false end
+		local pool = object._rqeRenderPool
+		if pool and not pool.active[object] then return false end
+		local objectType = object.GetObjectType and object:GetObjectType()
+		local text
+		if objectType == "SimpleHTML" then
+			text = (object.htmlText or object._rqeCoordblockHTMLBase or "")
+				:gsub("<[^>]+>", ""):gsub("&nbsp;", " ")
+		elseif objectType == "FontString" and object.GetText then
+			text = object:GetText()
+		end
+		if type(text) ~= "string" then return false end
+		text = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+		return text:find("%S") ~= nil
+	end
+
+	if hasShownText(self.SeparateStepText) then return true end
+	local pool = content._rqeRenderPools and content._rqeRenderPools.focus
+	if pool then
+		for object in pairs(pool.active) do
+			if hasShownText(object) then return true end
+		end
+	end
+	return false
+end
+
+-- Waits for combat to end without polling or requiring a quest database entry.
+function RQE:DeferSeparateFocusRecovery()
+	self._focusRecoveryAfterCombat = true
+	if not self._focusRecoveryEventFrame then
+		local frame = CreateFrame("Frame")
+		-- Resumes the pending check after combat, using tracking at the time it runs.
+		frame:SetScript("OnEvent", function(eventFrame, event)
+			if event ~= "PLAYER_REGEN_ENABLED" then return end
+			eventFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+			if not self._focusRecoveryAfterCombat then return end
+			self._focusRecoveryAfterCombat = nil
+			self:QueueSeparateFocusRecovery()
+		end)
+		self._focusRecoveryEventFrame = frame
+	end
+	self._focusRecoveryEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+end
+
+-- Restores empty focus content only while a quest is currently supertracked.
+function RQE:RecoverSeparateFocusFrame()
+	-- Clear old combat deferrals even when tracking ended or another refresh already succeeded.
+	self._focusRecoveryAfterCombat = nil
+	if self._focusRecoveryEventFrame then
+		self._focusRecoveryEventFrame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+	end
+	if not self:GetSeparateFocusRecoveryQuestID() then return false end
+	if self:HasSeparateFocusContent() then return true end
+	if not self.SeparateFocusFrame or not self.SeparateContentFrame or not self.UpdateSeparateFocusFrame then
+		return false
+	end
+	if InCombatLockdown() then
+		self:DeferSeparateFocusRecovery()
+		return false
+	end
+	if self._focusRecoveryRunning or self.IsUpdatingSeparateFocusFrame then return false end
+
+	-- The normal renderer retains ownership of searched previews and the selected quest step.
+	self._focusRecoveryRunning = true
+	local ok, err = pcall(self.UpdateSeparateFocusFrame, self)
+	self._focusRecoveryRunning = nil
+	if not ok then error(err, 0) end
+	return self:HasSeparateFocusContent()
+end
+
+-- Schedules an unconditional one-second check after clearing; repeated clears share the pending check.
+function RQE:QueueSeparateFocusRecovery()
+	-- A recovery rebuild clears its own widgets; that clear must not start a retry loop.
+	if self._focusRecoveryTimer or self._focusRecoveryRunning then return end
+	-- Rechecks live tracking even when the original clear was intentional or normal rendering already succeeded.
+	self._focusRecoveryTimer = C_Timer.NewTimer(1, function()
+		local ok, err = pcall(self.RecoverSeparateFocusFrame, self)
+		self._focusRecoveryTimer = nil
+		if not ok then error(err, 0) end
+	end)
+end
+
+-- Combined links retain their item label but use a distinct color on every theme.
+RQE.API.ObjectItemLinkColor = "ffff9955"
+-- Colons separate the object name from the final item name; braces delimit the complete tag.
+RQE.API.ObjectItemTagPattern = "{objectitem:([%a%d]+):(%d+):([^:{}]+):([^{}]+)}"
+
+-- Finds the next combined tag and keeps its object identity separate from its visible item label.
+function RQE.API.FindObjectItemTag(text, startIndex)
+	if type(text) ~= "string" then return nil end
+	local first, last, objectKey, itemID, objectName, itemName =
+		text:find(RQE.API.ObjectItemTagPattern, startIndex or 1)
+	if not first then return nil end
+	return first, last, {
+		objectKey = objectKey, itemID = tonumber(itemID), objectName = objectName, itemName = itemName,
+	}
+end
+
+-- Parses one complete combined tag without accepting surrounding text or partial matches.
+function RQE.API.ParseObjectItemTag(text)
+	local first, last, data = RQE.API.FindObjectItemTag(text)
+	if first == 1 and last == #text then return data end
+end
+
+-- Replaces combined tags with their visible item labels for rendering and layout measurement.
+function RQE.API.ReplaceObjectItemTags(text, colorHex)
+	if type(text) ~= "string" then return text end
+	-- Keep replacement labels literal, including percent signs and punctuation in item names.
+	return (text:gsub(RQE.API.ObjectItemTagPattern, function(_, _, _, itemName)
+		local label = "[" .. itemName .. "]"
+		return colorHex and ("|c" .. colorHex .. label .. "|r") or label
+	end))
+end
+
+-- Escapes entity labels as HTML text without changing their visible punctuation or color codes.
+function RQE.API.EscapeRichTextHTML(text)
+	return (tostring(text or ""):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
+end
+
+-- Restores one layer of escaped label text after surrounding HTML tags have been removed.
+function RQE.API.UnescapeRichTextHTML(text)
+	return (tostring(text or ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&"))
+end
+
+-- Builds unique combined hyperlinks and a fresh per-frame map of their hidden object metadata.
+function RQE.API.BuildObjectItemHTML(text)
+	local links, nextIndex = {}, 0
+	if type(text) ~= "string" then return text, links end
+	-- Each occurrence gets its own key, even when several objects grant the same item.
+	local html = text:gsub(RQE.API.ObjectItemTagPattern, function(objectKey, itemID, objectName, itemName)
+		nextIndex = nextIndex + 1
+		local href = "rqeobjectitem:" .. nextIndex
+		links[href] = {
+			objectKey = objectKey, itemID = tonumber(itemID), objectName = objectName, itemName = itemName,
+		}
+		return string.format('<a href="%s">|c%s[%s]|r</a>', href,
+			RQE.API.ObjectItemLinkColor, RQE.API.EscapeRichTextHTML(itemName))
+	end)
+	return html, links
+end
+
+-- Shows the item's tooltip and independently opens its quest-bound source-object preview.
+function RQE.API.ShowObjectItemTooltip(owner, data)
+	if type(data) ~= "table" or not tonumber(data.itemID) then return end
+	GameTooltip:Hide()
+	GameTooltip:SetOwner(owner or UIParent, "ANCHOR_CURSOR_RIGHT")
+	GameTooltip:SetItemByID(data.itemID)
+	local count = RQE.API.Client.C_Item.GetItemCount(data.itemID) or 0
+	GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+	GameTooltip:Show()
+	if RQE.ShowObjectImagePreview then
+		RQE.ShowObjectImagePreview(data.objectKey, data.objectName, nil, true)
+	end
+end
+
+-- Recognizes existing item references and the item portion of a combined object/item tag.
+function RQE.API.RichTextContainsItem(text, itemID)
+	if type(text) ~= "string" then return false end
+	if text:find("{item:" .. tostring(itemID) .. ":", 1, true) then return true end
+	local requestedID = tonumber(itemID)
+	if not requestedID then return false end
+	for _, taggedID in text:gmatch(RQE.API.ObjectItemTagPattern) do
+		if tonumber(taggedID) == requestedID then return true end
+	end
+	return false
+end
+
+-- Finds the editable item reference without confusing a source-object key with the item's ID.
+function RQE.API.GetGroundCollectionReference(text)
+	if type(text) ~= "string" then return nil end
+	local combinedFirst, combinedLast, combined = RQE.API.FindObjectItemTag(text)
+	local first, last, itemID, itemName = text:find("{item:(%d+):([^{}]+)}")
+	if combinedFirst and (not first or combinedFirst < first) then
+		combined.first, combined.last, combined.useObjectItem = combinedFirst, combinedLast, true
+		return combined
+	end
+	if first then
+		return { first = first, last = last, itemID = tonumber(itemID), itemName = itemName, useObjectItem = false }
+	end
+end
+
+-- Rewrites one ground-collection reference while preserving the surrounding description and unchanged fields.
+function RQE.API.RewriteGroundCollectionReference(text, options)
+	local reference = RQE.API.GetGroundCollectionReference(text)
+	if not reference then return nil, "The description needs an item reference before adding an object preview." end
+	options = type(options) == "table" and options or {}
+	local itemID = reference.itemID
+	if options.itemID ~= nil then itemID = tonumber(options.itemID) end
+	if not itemID or itemID < 1 or itemID % 1 ~= 0 then
+		return nil, "Enter a positive whole-number item ID."
+	end
+	local itemName = options.itemName ~= nil and options.itemName or reference.itemName
+	if type(itemName) ~= "string" or itemName:match("^%s*$") or itemName:find("[{}\r\n]") then
+		return nil, "Enter an item name without braces or line breaks."
+	end
+	local useObjectItem = options.useObjectItem
+	if useObjectItem == nil then useObjectItem = reference.useObjectItem end
+	local replacement
+	if useObjectItem then
+		local objectKey = options.objectKey ~= nil and options.objectKey or reference.objectKey or ""
+		objectKey = tostring(objectKey):match("^%s*(.-)%s*$")
+		if objectKey == "" then objectKey = "x99" end
+		if not objectKey:match("^[%a%d]+$") then
+			return nil, "Object ID must contain only letters and numbers; leave it blank to use x99."
+		end
+		local objectName = options.objectName ~= nil and options.objectName or reference.objectName or ""
+		objectName = tostring(objectName):match("^%s*(.-)%s*$")
+		if objectName == "" then objectName = "OBJECTNAME" end
+		if objectName:find("[:{}\r\n]") then
+			return nil, "Object name cannot contain colons, braces, or line breaks."
+		end
+		replacement = string.format("{objectitem:%s:%d:%s:%s}", objectKey, itemID, objectName, itemName)
+	else
+		replacement = string.format("{item:%d:%s}", itemID, itemName)
+	end
+	return text:sub(1, reference.first - 1) .. replacement .. text:sub(reference.last + 1)
 end
 
 -- End quest rendering pools.
@@ -2936,32 +3176,14 @@ elseif apiMajor >= 1 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSI
 		return AbandonQuest()
 	end
 
-	-- Vanilla 1.0.0 → BfA (pre-9) and Classic projects ≥1.13
-	-- Use: local info = RQE.API.GetTimeAllowed(questID) instead of: GetQuestTimers()
-	-- Returns a normalized table containing quest timer information.
-	--	Arguments:
-	--		questID -- number : The unique ID of the quest (ignored in Classic/older versions).
-	--	Returns:
-	--	{
-	--		questID		-- number : The provided questID
-	--		totalTime	-- number : The total time allowed for the first active timed quest (seconds). 0 if none.
-	--		elapsedTime	-- number : Always 0 (GetQuestTimers() does not return elapsed time).
-	--	}
-	--	Notes:
-	--		• GetQuestTimers() has existed since Vanilla (1.0.0).
-	--		• It only returns a list of time values (in seconds) for active timed quests, without linking them to questIDs.
-	--		• In Classic or older clients, we assume the first timer in the list applies.
-	--		• Starting in Retail Patch 9.0.1, the API was replaced with C_QuestLog.GetTimeAllowed(questID), which provides both totalTime and elapsedTime explicitly tied to a questID.
-	--		• This wrapper normalizes the Classic behavior into a table for consistency.
+	-- Returns this legacy quest's remaining time in the historical totalTime field; elapsed time is unavailable.
 	RQE.API.GetTimeAllowed = function(questID)
-		local timers = GetQuestTimers() or {}
-		local totalTime = timers[1] or 0 -- pick the first timer, since no questID mapping
-		local elapsedTime = 0 -- no way to track elapsed via GetQuestTimers
+		local seconds = RQE.API.GetQuestTimeRemainingSeconds(questID)
 
 		RQE.QuestTimeAllowedInfo = {
 			questID		= questID,
-			totalTime	= totalTime,
-			elapsedTime	= elapsedTime,
+			totalTime	= seconds or 0,
+			elapsedTime	= 0,
 		}
 
 		return RQE.QuestTimeAllowedInfo
@@ -3363,7 +3585,7 @@ else
 	--
 	--	Notes:
 	--		• On Retail 9.x+, `C_QuestLog.GetTimeAllowed(questID)` provides real data.
-	--		• On Classic / earlier, only `GetQuestTimers()` exists and cannot map to questIDs.
+	--		• The shared GetQuestTimeRemainingSeconds helper maps supported Classic timers to quest IDs.
 	--		• This stub ensures consistent return shape for addon code.
 	RQE.API.GetTimeAllowed = function(questID)
 		RQE.QuestTimeAllowedInfo = {
@@ -3772,45 +3994,114 @@ RQE.API.IsQuestFailed = function(questID)
 end
 
 
--- Use: local secondsLeft = RQE.API.GetQuestTimeRemainingSeconds(questID)
--- Ordinary timed quests use C_QuestLog.GetTimeAllowed on current Retail. Task
--- quests expose a separate seconds-left API, while legacy quest logs expose
--- only GetQuestLogTimeLeft for the currently selected quest.
-RQE.API.GetQuestTimeRemainingSeconds = function(questID)
-	questID = tonumber(questID)
-	if not questID or questID <= 0 then
-		return nil
+-- Shared quest deadlines for both the single-quest helper and every tracked row.
+-- Availability windows from C_TaskQuest are deliberately kept out of this state.
+do
+	local deadlines, probes, removed = {}, {}, {}
+	local nextScan, hasTimerList = 0, false
+
+	-- Accepts only finite positive durations, so expired timers cannot leave a stale zero line.
+	local function PositiveSeconds(value)
+		value = tonumber(value)
+		return value and value > 0 and value < math.huge and value or nil
 	end
 
-	local getTimeAllowed = isLegacyClient and NativeQuestLog.GetTimeAllowed
-		or (C_QuestLog and C_QuestLog.GetTimeAllowed)
-	if type(getTimeAllowed) == "function" then
-		local totalTime, elapsedTime = getTimeAllowed(questID)
-		totalTime, elapsedTime = tonumber(totalTime), tonumber(elapsedTime)
-		if totalTime and elapsedTime then
-			return math.max(0, totalTime - elapsedTime)
+	-- Associates an authoritative timer with its quest without relying on the selected quest.
+	local function RecordDeadline(questID, seconds, now)
+		questID, seconds = tonumber(questID), PositiveSeconds(seconds)
+		if questID and questID > 0 and seconds and not removed[questID] then
+			deadlines[questID] = now + seconds
 		end
 	end
 
-	local getTaskSeconds = isLegacyClient and NativeTaskQuest.GetQuestTimeLeftSeconds
-		or (C_TaskQuest and C_TaskQuest.GetQuestTimeLeftSeconds)
-	if type(getTaskSeconds) == "function" then
-		local rawSecondsLeft = getTaskSeconds(questID)
-		local secondsLeft = tonumber(rawSecondsLeft)
-		if secondsLeft then
-			return math.max(0, secondsLeft)
+	-- Reads one shared timer snapshot per second, using each client's native timer identity.
+	local function RefreshQuestTimerList(now)
+		if now < nextScan then return end
+		nextScan = now + 1
+		wipe(deadlines)
+		hasTimerList = false
+		local getTimers = NativeQuestLog.GetQuestTimers
+		if type(getTimers) == "function" then
+			local succeeded, timers = pcall(getTimers)
+			if succeeded and type(timers) == "table" then
+				hasTimerList = true
+				-- Forever provides the quest ID and remaining seconds in each timer record.
+				for _, timer in ipairs(timers) do
+					if type(timer) == "table" then
+						RecordDeadline(timer.questID, timer.questTimer, now)
+					end
+				end
+			end
+		end
+		if not hasTimerList and type(GetQuestTimers) == "function"
+			and type(GetQuestIndexForTimer) == "function" then
+			hasTimerList = true
+			-- SoD and TBC return multiple seconds values; timer slots map to quest-log rows.
+			local timers = { GetQuestTimers() }
+			for timerIndex, seconds in ipairs(timers) do
+				local logIndex = GetQuestIndexForTimer(timerIndex)
+				local info = logIndex and RQE.API.GetQuestLogInfo(logIndex)
+				if info and not info.isHeader then RecordDeadline(info.questID, seconds, now) end
+			end
 		end
 	end
 
-	if type(GetQuestLogTimeLeft) == "function" then
-		local secondsLeft = QueryLegacySelectedQuest(questID, GetQuestLogTimeLeft)
-		secondsLeft = tonumber(secondsLeft)
-		if secondsLeft then
-			return math.max(0, secondsLeft)
+	-- Returns a live quest deadline in seconds, preserving timers on quests awaiting turn-in.
+	function RQE.API.GetQuestTimeRemainingSeconds(questID)
+		questID = tonumber(questID)
+		if not questID or questID <= 0 or removed[questID] then return nil end
+		local now = GetTime()
+		RefreshQuestTimerList(now)
+		if deadlines[questID] then
+			return PositiveSeconds(deadlines[questID] - now)
 		end
+
+		local probe = probes[questID]
+		if not probe or now >= probe.nextProbe then
+			probe = { nextProbe = now + 1 }
+			probes[questID] = probe
+			local logIndex = RQE.API.GetLogIndexForQuestID(questID)
+			-- Previewed, removed and world quests must not acquire ordinary quest deadlines.
+			if logIndex and not RQE.API.IsWorldQuest(questID) then
+				local seconds
+				if type(NativeQuestLog.GetTimeAllowed) == "function" then
+					local total, elapsed = NativeQuestLog.GetTimeAllowed(questID)
+					total, elapsed = PositiveSeconds(total), tonumber(elapsed)
+					if total and elapsed and elapsed >= 0 then seconds = PositiveSeconds(total - elapsed) end
+				end
+				-- Retain selection-preserving compatibility only when timer enumeration is unavailable.
+				if not seconds and not hasTimerList and isLegacyClient
+					and type(GetQuestLogTimeLeft) == "function" then
+					seconds = PositiveSeconds(QueryLegacySelectedQuest(questID, GetQuestLogTimeLeft))
+					probe.nextProbe = now + 5
+				end
+				if seconds then probe.expiresAt = now + seconds end
+			end
+		end
+		return probe.expiresAt and PositiveSeconds(probe.expiresAt - now) or nil
 	end
 
-	return nil
+	-- Invalidates native readings after quest changes; countdown ticks only adjust existing text.
+	local timerEvents = CreateFrame("Frame")
+	for _, event in ipairs({ "PLAYER_ENTERING_WORLD", "QUEST_LOG_UPDATE", "QUEST_ACCEPTED",
+		"QUEST_REMOVED", "QUEST_TURNED_IN", "QUEST_WATCH_UPDATE", "QUEST_WATCH_LIST_CHANGED" }) do
+		pcall(timerEvents.RegisterEvent, timerEvents, event)
+	end
+	-- Drops ended quests immediately and allows a newly accepted copy of the same quest to start again.
+	timerEvents:SetScript("OnEvent", function(_, event, first, second)
+		nextScan = 0
+		wipe(deadlines)
+		wipe(probes)
+		if event == "PLAYER_ENTERING_WORLD" then
+			wipe(removed)
+		elseif event == "QUEST_REMOVED" or event == "QUEST_TURNED_IN" then
+			local questID = tonumber(first)
+			if questID and questID > 0 then removed[questID] = true end
+		elseif event == "QUEST_ACCEPTED" then
+			local questID = tonumber(isLegacyClient and second or first)
+			if questID and questID > 0 then removed[questID] = nil end
+		end
+	end)
 end
 
 
@@ -4055,8 +4346,37 @@ if isLegacyClient then
 	RQE.API.RemoveWorldQuestWatch = function() return false end
 	-- Removes the world quest watch.
 	RQE.API.AddWorldQuestWatch = function() return false end
-	-- Removes the world quest watch.
-	RQE.API.IsPushableQuest = function() return false end
+	-- Checks sharing eligibility for a real quest-log entry without leaving another quest selected.
+	RQE.API.IsPushableQuest = function(questID)
+		questID = tonumber(questID)
+		if not questID or questID <= 0 or questID % 1 ~= 0 then return false end
+		local index = RQE.API.GetLogIndexForQuestID(questID)
+		local info = index and RQE.API.GetQuestLogInfo(index)
+		if not info or info.isHeader or tonumber(info.questID) ~= questID then return false end
+		if Has(NativeQuestLog, "IsPushableQuest") then
+			return NativeQuestLog.IsPushableQuest(questID) and true or false
+		end
+		if type(GetQuestLogPushable) ~= "function" then return false end
+		-- Legacy shareability reads the selected quest, so verify the selection before querying it.
+		return QueryLegacySelectedQuest(questID, function()
+			return tonumber(RQE.API.GetSelectedQuest()) == questID and GetQuestLogPushable()
+		end) and true or false
+	end
+	-- Rechecks and shares the clicked quest, then restores the player's prior quest-log selection.
+	RQE.API.ShareQuest = function(questID)
+		questID = tonumber(questID)
+		if not questID or questID <= 0 or questID % 1 ~= 0
+			or type(IsInGroup) ~= "function" or not IsInGroup()
+			or type(QuestLogPushQuest) ~= "function" then return false end
+		-- Resolve the live selection again because the log may have changed since the menu opened.
+		return QueryLegacySelectedQuest(questID, function()
+			if tonumber(RQE.API.GetSelectedQuest()) ~= questID or not RQE.API.IsPushableQuest(questID) then
+				return false
+			end
+			QuestLogPushQuest()
+			return true
+		end) == true
+	end
 	-- Returns the selected quest.
 	RQE.API.GetSelectedQuest = function()
 		local index = type(GetQuestLogSelection) == "function" and GetQuestLogSelection()
@@ -4946,6 +5266,8 @@ end
 -- #🖼️ Creature Model Preview APIs
 -------------------------------------------------
 
+RQE.API.DEFAULT_CREATURE_PREVIEW_FACING = -0.5236
+
 -- Model widgets are available on every supported client, but the preferred
 -- widget type differs. Retail's CinematicModel provides the same creature-ID
 -- loading path used by Blizzard UI and Narcissus; the re-release clients use
@@ -4982,6 +5304,14 @@ function RQE.API.ClearCreaturePreviewModel(model)
 	end
 end
 
+-- Changes only the model's facing and reports whether the client accepted the rotation.
+function RQE.API.SetCreaturePreviewFacing(model, facing)
+	if not model or type(model.SetFacing) ~= "function" then return false end
+	facing = tonumber(facing) or RQE.API.DEFAULT_CREATURE_PREVIEW_FACING
+	local ok = pcall(model.SetFacing, model, facing)
+	return ok
+end
+
 -- Applies the requested camera, position, and display options to a preview model.
 function RQE.API.ConfigureCreaturePreviewModel(model, options)
 	if not model then return end
@@ -4995,9 +5325,7 @@ function RQE.API.ConfigureCreaturePreviewModel(model, options)
 	if type(model.UseModelCenterToTransform) == "function" then
 		pcall(model.UseModelCenterToTransform, model, true)
 	end
-	if type(model.SetFacing) == "function" then
-		pcall(model.SetFacing, model, tonumber(options.facing) or -0.5236)
-	end
+	RQE.API.SetCreaturePreviewFacing(model, options.facing)
 	if type(model.SetPortraitZoom) == "function" then
 		pcall(model.SetPortraitZoom, model, tonumber(options.portraitZoom) or 0)
 	end
@@ -5287,8 +5615,17 @@ do
 	-- Checks whether the required client APIs are available for this fallback.
 	-- Normalizes item cooldown data from the available client implementation.
 	adapt("C_Item.GetItemCooldown", function() return native("C_Container.GetItemCooldown") or native("GetItemCooldown") end, function(item)
+		-- Legacy cooldown APIs require an item ID, while C_Item accepts names and links too.
+		if type(item) ~= "number" and type(item) ~= "string" then return nil end
+		local itemID = tonumber(item) or (type(item) == "string" and tonumber(item:match("item:(%d+)")))
+		if not itemID then
+			local getItemInfo = native("C_Item.GetItemInfoInstant") or native("GetItemInfoInstant")
+			itemID = getItemInfo and getItemInfo(item)
+		end
+		-- Uncached names can resolve on a later refresh; never send an invalid ID to the native API.
+		if not itemID or itemID <= 0 or itemID > 2147483647 or itemID % 1 ~= 0 then return nil end
 		local fn = native("C_Container.GetItemCooldown") or native("GetItemCooldown")
-		local start, duration, enabled = fn(item)
+		local start, duration, enabled = fn(itemID)
 		return start, duration, enabled == true or enabled == 1
 	end)
 	-- Reads an item's cooldown through the legacy container API.
@@ -5497,6 +5834,7 @@ do
 	adapt("C_QuestLog.GetAbandonQuest", legacyQuestLogAvailable, function() return Client.C_QuestLog.GetSelectedQuest() end)
 	-- Checks whether the legacy quest-log entry can be shared with the party.
 	adapt("C_QuestLog.IsPushableQuest", "GetQuestLogPushable", function(questID)
+		if isLegacyClient then return API.IsPushableQuest(questID) end
 		local index = logIndex(questID)
 		return index and call("GetQuestLogPushable", index) or false
 	end)
@@ -6037,6 +6375,404 @@ do
 			extendedCost = info.hasExtendedCost, hasExtendedCost = info.hasExtendedCost,
 			currencyID = info.currencyID, spellID = info.spellID }
 		return RQE.MerchantInfo
+	end
+end
+
+-- Opt-in newest-pickup selection shares one request policy across native and virtual tracking clients.
+do
+	local newestEvents
+
+	-- Enables newest-pickup selection only while its parent empty-focus option is enabled.
+	function RQE:IsNewestQuestSelectionEnabled()
+		local profile = self.db and self.db.profile
+		return profile and profile.enableNearestSuperTrack == true and profile.autoSuperTrackNewestQuest == true or false
+	end
+
+	-- Reserves empty focus for a pickup instead of allowing distance-based automatic selection.
+	function RQE:ShouldWaitForNewestQuestSelection()
+		return self:IsNewestQuestSelectionEnabled() and (self.PendingNewestQuestSelection ~= nil
+			or (tonumber(self.API.GetSuperTrackedQuestID()) or 0) == 0)
+	end
+
+	-- Invalidates delayed pickup work after a manual choice, clear, setting change, or profile refresh.
+	function RQE:CancelNewestQuestSelection()
+		self.PendingNewestQuestSelection = nil
+	end
+
+	-- Checks the live empty-focus conditions without changing the selected quest or its UI.
+	local function canSelectNewest()
+		local profile = RQE.db and RQE.db.profile
+		return RQE:IsNewestQuestSelectionEnabled() and profile.enableFrame ~= false and not RQE.ClearButtonPressed
+			and not RQE.API.IsAutomaticQuestSelectionBlocked()
+			and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0
+			and (tonumber(RQE.searchedQuestID) or 0) == 0 and not RQE.ActiveCoordblock
+	end
+
+	-- Requires the accepted quest to exist in the log or remain an active local area objective.
+	local function newestQuestIsReady(questID)
+		if RQE.API.IsOnQuest(questID) then return true end
+		if isLegacyClient then return false end
+		local client = RQE.API.Client
+		local inArea = client.GetTaskInfo(questID)
+		return inArea == true and client.C_TaskQuest.IsActive(questID)
+			and not client.C_QuestLog.IsComplete(questID)
+	end
+
+	-- Schedules one readiness check for the current request, never a repeating movement scan.
+	local function scheduleNewest(request, delay)
+		if RQE.PendingNewestQuestSelection ~= request or request.scheduled then return end
+		request.scheduled = true
+		-- Rechecks ownership before consuming a delayed acceptance or resuming after combat.
+		RQE.API.Client.C_Timer.After(delay, function()
+			if RQE.PendingNewestQuestSelection ~= request then return end
+			request.scheduled = false
+			RQE:ProcessNewestQuestSelection(request)
+		end)
+	end
+
+	-- Applies the most recent ready pickup and explicitly initializes the helper on virtual clients.
+	function RQE:ProcessNewestQuestSelection(request)
+		if self.PendingNewestQuestSelection ~= request then return end
+		if request.profile ~= self.db.profile or not canSelectNewest() then
+			self:CancelNewestQuestSelection()
+			return
+		end
+		local client = self.API.Client
+		local now = client.GetTime()
+		if client.InCombatLockdown() then return end
+		if now < request.notBefore then scheduleNewest(request, request.notBefore - now); return end
+		-- The map can change native focus; allow a bounded wait until the player closes it.
+		if not isLegacyClient and WorldMapFrame and WorldMapFrame:IsShown() then
+			if now >= request.mapWaitUntil then self:CancelNewestQuestSelection(); return end
+			scheduleNewest(request, 0.35)
+			return
+		end
+		request.attempts = request.attempts + 1
+		if not newestQuestIsReady(request.questID) or client.UnitOnTaxi("player") then
+			if request.attempts >= 15 then self:CancelNewestQuestSelection(); return end
+			scheduleNewest(request, 0.35)
+			return
+		end
+
+		local questID = request.questID
+		local stepIndex = self.GetCurrentDBStepIndexForQuest and self.GetCurrentDBStepIndexForQuest(questID) or 1
+		if self.ClearManualStepPreview then self:ClearManualStepPreview(false) end
+		if self.ResetHybridNavigation then self:ResetHybridNavigation() end
+		-- Native setters notify focus listeners immediately; release this request before those callbacks run.
+		self.PendingNewestQuestSelection = nil
+		self.PendingUnfocusedQuestSelection = nil
+		if isLegacyClient then
+			self.API.SetSuperTrackedQuestID(questID)
+		else
+			client.C_SuperTrack.SetSuperTrackedQuestID(questID)
+		end
+		if tonumber(self.API.GetSuperTrackedQuestID()) ~= questID then return end
+		self.DisplayedQuestID, self.CurrentDisplayedQuestID = questID, questID
+		self.AddonSetStepIndex, self.CurrentStepIndex, self.StoredStepIndex = stepIndex, stepIndex, stepIndex
+		self.LastClickedIdentifier = stepIndex
+		self.AllFramesShouldUpdate, self.QuestLogIndexButtonPressed = true, true
+		if self.SaveSuperTrackedQuestToCharacter then self:SaveSuperTrackedQuestToCharacter() end
+		if UpdateFrame then UpdateFrame(questID) end
+		if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
+		if self.OnCoordinateClicked then self:OnCoordinateClicked() end
+		if self.UpdateStepDistance then self:UpdateStepDistance() end
+		if self.StartPeriodicChecks then self:StartPeriodicChecks() end
+		if self.RequestQuestTrackerRefresh then self:RequestQuestTrackerRefresh() end
+	end
+
+	-- Installs lightweight cancellation and combat-resume listeners when this mode is first used.
+	local function ensureNewestEvents()
+		if newestEvents then return end
+		newestEvents = CreateFrame("Frame")
+		newestEvents:RegisterEvent("PLAYER_REGEN_ENABLED")
+		newestEvents:RegisterEvent("QUEST_REMOVED")
+		-- Drops abandoned pickups and resumes the same request once combat ends.
+		newestEvents:SetScript("OnEvent", function(_, event, questID)
+			local request = RQE.PendingNewestQuestSelection
+			if not request then return end
+			if event == "QUEST_REMOVED" and tonumber(questID) == request.questID then
+				RQE:CancelNewestQuestSelection()
+			elseif event == "PLAYER_REGEN_ENABLED" then
+				scheduleNewest(request, 0.1)
+			end
+		end)
+		if not isLegacyClient and hooksecurefunc and C_SuperTrack then
+			for _, method in ipairs({ "SetSuperTrackedQuestID", "ClearAllSuperTracked" }) do
+				if type(C_SuperTrack[method]) == "function" then
+					-- Native focus changes, including Forever's, invalidate outstanding pickup work.
+					hooksecurefunc(C_SuperTrack, method, function() RQE:CancelNewestQuestSelection() end)
+				end
+			end
+		end
+	end
+
+	-- Replaces a pending pickup with the latest acceptance while leaving established focus alone.
+	function RQE:QueueNewestQuestSelection(questID)
+		if not canSelectNewest() then self:CancelNewestQuestSelection(); return end
+		if issecretvalue and issecretvalue(questID) then return end
+		questID = tonumber(questID)
+		if not questID or questID <= 0 or questID > 2147483647 or questID % 1 ~= 0
+			or self.API.IsWorldQuest(questID) then return end
+		ensureNewestEvents()
+		self.PendingUnfocusedQuestSelection = nil
+		local request = self.PendingNewestQuestSelection
+		if request and request.profile == self.db.profile and request.questID == questID then return end
+		local now = self.API.Client.GetTime()
+		request = { questID = questID, profile = self.db.profile, attempts = 0,
+			notBefore = now + 0.5, mapWaitUntil = now + 30 }
+		self.PendingNewestQuestSelection = request
+		scheduleNewest(request, 0.5)
+	end
+end
+
+-- Party tooltips use native data when available; Classic exchanges only the hovered quest with RQE peers.
+do
+	local comm, serializer, activeTooltip, hoverTicker
+	local prefix = "RQEQuestProgress"
+	local peerProgress, requested, lastReply = {}, {}, {}
+	local lastRequest = -10
+
+	-- Returns whether party-only quest progress is relevant to the current group.
+	local function inParty()
+		return IsInGroup and IsInGroup() and not (IsInRaid and IsInRaid())
+	end
+
+	-- Resolves a current party member's full name without assuming a same-realm group.
+	local function partyName(unit)
+		local name, realm
+		if UnitFullName then name, realm = UnitFullName(unit) end
+		if not name then name, realm = UnitName(unit) end
+		if not name then return nil end
+		realm = realm and realm ~= "" and realm or (GetRealmName and GetRealmName())
+		return realm and (name .. "-" .. realm:gsub("%s", "")) or name
+	end
+
+	-- Matches received addon traffic to a current party unit, excluding the player and outsiders.
+	local function senderUnit(sender)
+		if type(sender) ~= "string" then return nil end
+		if not sender:find("-", 1, true) then
+			local realm = GetRealmName and GetRealmName()
+			if realm then sender = sender .. "-" .. realm:gsub("%s", "") end
+		end
+		for index = 1, 4 do
+			local unit = "party" .. index
+			if UnitExists(unit) and sender == partyName(unit) then return unit end
+		end
+	end
+
+	-- Copies a small, validated progress record suitable for display and addon messages.
+	local function cleanProgress(data)
+		if type(data) ~= "table" or type(data.onQuest) ~= "boolean" or type(data.objectives) ~= "table" then return nil end
+		local result = { onQuest = data.onQuest, isComplete = data.isComplete == true,
+			isFailed = data.isFailed == true, objectives = {} }
+		for index = 1, math.min(#data.objectives, 20) do
+			local objective = data.objectives[index]
+			if type(objective) ~= "table" or type(objective.text) ~= "string" or #objective.text > 512 then return nil end
+			result.objectives[index] = { text = objective.text, finished = objective.finished == true }
+		end
+		return result
+	end
+
+	-- Reads objectives already shared by Questie without requiring it or inferring quest turn-in readiness.
+	local function questieProgress(questID, unit)
+		local modules = QuestieLoader and QuestieLoader._modules
+		local questie = modules and modules.QuestieComms
+		if not questie or type(questie.GetQuest) ~= "function" then return nil end
+		local ok, players = pcall(questie.GetQuest, questie, questID)
+		if not ok or type(players) ~= "table" then return nil end
+		local remote
+		for sender, objectives in pairs(players) do
+			if senderUnit(sender) == unit then remote = objectives; break end
+		end
+		if type(remote) ~= "table" then return nil end
+		local data = { onQuest = true, objectives = {} }
+		local localObjectives = RQE.API.GetQuestObjectives(questID) or {}
+		local replace = modules.QuestieLib and modules.QuestieLib.ReplaceObjectiveTextProgress
+		for index = 1, 20 do
+			local objective = remote[index]
+			if type(objective) == "table" then
+				local fulfilled, required = tonumber(objective.fulfilled), tonumber(objective.required)
+				if fulfilled and required and fulfilled >= 0 and required >= 0
+					and fulfilled < math.huge and required < math.huge then
+					local text = "Objective " .. index .. ": " .. fulfilled .. "/" .. required
+					local source = localObjectives[index] and localObjectives[index].text
+					if type(replace) == "function" and type(source) == "string" and source:find("%d+%s*/%s*%d+") then
+						local converted, value = pcall(replace, source, fulfilled, required)
+						if converted and type(value) == "string" then text = value end
+					end
+					data.objectives[#data.objectives + 1] = { text = text,
+						finished = objective.finished == true or objective.finished == 1 }
+				end
+			end
+		end
+		return #data.objectives > 0 and data or nil
+	end
+
+	-- Formats one member's status without substituting the local player's objective counts.
+	local function memberText(questID, unit)
+		local name = UnitName(unit)
+		if not name then return "" end
+		if UnitIsConnected and not UnitIsConnected(unit) then return name .. "\n" .. (PLAYER_OFFLINE or "Offline") end
+		local cached = peerProgress[UnitGUID(unit)]
+		local data = cached and cached.questID == questID and GetTime() - cached.time < 15 and cached.data
+		data = data or questieProgress(questID, unit)
+		local lines = { "|cffffff00" .. name .. "|r" }
+		if data then
+			if not data.onQuest then
+				lines[#lines + 1] = "Not on this quest"
+			elseif data.isFailed then
+				lines[#lines + 1] = "|cffff4040" .. (FAILED or "Failed") .. "|r"
+			elseif data.isComplete then
+				lines[#lines + 1] = "|cff40ff40" .. (COMPLETE or "Complete") .. "|r"
+			else
+				for _, objective in ipairs(data.objectives) do
+					local color = objective.finished and "|cff40ff40" or "|cffffffff"
+					lines[#lines + 1] = color .. objective.text .. "|r"
+				end
+				if #data.objectives == 0 then lines[#lines + 1] = "In progress" end
+			end
+		else
+			local index = RQE.API.GetLogIndexForQuestID(questID)
+			local status = "Quest progress unavailable"
+			if index and index > 0 and IsUnitOnQuest then
+				status = IsUnitOnQuest(index, unit) and "On this quest (progress unavailable)" or "Not on this quest"
+			end
+			lines[#lines + 1] = status
+		end
+		return table.concat(lines, "\n")
+	end
+
+	-- Cancels the small hover-only refresh loop when a tooltip is cleared or hidden.
+	local function stopHover()
+		activeTooltip = nil
+		if hoverTicker then hoverTicker:Cancel(); hoverTicker = nil end
+	end
+
+	-- Hides an obsolete party tooltip before discarding its member bindings.
+	local function invalidateHover()
+		local current = activeTooltip
+		stopHover()
+		if current and current.tooltip:GetOwner() == current.owner then current.tooltip:Hide() end
+	end
+
+	-- Refreshes reserved member lines only while the same quest tooltip is still owned and shown.
+	local function refreshHover()
+		local current = activeTooltip
+		if not current then return end
+		local tooltip = current.tooltip
+		if not inParty() then invalidateHover(); return end
+		if not tooltip:IsShown() or tooltip:GetOwner() ~= current.owner then stopHover(); return end
+		for _, row in ipairs(current.rows) do
+			if UnitGUID(row.unit) ~= row.guid then invalidateHover(); return end
+			row.font:SetText(memberText(current.questID, row.unit))
+		end
+		tooltip:Show()
+	end
+
+	-- Requests one quest at most every two seconds, using AceComm's existing traffic throttle.
+	local function requestProgress(questID)
+		if not comm or not inParty() or GetTime() - lastRequest < 2 then return end
+		lastRequest = GetTime()
+		requested = { [questID] = lastRequest }
+		comm:SendCommMessage(prefix, serializer:Serialize(1, "Q", questID), "PARTY", nil, "NORMAL")
+	end
+
+	if isLegacyClient and LibStub and CreateFrame then
+		local aceComm = LibStub("AceComm-3.0", true)
+		serializer = LibStub("AceSerializer-3.0", true)
+		if aceComm and serializer then
+			comm = {}
+			aceComm:Embed(comm)
+			-- Answers party requests and accepts bounded replies only for a recently requested quest.
+			comm:RegisterComm(prefix, function(_, message, distribution, sender)
+				if distribution ~= "PARTY" or not inParty() or #message > 16384 then return end
+				local unit = senderUnit(sender)
+				if not unit then return end
+				local ok, version, kind, questID, payload = serializer:Deserialize(message)
+				if not ok or version ~= 1 or type(questID) ~= "number" or questID <= 0
+					or questID > 2147483647 or questID % 1 ~= 0 then return end
+				if kind == "Q" then
+					if lastReply[unit] and GetTime() - lastReply[unit] < 1 then return end
+					lastReply[unit] = GetTime()
+					local index = RQE.API.GetLogIndexForQuestID(questID)
+					local info = index and RQE.API.GetQuestLogInfo(index)
+					local data = cleanProgress({ onQuest = info ~= nil and not info.isHeader,
+						isComplete = info and (info.isComplete == true or info.isComplete == 1),
+						isFailed = info and info.isComplete == -1,
+						objectives = RQE.API.GetQuestObjectives(questID) or {} })
+					if data then comm:SendCommMessage(prefix, serializer:Serialize(1, "P", questID, data), "PARTY", nil, "NORMAL") end
+				elseif kind == "P" and requested[questID] and GetTime() - requested[questID] < 10 then
+					local data, guid = cleanProgress(payload), UnitGUID(unit)
+					if data and guid then
+						peerProgress[guid] = { questID = questID, time = GetTime(), data = data }
+						refreshHover()
+					end
+				end
+			end)
+			local roster = CreateFrame("Frame")
+			roster:RegisterEvent("GROUP_ROSTER_UPDATE")
+			roster:RegisterEvent("PLAYER_ENTERING_WORLD")
+			-- Discards old group data so departed or replaced members cannot supply stale progress.
+			roster:SetScript("OnEvent", function()
+				peerProgress, requested, lastReply = {}, {}, {}
+				lastRequest = -10
+				invalidateHover()
+			end)
+		end
+	end
+
+	-- Appends native party objectives or Classic membership and synchronized RQE progress to a quest tooltip.
+	function RQE.API.AddQuestPartyProgressTooltip(tooltip, questID)
+		stopHover()
+		questID = tonumber(questID)
+		if not tooltip or not questID or questID <= 0 or questID > 2147483647
+			or questID % 1 ~= 0 or not inParty() then return end
+		local getProgress = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress
+		local types = Enum and Enum.TooltipDataLineType
+		if getProgress and types and types.QuestPlayer and types.QuestTitle then
+			local data = getProgress(questID)
+			local include, added = false, false
+			for _, line in ipairs(data and data.lines or {}) do
+				if line.type == types.QuestTitle then
+					include = false
+				elseif line.type == types.QuestPlayer then
+					include = line.leftText ~= UnitName("player") and line.leftText ~= partyName("player")
+				end
+				if include and line.leftText then
+					if not added then tooltip:AddLine(" "); added = true end
+					local r, g, b = 1, 1, 1
+					if line.leftColor then r, g, b = line.leftColor:GetRGB() end
+					tooltip:AddLine(line.leftText, r, g, b, true)
+				end
+			end
+			if added or not isLegacyClient then return end
+		end
+		if not isLegacyClient then return end
+		tooltip:AddLine(" ")
+		tooltip:AddLine("Party progress", 1, 0.82, 0)
+		local current = { tooltip = tooltip, owner = tooltip:GetOwner(), questID = questID, rows = {} }
+		for index = 1, 4 do
+			local unit = "party" .. index
+			if UnitExists(unit) then
+				tooltip:AddLine(memberText(questID, unit), 1, 1, 1, true)
+				local font = tooltip:GetName() and _G[tooltip:GetName() .. "TextLeft" .. tooltip:NumLines()]
+				if font then current.rows[#current.rows + 1] = { unit = unit, guid = UnitGUID(unit), font = font } end
+			end
+		end
+		if not tooltip._rqePartyProgressHooks then
+			tooltip._rqePartyProgressHooks = true
+			tooltip:HookScript("OnTooltipCleared", stopHover)
+			tooltip:HookScript("OnHide", stopHover)
+		end
+		activeTooltip = current
+		requestProgress(questID)
+		if C_Timer and C_Timer.NewTicker then
+			-- Polls only the visible hovered quest and stops immediately after ownership changes.
+			hoverTicker = C_Timer.NewTicker(3, function()
+				refreshHover()
+				if activeTooltip == current then requestProgress(questID) end
+			end)
+		end
 	end
 end
 
