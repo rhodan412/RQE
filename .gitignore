@@ -18,5 +18,8 @@ copy_rqe_database.py
 # Editable UI source artwork and build inputs are not loaded by the addon.
 /Media/UI/Source/
 Media/ObjectPreviews/PNG/
+Media/ObjectPreviews/TGA/
+Media/ObjectPreviews/BLP/
 Media/ObjectPreviews/__pycache__/
 Media/ObjectPreviews/convert_png_to_tga.py
+Media/ObjectPreviews/convert_to_blp.py
