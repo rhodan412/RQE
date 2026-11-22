@@ -1779,6 +1779,8 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 		-- Initialize an array to store the heights
 		local stepTextHeights = {}
 		local stepStyle = RQE.UI:GetStepTextSettings()
+		local questID = self.DisplayedQuestID
+		local questData = questID and RQE.getQuestData(questID)
 		RQE.CurrentQuestSteps = {}
 		local yOffset = -20  -- Vertical distance to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 		local baseYOffset = -20
@@ -1809,7 +1811,8 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			local hasCoords = raw:match("{coords:") or raw:match("{coordblock:")
 			local hasCoordblock = raw:find("{coordblock:", 1, true) ~= nil
 			-- local hasCoords = raw:match("{coords:")
-			local hasHoverables = raw:match("{objectitem:") or raw:match("{item:") or raw:match("{spell:")
+			local hasHoverables = raw:match("{objectitem:") or raw:match("{object3d:") or raw:match("{object3ditem:")
+				or raw:match("{item:") or raw:match("{spell:")
 				or raw:match("{npc:") or raw:match("{object:")
 
 			local StepText
@@ -1974,14 +1977,9 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				StepText:SetWordWrap(true)
 				StepText:SetText("")
 				RQE.RenderTextWithItemsSteps(StepText, raw, stepStyle.font, stepStyle.size, stepStyle.color, RQE.StepsHoverContainer)
+				RQE.API.WatchInventoryCountText(StepText, questID, questData and questData[i], raw)
 				if hasCoordblock then
-					-- A zero-height FontString centers multi-line coordblocks across
-					-- earlier step rows.  Reserve the rendered height before anchoring.
-					local visualText = StepText:GetText() or ""
-					local lineBreaks = select(2, visualText:gsub("\n", ""))
-					local measuredHeight = StepText:GetStringHeight() or 0
-					StepText:SetHeight(math.max(20, measuredHeight + 4, (lineBreaks + 1) * (stepStyle.size + 2)))
-					StepText:SetJustifyV("TOP")
+					RQE.API.SizeCoordblockStep(StepText, stepStyle.size)
 				end
 			end
 
@@ -3104,7 +3102,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	-------------------------------------------------------
 
 	-- Function to update the content dynamically
-		function RQE:UpdateSeparateFocusFrame()
+		function RQE:UpdateSeparateFocusFrame(inventorySnapshot)
 			if self._focusRefreshTimer then
 				self._focusRefreshTimer:Cancel()
 				self._focusRefreshTimer = nil
@@ -3298,7 +3296,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 			-- Update the step text dynamically to include the step index
 			local stepDescription = (stepData and stepData.description and stepData.description ~= "")
-				and RQE.FormatStepDescription(questID, stepData) or "No step description available."
+				and RQE.FormatStepDescription(questID, stepData, inventorySnapshot) or "No step description available."
 
 			if RQE.db.profile.debugLevel == "INFO+" and stepData and stepData.description then
 				local s = stepData.description
@@ -3385,13 +3383,13 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				end)
 
 				-- Converts NPC notation into a colored preview link.
-				html = html:gsub("{npc:(%d+):([^}]+)}", function(id, name)
-					return string.format('<a href="rqenpc:%s">|cff66ff66[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
+				html = html:gsub("(){npc:(%d+):([^}]+)}", function(position, id, name)
+					return string.format('<a href="rqenpc:%s:%d">|cff66ff66[%s]|r</a>', id, position, RQE.API.EscapeRichTextHTML(name))
 				end)
 
 				-- Converts object notation into a colored preview link.
-				html = html:gsub("{object:([%a%d]+):([^}]+)}", function(id, name)
-					return string.format('<a href="rqeobject:%s">|cffffd700[%s]|r</a>', id, RQE.API.EscapeRichTextHTML(name))
+				html = html:gsub("(){object:([%a%d]+):([^}]+)}", function(position, id, name)
+					return string.format('<a href="rqeobject:%s:%d">|cffffd700[%s]|r</a>', id, position, RQE.API.EscapeRichTextHTML(name))
 				end)
 
 				html = html:gsub("{coordblock:([^}]+)}", function(data)
@@ -3451,8 +3449,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				StepText:SetText(wrappedHTML)
 				StepText._rqeCoordblockHTMLBase = wrappedHTML
 
-				-- Hyperlink click handler
+				-- Opens a clicked 3D object or creates the selected coordinate waypoint.
 				StepText:SetScript("OnHyperlinkClick", function(self, link, text, button)
+					local entry = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
+					if button == "LeftButton" and RQE.API.HandleObjectPreviewLink(self, entry, true, self, link) then return end
 					local coordblockData = self._rqeCoordblockLinks and self._rqeCoordblockLinks[link]
 					local waypointLink = link:gsub(";rqeCoordblock$", "")
 					local x, y, mapID, title =
@@ -3499,12 +3499,19 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					if RQE._coordblockTooltipOwner == self then RQE._coordblockTooltipOwner = nil end
 					self:SetScript("OnUpdate", nil)
 					if type(link) ~= "string" then return end
+					self._rqeHoveredLink = link
 
-					local linkType, id = link:match("^(%a+):(.+)$")
-					if linkType == "rqeobjectitem" then
-						local entry = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
-						if entry then RQE.API.ShowObjectItemTooltip(self, entry) end
-					elseif linkType == "item" then
+					local entry = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
+					if RQE.API.HandleObjectPreviewLink(self, entry, false, self, link) then return end
+					local linkType, id = link:match("^(%a+):([^:]+)")
+					if linkType == "rqenpc" or linkType == "rqeobject" then
+						local name = tostring(text or ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):match("^%[(.*)%]$")
+						local isNPC = linkType == "rqenpc"
+						RQE.API.QueuePreviewHover(self, isNPC and "npc" or "object", isNPC and tonumber(id) or id, name, self, link)
+						return
+					end
+					RQE.API.CancelPreviewHover(self)
+					if linkType == "item" then
 						local itemID = tonumber(id)
 						if itemID then
 							GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
@@ -3520,12 +3527,6 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 							GameTooltip:SetSpellByID(spellID)
 							GameTooltip:Show()
 						end
-					elseif linkType == "rqenpc" then
-						local name = tostring(text or ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):match("^%[(.*)%]$")
-						if RQE.ShowNPCPreview then RQE.ShowNPCPreview(tonumber(id), name, true) end
-					elseif linkType == "rqeobject" then
-						local name = tostring(text or ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):match("^%[(.*)%]$")
-						if RQE.ShowObjectImagePreview then RQE.ShowObjectImagePreview(id, name, nil, true) end
 					elseif linkType == "coords" then
 						local compactLink = self._rqeCoordblockLinks and self._rqeCoordblockLinks[link]
 						local isCompact = compactLink or link:find(";rqeCoordblock", 1, true)
@@ -3550,7 +3551,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					end
 				end)
 
-				StepText:SetScript("OnHyperlinkLeave", function(self)
+				StepText:SetScript("OnHyperlinkLeave", function(self, link)
+					if link and self._rqeHoveredLink ~= link then return end
+					self._rqeHoveredLink = nil
+					RQE.API.CancelPreviewHover(self, false, link)
 					if RQE._coordblockTooltipOwner == self then RQE._coordblockTooltipOwner = nil end
 					self:SetScript("OnUpdate", nil)
 					GameTooltip:Hide()
@@ -3665,6 +3669,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 			-- RQE.SeparateStepText:Show()
 			if RQE.SeparateStepText then
+				RQE.API.WatchInventoryCountText(RQE.SeparateStepText, questID, stepData, stepDescription, true)
 				RQE.SeparateStepText:Show()
 			end
 
