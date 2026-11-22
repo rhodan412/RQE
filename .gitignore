@@ -15,6 +15,7 @@ copy_rqe_database.py
 /.pkgmeta
 .vscode/
 /Tests/
+/Reports/
 # Editable UI source artwork and build inputs are not loaded by the addon.
 /Media/UI/Source/
 Media/ObjectPreviews/PNG/
