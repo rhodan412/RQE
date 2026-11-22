@@ -1,7 +1,7 @@
 --[[
 
 RQE_ModelPreview.lua
-Reusable creature-model and object-image preview window, interaction controls, and quest-context lifecycle
+Reusable creature-model, object-model, and object-image preview window, controls, and quest-context lifecycle
 
 ]]
 
@@ -16,17 +16,20 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	--[[
 
 	RQE_ModelPreview.lua
-	Reusable creature-model and object-image preview window for Rhodan's Quest Explorer.
+	Reusable 3D model and object-image preview window for Rhodan's Quest Explorer.
 
 	Testing commands:
 		/run RQE.CreatureOrObject(4712, "n")
 		/run RQE.NPC(4712)
 		/run RQE.CreatureOrObject("F00483", "o")
 		/run RQE.Object("F00483", "Bridge to Nowhere")
+		/run RQE.Object3D(185298, "Anchorite Relic")
+		/run RQE.ObjectFormat("182127")          -- cataloged TGA, no quest needed
+		/run RQE.ObjectFormat("182127", "blp")   -- same object from a .blp copy beside the TGA
 
-	NPC creature IDs are resolved directly by Blizzard's model widget. Object keys
-	load cataloged Media/ObjectPreviews images (with legacy <key>.tga fallback) because Blizzard does not
-	expose an equivalent SetGameObject(objectID) model-widget method.
+	Blizzard's model widget resolves NPC creature IDs directly. Object3D uses RQE's map of
+	game object IDs to model FileDataIDs. Object image keys load cataloged Media/ObjectPreviews
+	images with a legacy <key>.tga fallback.
 
 	]]
 
@@ -37,6 +40,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	local MODEL_INSET = 14
 	local MODEL_TOP = -48
 	local LOAD_TIMEOUT = 2
+	local HOVER_DELAY = 0.30
 	local OBJECT_IMAGE_ROOT = "Interface\\AddOns\\RQE\\Media\\ObjectPreviews\\"
 	local MIN_NPC_ZOOM = 0.35
 	local MAX_NPC_ZOOM = 3
@@ -44,10 +48,12 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	local NPC_ROTATION_HOLD_DELAY = 0.25
 	local NPC_ROTATION_HOLD_SPEED = math.pi / 2
 	local NPC_CONTROL_ROW_HEIGHT = 28
+	local OBJECT_MODEL_CENTER_LIFT = 0.25
 	local MIN_OBJECT_ZOOM = 1
 	local MAX_OBJECT_ZOOM = 5
 
 	local previewFrame
+	local pendingHover
 
 	-------------------------------------------------------
 	-- #1b. Load Cancellation & Saved Position State
@@ -151,18 +157,32 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		button:SetScript("OnUpdate", nil)
 	end
 
-	-- Reserves an NPC-only control row and enables rotation only for a ready, supported model.
+	-- Identifies previews that use the model widget and its camera controls.
+	local function IsModelPreview(frame)
+		return frame.previewKind == "npc" or frame.previewKind == "object3d"
+	end
+
+	-- Shows the reset for both model types and the horizontal arrows only for NPCs.
 	local function UpdateNPCRotationControls(frame)
 		if not frame.RotationControls then return end
-		local isNPC = frame.previewKind == "npc"
-		local extraHeight = isNPC and NPC_CONTROL_ROW_HEIGHT or 0
-		-- Grow the NPC window with the row so its original model viewport and framing stay intact.
+		local isModel = IsModelPreview(frame)
+		local extraHeight = isModel and NPC_CONTROL_ROW_HEIGHT or 0
+		-- Grow the window with the row to preserve the model viewport and framing.
 		frame:SetHeight(PREVIEW_HEIGHT + extraHeight)
 		frame.Content:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -MODEL_INSET, 28 + extraHeight)
-		frame.RotationControls:SetShown(isNPC)
-		local enabled = isNPC and frame.previewReady and frame.Model and frame.Model:IsShown()
-			and type(frame.Model.SetFacing) == "function" and not frame.rotationUnavailable
+		frame.RotationControls:SetShown(isModel)
+		frame.Help:SetPoint("BOTTOM", frame, "BOTTOM", 0, isModel and 4 or 10)
+		frame.Help:SetText(isModel and "Drag to move  •  Wheel to zoom\nShift-drag to rotate"
+			or "Drag view  •  Wheel zoom  •  Title moves window")
+		local ready = isModel and frame.previewReady and frame.Model and frame.Model:IsShown()
+		local canTurn = ready and type(frame.Model.SetFacing) == "function" and not frame.rotationUnavailable
+		local canTilt = ready and type(frame.Model.SetPitch) == "function" and not frame.tiltUnavailable
 		for _, button in ipairs(frame.RotationControls.Buttons) do
+			local enabled = canTurn or canTilt
+			if button ~= frame.ResetFacingButton then
+				button:SetShown(frame.previewKind == "npc")
+				enabled = frame.previewKind == "npc" and canTurn
+			end
 			if enabled then
 				button:Enable()
 			else
@@ -173,12 +193,29 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		end
 	end
 
-	-- Turns the ready NPC by the requested angle, or restores its default facing without changing pan or zoom.
-	local function RotateNPCPreview(frame, delta)
+	-- Applies the model's tilt and remembers it for any subsequent camera refresh.
+	local function SetPreviewModelPitch(frame, pitch)
 		local model = frame.Model
-		if not frame:IsShown() or frame.previewKind ~= "npc" or not frame.previewReady
-			or not model or not model:IsShown() or frame.rotationUnavailable then return end
+		if frame.tiltUnavailable or type(model.SetPitch) ~= "function" then return end
+		if pcall(model.SetPitch, model, pitch) then
+			GetModelViewOptions(model).pitch = pitch
+		else
+			frame.tiltUnavailable = true
+			UpdateNPCRotationControls(frame)
+		end
+	end
+
+	-- Rotates one axis or restores the front view while preserving the model's pan and zoom.
+	local function RotatePreviewModel(frame, delta, adjustsPitch)
+		local model = frame.Model
+		if not frame:IsShown() or not IsModelPreview(frame) or not frame.previewReady
+			or not model or not model:IsShown() then return end
 		local options = GetModelViewOptions(model)
+		if adjustsPitch or not delta then
+			local pitch = delta and Clamp((options.pitch or 0) + delta, -math.pi / 2, math.pi / 2) or 0
+			SetPreviewModelPitch(frame, pitch)
+		end
+		if adjustsPitch or frame.rotationUnavailable then return end
 		local facing = RQE.API.DEFAULT_CREATURE_PREVIEW_FACING
 		if delta then
 			facing = ((tonumber(options.facing) or facing) + delta + math.pi) % (2 * math.pi) - math.pi
@@ -196,7 +233,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		if not button.rotationPressStart then return end
 		local frame = button:GetParent():GetParent()
 		if not button:IsEnabled() or not frame:IsShown() or frame.previewKind ~= "npc"
-			or not frame.previewReady or frame.rotationUnavailable
+			or not frame.previewReady
 			or button.rotationPressToken ~= frame.requestToken
 			or not frame.Model or not frame.Model:IsShown() then
 			StopNPCRotationHold(button, true)
@@ -209,7 +246,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		if elapsed >= NPC_ROTATION_HOLD_DELAY then button.suppressRotationClick = true end
 		if heldTime > previousHeldTime then
 			local direction = button.rotationDelta / NPC_ROTATION_STEP
-			RotateNPCPreview(frame, direction * NPC_ROTATION_HOLD_SPEED * (heldTime - previousHeldTime))
+			RotatePreviewModel(frame, direction * NPC_ROTATION_HOLD_SPEED * (heldTime - previousHeldTime))
 		end
 	end
 
@@ -245,23 +282,37 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	-- Ends active viewport dragging and removes its per-frame update handler.
 	local function StopViewportDrag(content)
 		content.isDraggingView = nil
+		content.rotateDuringDrag, content.dragToken = nil, nil
 		content:SetScript("OnUpdate", nil)
 	end
 
-	-- Updates creature translation or object-image panning while the viewport is dragged.
+	-- Pans the active preview or rotates a model during a Shift-drag.
 	local function UpdateViewportDrag(content)
 		if not content.isDraggingView then return end
 		local frame = content:GetParent()
+		if content.dragToken ~= frame.requestToken then
+			StopViewportDrag(content)
+			return
+		end
 		local cursorX, cursorY = GetCursorInRegionSpace(content)
 		local deltaX = cursorX - content.dragCursorX
 		local deltaY = cursorY - content.dragCursorY
 
-		if frame.previewKind == "npc" and frame.Model and frame.Model:IsShown() then
+		if IsModelPreview(frame) and frame.Model and frame.Model:IsShown() then
 			local options = GetModelViewOptions(frame.Model)
 			local width = math.max(1, content:GetWidth() or 1)
 			local height = math.max(1, content:GetHeight() or 1)
-			options.viewX = Clamp(content.dragStartX + deltaX, -width, width)
-			options.viewY = Clamp(content.dragStartY + deltaY, -height, height)
+			if content.rotateDuringDrag then
+				-- One viewport width turns a full circle. Pulling downward exposes the top.
+				if deltaX ~= 0 then RotatePreviewModel(frame, deltaX * 2 * math.pi / width, false) end
+				if deltaY ~= 0 then RotatePreviewModel(frame, -deltaY * math.pi / height, true) end
+				content.dragCursorX, content.dragCursorY = cursorX, cursorY
+				return
+			end
+			local originX = frame.previewKind == "object3d" and options.centerViewX or 0
+			local originY = frame.previewKind == "object3d" and options.centerViewY or 0
+			options.viewX = Clamp(content.dragStartX + deltaX, originX - width, originX + width)
+			options.viewY = Clamp(content.dragStartY + deltaY, originY - height, originY + height)
 			if type(frame.Model.SetViewTranslation) == "function" then
 				pcall(frame.Model.SetViewTranslation, frame.Model, options.viewX, options.viewY)
 			end
@@ -353,6 +404,101 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		local questID, stepIndex, superTrackedQuestID = GetPreviewQuestContext()
 		return frame.previewQuestID == questID and frame.previewStepIndex == stepIndex
 			and frame.previewSuperTrackedQuestID == superTrackedQuestID
+	end
+
+	-------------------------------------------------------
+	-- #2e. Quest Link Hover Timing
+	-------------------------------------------------------
+
+	-- Discards the pending link and prevents its timer from replacing the displayed preview.
+	local function ClearPendingHover()
+		local request = pendingHover
+		pendingHover = nil
+		if request and request.timer then request.timer:Cancel() end
+	end
+
+	-- Checks that the link still belongs to the same quest, step, and tracking selection.
+	local function MatchesHoverContext(request, questID, stepIndex, superTrackedID)
+		return request.questID == questID and request.stepIndex == stepIndex and request.superTrackedID == superTrackedID
+	end
+
+	-- Opens the requested preview if its link and quest are still visible and current.
+	local function OpenPendingHover(request)
+		if pendingHover ~= request or request.handoff then return end
+		pendingHover = nil
+		local owner = request.owner
+		if not RQE.IsCreatureObjectPreviewEnabled() or not HasActiveQuestDisplay()
+			or not MatchesHoverContext(request, GetPreviewQuestContext())
+			or (owner.IsVisible and not owner:IsVisible()) or (owner.IsShown and not owner:IsShown()) then return end
+		if request.kind == "npc" then
+			RQE.ShowNPCPreview(request.key, request.name, true)
+		elseif request.kind == "object3d" then
+			RQE.ShowObject3DPreview(request.key, request.name, true)
+		else
+			RQE.ShowObjectImagePreview(request.key, request.name, nil, true)
+		end
+	end
+
+	-- Cancels a hover immediately if its region disappears before the delay completes.
+	local function CancelHiddenPreviewHover(owner)
+		RQE.API.CancelPreviewHover(owner)
+	end
+
+	-- Opens the first preview immediately and shares the replacement delay across fragments of the same link.
+	function RQE.API.QueuePreviewHover(owner, kind, key, name, group, occurrence)
+		if not owner or not key or (kind ~= "npc" and kind ~= "object" and kind ~= "object3d")
+			or not RQE.IsCreatureObjectPreviewEnabled() then
+			ClearPendingHover()
+			return false
+		end
+		if not owner._rqePreviewHoverHideHooked and type(owner.HookScript) == "function"
+			and (not owner.HasScript or owner:HasScript("OnHide")) then
+			owner:HookScript("OnHide", CancelHiddenPreviewHover)
+			owner._rqePreviewHoverHideHooked = true
+		end
+		group, occurrence = group or owner, occurrence or owner
+		local questID, stepIndex, superTrackedID = GetPreviewQuestContext()
+		local request = pendingHover
+		if request and request.group == group and request.occurrence == occurrence
+			and request.kind == kind and request.key == key and request.name == name
+			and MatchesHoverContext(request, questID, stepIndex, superTrackedID) then
+			request.owner, request.handoff = owner, nil
+			if request.elapsed then OpenPendingHover(request) end
+			return true
+		end
+
+		ClearPendingHover()
+		request = { owner = owner, group = group, occurrence = occurrence, kind = kind, key = key, name = name,
+			questID = questID, stepIndex = stepIndex, superTrackedID = superTrackedID }
+		pendingHover = request
+		if not previewFrame or not previewFrame:IsVisible() then
+			OpenPendingHover(request)
+			return true
+		end
+		-- Retain the elapsed deadline if it lands between adjacent wrapped fragments.
+		request.timer = RQE.API.Client.C_Timer.NewTimer(HOVER_DELAY, function()
+			request.timer, request.elapsed = nil, true
+			OpenPendingHover(request)
+		end)
+		return true
+	end
+
+	-- Cancels a departing link, optionally letting a wrapped sibling reclaim its deadline this frame.
+	function RQE.API.CancelPreviewHover(owner, allowTransfer, occurrence)
+		local request = pendingHover
+		if not request then return end
+		if owner and (request.owner ~= owner or (occurrence ~= nil and request.occurrence ~= occurrence)) then return end
+		if not owner or not allowTransfer then
+			ClearPendingHover()
+			return
+		end
+		if request.handoff then return end
+		local handoff = {}
+		request.handoff = handoff
+		-- The old timer cannot open a preview while its link has no hovered fragment.
+		RQE.API.Client.C_Timer.After(0, function()
+			if pendingHover == request and request.handoff == handoff then ClearPendingHover() end
+		end)
 	end
 
 --------------------------------------------------
@@ -462,10 +608,11 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		HideRotationButtonTooltip(button)
 	end
 
-	-- Creates an icon button that turns the NPC or restores its original facing.
-	local function CreateNPCRotationButton(frame, offset, label, texture, pushedTexture, delta)
+	-- Creates a click-and-hold NPC rotation arrow or the shared front-view reset button.
+	local function CreateRotationButton(frame, offset, label, texture, pushedTexture, delta)
 		local button = CreateFrame("Button", nil, frame.RotationControls)
-		button:SetSize(24, 24)
+		local size = delta and 32 or 24
+		button:SetSize(size, size)
 		button:SetPoint("CENTER", frame.RotationControls, "CENTER", offset, 0)
 		button:SetNormalTexture(texture)
 		button:SetPushedTexture(pushedTexture or texture)
@@ -492,6 +639,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		end
 		-- Applies one step for a short click, suppresses a completed hold, or restores the front view.
 		button:SetScript("OnClick", function(self)
+			if not self:IsEnabled() then return end
 			if delta then
 				ApplyNPCRotationHold(self)
 				local suppressed = self.suppressRotationClick
@@ -500,7 +648,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 				self.rotationPressToken, self.suppressRotationClick = nil, nil
 				if suppressed then return end
 			end
-			RotateNPCPreview(frame, delta)
+			RotatePreviewModel(frame, delta)
 		end)
 		-- Explains the rotation direction or default-facing reset above the hovered icon.
 		button:SetScript("OnEnter", function(self)
@@ -637,15 +785,19 @@ Reusable creature-model and object-image preview window, interaction controls, a
 			local cursorX, cursorY = GetCursorInRegionSpace(content)
 			content.dragCursorX = cursorX
 			content.dragCursorY = cursorY
-			if frame.previewKind == "npc" and frame.Model then
+			if IsModelPreview(frame) then
+				if not frame.previewReady or not frame.Model or not frame.Model:IsShown() then return end
 				local options = GetModelViewOptions(frame.Model)
 				content.dragStartX = options.viewX
 				content.dragStartY = options.viewY
+				content.rotateDuringDrag = RQE.API.Client.IsShiftKeyDown()
 			else
+				content.rotateDuringDrag = false
 				content.dragStartX = tonumber(frame.objectPanX) or 0
 				content.dragStartY = tonumber(frame.objectPanY) or 0
 			end
 			content.isDraggingView = true
+			content.dragToken = frame.requestToken
 			content:SetScript("OnUpdate", UpdateViewportDrag)
 		end)
 		frame.Content:SetScript("OnDragStop", StopViewportDrag)
@@ -654,9 +806,9 @@ Reusable creature-model and object-image preview window, interaction controls, a
 			if button == "RightButton" then frame:Hide() end
 			if button == "LeftButton" then StopViewportDrag(content) end
 		end)
-		-- Applies the object viewport.
+		-- Zooms the active model camera or image around its current view.
 		frame.Content:SetScript("OnMouseWheel", function(_, delta)
-			if frame.previewKind == "npc" and frame.Model and frame.Model:IsShown() then
+			if IsModelPreview(frame) and frame.previewReady and frame.Model and frame.Model:IsShown() then
 				local options = GetModelViewOptions(frame.Model)
 				local factor = delta > 0 and 0.88 or 1.14
 				options.scale = Clamp(options.scale * factor, MIN_NPC_ZOOM, MAX_NPC_ZOOM)
@@ -669,9 +821,14 @@ Reusable creature-model and object-image preview window, interaction controls, a
 				ApplyObjectViewport(frame)
 			end
 		end)
-		-- Applies the object viewport.
-		frame.Content:SetScript("OnSizeChanged", function()
-			if frame.previewKind == "object" then ApplyObjectViewport(frame) end
+		-- Reframes images and loaded object models when the viewport dimensions change.
+		frame.Content:SetScript("OnSizeChanged", function(_, width, height)
+			if frame.previewKind == "object" then
+				ApplyObjectViewport(frame)
+			elseif frame.previewKind == "object3d" and frame.previewReady then
+				local model = frame.Model
+				RQE.API.ApplyPreviewModelCenter(model, model.RQEPreviewOptions, width, height)
+			end
 		end)
 
 		frame.Model, frame.ModelFrameType, frame.ModelError = RQE.API.CreateCreaturePreviewModel(frame.Content)
@@ -680,13 +837,19 @@ Reusable creature-model and object-image preview window, interaction controls, a
 			frame.Model:EnableMouse(false)
 			-- Finishes the matching model load and reapplies its requested framing.
 			frame.Model:SetScript("OnModelLoaded", function(model)
-				if not frame:IsShown() or frame.previewKind ~= "npc"
+				if not frame:IsShown() or not IsModelPreview(frame)
 					or model.RQEPreviewToken ~= frame.requestToken then return end
+				-- A late load or a client placeholder must not replace the requested object's model.
+				if frame.previewKind == "object3d" and model:GetModelFileID() ~= frame.previewSource then return end
+				-- Different creature skins can finish loading the same model file.
+				local appearance = frame.previewAppearance
+				if appearance and appearance.creatureDisplayID and type(model.GetDisplayInfo) == "function"
+					and model:GetDisplayInfo() ~= appearance.creatureDisplayID then return end
 				CancelPreviewLoad(frame)
 				frame.previewReady = true
-				-- Blizzard can replace camera transforms while SetCreature finishes;
-				-- apply the compact-window centering only after the model is ready.
+				-- Loading can replace camera transforms. Reapply the compact-window framing after it finishes.
 				RQE.API.ConfigureCreaturePreviewModel(model, model.RQEPreviewOptions)
+				SetPreviewModelPitch(frame, GetModelViewOptions(model).pitch or 0)
 				frame.Status:Hide()
 				model:SetAlpha(1)
 				UpdateNPCRotationControls(frame)
@@ -707,18 +870,16 @@ Reusable creature-model and object-image preview window, interaction controls, a
 		frame.Status:SetTextColor(0.92, 0.92, 0.92)
 
 		frame.Help = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-		frame.Help:SetPoint("BOTTOM", frame, "BOTTOM", 0, 10)
-		frame.Help:SetText("Drag view  •  Wheel zoom  •  Title moves window")
 
 		frame.RotationControls = CreateFrame("Frame", nil, frame)
 		frame.RotationControls:SetSize(88, 24)
 		frame.RotationControls:SetPoint("BOTTOM", frame, "BOTTOM", 0, 28)
-		frame.RotateLeftButton = CreateNPCRotationButton(frame, -32, "Rotate left",
+		frame.RotateLeftButton = CreateRotationButton(frame, -32, "Rotate left",
 			"Interface\\Buttons\\UI-RotationLeft-Button-Up", "Interface\\Buttons\\UI-RotationLeft-Button-Down",
 			-NPC_ROTATION_STEP)
-		frame.ResetFacingButton = CreateNPCRotationButton(frame, 0, "Restore front view (keeps pan and zoom)",
+		frame.ResetFacingButton = CreateRotationButton(frame, 0, "Restore front view (keeps pan and zoom)",
 			"Interface\\Buttons\\UI-RefreshButton")
-		frame.RotateRightButton = CreateNPCRotationButton(frame, 32, "Rotate right",
+		frame.RotateRightButton = CreateRotationButton(frame, 32, "Rotate right",
 			"Interface\\Buttons\\UI-RotationRight-Button-Up", "Interface\\Buttons\\UI-RotationRight-Button-Down",
 			NPC_ROTATION_STEP)
 		frame.RotationControls.Buttons = { frame.RotateLeftButton, frame.ResetFacingButton, frame.RotateRightButton }
@@ -726,12 +887,17 @@ Reusable creature-model and object-image preview window, interaction controls, a
 
 		-- Stops preview dragging and cancels pending model loading when hidden.
 		frame:SetScript("OnHide", function(self)
+			ClearPendingHover()
 			CancelPreviewLoad(self)
 			self:SetScript("OnUpdate", nil)
 			self.requestToken = (self.requestToken or 0) + 1
-			self.previewReady, self.previewSource = nil, nil
+			self.previewReady, self.previewSource, self.previewAppearance = nil, nil, nil
+			-- Start the next preview level when it reuses this widget.
+			if IsModelPreview(self) and self.Model and type(self.Model.SetPitch) == "function" then
+				pcall(self.Model.SetPitch, self.Model, 0)
+			end
 			self.previewKind = nil
-			self.rotationUnavailable = nil
+			self.rotationUnavailable, self.tiltUnavailable = nil, nil
 			UpdateNPCRotationControls(self)
 			self.previewKey = nil
 			self.previewQuestID = nil
@@ -790,6 +956,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 
 	-- Hides the preview window, optionally only when it is bound to a quest.
 	function RQE.HideCreatureObjectPreview(questOnly)
+		ClearPendingHover()
 		if previewFrame and (not questOnly or previewFrame.previewRequiresQuest) then
 			previewFrame:Hide()
 		end
@@ -800,22 +967,42 @@ Reusable creature-model and object-image preview window, interaction controls, a
 --------------------------------------------------
 
 	-------------------------------------------------------
-	-- #6a. Creature Model Loading
+	-- #6a. Creature and Object Model Loading
 	-------------------------------------------------------
 
-	-- Initializes an NPC model request, manages loading state, and reports unavailable models.
-	local function BeginPreview(title, previewKey, loader, unavailableMessage, questBound)
+	-- Loads the mapped mesh or native appearance after preparing the camera for a synchronous load.
+	local function LoadObjectPreviewModel(model, fileID, appearance)
+		if not fileID then return false end
+		local setter, source = model.SetModel, fileID
+		if appearance then
+			if appearance.creatureDisplayID then
+				setter, source = model.SetDisplayInfo, appearance.creatureDisplayID
+			else
+				setter, source = model.SetItem, appearance.itemID
+			end
+		end
+		if type(setter) ~= "function" or not source or type(model.GetModelFileID) ~= "function" then
+			return false, appearance and "This client cannot display the object's mapped appearance."
+				or "This client cannot display object model files."
+		end
+		model.RQEPreviewOptions = { centerLiftRatio = OBJECT_MODEL_CENTER_LIFT }
+		local ok, loaded = pcall(setter, model, source)
+		return ok and loaded ~= false
+	end
+
+	-- Opens an NPC or object model and manages its loading state and failure message.
+	local function BeginModelPreview(title, previewKey, kind, modelID, unavailableMessage, questBound, appearance)
 		local frame = CreatePreviewFrame()
-		if IsCurrentPreview(frame, previewKey, "npc", title, questBound) then return true end
+		if IsCurrentPreview(frame, previewKey, kind, title, questBound, modelID) then return true end
 		CancelPreviewLoad(frame)
 		RQE.ApplyCreatureObjectPreviewLayout()
 		PreparePreviewIdentity(frame, previewKey)
-		frame.previewReady, frame.previewSource = false, nil
+		frame.previewReady, frame.previewSource, frame.previewAppearance = false, modelID, appearance
 		frame.requestToken = (frame.requestToken or 0) + 1
 		local token = frame.requestToken
 		frame.Title:SetText(title)
-		frame.previewKind = "npc"
-		frame.rotationUnavailable = nil
+		frame.previewKind = kind
+		frame.rotationUnavailable, frame.tiltUnavailable = nil, nil
 		UpdateNPCRotationControls(frame)
 		frame.previewRequiresQuest = questBound == true
 		frame.objectZoom, frame.objectPanX, frame.objectPanY = 1, 0, 0
@@ -830,12 +1017,24 @@ Reusable creature-model and object-image preview window, interaction controls, a
 			return false
 		end
 
-		frame.Model.RQEPreviewToken = token
-		frame.Model:Show()
+		frame.Model.RQEPreviewToken = nil
 		frame.Model:SetAlpha(0)
-		local ok, err = loader(frame.Model)
+		frame.Model:Show()
+		if kind == "object3d" then RQE.API.ClearCreaturePreviewModel(frame.Model) end
+		frame.Model.RQEPreviewToken = token
+		local ok, err
+		if kind == "object3d" then
+			ok, err = LoadObjectPreviewModel(frame.Model, modelID, appearance)
+		else
+			ok, err = RQE.API.SetCreaturePreviewModel(frame.Model, modelID)
+		end
 		if not ok then
+			frame.previewReady = false
+			frame.Model.RQEPreviewToken = nil
+			frame.Model:Hide()
 			frame.Status:SetText(err or unavailableMessage or "The preview could not be loaded.")
+			frame.Status:Show()
+			UpdateNPCRotationControls(frame)
 			return false
 		end
 
@@ -914,14 +1113,13 @@ Reusable creature-model and object-image preview window, interaction controls, a
 
 	-- Validates an NPC ID and opens its Blizzard creature-model preview.
 	function RQE.ShowNPCPreview(creatureID, displayName, questBound)
+		ClearPendingHover()
 		if not RQE.IsCreatureObjectPreviewEnabled() then return false end
 		creatureID = tonumber(creatureID)
 		if not creatureID or creatureID <= 0 then return false end
 		local title = displayName and displayName ~= "" and (displayName .. " (NPC " .. creatureID .. ")") or ("NPC " .. creatureID)
-		-- Sets the creature preview model.
-		return BeginPreview(title, "npc:" .. creatureID, function(model)
-			return RQE.API.SetCreaturePreviewModel(model, creatureID)
-		end, "Blizzard returned no displayable creature model for NPC " .. creatureID .. ".", questBound)
+		return BeginModelPreview(title, "npc:" .. creatureID, "npc", creatureID,
+			"Blizzard returned no displayable creature model for NPC " .. creatureID .. ".", questBound)
 	end
 
 	-------------------------------------------------------
@@ -930,6 +1128,7 @@ Reusable creature-model and object-image preview window, interaction controls, a
 
 	-- Resolves catalog and fallback textures before opening an object's image preview.
 	function RQE.ShowObjectImagePreview(objectKey, displayName, texturePath, questBound)
+		ClearPendingHover()
 		if not RQE.IsCreatureObjectPreviewEnabled() then return false end
 		objectKey = NormalizeObjectKey(objectKey)
 		if not objectKey then
@@ -952,10 +1151,13 @@ Reusable creature-model and object-image preview window, interaction controls, a
 				texturePaths[#texturePaths + 1] = OBJECT_IMAGE_ROOT .. entry.file
 			end
 			-- Preserve unindexed legacy links and key-only images as fallbacks.
+			-- Converted previews may exist only as .blp, so each .tga guess gets a .blp twin.
 			if fileLabel then
 				texturePaths[#texturePaths + 1] = OBJECT_IMAGE_ROOT .. objectKey .. " - " .. fileLabel .. ".tga"
+				texturePaths[#texturePaths + 1] = OBJECT_IMAGE_ROOT .. objectKey .. " - " .. fileLabel .. ".blp"
 			end
 			texturePaths[#texturePaths + 1] = OBJECT_IMAGE_ROOT .. objectKey .. ".tga"
+			texturePaths[#texturePaths + 1] = OBJECT_IMAGE_ROOT .. objectKey .. ".blp"
 		end
 		local customKey = objectKey:match("^%a") ~= nil
 		local title
@@ -973,7 +1175,29 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	end
 
 	-------------------------------------------------------
-	-- #7c. Generic & Convenience Entry Points
+	-- #7c. Object Model Preview Requests
+	-------------------------------------------------------
+
+	-- Resolves a game object ID to its model file and opens an interactive 3D preview.
+	function RQE.ShowObject3DPreview(objectID, displayName, questBound)
+		ClearPendingHover()
+		if not RQE.IsCreatureObjectPreviewEnabled() then return false end
+		objectID = tonumber(objectID)
+		if not objectID or objectID <= 0 or objectID % 1 ~= 0 then return false end
+		local fileID = RQE.ObjectModelFileIDs and RQE.ObjectModelFileIDs[objectID]
+		local appearance = RQE.ObjectModelAppearances and RQE.ObjectModelAppearances[objectID]
+		if not displayName or displayName == "" then
+			displayName = RQE.ObjectModelNames and RQE.ObjectModelNames[objectID]
+		end
+		local title = displayName and displayName ~= "" and (displayName .. "\n(Object " .. objectID .. ")")
+			or ("Object " .. objectID)
+		local unavailableMessage = fileID and ("This client could not load the 3D model for object " .. objectID .. ".")
+			or ("No 3D model is mapped for object " .. objectID .. ".")
+		return BeginModelPreview(title, "object3d:" .. objectID, "object3d", fileID, unavailableMessage, questBound, appearance)
+	end
+
+	-------------------------------------------------------
+	-- #7d. Generic & Convenience Entry Points
 	-------------------------------------------------------
 
 	-- Dispatches a generic preview request to the NPC or object implementation.
@@ -999,5 +1223,35 @@ Reusable creature-model and object-image preview window, interaction controls, a
 	-- Provides a concise convenience entry point for object image previews.
 	function RQE.Object(objectKey, displayName)
 		return RQE.CreatureOrObject(objectKey, "o", displayName)
+	end
+
+	-- Opens a mapped game object's 3D preview without a quest link.
+	function RQE.Object3D(objectID, displayName)
+		return RQE.ShowObject3DPreview(objectID, displayName)
+	end
+
+	-- Opens a cataloged object image in the normal viewer from an explicit file format, for
+	-- example "blp" to load a converted copy stored beside the shipped TGA. No quest is needed,
+	-- and the viewer's drag, zoom, and reset controls behave as they do for quest previews.
+	-- Returns the viewer's result, or false when the object has no catalog entry.
+	function RQE.ObjectFormat(objectKey, extension)
+		local key = NormalizeObjectKey(objectKey)
+		if not key then
+			PrintPreviewMessage("Object preview keys may contain only letters and numbers.")
+			return false
+		end
+		local entry = RQE.ObjectPreviewCatalog and RQE.ObjectPreviewCatalog[key:lower()]
+		local file = entry and entry.file
+		if not file then
+			PrintPreviewMessage("No cataloged preview image was found for object " .. key .. ".")
+			return false
+		end
+		extension = type(extension) == "string" and extension:gsub("^%.", ""):lower() or ""
+		if extension ~= "" then
+			file = file:gsub("%.[^%.]+$", "") .. "." .. extension
+		end
+		local label = (entry.name and entry.name ~= "" and entry.name or key)
+			.. " [" .. (extension ~= "" and extension or "tga"):upper() .. "]"
+		return RQE.ShowObjectImagePreview(key, label, OBJECT_IMAGE_ROOT .. file)
 	end
 
