@@ -164,6 +164,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		"ZONE_CHANGED_INDOORS",
 		"ZONE_CHANGED_NEW_AREA"
 	}
+	if RQE.API.GameVersion.apiProfile == "retail" then
+		table.insert(eventsToRegister, "BANKFRAME_CLOSED")
+	end
 
 
 --------------------------------------------------
@@ -545,7 +548,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			BAG_NEW_ITEMS_UPDATED = RQE.BagNewItemsAdded,
 			BAG_UPDATE = RQE.ReagentBagUpdate,
 			BAG_UPDATE_DELAYED = RQE.handleBagUpdateDelayed,
-			BANKFRAME_OPENED = RQE.handleRecipeMaterialUpdate,
+			BANKFRAME_CLOSED = RQE.handleBankInventoryUpdate,
+			BANKFRAME_OPENED = RQE.handleBankInventoryUpdate,
 			BOSS_KILL = RQE.handleBossKill,
 			CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 			CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,  -- MAY NEED TO COMMENT OUT AGAIN
@@ -571,7 +575,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			NEW_WMO_CHUNK = RQE.handleNewWMOChunk,
 			OBJECT_ENTERED_AOI = RQE.handleObjectEnteredLeft,
 			OBJECT_LEFT_AOI = RQE.handleObjectEnteredLeft,
-			PLAYERBANKSLOTS_CHANGED = RQE.handleRecipeMaterialUpdate,
+			PLAYERBANKSLOTS_CHANGED = RQE.handleBankInventoryUpdate,
 			PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 			PLAYER_CONTROL_LOST = RQE.handlePlayerControlLost,
 			PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
@@ -1028,8 +1032,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	end
 
 
-	-- Re-evaluate inventory-based steps after the bag change has settled.
+	-- Refresh displayed item counts and recheck inventory-based steps after bag changes settle.
 	function RQE.handleBagUpdateDelayed()
+		RQE:QueueInventoryCountDisplayRefresh()
 		if RQE.recipeTrackingFrame then RQE:UpdateRecipeTrackingFrame() end
 		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not CurrentStepUsesInventoryCheck(questID) then return end
@@ -1297,6 +1302,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. 
 	-- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 	function RQE.handlePlayerRegenEnabled()
+		if RQE._inventoryRefreshAfterCombat then RQE:QueueInventoryCountDisplayRefresh() end
 		local mythicMode = RQE.db.profile.mythicScenarioMode
 		if RQE.EnforceObjectiveTrackerVisibility then RQE:EnforceObjectiveTrackerVisibility() end
 
@@ -5149,6 +5155,16 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handles TRACKED_RECIPE_UPDATE event
 	function RQE.handleTrackedRecipeUpdate(...)
 		RQE:UpdateRecipeTrackingFrame()
+	end
+
+	-- Refresh Retail step counts on bank access or slot changes and keep existing recipe updates.
+	function RQE.handleBankInventoryUpdate(frame, event, ...)
+		if RQE.API.GameVersion.apiProfile == "retail" then
+			RQE:QueueInventoryCountDisplayRefresh()
+		end
+		if event ~= "BANKFRAME_CLOSED" then
+			RQE.handleRecipeMaterialUpdate(frame, event, ...)
+		end
 	end
 
 	-- Refresh reagent names and material counts after currency, item, or bank updates.
