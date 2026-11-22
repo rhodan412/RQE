@@ -106,6 +106,7 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 		Yellow = { label = "Yellow", hex = "ffff00" },
 		Green = { label = "Green", hex = "00ff00" },
 		Cyan = { label = "Cyan", hex = "00ff99" },
+		["Pale Mint"] = { label = "Pale Mint", hex = "a8f0ce" },
 		Canary = { label = "Canary", hex = "ffffd9" },
 		["Cream Can"] = { label = "Cream Can", hex = "edbf59" },
 		White = { label = "White", hex = "ffffff" },
@@ -121,12 +122,13 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 		["Medium Purple"] = { label = "Medium Purple", hex = "b266ff" },
 		["Maya Blue"] = { label = "Maya Blue", hex = "66ccff" },
 		Cobalt = { label = "Cobalt", hex = "0057b8" },
+		Periwinkle = { label = "Periwinkle", hex = "b5bcff" },
 		["Golden Yellow"] = { label = "Golden Yellow", hex = "ffd700" },
 	}
 
 	RQE.FontColorOrder = {
 		"Crimson", "Dark Orange", "Infernal Orange", "Cream Can", "Golden Yellow", "Yellow", "Canary",
-		"Green", "Fel Green", "Cyan", "Maya Blue", "Cobalt", "Medium Purple", "Lavender",
+		"Green", "Fel Green", "Pale Mint", "Cyan", "Maya Blue", "Cobalt", "Periwinkle", "Medium Purple", "Lavender",
 		"Fuchsia", "Hot Pink", "Carnation Pink", "Silver", "White",
 	}
 	RQE.FontColorLabels = {}
