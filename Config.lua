@@ -106,6 +106,7 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		Yellow = { label = "Yellow", hex = "ffff00" },
 		Green = { label = "Green", hex = "00ff00" },
 		Cyan = { label = "Cyan", hex = "00ff99" },
+		["Pale Mint"] = { label = "Pale Mint", hex = "a8f0ce" },
 		Canary = { label = "Canary", hex = "ffffd9" },
 		["Cream Can"] = { label = "Cream Can", hex = "edbf59" },
 		["Parchment Ivory"] = { label = "Parchment Ivory", hex = "f4e6c5" },
@@ -122,6 +123,7 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		["Medium Purple"] = { label = "Medium Purple", hex = "b266ff" },
 		["Maya Blue"] = { label = "Maya Blue", hex = "66ccff" },
 		Cobalt = { label = "Cobalt", hex = "0057b8" },
+		Periwinkle = { label = "Periwinkle", hex = "b5bcff" },
 		["Astral Ice"] = { label = "Astral Ice", hex = "dee2f7" },
 		["Fel Green"] = { label = "Fel Green", hex = "99e22d" },
 		["Golden Yellow"] = { label = "Golden Yellow", hex = "ffd700" },
@@ -129,7 +131,7 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 
 	RQE.FontColorOrder = {
 		"Crimson", "Scarlet Red", "Dark Orange", "Infernal Orange", "Cream Can", "Parchment Ivory", "Golden Yellow", "Yellow", "Canary",
-		"Green", "Fel Green", "Cyan", "Maya Blue", "Cobalt", "Medium Purple", "Lavender",
+		"Green", "Fel Green", "Pale Mint", "Cyan", "Maya Blue", "Cobalt", "Periwinkle", "Medium Purple", "Lavender",
 		"Fuchsia", "Hot Pink", "Carnation Pink", "Astral Ice", "Silver", "White",
 	}
 	RQE.FontColorLabels = {}
