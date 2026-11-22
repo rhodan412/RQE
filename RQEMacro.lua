@@ -353,6 +353,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				kind = kind, name = name, id = id,
 				hostile = kind == "npc" and source and source.hostile,
 				auction = kind == "item" and source and source.auction,
+				show3D = kind == "object" and source and source.show3D == true,
 			}
 		end
 		for _, source in ipairs(type(questData.npcs) == "table" and questData.npcs or {}) do
@@ -383,6 +384,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			if source.kind == "item" and type(source.auction) == "boolean" then
 				metadata = metadata .. ", auction = " .. tostring(source.auction)
 			end
+			if source.show3D then metadata = metadata .. ", show3D = true" end
 			local separator = index < #sources and "," or ""
 			emit(string.format('\t\t\t\t{ %s = "%s", id = %s%s }%s',
 				source.kind, EscapeText(source.name), id, metadata, separator))
@@ -397,8 +399,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		local sources, seen = {}, {}
 		if not questData then return sources end
 
-		-- Adds a distinct pickup source while preserving hostility and explicit AH opt-outs.
-		local function AddSource(kind, name, id, hostile, auction)
+		-- Keeps each source's preview choice, hostility, and explicit Auction House opt-out.
+		local function AddSource(kind, name, id, source)
 			if type(name) ~= "string" then return end
 			name = name:match("^%s*(.-)%s*$")
 			if name == "" or name:find("[\r\n]") or name:sub(1, 1) == "/" then return end
@@ -414,16 +416,19 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				id = tonumber(id)
 				if not id or id <= 0 or id ~= math.floor(id) then id = nil end
 			end
-			local key = kind .. ":" .. name
-			hostile = kind == "npc" and hostile == true or nil
+			local show3D = kind == "object" and source.show3D == true
+				and id and id:match("^%d+$") and tonumber(id) > 0 or nil
+			local key = (show3D and "object3d" or kind) .. ":" .. name
+			local hostile = kind == "npc" and source and source.hostile == true or nil
+			local noAuction = kind == "item" and source.auction == false
 			if seen[key] then
 				if id then seen[key].id = id end
 				if hostile then seen[key].hostile = true end
-				if auction == false then seen[key].auction = false end
+				if noAuction then seen[key].auction = false end
 				return
 			end
-			local entry = { kind = kind, name = name, id = id, hostile = hostile }
-			if kind == "item" and auction == false then entry.auction = false end
+			local entry = { kind = kind, name = name, id = id, hostile = hostile, show3D = show3D }
+			if noAuction then entry.auction = false end
 			sources[#sources + 1] = entry
 			seen[key] = entry
 		end
@@ -432,11 +437,11 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			for _, entry in ipairs(questData.npcs) do
 				if type(entry) == "table" then
 					if entry.object ~= nil then
-						AddSource("object", entry.object, entry.id)
+						AddSource("object", entry.object, entry.id, entry)
 					elseif entry.item ~= nil then
-						AddSource("item", entry.item, entry.id, nil, entry.auction)
+						AddSource("item", entry.item, entry.id, entry)
 					else
-						AddSource("npc", entry.npc or entry.name, entry.id, entry.hostile)
+						AddSource("npc", entry.npc or entry.name, entry.id, entry)
 					end
 				end
 			end
@@ -477,10 +482,11 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 					names[#names + 1] = self:GetQuestPickupItemText(entry, questID, useLinks, noAuctionAdvice)
 					-- Previous code (commented out 2026.11.02): item text always carried the AH suffix
 					-- names[#names + 1] = self:GetQuestPickupItemText(entry, questID, useLinks)
+				elseif useLinks and entry.id then
+					local tag = entry.show3D and "object3d" or entry.kind
+					names[#names + 1] = string.format("{%s:%s:%s}", tag, entry.id, entry.name)
 				else
-					names[#names + 1] = useLinks and entry.id
-						and (entry.kind == "object" and string.format("{object:%s:%s}", entry.id, entry.name)
-							or string.format("{npc:%d:%s}", entry.id, entry.name)) or entry.name
+					names[#names + 1] = entry.name
 				end
 			end
 		end
