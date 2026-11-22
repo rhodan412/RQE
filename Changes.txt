@@ -1,3 +1,160 @@
+12.1.5.5 (2026.11.22)
+
+	**HIGHLIGHTS**
+		- Added one Contribution copy window for current locations, pickup NPC, and turn-in description with coordinates. Each snippet has its own copy field; a checkbox comments out the turn-in lines, and clients without continent coordinates use single-location forms.
+		- The combined Contribution window can now use a quest's saved pickup location and a chosen step's saved coordinates while keeping the player's current continent position. Quest entries without authored steps disable the existing-coordinate controls with an explanation on hover.
+		- Refresh any quest contribution snippet with its own Update button, or refresh all three at once with Update All while keeping the panel open.
+		- The Contribution menu now offers a copyable objective quantity. Use the default remaining-objective token or enter a fixed count.
+		- Escape now closes the Quest Log opened from RQE on Burning Crusade and Classic 1.0 through 1.49, using the same window handling as Blizzard's Quest Log button.
+		- Quest steps can show a live item count in the step list and Separate Focus. Retail counts carried items and the personal bank. Forever, TBC Anniversary, and Season of Discovery count carried bags.
+		- Use Copy inventory count in the Contribution menu to turn an item ID into a pale-mint count and its localized item link. Pale Mint is also available in the font-color picker on every client.
+		- Quest steps can now show a rotatable 3D model for a supported object. Item links can display the source model alongside the item tooltip, and existing picture links still show your images.
+		- Use the right-side up and down arrows to see the top or underside of a 3D object. Drag to move it, scroll to zoom, or use the bottom controls to turn it and restore its front view.
+		- Picture and 3D links can sit side by side in quest steps. A Periwinkle 3D shortcut opens the named object, and Periwinkle is available in the font-color picker on every client.
+		- 3D objects now open higher in the preview with larger rotation arrows and a lower underside button. Shift-drag an NPC or 3D object to rotate it, drag normally to move it, and use the wheel to zoom.
+		- Hover a quest link for 0.30 seconds to open its NPC, picture, or 3D preview. Passing over another link keeps the current preview open. Clicking [3D] and hovering for an item tooltip still respond immediately.
+		- The 3D object viewer now has a single restore button. Shift-drag to turn or tilt an object and click restore to return to its front view.
+		- Hovering an NPC, picture, or 3D link opens the first preview immediately, including after you close the viewer. While a preview is visible, hovering another link for 0.30 seconds replaces it.
+		- Contribution can now copy item links with either an object picture or a 3D model. Both show the item name in warm orange and open its tooltip on hover.
+		- Cast Spell, Use Item, and Turn In Quest now let you choose an NPC, a 2D object, or a 3D object. Look/Interact can link either kind of object beside a nearby NPC. Target changes update the NPC without overwriting a chosen object.
+		- Collect Items from Ground starts with an item-only link and uses a 3D model when you enable its object preview. Look/Interact with Object near NPC now starts in 3D. Both dialogs also offer 2D pictures.
+		- Contribution fills item names as you type an ID. Ground collection and Object+Item Hyperlink also use the item name as the editable object title. If the current client lacks the item, you can supply its name as ID:Item Name.
+		- Pickup objects in the same quest can open different viewers. Add show3D = true to an object in the npcs list to open its model. Other objects still open their pictures.
+		- The Contribution Step Editor can now switch an unfinished ground-item description between an item link, a 3D model, and a picture before you enter the object ID.
+		- Quest links can now open 3D previews for over 109,000 Retail objects and thousands of Classic objects, including Fei Fei's Cache. Each client uses the model selected for its edition.
+		- More quest objects have 3D previews across all four editions. Retail objects such as Jeb's Backup Supply Pack and Replica Atiesh now use their item appearances.
+		- Enter an object ID in the Contribution dropdown to fill its name from your game edition's catalog. Combined item links use the item name when the object is unknown, and you can type your own object name.
+		- The Contribution Step Editor can now keep the original punctuation in pickup names suggested by RQE's object catalog.
+		- The Contribution dropdown lists its flyouts alphabetically above a divider. Under Scripts and Run Cmds, open an object by ID in 3D or 2D, or read an open interaction's GUID to copy the object reference and preview it.
+
+	Client_Classic/Config.lua
+		- Registered Pale Mint (#A8F0CE) and placed it between Fel Green and Cyan in the shared picker so Season of Discovery can use the inventory snippet color with or without a theme pack. (2026.11.20.2058)
+		- Added Periwinkle (#B5BCFF) to the Season of Discovery font palette and picker so players can select the same color used by model links. (2026.11.20.2337)
+
+	Client_Classic/Core.lua
+		- Routed quest-detail clicks through the shared legacy Quest Log toggle so Classic 1.0 through 1.49 opens the selected quest in a panel that Escape can dismiss. Clicking an RQE quest again still closes the open log. (2026.11.20.1955)
+		- Shared one inventory snapshot across the Classic quest's step descriptions so multiple count tokens require only one scan of the carried bags per list build. (2026.11.20.2030)
+		- Season of Discovery now renders standalone 3D object names and combined item labels in quest descriptions. Wrapped links open the model by object ID, and coordinate hotspots use the visible label width. (2026.11.20.2306)
+		- Rendered compact model links with their two-character labels in Classic quest text and HTML. Kept the adjacent picture, model, and coordinate hotspots aligned with their visible text when they wrap. (2026.11.20.2337)
+		- Queued Season of Discovery NPC, picture, and model hovers by link occurrence. Moving between wrapped fragments of one quest link counts toward the same delay, and its item tooltip appears on entry. (2026.11.20.2345)
+
+	Client_Classic/EventManager.lua
+		- Queued a display refresh when Classic bag updates settle and resumed pending refreshes after combat, so looting or using an item updates the count even on steps that use quest objective progress for completion. (2026.11.20.2027)
+
+	Client_Classic/RQEFrame.lua
+		- Registered rendered step rows and the selected Separate Focus description for inventory count updates. Refreshed rows use their existing rich-text styling and coordinate-block sizing, preserving links and step selection. (2026.11.20.2027)
+		- Recognized both 3D tags in Season of Discovery step rows and routed Separate Focus hyperlink hover and left-click through the metadata for that label. The selected object stays distinct when several links share an item ID. (2026.11.20.2306)
+		- Gave each Separate Focus NPC and picture link its own hover identity on Season of Discovery. Leaving a link cancels its queued preview, while clicking a 3D link opens the model immediately. (2026.11.20.2345)
+
+	Client_TBC/Config.lua
+		- Added Pale Mint (#A8F0CE) to the TBC font-color registry and picker order so the Contribution snippet and player-selected fonts share the same color. (2026.11.20.2058)
+		- Added Periwinkle (#B5BCFF) to TBC Anniversary's font palette and picker independently of the optional theme pack. (2026.11.20.2337)
+
+	Client_TBC/Core.lua
+		- Routed Burning Crusade quest-detail clicks through the shared legacy Quest Log toggle, allowing Escape to close the selected quest's panel while retaining the combat and auto-complete checks. (2026.11.20.1955)
+		- Passed the same inventory snapshot to each TBC quest step during list formatting so repeated items reuse their totals and several steps share one carried-bag scan. (2026.11.20.2030)
+		- Added model and item labels to TBC rich text and wired wrapped hover regions and HTML links to the 3D preview. Coordinate markers are measured after the tags expand to their visible labels. (2026.11.20.2306)
+		- Used the visible 3D label to measure TBC quest text and create its hover region. Separate model titles and picture links continue to open the correct preview when their labels share a line. (2026.11.20.2337)
+		- Applied the hover delay to TBC Anniversary rich-text links in HTML and wrapped quest descriptions. Fragments of a single label share a deadline, while crossing into a different label starts a fresh delay. (2026.11.20.2345)
+
+	Client_TBC/EventManager.lua
+		- Connected settled TBC bag changes to the count display independently of inventory-based step completion and replayed a pending text refresh when combat ends. (2026.11.20.2027)
+
+	Client_TBC/RQEFrame.lua
+		- Registered item-count descriptions in both TBC step rows and Separate Focus, including searched steps. Updated counts retain their item links, text layout, and selected waypoint. (2026.11.20.2027)
+		- Enabled both model tags in TBC quest rows and Separate Focus. Hovering a combined tag shows its item tooltip alongside the source model, and left-click reopens the model. (2026.11.20.2306)
+		- Connected TBC Anniversary Separate Focus links to the delayed preview handlers. Distinct occurrences of the same NPC or object get independent hover times, and item tooltips and model clicks are immediate. (2026.11.20.2345)
+
+	Config.lua
+		- Added Pale Mint (#A8F0CE) to the base font-color registry and picker order used by Retail and Forever, making the Contribution count color available independently of RQE_Themes. (2026.11.20.2058)
+		- Registered Periwinkle (#B5BCFF) in the Retail and Forever font palette and picker order so the new model-link color is available in both settings interfaces. (2026.11.20.2337)
+
+	Core.lua
+		- Shared one inventory snapshot while building the Retail and Forever step lists. Descriptions with multiple item IDs reuse carried stack totals, and repeated IDs reuse their computed count for that build. (2026.11.20.2030)
+		- Added standalone and combined 3D object links to the Retail and Forever rich-text renderers. Wrapped labels and HTML links open the mapped model, and coordinate hit regions account for the displayed object or item name. (2026.11.20.2306)
+		- Updated the Retail and Forever step renderers to show compact model labels in Periwinkle. Adjacent pictures retain their titles and separate hit regions, including wrapped lines and text preceding coordinates. (2026.11.20.2337)
+		- Routed Retail and Forever HTML and wrapped-text preview hovers through the shared timer. Each authored link has a separate identity so crossing links preserves the open preview, even when neighboring links refer to the same object. (2026.11.20.2345)
+
+	EventManager.lua
+		- Queued count updates after bag changes on Retail and Forever and resumed pending work after combat. Retail also refreshes at personal bank open, close, and slot updates while preserving the existing recipe tracker updates. (2026.11.20.2027)
+
+	QuestTools.lua
+		- Added a Contribution menu action and a shared three-region copy frame loaded by the Retail, Classic, and TBC manifests. The locations region is selected on open; clicking or tabbing between regions selects only that snippet for copying, and reopening refreshes the current position, NPC target, and zone. (2026.11.19.1329)
+		- Built pickup NPC text from the existing target-table formatter and paired the turn-in description with current map and available continent hotspots. The default-off checkbox comments every description and coordinate line without changing the other regions; absent continent coordinates use location/coordinates singular fields. (2026.11.19.1329)
+		- Added optional Quest ID and Step index inputs with a Use existing DB coordinates checkbox to the combined copy frame. The client-selected quest lookup supplies the saved location (including the first valid map row in a locations array) and the explicitly selected step's coordinates; the player position continues to supply the continent row, and changing the step does not select a different description template. Missing quests, authored steps, locations, or step coordinates keep the current-position output and show a status message. (2026.11.19.1358)
+		- Disabled and dimmed the existing-coordinate checkbox and step field until the entered quest has authored steps and a valid location. Hover overlays explain why disabled controls cannot be used, and new selections regenerate only the two coordinate snippets while preserving the separate NPC and comment controls. (2026.11.19.1358)
+		- Shortened all three copy fields to make room for a themed Update button beside each field and aligned Update All with the Quest ID and Step index row. Each button selects the refreshed text for copying. (2026.11.20.1513)
+		- Made each snippet refresh independently using the current position, NPC target, or turn-in target and zone as appropriate. Update All refreshes all three in one click, and coordinate refreshes honor the selected saved quest location and step while keeping the turn-in comment option applied. (2026.11.20.1513)
+		- Added Copy objective quantity to the Quest Helper's Contribution menu using the shared copy dialog. Its checked-by-default option emits the literal colored objectiveRemaining token, and turning it off enables a positive whole-number field that updates the standalone snippet as the player types. The copy field preserves the color codes as literal text. (2026.11.20.1729)
+		- Added Copy inventory count beside Copy objective quantity. Its item ID field looks up the localized name and generates a literal pale-mint {inventoryCount:itemID} followed by the matching {item:itemID:itemName} link. Enter or Update selects the resolved snippet for copying with its color codes intact. (2026.11.20.2058)
+		- Clear the previous inventory snippet when the ID changes, wait for typing to settle before requesting a name, and discard results from older edits or closed dialogs. Lookup failures leave the field empty and allow the player to retry. (2026.11.20.2058)
+		- Added a checked 3D choice to Object+Item Hyperlink and an optional model choice to Collect Items from Ground. Ground collection opens with an item-only tag and initially uses the existing 2D picture format when its preview is enabled. (2026.11.21.0030)
+		- Added an object ID and picture/model choice to Look/Interact with Object near NPC. Its checked 2D option generates an object tag, while the nearby NPC still follows the player's target and the description uses the current subzone and zone. (2026.11.21.0030)
+		- Added mutually exclusive NPC, 2D object, and 3D object choices to Cast Spell, Use Item, and Turn In Quest. The selected mode controls the editable ID and name and whether the target button appears, so an unrelated target change cannot replace an authored object. (2026.11.21.0030)
+		- Preserved manual NPC fields when switching back to an unchanged target. Finishing an item lookup or changing the object format now refreshes the copy text while keeping focus in the field the author is editing. (2026.11.21.0033)
+		- Preselected the disabled 3D checkbox and displayed the item-only status when Collect Items from Ground opens. Enabling the object preview now generates an object3ditem tag immediately. Authors can still select a 2D picture in the open dialog. (2026.11.21.0050)
+		- Updated the Look/Interact menu example and initial description to use object3d with the 2D picture checkbox cleared. Both read the same object placeholder so the nearby NPC and location keep their own fields. (2026.11.21.0050)
+		- Resolved typed item IDs for item-bearing descriptions, named /use macros, and inventory counts. Enter and Update submit immediately. Pending or failed lookups suppress unfinished copy text and keep their status when preview modes or targets change. Authors can enter an explicit ID:Item Name when their client lacks the item. (2026.11.21.0216)
+		- Applied the item label as the editable default object title in ground collection and the standalone hyperlink builder. A custom title survives deferred lookups and 2D/3D switches. Clearing it restores the default, and colons in the item label are preserved in the final item-name field. (2026.11.21.0216)
+		- Used the same item ID and optional name parser and object-title formatting as the Step Editor so the copy dialogs accept the same cross-client item references. (2026.11.21.0254)
+		- Fill object names in Object+Item Hyperlink and the object fields of the five description templates when the ID changes. Ground collection and the hyperlink builder recheck the current ID when item data arrives. Manually entered names survive delayed results and switching between picture and model previews. (2026.11.21.0439)
+		- Moved Descriptions, Macros, and Scripts and Run Cmds above the standalone Contribution actions, using the tracker's existing separator between the two groups. (2026.11.21.1454)
+		- Added a shared object viewer and interaction GUID dialog. View opens the selected picture or model by ID without a quest. Read GUID copies the readable interaction result into its own field and fills the object ID from a GameObject GUID. The dialog supplies both chat commands and a copyable catalog-named reference for the selected format, with the numeric ID as its fallback. (2026.11.21.1454)
+
+	RQE-Camelot.TOC
+		- Loaded the shared object-to-model lookup before the Classic Forever preview window so 3D quest links can resolve object IDs at first use. (2026.11.20.2306)
+
+	RQE-Classic.toc
+		- Loaded the shared object-to-model lookup before the Season of Discovery preview window so 3D quest links can resolve object IDs at first use. (2026.11.20.2306)
+
+	RQE-Tbc.toc
+		- Loaded the shared object-to-model lookup before the TBC Anniversary preview window so 3D quest links can resolve object IDs at first use. (2026.11.20.2306)
+
+	RQE.toc
+		- Loaded the shared object-to-model lookup before the Retail preview window so 3D quest links can resolve object IDs at first use. (2026.11.20.2306)
+
+	RQE_API.lua
+		- Added ToggleLegacyQuestLog to select the requested log entry and call Blizzard's ShowUIPanel and HideUIPanel on 2.x and Classic 1.x below 1.50. This gives Blizzard control of Escape handling and retains the existing selection and missing-frame fallbacks. (2026.11.20.1955)
+		- Added display-time expansion of explicit {inventoryCount:itemID} tokens independently of objective progress. Carried bag stacks supply all four clients' counts. Retail adds only the personal bank contribution, including reagents stored in its tabs. (2026.11.20.2027)
+		- Tracked rendered regions containing inventory counts until their release. Batched updates share item totals, compare the displayed text, and redraw affected rows or Separate Focus while preserving step controls and authored formatting. (2026.11.20.2027)
+		- Parsed numeric object3d and object3ditem references, preserved per-link model and item identities in HTML, and dispatched model and picture hovers to their respective loaders. Combined 3D references keep item tooltips, inventory counts, item matching, and their tag type during description edits. (2026.11.20.2306)
+		- Separated the model link's visible label from its viewer title. Compact 3D or [3D] tags use catalog names, an explicit name followed by :3D supplies a title override, and combined model/item links display their item name in Periwinkle. HTML labels and plain-text measurements use the same formatting. (2026.11.20.2337)
+		- Applied a height-relative vertical offset to object model framing on both model widget types, preserving any manual pan across model loads and viewport resizing. (2026.11.20.2337)
+		- Preserved the author's choice of [3D] or 3D for compact model links. The label appears exactly once with the chosen punctuation in the step list and Separate Focus, and both forms open the same titled preview. (2026.11.20.2338)
+		- Split object and item link handling so hovering queues the source picture or model while the item tooltip and count appear immediately. A left-click opens a 3D model directly. Releasing a pooled region cancels its pending preview before reuse. (2026.11.20.2345)
+		- Applied the existing warm orange item-link color to both combined tags in quest text and HTML. Standalone model links keep Periwinkle, and the combined link keeps its separate item and source object IDs. (2026.11.21.0030)
+		- Allowed ground-collection authors to select a picture or model when rewriting an item reference. Model drafts can explicitly request an OBJECTID placeholder. Finished models require numeric IDs, and pictures continue to accept custom keys and the blank-key x99 fallback. (2026.11.21.0030)
+		- Added shared parsing for author-supplied item names and recognized OBJECTID in editable 3D ground-item drafts so the Step Editor can restore or change an unfinished link. Numeric IDs remain required to display the model. (2026.11.21.0254)
+		- Let GetDefaultObjectTitle look up a numeric object key in the active edition's name table before using the supplied item name. Strip display markup from catalog labels and format reserved tag punctuation so the copied object and item names parse into their own fields. (2026.11.21.0439)
+		- Added a pickup-name option to GetDefaultObjectTitle so the Step Editor can store catalog names such as Wanted: Gath'Ilzogg with their original colons. Hyperlink fields continue to use the delimiter-safe spelling. (2026.11.21.0451)
+
+	RQE_ModelPreview.lua
+		- Added the RQE.ObjectFormat(objectKey, extension) testing entry point, which opens a cataloged object image in the existing viewer from an explicit file extension (for example a DXT5 .blp copy stored beside the shipped .tga) without needing the related quest. It reuses RQE.ShowObjectImagePreview with an explicit texture path, so drag, zoom, and reset behave exactly as for quest previews; the title shows the format in brackets. Used to compare texture compression candidates in game. (2026.11.19.2157)
+		- Object previews may now ship as .blp textures. The generated ObjectPreviewCatalog.lua already carries each file's extension, so cataloged .blp entries load unchanged; the unindexed fallbacks that guessed "<key> - <label>.tga" and "<key>.tga" now also try the matching .blp names. Quest-link previews keep their plain "Name (Object key)" title whatever the file format. (2026.11.19.2232)
+		- Added a quest-bound object model preview and the standalone RQE.Object3D(objectID, name) command. The model widget loads the mapped FileDataID and verifies the completed model before enabling rotation, zoom, and pan. Missing mappings and unavailable files show an explanation. (2026.11.20.2306)
+		- Added two object-only tilt buttons at the right edge of the viewport. A click tilts 45 degrees, and holding moves continuously up to the top or underside view. The bottom reset restores both axes while keeping the current position and zoom. Switching back to an NPC restores level pitch. (2026.11.20.2312)
+		- Raised the default object view by one quarter of the viewport height. Enlarged the four rotation arrows, preserved the upper tilt button's center and reset size, and lowered the underside button by 42 UI units. (2026.11.20.2337)
+		- Added Shift-left-drag rotation for NPCs and 3D objects. Horizontal movement turns the model and a downward pull exposes the top. Normal drag pans, the wheel zooms, and resetting the front keeps the player's pan and zoom. Direct object previews use the catalog name when no title is supplied. (2026.11.20.2337)
+		- Added a shared 0.30-second timer for quest-link hovers. A completed hover can replace the open preview only while the source and quest context are still valid. Direct opens and closing the viewer cancel pending replacements. (2026.11.20.2345)
+		- Removed the right-side tilt controls and made the horizontal rotation arrows exclusive to NPCs. The 3D object viewer keeps its centered restore button, drag-to-pan, wheel zoom, and Shift-drag rotation. (2026.11.20.2345)
+		- Checked the shared preview window's visibility before starting the hover timer. A closed viewer opens on hover immediately across all clients. A visible viewer keeps its 0.30-second replacement delay even while its model is loading. (2026.11.20.2350)
+		- Load a mapped object's creature display or item appearance through the native model widget when its skin depends on that appearance. Check the loaded file and, when available, the creature display before revealing it so another skin sharing the mesh cannot complete the wrong preview. (2026.11.21.0414)
+
+	RQE_ObjectModelCatalog.lua
+		- Added verified game-object ID to model FileDataID mappings for quest previews, including Anchorite Relic. The shared lookup supplies model assets independently of the custom picture catalog. (2026.11.20.2306)
+
+	RQEDatabase.lua
+		- Large DB update to include npcIDs and itemIDs in the description lines (2026.11.21.2314) 
+
+	RQEFrame.lua
+		- Connected the Retail and Forever step list and Separate Focus to live count updates, including searched steps. Coordinate blocks are remeasured as counts change so wrapped text clears the next row. (2026.11.20.2027)
+		- Enabled both new tags in Retail and Forever quest rows and Separate Focus hyperlinks. Each model link opens on hover or left-click and uses its own source object even when another tag displays the same item. (2026.11.20.2306)
+		- Assigned each Retail and Forever Separate Focus NPC and picture hyperlink its own hover identity and canceled pending previews on departure. Immediate model clicks and item tooltips use the same per-link metadata. (2026.11.20.2345)
+
+	RQEMacro.lua
+		- Carried each pickup object's show3D flag into its link and exported source row. The direction row and Separate Focus open numeric, flagged objects in the model viewer. Standard object links and custom picture keys use the picture viewer. (2026.11.21.0216)
+
+
 12.1.5.4 (2026.11.18)
 
 	**HIGHLIGHTS**
