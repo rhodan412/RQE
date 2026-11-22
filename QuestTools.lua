@@ -975,6 +975,34 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		ShowMenu(menu, self.QTQuestFilterButton)
 	end
 
+	local descriptionTargetDefaults = {
+		["Cast Spell on Object/NPC"] = "NPCNAME",
+		["Use Item on Object/NPC"] = "NPCNAME",
+		["Turn In Quest"] = "NPC",
+	}
+	local descriptionTargetMarker = "\001target\001"
+	local itemOnlyStatus = "Using the item-only description."
+
+	-- Finds the nearby object's slot in a description template or its menu example.
+	local function NearbyObjectPlaceholder(text)
+		return text:match("{object3d:OBJECTID:OBJECTNAME}") or text:match("{object:OBJECTID:OBJECTNAME}")
+			or text:match('"OBJECT"') or "OBJECT"
+	end
+
+	-- Shows the default target references supplied by the copy tool in its menu preview.
+	local function DescriptionMenuPreview(template)
+		local example = template.tooltip or template.text
+		local npcName = descriptionTargetDefaults[template.name]
+		if npcName and example then
+			local npc = "{npc:NPCID:" .. npcName .. "}"
+			return (example:gsub("OBJECT/NPC", npc):gsub("{npc:NPCID:[%u_]+}", npc))
+		elseif template.name == "Look/Interact with Object near NPC" and example then
+			return (example:gsub(NearbyObjectPlaceholder(example), "{object3d:OBJECTID:OBJECTNAME}", 1)
+				:gsub("{npc:NPCID:NPCTARGET}", "{npc:NPCID:NPCNAME}"))
+		end
+		return example
+	end
+
 	-- Opens Contribution tools with the same compact, themed rows and flyouts as the filter menu.
 	function RQE:ShowTargetNPCMenu()
 		if not ContributionLoaded() or not self.TargetNPCButton then return end
@@ -984,17 +1012,6 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		menu.rootAtCursor = nil
 		BuildMenu(menu, {
 			{ text = "Contribution", kind = "heading" },
-			-- Copies a database NPC table, keeping placeholders when target details are unavailable.
-			{ text = "Copy target NPC table", action = function()
-				self:ShowTargetNPCTableCopy()
-			end },
-			-- Shows the target NPC copy.
-			{ text = "Copy target NPC reference", action = function()
-				self:ShowTargetNPCCopy()
-			end },
-			-- Opens the standalone object/item hyperlink builder.
-			{ text = "Object+Item Hyperlink", tooltip = "{objectitem:OBJECTID:ITEMID:OBJECTNAME:ITEMNAME}",
-				action = function() self:ShowContributionObjectItemCopy() end },
 			-- Builds the NPC description-template submenu and its copy actions.
 			{ text = "Descriptions", submenu = "TargetNPCDescriptions", build = function()
 				local templates = RQE_Contribution and RQE_Contribution.GetStepEditorDescriptionTemplates
@@ -1005,7 +1022,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				for _, template in ipairs(templates) do
 					local selectedTemplate = template
 					rows[#rows + 1] = {
-						text = selectedTemplate.name, tooltip = selectedTemplate.tooltip or selectedTemplate.text, previewTooltip = true,
+						text = selectedTemplate.name, tooltip = DescriptionMenuPreview(selectedTemplate), previewTooltip = true,
 						-- Shows the contribution description copy.
 						action = function() self:ShowContributionDescriptionCopy(selectedTemplate) end,
 					}
@@ -1035,6 +1052,28 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				end
 				return rows
 			end },
+			-- Lists commands that contributors can run directly or copy into chat.
+			{ text = "Scripts and Run Cmds", submenu = "TargetNPCScripts", build = function()
+				return {
+					-- Opens the viewer and GUID reader together so a live object can be previewed or copied.
+					{ text = "Object viewer and interaction GUID", action = function()
+						self:ShowCopyableReferenceText("Object viewer and interaction GUID",
+							"Enter an object ID or open an interaction and click Read GUID.", "", { runCommand = true })
+					end },
+				}
+			end },
+			{ kind = "separator" },
+			-- Copies a database NPC table, keeping placeholders when target details are unavailable.
+			{ text = "Copy target NPC table", action = function()
+				self:ShowTargetNPCTableCopy()
+			end },
+			-- Copies the current target's NPC reference.
+			{ text = "Copy target NPC reference", action = function()
+				self:ShowTargetNPCCopy()
+			end },
+			-- Opens the standalone object/item hyperlink builder.
+			{ text = "Object+Item Hyperlink", tooltip = "{object3ditem:OBJECTID:ITEMID:OBJECTNAME:ITEMNAME}",
+				action = function() self:ShowContributionObjectItemCopy() end },
 			-- Prints the player's continent coordinates for diagnostics.
 			{ text = "Copy player locations", action = function()
 				RQE.DebugPrintPlayerContinentPosition(nil, "locations")
@@ -1051,9 +1090,21 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			{ text = "Copy player coordinate hotspots for existing entry", action = function()
 				self:ShowPlayerCoordinatesCopy("coordinateHotspots", true)
 			end },
+			-- Opens one authoring frame for location, pickup NPC, and turn-in hotspot snippets.
+			{ text = "Copy quest location, pickup, and turn-in", action = function()
+				self:ShowCombinedContributionCopy()
+			end },
 			-- Shows the player zone copy.
 			{ text = "Copy subzone and zone", action = function()
 				self:ShowPlayerZoneCopy()
+			end },
+			-- Opens the standalone copy field for a dynamic objective count or a fixed number.
+			{ text = "Copy objective quantity", action = function()
+				self:ShowContributionQuantityCopy()
+			end },
+			-- Opens the item ID field for copying an inventory count and its item link.
+			{ text = "Copy inventory count", action = function()
+				self:ShowContributionInventoryCountCopy()
 			end },
 		})
 		ShowMenu(menu, self.TargetNPCButton)
@@ -1255,6 +1306,14 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	-- deferred pass runs after the context menu has released keyboard focus.
 	local function SelectReferenceText(frame)
 		if not frame:IsShown() then return end
+		if frame.runCommand and frame.copyValue == "" then
+			frame.commandControls.input:SetFocus()
+			return
+		end
+		if frame.descriptionState and frame.descriptionState.inventoryCount and frame.copyValue == "" then
+			frame.macroIDInput:SetFocus()
+			return
+		end
 		frame.editBox:SetFocus()
 		frame.editBox:SetCursorPosition(0)
 		frame.editBox:HighlightText()
@@ -1298,6 +1357,102 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		frame.editBox:SetText(frame.copyDisplayValue)
 	end
 
+	-- Resolves a localized item name through Contribution, or reads the client cache when only RQE is available.
+	local function RequestContributionItemName(id, callback)
+		if RQE_Contribution and RQE_Contribution.GetItemName then
+			RQE_Contribution:GetItemName(id, callback)
+		else
+			local name = ClientCall("C_Item.GetItemNameByID", id) or ClientCall("GetItemInfo", id)
+			callback(id, name)
+		end
+	end
+
+	local itemUnavailable = "Item name unavailable. Enter ID:Item Name or press Update to retry."
+
+	-- Fills an editable object title from the catalog or item until the author supplies a name.
+	local function UpdateContributionObjectName(state, idInput, nameInput, itemName, editedName)
+		if editedName then state.manualObjectName = nameInput:GetText():find("%S") ~= nil end
+		if state.manualObjectName then return end
+		local title = RQE.API.GetDefaultObjectTitle(itemName, idInput:GetText())
+		if nameInput:GetText() ~= title then nameInput:SetText(title) end
+		if editedName and title ~= "" then nameInput:HighlightText() end
+	end
+
+	-- Keeps the ground object's editable draft and the last valid ID used in the copy text correctly named.
+	local function UpdateGroundObjectTitle(frame, state)
+		if not state.hasObjectItemOption or state.manualObjectName then return end
+		state.objectName = RQE.API.GetDefaultObjectTitle(state.itemName, state.objectID)
+		UpdateContributionObjectName(state, frame.descriptionObjectIDInput, frame.descriptionObjectNameInput, state.itemName)
+	end
+
+	-- Resolves the latest item ID for descriptions, named macros and inventory snippets without interrupting typing.
+	local function UpdateContributionNamedItem(frame, submit)
+		local state = frame.descriptionState or frame.macroState
+		local id, suppliedName, input = RQE.API.ReadAuthoringItemID(frame.macroIDInput:GetText())
+		if id and state.itemID == id and state.suppliedName == suppliedName then
+			if state.itemName then
+				if submit then SelectReferenceText(frame) end
+				return
+			end
+			if state.loading and (state.requestStarted or not submit) then
+				if submit then SelectReferenceText(frame) end
+				state.selectOnLoad = submit or state.selectOnLoad
+				return
+			end
+		end
+
+		state.lookupSerial = (state.lookupSerial or 0) + 1
+		state.itemID, state.itemName, state.suppliedName = id, nil, suppliedName
+		UpdateGroundObjectTitle(frame, state)
+		state.loading, state.requestStarted, state.selectOnLoad = id ~= nil, false, submit
+		state.needsItemName = input ~= ""
+		state.itemLookupStatus = nil
+		-- Rebuild the active tool using its current target, quantity and preview selection.
+		local function refresh()
+			if frame.descriptionState == state then RQE:RefreshContributionDescriptionCopy(frame, true)
+			else RQE:RefreshContributionMacroCopy(frame, true) end
+		end
+		if not id then
+			state.itemLookupStatus = input ~= "" and "Enter a valid positive item ID." or nil
+			frame.macroStatus:SetText(state.itemLookupStatus or "Enter an item ID.")
+			refresh()
+			return
+		end
+		state.itemLookupStatus = "Loading item name..."
+		refresh()
+		if submit then SelectReferenceText(frame) end
+		local serial = state.lookupSerial
+		-- Ignore previously typed IDs and requests from a closed or repurposed dialog.
+		local function isCurrent()
+			return (frame.descriptionState == state or frame.macroState == state)
+				and state.lookupSerial == serial and frame:IsShown()
+		end
+		-- Apply a resolved or author-supplied label to this item and its automatically named ground object.
+		local function applyName(resolvedID, name)
+			if not isCurrent() or id ~= resolvedID then return end
+			state.loading = false
+			if type(name) ~= "string" or not name:find("%S") or name:find("[{}\r\n]") then
+				state.itemLookupStatus = itemUnavailable
+				frame.macroStatus:SetText(itemUnavailable)
+				return
+			end
+			state.itemLookupStatus, state.itemName = nil, name
+			UpdateGroundObjectTitle(frame, state)
+			frame.macroStatus:SetText(state.inventoryCount and "" or ("Updated item: " .. name))
+			refresh()
+			if state.inventoryCount and state.selectOnLoad then SelectReferenceText(frame)
+			elseif frame.editBox:HasFocus() then frame.editBox:HighlightText() end
+		end
+		if suppliedName then return applyName(id, suppliedName) end
+		-- Looks up only the latest ID once typing settles or the player submits it.
+		local function requestName()
+			if not isCurrent() then return end
+			state.requestStarted = true
+			RequestContributionItemName(id, applyName)
+		end
+		if submit then requestName() else After(0.25, requestName) end
+	end
+
 	-- Adds the three editable hyperlink fields and their single Update button to the shared copy dialog.
 	local function CreateObjectItemCopyControls(frame)
 		frame.objectItemInputs, frame.objectItemRows = {}, {}
@@ -1313,14 +1468,18 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			input:SetSize(field == "objectName" and 350 or 120, 22)
 			input:SetPoint("LEFT", label, "RIGHT", 8, 0)
 			input:SetAutoFocus(false)
-			input:SetMaxLetters(field == "itemID" and 12 or field == "objectID" and 64 or 255)
-			-- Tracks draft edits and looks up item names without applying unfinished object edits to the copy field.
-			input:SetScript("OnTextChanged", function(_, userInput)
+			input:SetMaxLetters(field == "objectID" and 64 or 255)
+			-- Updates suggested names as the author types and keeps edits in the draft until Update or Enter.
+			input:SetScript("OnTextChanged", function(box, userInput)
 				local state = frame.objectItemState
 				if not userInput or not state then return end
 				state.editSerial = state.editSerial + 1
-				if field == "objectName" then state.objectNameSerial = state.objectNameSerial + 1 end
-				if field == "itemID" then RQE:LookupContributionObjectItem(frame) end
+				if field == "itemID" then
+					RQE:LookupContributionObjectItem(frame)
+				else
+					local inputs = frame.objectItemInputs
+					UpdateContributionObjectName(state, inputs.objectID, inputs.objectName, state.itemName, field == "objectName")
+				end
 			end)
 			-- Applies all current fields and selects the resulting hyperlink for copying.
 			input:SetScript("OnEnterPressed", function() RQE:UpdateContributionObjectItemCopy(frame) end)
@@ -1348,11 +1507,223 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		if RQE.UI then RQE.UI:StyleTextButton(frame.objectItemUpdateButton) end
 	end
 
+	-- Adds the exclusive target choices and editable ID and name used in three description templates.
+	local function CreateDescriptionTargetControls(frame)
+		local row = CreateFrame("Frame", nil, frame.macroControls)
+		row:SetHeight(26)
+		frame.descriptionTargetModeRow, frame.descriptionTargetModes = row, {}
+		for index, choice in ipairs({ { "npc", "NPC" }, { "object", "Object (2D)" }, { "object3d", "Object (3D)" } }) do
+			local mode = choice[1]
+			local check = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
+			check:SetSize(24, 24)
+			check:SetPoint("LEFT", row, "LEFT", (index - 1) * 132, 0)
+			local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			label:SetPoint("LEFT", check, "RIGHT", 3, 0)
+			label:SetText(choice[2])
+			-- Selects one target kind and shows the fields saved for it.
+			check:SetScript("OnClick", function() RQE:SetContributionDescriptionTargetMode(frame, mode) end)
+			frame.descriptionTargetModes[mode] = check
+		end
+		for _, field in ipairs({ "ID", "Name" }) do
+			local fieldRow = CreateFrame("Frame", nil, frame.macroControls)
+			fieldRow:SetHeight(26)
+			local label = fieldRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			label:SetSize(90, 22)
+			label:SetPoint("LEFT", fieldRow, "LEFT", 0, 0)
+			local input = CreateFrame("EditBox", nil, fieldRow, "InputBoxTemplate")
+			input:SetPoint("LEFT", label, "RIGHT", 8, 0)
+			input:SetSize(field == "ID" and 120 or 350, 22)
+			input:SetMaxLetters(field == "ID" and 64 or 255)
+			input:SetAutoFocus(false)
+			-- Fills object titles and updates the selected target link as the author edits either field.
+			input:SetScript("OnTextChanged", function(_, userInput)
+				local state = frame.descriptionState
+				if not userInput or not state or not state.targetMode then return end
+				if state.targetMode ~= "npc" then
+					UpdateContributionObjectName(state.objectDraft, frame.descriptionTargetIDInput,
+						frame.descriptionTargetNameInput, nil, field == "Name")
+				end
+				RQE:UpdateContributionDescriptionTarget(frame, true)
+			end)
+			-- Selects the finished description for copying after the player submits either field.
+			input:SetScript("OnEnterPressed", function() RQE:UpdateContributionDescriptionTarget(frame) end)
+			-- Transfers focus between the target's ID and name.
+			input:SetScript("OnTabPressed", function(box)
+				box:ClearFocus()
+				local nextBox = field == "ID" and frame.descriptionTargetNameInput or frame.descriptionTargetIDInput
+				nextBox:SetFocus()
+				nextBox:HighlightText()
+			end)
+			-- Returns focus to the copyable description when Escape is pressed.
+			input:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
+			if RQE.UI then RQE.UI:StyleSearchBox(input) end
+			input:SetTextInsets(12, 10, 0, 0)
+			frame["descriptionTarget" .. field .. "Row"] = fieldRow
+			frame["descriptionTarget" .. field .. "Label"] = label
+			frame["descriptionTarget" .. field .. "Input"] = input
+		end
+	end
+
+	-- Displays the selected target fields and offers live NPC capture only while NPC is selected.
+	local function ShowDescriptionTargetFields(frame)
+		local state = frame.descriptionState
+		local isNPC = state.targetMode == "npc"
+		local draft = isNPC and state.npcDraft or state.objectDraft
+		for mode, check in pairs(frame.descriptionTargetModes) do check:SetChecked(mode == state.targetMode) end
+		frame.descriptionTargetIDLabel:SetText(isNPC and "NPC ID" or "Object ID")
+		frame.descriptionTargetNameLabel:SetText(isNPC and "NPC name" or "Object name")
+		frame.descriptionTargetIDInput:SetText(draft.id)
+		frame.descriptionTargetNameInput:SetText(draft.name)
+		frame.macroNPCRow:SetShown(isNPC)
+		frame.macroNPCprimary:SetShown(isNPC)
+	end
+
+	-- Creates the viewer, interaction reader, and copyable object reference in a single command panel.
+	local function CreateRunCommandControls(frame)
+		local controls = CreateFrame("Frame", nil, frame)
+		controls:SetPoint("TOPLEFT", frame.editBox, "BOTTOMLEFT", 0, -10)
+		controls:SetPoint("TOPRIGHT", frame.editBox, "BOTTOMRIGHT", 0, -10)
+		controls:SetHeight(152)
+
+		-- Builds a labeled field and keeps generated results intact for copying.
+		local function createField(title, top, rightInset, copyOnly)
+			local label = controls:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			label:SetPoint("TOPLEFT", 0, top - 5)
+			label:SetText(title)
+			local box = CreateFrame("EditBox", nil, controls, "InputBoxTemplate")
+			box:SetPoint("TOPLEFT", 76, top)
+			box:SetPoint("TOPRIGHT", -rightInset, top)
+			box:SetHeight(24)
+			box:SetAutoFocus(false)
+			if RQE.UI then RQE.UI:StyleSearchBox(box) end
+			box:SetTextInsets(10, 8, 0, 0)
+			-- Closes the command dialog from any of its fields.
+			box:SetScript("OnEscapePressed", function() frame:Hide() end)
+			if copyOnly then
+				-- Restores the generated text after an attempted edit.
+				box:SetScript("OnTextChanged", function(field, userInput)
+					if userInput then field:SetText(field.copyValue); field:HighlightText() end
+				end)
+				-- Selects the complete field even if it already has keyboard focus.
+				box:SetScript("OnMouseUp", function(field) field:SetFocus(); field:HighlightText() end)
+			end
+			return box
+		end
+
+		-- Places a themed action button beside the corresponding field.
+		local function createButton(title, top)
+			local button = CreateFrame("Button", nil, controls, "UIPanelButtonTemplate")
+			button:SetPoint("TOPRIGHT", 0, top)
+			button:SetSize(96, 24)
+			button.label = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			button.label:SetPoint("CENTER")
+			button.label:SetText(title)
+			if RQE.UI then RQE.UI:StyleTextButton(button) end
+			return button
+		end
+
+		-- Stores a generated value and displays it without changing the player's current input focus.
+		local function setField(box, value)
+			box.copyValue = value
+			box:SetText(value)
+			box:SetCursorPosition(0)
+		end
+		controls.input = createField("Object ID", 0, 108, false)
+		controls.viewButton = createButton("View", 0)
+		controls.reference = createField("Reference", -64, 0, true)
+		controls.dumpCommand = createField("Command", -96, 108, true)
+		setField(controls.dumpCommand, '/dump UnitGUID("npc")')
+		controls.readButton = createButton("Read GUID", -96)
+		controls.guidResult = createField("Full GUID", -128, 0, true)
+		controls.choices = {}
+
+		-- Accepts positive decimal object entry IDs that fit the client's unsigned 32-bit field.
+		local function readObjectID(text)
+			local id = tonumber(text:match("^%s*(%d+)%s*$") or "")
+			if id and id > 0 and id <= 4294967295 then return id end
+		end
+
+		-- Updates the viewer command and the quest reference whenever the ID or preview format changes.
+		local function updateObjectCommand()
+			local id = readObjectID(controls.input:GetText())
+			controls.viewButton:SetEnabled(id ~= nil)
+			SetReferenceCopyValue(frame, id and ("/run RQE." .. controls.viewer .. "(" .. id .. ")") or "")
+			local reference = id and tostring(id) or ""
+			local name = id and RQE.API.GetDefaultObjectTitle(nil, id, true)
+			if name and name ~= "" and not name:find("[|%c]") then
+				local tag = controls.viewer == "Object3D" and "object3d" or "object"
+				reference = "{" .. tag .. ":" .. id .. ":" .. name .. "}"
+			end
+			setField(controls.reference, reference)
+		end
+
+		-- Checks the selected format and rebuilds the command and reference for that viewer.
+		local function selectFormat(viewer)
+			controls.viewer = viewer
+			for key, check in pairs(controls.choices) do check:SetChecked(key == viewer) end
+			updateObjectCommand()
+		end
+		for index, choice in ipairs({ { "Object3D", "3D model" }, { "Object", "2D picture" } }) do
+			local viewer = choice[1]
+			local check = CreateFrame("CheckButton", nil, controls, "UICheckButtonTemplate")
+			check:SetPoint("TOPLEFT", (index - 1) * 125, -32)
+			check:SetSize(24, 24)
+			local caption = controls:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			caption:SetPoint("LEFT", check, "RIGHT", 3, 0)
+			caption:SetText(choice[2])
+			controls.choices[viewer] = check
+			-- Changes the preview format and selects the updated command for copying.
+			check:SetScript("OnClick", function() selectFormat(viewer); SelectReferenceText(frame) end)
+		end
+		-- Retains manually typed IDs as the fallback when a later interaction has no readable object.
+		controls.input:SetScript("OnTextChanged", function(box, userInput)
+			if userInput then controls.manualID = box:GetText(); updateObjectCommand() end
+		end)
+		-- Selects the current viewer command when the player submits an ID.
+		controls.input:SetScript("OnEnterPressed", function() SelectReferenceText(frame) end)
+		-- Calls the chosen viewer directly without requiring an active quest.
+		controls.viewButton:SetScript("OnClick", function()
+			local id = readObjectID(controls.input:GetText())
+			if id then RQE[controls.viewer](id) end
+		end)
+		-- Reads the open interaction and uses field six of a GameObject GUID as its object entry ID.
+		controls.readButton:SetScript("OnClick", function()
+			local ok, guid = pcall(UnitGUID, "npc")
+			local result, id
+			if not ok or (issecretvalue and issecretvalue(guid)) then
+				result = "Unavailable"
+			elseif type(guid) == "string" then
+				result = guid
+				local entry = guid:match("^GameObject%-%d+%-%d+%-%d+%-%d+%-(%d+)%-%x+$")
+				if entry then id = readObjectID(entry) end
+			else
+				result = "nil"
+			end
+			setField(controls.guidResult, result)
+			controls.input:SetText(id and tostring(id) or controls.manualID)
+			updateObjectCommand()
+			local selected = id and controls.reference or controls.guidResult
+			selected:SetFocus()
+			selected:HighlightText()
+		end)
+		-- Discards prior command drafts and starts a new viewer session in 3D.
+		function controls:Reset()
+			self.manualID = ""
+			self.input:SetText("")
+			setField(self.guidResult, "")
+			selectFormat("Object3D")
+		end
+		return controls
+	end
+
 	-- Creates or updates the movable copy dialog and selects the supplied text.
 	function RQE:ShowCopyableReferenceText(header, title, value, options)
-		if type(header) ~= "string" or header == ""
-			or type(value) ~= "string" or value == "" then return end
+		local descriptionState = options and options.descriptionState
+		local runCommand = options and options.runCommand
+		if type(header) ~= "string" or header == "" or type(value) ~= "string" then return end
+		if value == "" and not (descriptionState and descriptionState.inventoryCount) and not runCommand then return end
 		self:CloseQuestFilterMenus()
+		if self.CombinedContributionCopyFrame then self.CombinedContributionCopyFrame:Hide() end
 		local frame = self.QuestReferenceLinkFrame
 		if not frame then
 			frame = CreateFrame("Frame", "RQEQuestReferenceLinkFrame", UIParent, "BackdropTemplate")
@@ -1403,6 +1774,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.macroControls = CreateFrame("Frame", nil, frame)
 			frame.macroControls:SetPoint("TOPLEFT", frame.editBox, "BOTTOMLEFT", 0, -10)
 			frame.macroControls:SetPoint("TOPRIGHT", frame.editBox, "BOTTOMRIGHT", 0, -10)
+			CreateDescriptionTargetControls(frame)
 			CreateObjectItemCopyControls(frame)
 			frame.macroIDRow = CreateFrame("Frame", nil, frame.macroControls)
 			frame.macroIDRow:SetPoint("TOPLEFT", frame.macroControls, "TOPLEFT")
@@ -1416,6 +1788,13 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.macroIDInput:SetPoint("LEFT", frame.macroIDLabel, "RIGHT", 8, 0)
 			frame.macroIDInput:SetAutoFocus(false)
 			frame.macroIDInput:SetMaxLetters(12)
+			-- Starts a lookup as the player types an ID into a tool that needs a localized item name.
+			frame.macroIDInput:SetScript("OnTextChanged", function(_, userInput)
+				local state = frame.descriptionState or frame.macroState
+				if userInput and state and state.idKind == "item" and (frame.descriptionState or state.hasItemName) then
+					UpdateContributionNamedItem(frame, false)
+				end
+			end)
 			frame.macroIDButton = CreateFrame("Button", nil, frame.macroIDRow, "UIPanelButtonTemplate")
 			frame.macroIDButton:SetSize(150, 24)
 			frame.macroIDButton:SetPoint("LEFT", frame.macroIDInput, "RIGHT", 14, 0)
@@ -1432,8 +1811,12 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				if frame.descriptionState then RQE:UpdateContributionDescriptionID(frame)
 				else RQE:UpdateContributionMacroID(frame) end
 			end)
-			-- Releases keyboard focus when Escape is pressed.
-			frame.macroIDInput:SetScript("OnEscapePressed", function(box) box:ClearFocus(); SelectReferenceText(frame) end)
+			-- Closes the inventory tool or returns focus to the current template's copy field.
+			frame.macroIDInput:SetScript("OnEscapePressed", function(box)
+				if frame.descriptionState and frame.descriptionState.inventoryCount then frame:Hide(); return end
+				box:ClearFocus()
+				SelectReferenceText(frame)
+			end)
 			frame.macroQuantityRow = CreateFrame("Frame", nil, frame.macroControls)
 			frame.macroQuantityRow:SetHeight(26)
 			frame.macroQuantityLabel = frame.macroQuantityRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1497,6 +1880,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			frame.descriptionObjectItemMode:SetScript("OnClick", function()
 				RQE:UpdateContributionDescriptionObjectItemMode(frame)
 			end)
+			frame.objectPreviewFormatRow = CreateFrame("Frame", nil, frame.macroControls)
+			frame.objectPreviewFormatRow:SetHeight(26)
+			frame.objectPreviewFormatCheck = CreateFrame("CheckButton", nil, frame.objectPreviewFormatRow, "UICheckButtonTemplate")
+			frame.objectPreviewFormatCheck:SetSize(24, 24)
+			frame.objectPreviewFormatCheck:SetPoint("LEFT", frame.objectPreviewFormatRow, "LEFT", 0, 0)
+			frame.objectPreviewFormatLabel = frame.objectPreviewFormatRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			frame.objectPreviewFormatLabel:SetPoint("LEFT", frame.objectPreviewFormatCheck, "RIGHT", 4, 0)
+			-- Switches the open dialog between a model and a picture without clearing its fields.
+			frame.objectPreviewFormatCheck:SetScript("OnClick", function()
+				RQE:UpdateContributionObjectPreviewFormat(frame)
+			end)
 			for _, field in ipairs({ "ID", "Name" }) do
 				local row = CreateFrame("Frame", nil, frame.macroControls)
 				row:SetHeight(26)
@@ -1511,7 +1905,11 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				input:SetMaxLetters(field == "ID" and 64 or 255)
 				-- Applies valid object edits without moving keyboard focus away from the field being typed in.
 				input:SetScript("OnTextChanged", function(_, userInput)
-					if userInput then RQE:UpdateContributionDescriptionObjectItem(frame, true) end
+					local state = frame.descriptionState
+					if not userInput or not state then return end
+					UpdateContributionObjectName(state, frame.descriptionObjectIDInput, frame.descriptionObjectNameInput,
+						state.itemName, field == "Name")
+					RQE:UpdateContributionDescriptionObjectItem(frame, true)
 				end)
 				-- Applies object edits and selects the finished description for copying.
 				input:SetScript("OnEnterPressed", function()
@@ -1529,9 +1927,14 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				-- Explains accepted object keys and the separators reserved by the combined-tag format.
 				input:SetScript("OnEnter", function(box)
 					GameTooltip:SetOwner(box, "ANCHOR_RIGHT")
-					GameTooltip:SetText(field == "ID"
-						and "Object ID or custom key such as bt002. Leave blank to use x99."
-						or "Object title; omit colons, braces, and line breaks. Leave blank to use OBJECTNAME.", 1, 1, 1, 1, true)
+					local state = frame.descriptionState
+					local idHelp = state and state.use3DObject and "Positive numeric object ID. Leave blank to use OBJECTID."
+						or ("Object ID or custom key such as bt002. Leave blank to use "
+							.. (state and state.hasNearbyObject and "OBJECTID." or "x99."))
+					local nameHelp = state and state.hasObjectItemOption
+						and "Clear to use the catalog name or item name. Omit colons, braces, and line breaks."
+						or "Clear to use the catalog name when available. Omit colons, braces, and line breaks."
+					GameTooltip:SetText(field == "ID" and idHelp or nameHelp, 1, 1, 1, 1, true)
 					GameTooltip:Show()
 				end)
 				-- Hides the object-field help when the pointer leaves it.
@@ -1631,6 +2034,8 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				frame.editBox:ClearFocus()
 				frame.macroIDInput:ClearFocus()
 				frame.macroQuantityInput:ClearFocus()
+				frame.descriptionTargetIDInput:ClearFocus()
+				frame.descriptionTargetNameInput:ClearFocus()
 				frame.descriptionObjectIDInput:ClearFocus()
 				frame.descriptionObjectNameInput:ClearFocus()
 				frame.macroObjectInput:ClearFocus()
@@ -1640,6 +2045,8 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				frame.descriptionState = nil
 				frame.targetNPCMode = nil
 				frame.objectItemState = nil
+				if frame.commandControls then frame.commandControls.input:ClearFocus() end
+				frame.runCommand = nil
 			end)
 			RegisterEscape(frame)
 			self.QuestReferenceLinkFrame = frame
@@ -1676,12 +2083,17 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		frame.editBox:SetMultiLine(multiline)
 		frame.editBox:SetHeight(multiline and 170 or 24)
 		local macroState = options and options.macroState
-		local descriptionState = options and options.descriptionState
 		local objectItemState = options and options.objectItemState
 		frame.macroState = macroState
 		frame.descriptionState = descriptionState
 		frame.targetNPCMode = options and options.targetNPCMode
 		frame.objectItemState = objectItemState
+		frame.runCommand = runCommand
+		if runCommand and not frame.commandControls then frame.commandControls = CreateRunCommandControls(frame) end
+		if frame.commandControls then
+			frame.commandControls:SetShown(runCommand ~= nil)
+			if runCommand then frame.commandControls:Reset() end
+		end
 		for field, input in pairs(frame.objectItemInputs) do
 			input:ClearFocus()
 			input:SetText("")
@@ -1693,15 +2105,21 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		local hasObject = (macroState and macroState.hasObject) or (descriptionState and descriptionState.hasObject)
 		local hasObjectItemOption = descriptionState and descriptionState.hasObjectItemOption or false
 		local useObjectItem = hasObjectItemOption and descriptionState.useObjectItem == true
+		local hasNearbyObject = descriptionState and descriptionState.hasNearbyObject or false
+		local showObjectFields = hasObjectItemOption or hasNearbyObject
+		local enableObjectFields = useObjectItem or hasNearbyObject
+		local hasObjectFormat = objectItemState ~= nil or showObjectFields
+		local formatState = objectItemState or descriptionState
+		local is3D = formatState and formatState.use3DObject == true
 		local hasGossip = macroState and macroState.hasGossip
 		local hasDualNPC = macroState and macroState.dualNPC == true
 		local hasNPCButton = (macroState and type(macroState.primary) == "string" and macroState.primary ~= "")
 			or (descriptionState and descriptionState.hasNPCButton) or frame.targetNPCMode ~= nil
 		local controlsHeight = 0
-		frame.macroControls:SetShown(hasID or hasQuantity or hasObject or hasObjectItemOption
-			or hasGossip or hasNPCButton or objectItemState ~= nil)
+		frame.macroControls:SetShown(hasID or hasQuantity or hasObject or hasObjectFormat or hasGossip or hasNPCButton)
 		frame.macroIDRow:SetShown(hasID or false)
 		frame.macroQuantityRow:SetShown(hasQuantity or false)
+		frame.macroQuantityButton:SetShown(not (descriptionState and descriptionState.quantityOnly))
 		frame.descriptionQuantityModeRow:SetShown(descriptionState and hasQuantity or false)
 		local useObjectiveRemaining = descriptionState and hasQuantity and descriptionState.useObjectiveRemaining or false
 		frame.descriptionQuantityMode:SetChecked(useObjectiveRemaining)
@@ -1710,20 +2128,30 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		frame.macroQuantityRow:SetAlpha(useObjectiveRemaining and 0.5 or 1)
 		frame.descriptionObjectItemModeRow:SetShown(hasObjectItemOption)
 		frame.descriptionObjectItemMode:SetChecked(useObjectItem)
-		frame.descriptionObjectIDRow:SetShown(hasObjectItemOption)
-		frame.descriptionObjectNameRow:SetShown(hasObjectItemOption)
-		frame.descriptionObjectIDInput:SetEnabled(useObjectItem)
-		frame.descriptionObjectNameInput:SetEnabled(useObjectItem)
-		frame.descriptionObjectIDRow:SetAlpha(useObjectItem and 1 or 0.5)
-		frame.descriptionObjectNameRow:SetAlpha(useObjectItem and 1 or 0.5)
-		frame.descriptionObjectIDInput:SetText(hasObjectItemOption and descriptionState.objectID or "")
-		frame.descriptionObjectNameInput:SetText(hasObjectItemOption and descriptionState.objectName or "")
+		frame.objectPreviewFormatRow:SetShown(hasObjectFormat)
+		frame.objectPreviewFormatLabel:SetText(hasNearbyObject and "Use 2D object picture" or "Use 3D object model")
+		frame.objectPreviewFormatCheck:SetChecked((hasNearbyObject and not is3D) or (not hasNearbyObject and is3D) or false)
+		frame.objectPreviewFormatCheck:SetEnabled(not hasObjectItemOption or useObjectItem)
+		frame.objectPreviewFormatRow:SetAlpha(hasObjectItemOption and not useObjectItem and 0.5 or 1)
+		frame.descriptionObjectIDRow:SetShown(showObjectFields)
+		frame.descriptionObjectNameRow:SetShown(showObjectFields)
+		frame.descriptionObjectIDInput:SetEnabled(enableObjectFields)
+		frame.descriptionObjectNameInput:SetEnabled(enableObjectFields)
+		frame.descriptionObjectIDRow:SetAlpha(enableObjectFields and 1 or 0.5)
+		frame.descriptionObjectNameRow:SetAlpha(enableObjectFields and 1 or 0.5)
+		frame.descriptionObjectIDInput:SetText(showObjectFields and descriptionState.objectID or "")
+		frame.descriptionObjectNameInput:SetText(showObjectFields and descriptionState.objectName or "")
 		frame.macroObjectRow:SetShown(hasObject or false)
 		frame.macroGossipRow:SetShown(hasGossip or false)
 		frame.macroNPCRow:SetShown(hasNPCButton or false)
 		frame.macroNPCsecondary:SetShown(hasDualNPC or false)
+		local hasTargetChoice = descriptionState and descriptionState.targetMode ~= nil or false
+		frame.descriptionTargetModeRow:SetShown(hasTargetChoice)
+		frame.descriptionTargetIDRow:SetShown(hasTargetChoice)
+		frame.descriptionTargetNameRow:SetShown(hasTargetChoice)
+		frame.macroNPCprimary:Show()
 		frame.hint:ClearAllPoints()
-		if hasID or hasQuantity or hasObject or hasObjectItemOption or hasGossip or hasNPCButton or objectItemState then
+		if hasID or hasQuantity or hasObject or hasObjectFormat or hasGossip or hasNPCButton then
 			local rowTop = 0
 			-- Places a visible flyout row and advances the layout cursor.
 			local function positionRow(row, visible)
@@ -1737,17 +2165,28 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			positionRow(frame.descriptionQuantityModeRow, descriptionState and hasQuantity)
 			positionRow(frame.macroQuantityRow, hasQuantity)
 			positionRow(frame.descriptionObjectItemModeRow, hasObjectItemOption)
-			positionRow(frame.descriptionObjectIDRow, hasObjectItemOption)
-			positionRow(frame.descriptionObjectNameRow, hasObjectItemOption)
+			positionRow(frame.objectPreviewFormatRow, hasObjectFormat)
+			positionRow(frame.descriptionObjectIDRow, showObjectFields)
+			positionRow(frame.descriptionObjectNameRow, showObjectFields)
 			positionRow(frame.macroObjectRow, hasObject)
+			positionRow(frame.descriptionTargetModeRow, hasTargetChoice)
+			positionRow(frame.descriptionTargetIDRow, hasTargetChoice)
+			positionRow(frame.descriptionTargetNameRow, hasTargetChoice)
 			positionRow(frame.macroGossipRow, hasGossip)
-			positionRow(frame.macroNPCRow, hasNPCButton)
+			positionRow(frame.macroNPCRow, hasNPCButton and not hasTargetChoice)
+			if hasTargetChoice then
+				frame.macroNPCRow:ClearAllPoints()
+				frame.macroNPCRow:SetPoint("LEFT", frame.descriptionTargetIDInput, "RIGHT", 14, 0)
+				frame.macroNPCRow:SetSize(150, 26)
+				ShowDescriptionTargetFields(frame)
+			end
 			positionRow(frame.objectItemRows.itemID, objectItemState ~= nil)
 			positionRow(frame.objectItemRows.objectID, objectItemState ~= nil)
 			positionRow(frame.objectItemRows.objectName, objectItemState ~= nil)
 			controlsHeight = -rowTop + 18
 			frame.macroControls:SetHeight(controlsHeight)
 			frame.macroIDLabel:SetText(hasID and (idKind == "item" and "Item ID" or "Spell ID") or "")
+			frame.macroIDInput:SetMaxLetters(idKind == "item" and (descriptionState or macroState.hasItemName) and 255 or 12)
 			frame.macroObjectLabel:SetText(descriptionState and descriptionState.objectPlaceholder == "OBJECT/NPC"
 				and "Object/NPC" or "Object name")
 			frame.macroIDInput:SetText("")
@@ -1758,13 +2197,16 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				or hasDualNPC and macroState.primaryLabel or "NPC target")
 			frame.macroNPCsecondary.label:SetText(macroState and macroState.secondaryLabel or "Second NPC")
 			local buttonText = descriptionState and "Update description" or "Update macro"
-			frame.macroIDButton.label:SetText(buttonText)
+			frame.macroIDButton.label:SetText(descriptionState and descriptionState.inventoryCount and "Update" or buttonText)
 			frame.macroQuantityButton.label:SetText(buttonText)
 			frame.macroObjectButton.label:SetText(buttonText)
 			frame.macroStatus:ClearAllPoints()
 			frame.macroStatus:SetPoint("TOPLEFT", frame.macroControls, "TOPLEFT", 0, -controlsHeight + 18)
-			frame.macroStatus:SetText("")
+			frame.macroStatus:SetText(hasObjectItemOption and not useObjectItem and itemOnlyStatus or "")
 			frame.hint:SetPoint("TOPRIGHT", frame.macroControls, "BOTTOMRIGHT", 0, -6)
+		elseif runCommand then
+			controlsHeight = frame.commandControls:GetHeight()
+			frame.hint:SetPoint("TOPRIGHT", frame.commandControls, "BOTTOMRIGHT", 0, -6)
 		else
 			frame.hint:SetPoint("TOPRIGHT", frame.editBox, "BOTTOMRIGHT", 0, -6)
 		end
@@ -1776,36 +2218,50 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return frame
 	end
 
+	-- Validates typed object fields for picture or model links and leaves blank drafts available for placeholders.
+	local function ReadContributionObjectFields(frame, idInput, nameInput, is3D)
+		local id = idInput:GetText():match("^%s*(.-)%s*$")
+		if id ~= "" and is3D and (not id:match("^%d+$") or tonumber(id) < 1) then
+			frame.macroStatus:SetText("Enter a positive whole-number object ID for a 3D preview.")
+			return nil
+		end
+		if id ~= "" and not id:match("^[%a%d]+$") then
+			frame.macroStatus:SetText("Object ID must contain only letters and numbers.")
+			return nil
+		end
+		local name = nameInput:GetText():match("^%s*(.-)%s*$")
+		if name:find("[:{}\r\n]") then
+			frame.macroStatus:SetText("Object name cannot contain colons, braces, or line breaks.")
+			return nil
+		end
+		return id, name
+	end
+
 	-- Builds the raw object/item tag from current fields, retaining placeholders for unfinished values.
 	function RQE:RefreshContributionObjectItemCopy(frame, keepFocus)
 		local state = frame and frame.objectItemState
 		if not state then return end
 		local inputs = frame.objectItemInputs
-		local itemText = inputs.itemID:GetText():match("^%s*(.-)%s*$")
-		local itemID = tonumber(itemText)
-		if itemText ~= "" and (not itemText:match("^%d+$") or not itemID or itemID < 1) then
+		local itemID, _, itemText = RQE.API.ReadAuthoringItemID(inputs.itemID:GetText())
+		if itemText ~= "" and not itemID then
 			frame.macroStatus:SetText("Enter a positive whole-number item ID.")
 			return false
 		end
-		local objectID = inputs.objectID:GetText():match("^%s*(.-)%s*$")
-		if objectID == "" then objectID = "OBJECTID" end
-		if not objectID:match("^[%a%d]+$") then
-			frame.macroStatus:SetText("Object ID must contain only letters and numbers.")
-			return false
-		end
-		local objectName = inputs.objectName:GetText():match("^%s*(.-)%s*$")
-		if objectName == "" then objectName = "OBJECTNAME" end
-		if objectName:find("[:{}\r\n]") then
-			frame.macroStatus:SetText("Object name cannot contain colons, braces, or line breaks.")
-			return false
-		end
-		local itemName = itemID and state.itemID == itemID and state.itemName or "ITEMNAME"
-		if itemName:find("[{}\r\n]") then
+		local objectID, objectName = ReadContributionObjectFields(frame, inputs.objectID, inputs.objectName, state.use3DObject)
+		if not objectID then return false end
+		local itemName = state.itemID == itemID and state.itemName
+		if itemName and itemName:find("[{}\r\n]") then
 			frame.macroStatus:SetText("Item name cannot contain braces or line breaks.")
 			return false
 		end
-		SetReferenceCopyValue(frame, string.format("{objectitem:%s:%s:%s:%s}",
-			objectID, itemID and string.format("%.0f", itemID) or "ITEMID", objectName, itemName))
+		local tag = state.use3DObject and "object3ditem" or "objectitem"
+		local value = ""
+		if not itemID or itemName then
+			value = string.format("{%s:%s:%s:%s:%s}", tag, objectID ~= "" and objectID or "OBJECTID",
+				itemID and string.format("%.0f", itemID) or "ITEMID", objectName ~= "" and objectName or "OBJECTNAME",
+				itemName or "ITEMNAME")
+		end
+		SetReferenceCopyValue(frame, value)
 		if not keepFocus then
 			for _, input in pairs(inputs) do input:ClearFocus() end
 			SelectReferenceText(frame)
@@ -1814,23 +2270,22 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return true
 	end
 
-	-- Resolves typed item IDs, discarding obsolete lookups and preserving object names edited while loading.
+	-- Resolves typed item IDs and replaces automatic object names while preserving the author's own choice.
 	function RQE:LookupContributionObjectItem(frame, immediate)
 		local state = frame and frame.objectItemState
 		if not state then return end
-		local itemText = frame.objectItemInputs.itemID:GetText():match("^%s*(.-)%s*$")
-		local id = itemText:match("^%d+$") and tonumber(itemText)
-		if id and id < 1 then id = nil end
-		if id and state.itemID == id then
+		local id, suppliedName, itemText = RQE.API.ReadAuthoringItemID(frame.objectItemInputs.itemID:GetText())
+		if id and state.itemID == id and state.suppliedName == suppliedName then
 			if state.itemName then
 				frame.macroStatus:SetText("Item: " .. state.itemName)
 				return
 			end
 			if state.loading and (not immediate or state.requestStarted) then return end
 		end
-		if state.itemID ~= id then state.itemNameSerial = state.objectNameSerial end
 		state.lookupSerial = state.lookupSerial + 1
-		state.itemID, state.itemName = id, nil
+		state.itemID, state.itemName, state.suppliedName = id, nil, suppliedName
+		local inputs = frame.objectItemInputs
+		UpdateContributionObjectName(state, inputs.objectID, inputs.objectName)
 		state.loading, state.requestStarted = id ~= nil, false
 		frame.questTitle:SetText("Create an object and item reference")
 		if not id then
@@ -1839,30 +2294,30 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 			return
 		end
 		frame.macroStatus:SetText("Loading item name...")
-		local serial, nameSerial = state.lookupSerial, state.itemNameSerial
+		local serial = state.lookupSerial
+		-- Fills the editable default name and completes an applied draft without interrupting newer edits.
+		local function itemLoaded(resolvedID, itemName)
+			if frame.objectItemState ~= state or state.lookupSerial ~= serial or state.itemID ~= resolvedID
+				or not frame:IsShown() then return end
+			state.loading = false
+			if type(itemName) == "string" and itemName:find("%S") and not itemName:find("[{}\r\n]") then
+				state.itemName = itemName
+				UpdateContributionObjectName(state, inputs.objectID, inputs.objectName, itemName)
+				frame.macroStatus:SetText("Item: " .. itemName)
+			else
+				frame.macroStatus:SetText(itemUnavailable)
+			end
+			if state.appliedSerial == state.editSerial then
+				self:RefreshContributionObjectItemCopy(frame, true)
+				if frame.editBox:HasFocus() then frame.editBox:HighlightText() end
+			end
+		end
+		if suppliedName then return itemLoaded(id, suppliedName) end
 		-- Starts only the latest requested lookup after typing settles, or immediately when Update is pressed.
 		local function requestName()
 			if frame.objectItemState ~= state or state.lookupSerial ~= serial or not frame:IsShown() then return end
 			state.requestStarted = true
-			-- Fills the editable default name and completes an applied draft without interrupting newer edits.
-			local function itemLoaded(resolvedID, itemName)
-				if frame.objectItemState ~= state or state.lookupSerial ~= serial or state.itemID ~= resolvedID
-					or not frame:IsShown() then return end
-				state.loading = false
-				if type(itemName) == "string" and itemName ~= "" then
-					state.itemName = itemName
-					if state.objectNameSerial == nameSerial then frame.objectItemInputs.objectName:SetText(itemName) end
-					frame.macroStatus:SetText("Item: " .. itemName)
-				else
-					frame.macroStatus:SetText("Item name unavailable. Check itemID and press Update to retry.")
-				end
-				if state.appliedSerial == state.editSerial then self:RefreshContributionObjectItemCopy(frame, true) end
-			end
-			if RQE_Contribution and RQE_Contribution.GetItemName then
-				RQE_Contribution:GetItemName(id, itemLoaded)
-			else
-				itemLoaded(id, ClientCall("GetItemInfo", id))
-			end
+			RequestContributionItemName(id, itemLoaded)
 		end
 		if immediate then requestName() else After(0.25, requestName) end
 	end
@@ -1880,8 +2335,8 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	function RQE:ShowContributionObjectItemCopy()
 		if not ContributionLoaded() then return end
 		return self:ShowCopyableReferenceText("Object+Item Hyperlink", "Create an object and item reference",
-			"{objectitem:OBJECTID:ITEMID:OBJECTNAME:ITEMNAME}",
-			{ objectItemState = { editSerial = 0, objectNameSerial = 0, lookupSerial = 0 } })
+			"{object3ditem:OBJECTID:ITEMID:OBJECTNAME:ITEMNAME}",
+			{ objectItemState = { use3DObject = true, editSerial = 0, lookupSerial = 0 } })
 	end
 
 	-- Keeps existing quest-link callers on the shared copy dialog.
@@ -1989,6 +2444,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 
 	-- Rebuilds from untouched template text, keeping each authoring field independent.
 	local function RenderContributionMacro(state)
+		if state.needsItemName and not state.itemName then return "" end
 		local macro, pending = state.body, {}
 		if state.gossipOptions then
 			local marker = "\001" .. (#pending + 1) .. "\002"
@@ -2046,6 +2502,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		local state = frame and frame.macroState
 		if not state or not frame:IsShown() then return end
 		SetReferenceCopyValue(frame, RenderContributionMacro(state))
+		if state.itemLookupStatus then frame.macroStatus:SetText(state.itemLookupStatus) end
 		if not keepFocus then
 			SelectReferenceText(frame)
 			QueueReferenceSelection(frame)
@@ -2075,12 +2532,12 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	function RQE:UpdateContributionMacroID(frame)
 		local state = frame and frame.macroState
 		if not state or not state.idKind then return end
+		if state.hasItemName and state.idKind == "item" then return UpdateContributionNamedItem(frame, true) end
 		local id = tonumber(frame.macroIDInput:GetText())
 		if not id or id < 1 or id % 1 ~= 0 then
 			frame.macroStatus:SetText("Enter a positive whole-number " .. state.idKind .. " ID.")
 			return
 		end
-		state.lookupSerial = (state.lookupSerial or 0) + 1
 		if state.idKind == "spell" then
 			state.spellID, state.spellName = id, nil
 			if state.hasSpellName and RQE.API.GetSpellPresentation then
@@ -2091,28 +2548,9 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				and "Spell name unavailable; the ID was updated." or ("Updated spell ID " .. id .. "."))
 			return self:RefreshContributionMacroCopy(frame)
 		end
-		state.itemID, state.itemName = id, nil
-		frame.macroStatus:SetText(state.hasItemName and "Loading item name..." or ("Updated item ID " .. id .. "."))
+		state.itemID = id
+		frame.macroStatus:SetText("Updated item ID " .. id .. ".")
 		self:RefreshContributionMacroCopy(frame)
-		if not state.hasItemName then return end
-		local serial = state.lookupSerial
-		-- Updates the copy preview after the requested item name becomes available.
-		local function itemLoaded(resolvedID, itemName)
-			if frame.macroState ~= state or state.lookupSerial ~= serial or state.itemID ~= resolvedID
-				or not frame:IsShown() then return end
-			if type(itemName) == "string" and itemName ~= "" then
-				state.itemName = itemName
-				frame.macroStatus:SetText("Updated item: " .. itemName)
-			else
-				frame.macroStatus:SetText("Item name unavailable; the ID was updated.")
-			end
-			self:RefreshContributionMacroCopy(frame)
-		end
-		if RQE_Contribution and RQE_Contribution.GetItemName then
-			RQE_Contribution:GetItemName(id, itemLoaded)
-		else
-			itemLoaded(id, ClientCall("GetItemInfo", id))
-		end
 	end
 
 	-- Purchase templates share one count field, separate from the item ID.
@@ -2362,6 +2800,402 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return self:ShowCopyableReferenceText("Player subzone and zone", "Current position", value)
 	end
 
+	-- Comments each authored line while preserving its original indentation.
+	local function CommentContributionLines(value)
+		-- Places a Lua comment marker after each line's indentation.
+		local commented = value:gsub("([^\n]+)", function(line)
+			local indentation, content = line:match("^(%s*)(.*)$")
+			return content:find("^%-%- ") and line or indentation .. "-- " .. content
+		end)
+		return commented
+	end
+
+	-- Returns a valid saved map point in percentage coordinates.
+	local function CombinedCopyPoint(source)
+		if type(source) ~= "table" then return end
+		local mapID = CoordinateCopyNumber(source.mapID)
+		local x, y = CoordinateCopyNumber(source.x), CoordinateCopyNumber(source.y)
+		if mapID and mapID > 0 and mapID % 1 == 0 and x and y
+			and x >= 0 and x <= 100 and y >= 0 and y <= 100 then
+			return mapID, x, y
+		end
+	end
+
+	local combinedUpdateWidth, combinedUpdateGap = 120, 24
+
+	-- Builds the turn-in description from the current target and zone.
+	local function CombinedTurnInDescription()
+		local name, npcID = TargetNPC(true)
+		local npc = name and (npcID and string.format("{npc:%d:%s}", npcID, EscapeLuaString(name))
+			or EscapeLuaString(name)) or "{npc:NPCID:NPC}"
+		local zone = PlayerZoneText() or "SUBZONE, ZONE"
+		return string.format('description = "Turn in the quest to %s at %s.",', npc, EscapeLuaString(zone))
+	end
+
+	-- Builds the location and turn-in coordinates using saved map points when requested.
+	local function CombinedContributionCoordinates(locationSource, coordinateSource)
+		local mapID, x, y = RQE:GetCurrentPlayerMapPosition()
+		mapID, x, y = CoordinateCopyNumber(mapID), CoordinateCopyNumber(x), CoordinateCopyNumber(y)
+		local continentID, map, seen = nil, mapID, {}
+		while map and map > 0 and not seen[map] do
+			seen[map] = true
+			local info = ClientCall("C_Map.GetMapInfo", map)
+			if not info then break end
+			if info.mapType == 2 then
+				continentID = CoordinateCopyNumber(info.mapID) or map
+				break
+			end
+			map = CoordinateCopyNumber(info.parentMapID)
+		end
+		local cx, cy
+		if continentID and (locationSource or coordinateSource or continentID ~= mapID) then
+			local position = ClientCall("C_Map.GetPlayerMapPosition", continentID, "player")
+			if position then cx, cy = position:GetXY() end
+			cx, cy = CoordinateCopyNumber(cx), CoordinateCopyNumber(cy)
+		end
+		local locationMapID, locationX, locationY = mapID, x and x * 100, y and y * 100
+		local hotspotMapID, hotspotX, hotspotY = locationMapID, locationX, locationY
+		if locationSource then locationMapID, locationX, locationY = CombinedCopyPoint(locationSource) end
+		if coordinateSource then hotspotMapID, hotspotX, hotspotY = CombinedCopyPoint(coordinateSource) end
+		local location, turnIn
+		if locationMapID and locationX and locationY then
+			if cx and cy then
+				location = "\t\t\tlocations = {\n"
+					.. string.format("\t\t\t\t{ x = %.2f, y = %.2f, mapID = %d },\n", locationX, locationY, locationMapID)
+					.. string.format("\t\t\t\t{ x = %.2f, y = %.2f, continentID = %d },\n", cx * 100, cy * 100, continentID)
+					.. "\t\t\t},"
+			else
+				location = string.format("\t\t\tlocation = { x = %.2f, y = %.2f, mapID = %d },", locationX, locationY, locationMapID)
+			end
+		else
+			location = "Unable to determine current map position."
+		end
+		if hotspotMapID and hotspotX and hotspotY then
+			if cx and cy then
+				turnIn = "\t\t\t\tcoordinateHotspots = {\n"
+					.. string.format("\t\t\t\t\t{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },\n", hotspotX, hotspotY, hotspotMapID)
+					.. string.format("\t\t\t\t\t{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },\n", cx * 100, cy * 100, continentID)
+					.. "\t\t\t\t},"
+			else
+				turnIn = string.format("\t\t\t\tcoordinates = { x = %.2f, y = %.2f, mapID = %d },", hotspotX, hotspotY, hotspotMapID)
+			end
+		else
+			turnIn = "\t\t\t\t-- Unable to determine current map position."
+		end
+		return location, turnIn
+	end
+
+	-- Finds the quest's saved starting point in either location format.
+	local function CombinedCopySavedLocation(data)
+		if type(data) ~= "table" then return end
+		if CombinedCopyPoint(data.location) then return data.location end
+		if type(data.locations) == "table" then
+			for _, point in ipairs(data.locations) do
+				if CombinedCopyPoint(point) then return point end
+			end
+		end
+	end
+
+	-- Reports whether the database entry has an authored numeric step.
+	local function CombinedCopyHasSteps(data)
+		if type(data) ~= "table" then return false end
+		for index, step in pairs(data) do
+			if type(index) == "number" and index > 0 and index % 1 == 0 and type(step) == "table" then
+				return true
+			end
+		end
+		return false
+	end
+
+	-- Displays generated text for one copy box, applying the comment option to the turn-in snippet.
+	local function SetCombinedCopyText(frame, index, value)
+		if index == 3 and frame.comment:GetChecked() then value = CommentContributionLines(value) end
+		local box = frame.boxes[index]
+		box.copyDisplayValue = value:gsub("|", "||")
+		box:SetText(box.copyDisplayValue)
+	end
+
+	-- Validates the database selection and refreshes one or both coordinate snippets.
+	function RQE:RefreshCombinedContributionCopy(frame, index)
+		if not frame then return end
+		local questText = (frame.questIDInput:GetText() or ""):match("^%s*(.-)%s*$")
+		local questID = questText:match("^%d+$") and tonumber(questText)
+		local data = questID and questID > 0 and self.getQuestData and self.getQuestData(questID)
+		local savedLocation = CombinedCopySavedLocation(data)
+		local hasSteps = CombinedCopyHasSteps(data)
+		local available = savedLocation ~= nil and hasSteps
+		local reason
+		if questText == "" then reason = "Enter a quest ID to use saved coordinates."
+		elseif not questID or questID <= 0 then reason = "Enter a positive whole-number quest ID."
+		elseif not data then reason = "No database entry was found for this quest ID."
+		elseif not hasSteps then reason = "This database entry has no authored steps."
+		elseif not savedLocation then reason = "This database entry has no saved location."
+		end
+		frame.existing:SetEnabled(available)
+		frame.existing:SetAlpha(available and 1 or 0.5)
+		frame.existing.label:SetAlpha(available and 1 or 0.5)
+		frame.stepInput:SetEnabled(available)
+		frame.stepInput:SetAlpha(available and 1 or 0.5)
+		frame.stepLabel:SetAlpha(available and 1 or 0.5)
+		frame.existingDisabledHover:SetShown(not available)
+		frame.stepDisabledHover:SetShown(not available)
+		frame.existingHelp = reason or "Use the saved quest location and coordinates from the selected step."
+		if not available then frame.existing:SetChecked(false) end
+		local stepPoint
+		if available and frame.existing:GetChecked() then
+			local stepText = (frame.stepInput:GetText() or ""):match("^%s*(.-)%s*$")
+			local stepIndex = stepText:match("^%d+$") and tonumber(stepText)
+			local step = stepIndex and stepIndex > 0 and data[stepIndex]
+			if type(step) ~= "table" then
+				reason = "Enter a step index that exists in this quest's database entry."
+			elseif not CombinedCopyPoint(step.coordinates) then
+				reason = "The selected step has no valid saved coordinates."
+			else
+				stepPoint = step.coordinates
+				reason = "Using saved quest location and step " .. stepIndex .. " coordinates."
+			end
+			if not stepPoint then frame.existing:SetChecked(false) end
+		end
+		local location, turnInCoordinates = CombinedContributionCoordinates(stepPoint and savedLocation, stepPoint)
+		if not index or index == 1 then SetCombinedCopyText(frame, 1, location) end
+		if not index or index == 3 then
+			frame.turnInValue = "\t\t\t\t" .. frame.descriptionValue .. "\n" .. turnInCoordinates
+			SetCombinedCopyText(frame, 3, frame.turnInValue)
+		end
+		frame.status:SetText(reason or "")
+	end
+
+	-- Recaptures live data for the requested snippet, or for all snippets when no index is supplied.
+	local function UpdateCombinedContributionCopy(frame, index)
+		if not index or index == 2 then
+			local _, pickup = TargetNPCCopyValue("table")
+			SetCombinedCopyText(frame, 2, pickup)
+		end
+		if not index or index == 3 then frame.descriptionValue = CombinedTurnInDescription() end
+		if index ~= 2 then RQE:RefreshCombinedContributionCopy(frame, index) end
+	end
+
+	-- Adds a themed update button and selects its refreshed text for copying when clicked.
+	local function CreateCombinedCopyUpdateButton(frame, anchor, anchorPoint, yOffset, index)
+		local button = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+		button:SetSize(combinedUpdateWidth, 28)
+		button:SetPoint("LEFT", anchor, anchorPoint, combinedUpdateGap, yOffset)
+		button:SetText(index and "Update" or "Update All")
+		-- Refreshes the requested data and focuses the corresponding copy box.
+		button:SetScript("OnClick", function()
+			UpdateCombinedContributionCopy(frame, index)
+			local box = frame.boxes[index or 1]
+			box:SetFocus()
+			box:HighlightText()
+		end)
+		if RQE.UI then RQE.UI:StyleTextButton(button) end
+	end
+
+	-- Opens a three-region copy frame with a comment toggle for the turn-in description and coordinates.
+	function RQE:ShowCombinedContributionCopy()
+		if not ContributionLoaded() then return end
+		self:CloseQuestFilterMenus()
+		if self.QuestReferenceLinkFrame then self.QuestReferenceLinkFrame:Hide() end
+		local frame = self.CombinedContributionCopyFrame
+		if not frame then
+			frame = CreateFrame("Frame", "RQECombinedContributionCopyFrame", UIParent, "BackdropTemplate")
+			frame:SetPoint("CENTER")
+			frame:SetFrameStrata("DIALOG")
+			frame:SetClampedToScreen(true)
+			frame:SetMovable(true)
+			frame:EnableMouse(true)
+			frame:RegisterForDrag("LeftButton")
+			frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8",
+				edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 14,
+				insets = { left = 4, right = 4, top = 4, bottom = 4 } })
+			frame:SetBackdropColor(0.025, 0.035, 0.055, 0.98)
+			frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			frame.title:SetPoint("TOP", 0, -14)
+			frame.title:SetText("Quest contribution snippets")
+			frame.boxes = {}
+			local labels = { "Locations", "Pickup NPC", "Turn-in description and coordinates" }
+			local heights = { 88, 80, 150 }
+			local previous
+			for index, labelText in ipairs(labels) do
+				local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				if previous then
+					label:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", -4, -16)
+				else
+					label:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -46)
+				end
+				label:SetText(labelText)
+				local box = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+				box:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 4, -8)
+				box:SetHeight(heights[index])
+				box:SetMultiLine(true)
+				box:SetAutoFocus(false)
+				box:SetFontObject("GameFontHighlight")
+				box:SetMaxLetters(0)
+				box:SetHyperlinksEnabled(false)
+				frame.boxes[index] = box
+				local nextIndex = index % #labels + 1
+				-- Selects only this region when the player clicks or tabs into it.
+				box:SetScript("OnEditFocusGained", function(selfBox) selfBox:HighlightText() end)
+				-- Keeps a mouse click on the copy region ready for Ctrl+C.
+				box:SetScript("OnMouseUp", function(selfBox) selfBox:HighlightText() end)
+				-- Restores generated text if the player types into a copy-only region.
+				box:SetScript("OnTextChanged", function(selfBox, userInput)
+					if userInput and selfBox:GetText() ~= selfBox.copyDisplayValue then
+						selfBox:SetText(selfBox.copyDisplayValue)
+						selfBox:HighlightText()
+					end
+				end)
+				-- Moves focus to the next independent copy region.
+				box:SetScript("OnTabPressed", function(selfBox)
+					selfBox:ClearFocus()
+					local nextBox = frame.boxes[nextIndex]
+					nextBox:SetFocus()
+					nextBox:HighlightText()
+				end)
+				-- Closes the combined copy frame on Escape.
+				box:SetScript("OnEscapePressed", function() frame:Hide() end)
+				if self.UI then self.UI:StyleSearchBox(box) end
+				box:SetTextInsets(12, 10, 6, 4)
+			CreateCombinedCopyUpdateButton(frame, box, "RIGHT", 0, index)
+				previous = box
+			end
+			frame.comment = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+			frame.comment:SetSize(24, 24)
+			frame.comment:SetPoint("TOPLEFT", frame.boxes[3], "BOTTOMLEFT", -4, -12)
+			frame.comment.label = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			frame.comment.label:SetPoint("LEFT", frame.comment, "RIGHT", 4, 0)
+			frame.comment.label:SetText("Comment out turn-in lines")
+			-- Regenerates the third copy region when the comment mode changes.
+			frame.comment:SetScript("OnClick", function()
+			SetCombinedCopyText(frame, 3, frame.turnInValue)
+				local box = frame.boxes[3]
+				box:SetFocus()
+				box:HighlightText()
+			end)
+			frame.existing = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+			frame.existing:SetSize(24, 24)
+			frame.existing:SetPoint("TOPLEFT", frame.comment, "TOPLEFT", 240, 0)
+			frame.existing.label = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+			frame.existing.label:SetPoint("LEFT", frame.existing, "RIGHT", 4, 0)
+			frame.existing.label:SetText("Use existing DB coordinates")
+			-- Applies a saved quest location and step coordinate when both inputs are valid.
+			frame.existing:SetScript("OnClick", function() RQE:RefreshCombinedContributionCopy(frame) end)
+			-- Explains the saved-coordinate option when it is available.
+			frame.existing:SetScript("OnEnter", function(control)
+				GameTooltip:SetOwner(control, "ANCHOR_RIGHT")
+				GameTooltip:SetText(frame.existingHelp, 1, 1, 1, 1, true)
+				GameTooltip:Show()
+			end)
+			-- Hides the saved-coordinate help when the pointer leaves the checkbox.
+			frame.existing:SetScript("OnLeave", function() GameTooltip:Hide() end)
+		local questRowOffset, questRowHeight = -50, 22
+		frame.questIDLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		frame.questIDLabel:SetSize(58, questRowHeight)
+		frame.questIDLabel:SetPoint("TOPLEFT", frame.boxes[3], "BOTTOMLEFT", -4, questRowOffset)
+			frame.questIDLabel:SetText("Quest ID")
+			frame.questIDInput = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+		frame.questIDInput:SetSize(120, questRowHeight)
+			frame.questIDInput:SetPoint("LEFT", frame.questIDLabel, "RIGHT", 8, 0)
+			frame.questIDInput:SetAutoFocus(false)
+			frame.questIDInput:SetMaxLetters(12)
+			-- Enables existing coordinates only when the entered quest has authored steps.
+			frame.questIDInput:SetScript("OnTextChanged", function(_, userInput)
+				if userInput then RQE:RefreshCombinedContributionCopy(frame) end
+			end)
+			-- Applies a completed quest ID without closing the copy frame.
+			frame.questIDInput:SetScript("OnEnterPressed", function()
+				RQE:RefreshCombinedContributionCopy(frame)
+			end)
+			-- Closes the combined copy frame on Escape from the quest ID field.
+			frame.questIDInput:SetScript("OnEscapePressed", function() frame:Hide() end)
+			frame.stepLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		frame.stepLabel:SetSize(76, questRowHeight)
+			frame.stepLabel:SetPoint("LEFT", frame.questIDInput, "RIGHT", 36, 0)
+			frame.stepLabel:SetText("Step index")
+			frame.stepInput = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+		frame.stepInput:SetSize(70, questRowHeight)
+			frame.stepInput:SetPoint("LEFT", frame.stepLabel, "RIGHT", 8, 0)
+			frame.stepInput:SetAutoFocus(false)
+			frame.stepInput:SetMaxLetters(5)
+			-- Rebuilds saved-coordinate snippets when the selected step changes.
+			frame.stepInput:SetScript("OnTextChanged", function(_, userInput)
+				if userInput then RQE:RefreshCombinedContributionCopy(frame) end
+			end)
+			-- Applies the selected step without closing the copy frame.
+			frame.stepInput:SetScript("OnEnterPressed", function()
+				RQE:RefreshCombinedContributionCopy(frame)
+			end)
+			-- Closes the combined copy frame on Escape from the step field.
+			frame.stepInput:SetScript("OnEscapePressed", function() frame:Hide() end)
+		CreateCombinedCopyUpdateButton(frame, frame.boxes[3], "BOTTOMRIGHT", questRowOffset - questRowHeight / 2)
+			frame.status = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+			frame.status:SetPoint("TOPLEFT", frame.questIDLabel, "BOTTOMLEFT", 0, -7)
+			frame.status:SetJustifyH("LEFT")
+			for _, detail in ipairs({
+				{ key = "existingDisabledHover", anchor = frame.existing, width = 230 },
+				{ key = "stepDisabledHover", anchor = frame.stepLabel, width = 175 },
+			}) do
+				local hover = CreateFrame("Frame", nil, frame)
+				hover:SetSize(detail.width, 26)
+				hover:SetPoint("LEFT", detail.anchor, "LEFT", 0, 0)
+				hover:SetFrameLevel(frame:GetFrameLevel() + 10)
+				hover:EnableMouse(true)
+				-- Explains why the saved-coordinate control is currently unavailable.
+				hover:SetScript("OnEnter", function(control)
+					GameTooltip:SetOwner(control, "ANCHOR_RIGHT")
+					GameTooltip:SetText(frame.existingHelp, 1, 1, 1, 1, true)
+					GameTooltip:Show()
+				end)
+				-- Hides the unavailable-control help when the pointer leaves it.
+				hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+				hover:Hide()
+				frame[detail.key] = hover
+			end
+			frame.hint = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+			frame.hint:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -24, 20)
+			frame.hint:SetText("Click a field, then Ctrl+C to copy  |  Esc to close")
+			frame.closeButton = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+			frame.closeButton:SetSize(22, 22)
+			frame.closeButton:SetPoint("TOPRIGHT", -7, -6)
+			-- Closes the combined contribution copy frame.
+			frame.closeButton:SetScript("OnClick", function() frame:Hide() end)
+			frame:SetScript("OnDragStart", frame.StartMoving)
+			-- Stops moving the frame when dragging ends.
+			frame:SetScript("OnDragStop", function() frame:StopMovingOrSizing() end)
+			-- Releases edit-box focus when the combined frame closes.
+			frame:SetScript("OnHide", function()
+				for _, box in ipairs(frame.boxes) do box:ClearFocus() end
+				frame.questIDInput:ClearFocus()
+				frame.stepInput:ClearFocus()
+			end)
+			if self.UI then
+				self.UI:StylePanel(frame, 0.98, "menu")
+				self.UI:StyleIconButton(frame.closeButton, "Close", { size = 22 })
+				self.UI:StyleSearchBox(frame.questIDInput)
+				self.UI:StyleSearchBox(frame.stepInput)
+			end
+			frame.questIDInput:SetTextInsets(12, 10, 0, 0)
+			frame.stepInput:SetTextInsets(12, 10, 0, 0)
+			RegisterEscape(frame)
+			self.CombinedContributionCopyFrame = frame
+		end
+		frame:SetSize(math.min(960, UIParent:GetWidth() - 40), 595)
+		frame.comment:SetChecked(false)
+		frame.existing:SetChecked(false)
+		frame.questIDInput:SetText("")
+		frame.stepInput:SetText("")
+		frame.status:SetWidth(frame:GetWidth() - 48)
+		local boxWidth = frame:GetWidth() - 60 - combinedUpdateWidth - combinedUpdateGap
+		for _, box in ipairs(frame.boxes) do
+			box:SetWidth(boxWidth)
+		end
+		UpdateCombinedContributionCopy(frame)
+		frame:Show()
+		frame.boxes[1]:SetFocus()
+		frame.boxes[1]:HighlightText()
+		return frame
+	end
+
 	-- Chooses an NPC button label appropriate to the description template.
 	local function DescriptionNPCButtonLabel(name, objectPlaceholder)
 		if objectPlaceholder == "OBJECT/NPC" then return "Target NPC" end
@@ -2372,14 +3206,23 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		return "NPC target"
 	end
 
-	-- Rebuilds the description from its template so each field can be updated separately.
+	-- Builds a standalone quantity snippet or inserts the current fields into a full description.
 	local function RenderContributionDescription(state)
+		if state.needsItemName and not state.itemName then return "" end
+		if state.inventoryCount then
+			if not state.itemName then return "" end
+			local mint = RQE.FontColorOptions["Pale Mint"].hex
+			return ("|cFF%s{inventoryCount:%d}|r {item:%d:%s}"):format(mint, state.itemID, state.itemID, state.itemName)
+		end
+		if state.targetMode and not state.targetReference then return "" end
 		local description = state.text
 		if state.hasQuantity then
 			local quantity = state.useObjectiveRemaining and "{objectiveRemaining}" or tostring(state.quantity or "##")
+			local quantityCode = "|cFFffcc33" .. quantity .. "|r"
+			if state.quantityOnly then return quantityCode end
 			-- Replaces the template count before inserting names or other user-supplied text.
 			description = description:gsub(state.quantityPlaceholder, function()
-				return "|cFFffcc33" .. quantity .. "|r"
+				return quantityCode
 			end)
 		end
 		if state.npcPlaceholder then
@@ -2405,6 +3248,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		if state.hasObjectItemOption and state.useObjectItem then
 			description = RQE.API.RewriteGroundCollectionReference(description, {
 				useObjectItem = true, objectKey = state.objectID, objectName = state.objectName,
+				is3D = state.use3DObject, allowPlaceholder = true,
 			}) or description
 		end
 		if state.spellID or state.spellName then
@@ -2413,9 +3257,21 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				return "{spell:" .. (state.spellID or "SPELLID") .. ":" .. (state.spellName or "SPELL") .. "}"
 			end)
 		end
-		if state.objectValue and state.objectPlaceholder then
+		if state.hasNearbyObject then
+			local tag = state.use3DObject and "object3d" or "object"
+			local key = state.objectID and state.objectID ~= "" and state.objectID or "OBJECTID"
+			local name = state.objectName and state.objectName ~= "" and state.objectName or "OBJECTNAME"
+			-- Insert the nearby object last so its name cannot be interpreted as another template field.
+			description = description:gsub(state.objectPlaceholder, function()
+				return string.format("{%s:%s:%s}", tag, key, name)
+			end, 1)
+		elseif state.objectValue and state.objectPlaceholder then
 			-- Returns the object value.
 			description = description:gsub(state.objectPlaceholder, function() return state.objectValue end)
+		end
+		if state.targetMode then
+			-- Insert the selected reference literally, including punctuation and percent signs in names.
+			description = description:gsub(descriptionTargetMarker, function() return state.targetReference end, 1)
 		end
 		return 'description = "' .. EscapeLuaString(description) .. '",'
 	end
@@ -2425,18 +3281,84 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		local state = frame and frame.descriptionState
 		if not state or not frame:IsShown() then return end
 		SetReferenceCopyValue(frame, RenderContributionDescription(state))
+		if state.itemLookupStatus then frame.macroStatus:SetText(state.itemLookupStatus) end
 		if not keepFocus then
 			SelectReferenceText(frame)
 			QueueReferenceSelection(frame)
 		end
 	end
 
+	-- Rebuilds the selected target link from its editable fields, retaining an invalid draft for correction.
+	function RQE:UpdateContributionDescriptionTarget(frame, keepFocus)
+		local state = frame and frame.descriptionState
+		if not state or not state.targetMode then return end
+		local isNPC = state.targetMode == "npc"
+		local draft = isNPC and state.npcDraft or state.objectDraft
+		local idInput, nameInput = frame.descriptionTargetIDInput, frame.descriptionTargetNameInput
+		draft.id, draft.name = idInput:GetText(), nameInput:GetText()
+		local id, name
+		if isNPC then
+			id = draft.id:match("^%s*(.-)%s*$")
+			name = draft.name:match("^%s*(.-)%s*$")
+			if id ~= "" and (not id:match("^%d+$") or tonumber(id) < 1) then
+				frame.macroStatus:SetText("Enter a positive whole-number NPC ID.")
+				id = nil
+			elseif name:find("[{}\r\n]") then
+				frame.macroStatus:SetText("NPC name cannot contain braces or line breaks.")
+				id = nil
+			end
+		else
+			id, name = ReadContributionObjectFields(frame, idInput, nameInput, state.targetMode == "object3d")
+		end
+		if not id then
+			state.targetReference = nil
+			SetReferenceCopyValue(frame, "")
+			return
+		end
+		if isNPC and id == "" and not draft.seenID and name ~= "" and name == draft.seenName then
+			state.targetReference = name
+		else
+			if id == "" then id = isNPC and "NPCID" or "OBJECTID" end
+			if name == "" then name = isNPC and state.targetNPCDefault or "OBJECTNAME" end
+			state.targetReference = string.format("{%s:%s:%s}", state.targetMode, id, name)
+		end
+		frame.macroStatus:SetText("")
+		self:RefreshContributionDescriptionCopy(frame, keepFocus)
+	end
+
+	-- Switches target format while keeping typed object fields apart from automatic NPC updates.
+	function RQE:SetContributionDescriptionTargetMode(frame, mode)
+		local state = frame and frame.descriptionState
+		if not state or not state.targetMode or not frame.descriptionTargetModes[mode] then return end
+		if state.targetMode == mode then
+			frame.descriptionTargetModes[mode]:SetChecked(true)
+			return
+		end
+		state.targetMode = mode
+		ShowDescriptionTargetFields(frame)
+		if mode == "npc" then
+			local name, id = TargetNPC(true)
+			if name ~= state.npcDraft.seenName or id ~= state.npcDraft.seenID then
+				return self:UpdateContributionDescriptionNPC(frame, true)
+			end
+		end
+		frame.questTitle:SetText(mode == "npc" and state.npcDraft.name ~= "" and state.npcDraft.name or "Description template")
+		frame.questTitle:SetHeight(frame.questTitle:GetStringHeight())
+		self:UpdateContributionDescriptionTarget(frame, true)
+	end
+
 	-- Refreshes the description's target, using its name alone or restoring placeholders when needed.
 	function RQE:UpdateContributionDescriptionNPC(frame, keepFocus)
 		local state = frame and frame.descriptionState
-		if not state or not state.hasNPCButton then return end
+		if not state or not state.hasNPCButton or (state.targetMode and state.targetMode ~= "npc") then return end
 		local name, npcID = TargetNPC(true)
 		local reference = name and (npcID and string.format("{npc:%d:%s}", npcID, name) or name) or nil
+		if state.targetMode then
+			state.npcDraft.id, state.npcDraft.name = npcID and tostring(npcID) or "", name or ""
+			state.npcDraft.seenName, state.npcDraft.seenID = name, npcID
+			state.targetReference = reference or "{npc:NPCID:" .. state.targetNPCDefault .. "}"
+			ShowDescriptionTargetFields(frame)
+		end
 		state.followTargetNPC = true
 		if state.hasNPC then state.npcReference = reference end
 		if state.objectPlaceholder == "OBJECT/NPC" then
@@ -2454,43 +3376,20 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 	function RQE:UpdateContributionDescriptionID(frame)
 		local state = frame and frame.descriptionState
 		if not state or not state.idKind then return end
+		if state.idKind == "item" then return UpdateContributionNamedItem(frame, true) end
 		local id = tonumber(frame.macroIDInput:GetText())
 		if not id or id < 1 or id % 1 ~= 0 then
 			frame.macroStatus:SetText("Enter a positive whole-number " .. state.idKind .. " ID.")
 			return
 		end
-		state.lookupSerial = (state.lookupSerial or 0) + 1
-		if state.idKind == "spell" then
-			state.spellID, state.spellName = id, nil
-			if RQE.API.GetSpellPresentation then
-				local spellName = RQE.API.GetSpellPresentation(id)
-				if type(spellName) == "string" and spellName ~= "" then state.spellName = spellName end
-			end
-			frame.macroStatus:SetText(state.spellName and ("Updated spell: " .. state.spellName)
-				or "Spell name unavailable; the ID was updated.")
-			return self:RefreshContributionDescriptionCopy(frame)
+		state.spellID, state.spellName = id, nil
+		if RQE.API.GetSpellPresentation then
+			local spellName = RQE.API.GetSpellPresentation(id)
+			if type(spellName) == "string" and spellName ~= "" then state.spellName = spellName end
 		end
-		state.itemID, state.itemName = id, nil
-		frame.macroStatus:SetText("Loading item name...")
+		frame.macroStatus:SetText(state.spellName and ("Updated spell: " .. state.spellName)
+			or "Spell name unavailable; the ID was updated.")
 		self:RefreshContributionDescriptionCopy(frame)
-		local serial = state.lookupSerial
-		-- Updates the copy preview after the requested item name becomes available.
-		local function itemLoaded(resolvedID, itemName)
-			if frame.descriptionState ~= state or state.lookupSerial ~= serial or state.itemID ~= resolvedID
-				or not frame:IsShown() then return end
-			if type(itemName) == "string" and itemName ~= "" then
-				state.itemName = itemName
-				frame.macroStatus:SetText("Updated item: " .. itemName)
-			else
-				frame.macroStatus:SetText("Item name unavailable; the ID was updated.")
-			end
-			self:RefreshContributionDescriptionCopy(frame)
-		end
-		if RQE_Contribution and RQE_Contribution.GetItemName then
-			RQE_Contribution:GetItemName(id, itemLoaded)
-		else
-			itemLoaded(id, ClientCall("GetItemInfo", id))
-		end
 	end
 
 	-- Resets the description count and enables manual entry when the remaining-objective option is unchecked.
@@ -2545,25 +3444,53 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		self:RefreshContributionDescriptionCopy(frame)
 	end
 
-	-- Applies valid ground-object fields while retaining the last valid description if a draft is malformed.
+	-- Applies valid nearby or ground object fields while keeping the last valid description during edits.
 	function RQE:UpdateContributionDescriptionObjectItem(frame, keepFocus)
 		local state = frame and frame.descriptionState
-		if not state or not state.hasObjectItemOption or not state.useObjectItem then return false end
-		local objectID = frame.descriptionObjectIDInput:GetText() or ""
-		local objectName = frame.descriptionObjectNameInput:GetText() or ""
-		local updated, message = RQE.API.RewriteGroundCollectionReference(state.text, {
-			useObjectItem = true, objectKey = objectID, objectName = objectName,
-			itemID = state.itemID, itemName = state.itemName,
-		})
-		if not updated then
-			frame.macroStatus:SetText(message or "Enter a valid object ID and name.")
-			return false
+		if not state or not (state.hasNearbyObject or (state.hasObjectItemOption and state.useObjectItem)) then return false end
+		local key, name = ReadContributionObjectFields(frame, frame.descriptionObjectIDInput,
+			frame.descriptionObjectNameInput, state.use3DObject)
+		if not key then return false end
+		if state.hasObjectItemOption then
+			local updated, message = RQE.API.RewriteGroundCollectionReference(state.text, {
+				useObjectItem = true, objectKey = key, objectName = name, is3D = state.use3DObject,
+				itemID = state.itemID, itemName = state.itemName, allowPlaceholder = true,
+			})
+			if not updated then
+				frame.macroStatus:SetText(message)
+				return false
+			end
 		end
-		local reference = RQE.API.GetGroundCollectionReference(updated)
-		state.objectID, state.objectName = reference.objectKey, reference.objectName
-		frame.macroStatus:SetText("Object preview updated; blank fields use x99 and OBJECTNAME.")
+		state.objectID, state.objectName = key, name
+		frame.macroStatus:SetText("")
 		self:RefreshContributionDescriptionCopy(frame, keepFocus)
 		return true
+	end
+
+	-- Applies the chosen picture or model format if the current fields can produce the requested link.
+	function RQE:UpdateContributionObjectPreviewFormat(frame)
+		local state = frame.objectItemState or frame.descriptionState
+		if not state or (state.hasObjectItemOption and not state.useObjectItem) then return end
+		local checked = frame.objectPreviewFormatCheck:GetChecked() == true
+		local previous = state.use3DObject
+		state.use3DObject = (state.hasNearbyObject and not checked) or (not state.hasNearbyObject and checked)
+		local applied
+		if frame.objectItemState then
+			applied = self:RefreshContributionObjectItemCopy(frame, true)
+			if applied then
+				state.appliedSerial = state.editSerial
+				local message = state.itemName and ("Item: " .. state.itemName) or state.loading and "Loading item name..."
+				if message or not state.itemID then frame.macroStatus:SetText(message or "") end
+			end
+		else
+			applied = self:UpdateContributionDescriptionObjectItem(frame, true)
+		end
+		if not applied then
+			state.use3DObject = previous
+			frame.objectPreviewFormatCheck:SetChecked(not checked)
+		elseif frame.editBox.HasFocus and frame.editBox:HasFocus() then
+			frame.editBox:HighlightText()
+		end
 	end
 
 	-- Enables combined ground-item links or restores the original item-only description without losing its fields.
@@ -2578,13 +3505,15 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				frame.descriptionObjectItemMode:SetChecked(wasEnabled)
 			end
 		else
-			frame.macroStatus:SetText("Using the item-only description.")
+			frame.macroStatus:SetText(itemOnlyStatus)
 			self:RefreshContributionDescriptionCopy(frame)
 		end
 		frame.descriptionObjectIDInput:SetEnabled(state.useObjectItem)
 		frame.descriptionObjectNameInput:SetEnabled(state.useObjectItem)
 		frame.descriptionObjectIDRow:SetAlpha(state.useObjectItem and 1 or 0.5)
 		frame.descriptionObjectNameRow:SetAlpha(state.useObjectItem and 1 or 0.5)
+		frame.objectPreviewFormatCheck:SetEnabled(state.useObjectItem)
+		frame.objectPreviewFormatRow:SetAlpha(state.useObjectItem and 1 or 0.5)
 	end
 
 	-- The current target and zone are captured on opening; controls can refine the text.
@@ -2595,8 +3524,13 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		local npcReference = name and (npcID and string.format("{npc:%d:%s}", npcID, name) or name) or nil
 		local npcPlaceholder = template.text:match("{npc:NPCID:([%u_]+)}")
 		local hasNPC = npcPlaceholder ~= nil
+		local hasNearbyObject = template.name == "Look/Interact with Object near NPC"
+		local hasObjectItemOption = template.supportsObjectItem == true or template.name == "Collect Items from Ground"
 		local objectPlaceholder = template.text:find("OBJECT/NPC", 1, true) and "OBJECT/NPC"
 			or template.text:find("OBJECT", 1, true) and "OBJECT" or nil
+		if hasNearbyObject then
+			objectPlaceholder = NearbyObjectPlaceholder(template.text)
+		end
 		local quantityPlaceholder = template.text:match("|cFFffcc33{objectiveRemaining}|r")
 			or template.text:match("|cFFffcc33##|r") or template.text:match("|cFFffcc33%d+|r")
 			or template.text:match("##")
@@ -2612,13 +3546,42 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 				or template.text:find("{item:%d+:[^}]+}") and "item" or nil,
 			hasQuantity = quantityPlaceholder ~= nil, quantityPlaceholder = quantityPlaceholder,
 			useObjectiveRemaining = true,
-			hasObject = objectPlaceholder ~= nil, objectPlaceholder = objectPlaceholder,
+			hasNearbyObject = hasNearbyObject, hasObject = objectPlaceholder ~= nil and not hasNearbyObject,
+			objectPlaceholder = objectPlaceholder,
 			objectValue = objectPlaceholder == "OBJECT/NPC" and npcReference or nil,
-			hasObjectItemOption = template.supportsObjectItem == true or template.name == "Collect Items from Ground",
+			hasObjectItemOption = hasObjectItemOption, use3DObject = hasNearbyObject or hasObjectItemOption,
 			useObjectItem = false,
 		}
+		local targetDefault = descriptionTargetDefaults[template.name]
+		if targetDefault then
+			state.targetMode, state.targetNPCDefault = "npc", targetDefault
+			-- Mark the authored target before inserting spell, item, or zone names that could also contain its text.
+			local placeholder = npcPlaceholder and ("{npc:NPCID:" .. npcPlaceholder .. "}") or "OBJECT/NPC"
+			state.text = state.text:gsub(placeholder, descriptionTargetMarker, 1)
+			state.targetReference = npcReference or "{npc:NPCID:" .. targetDefault .. "}"
+			state.npcDraft = { id = npcID and tostring(npcID) or "", name = name or "", seenName = name, seenID = npcID }
+			state.objectDraft = { id = "", name = "" }
+			state.hasNPCButton, state.npcButtonLabel = true, "Target NPC"
+			state.npcPlaceholder, state.hasObject, state.objectPlaceholder = nil, false, nil
+		end
 		return self:ShowCopyableReferenceText(template.name, name or "Description template",
 			RenderContributionDescription(state), { descriptionState = state })
+	end
+
+	-- Opens a fresh quantity snippet with the objective-remaining token selected by default.
+	function RQE:ShowContributionQuantityCopy()
+		if not ContributionLoaded() then return end
+		local state = { hasQuantity = true, useObjectiveRemaining = true, quantityOnly = true }
+		return self:ShowCopyableReferenceText("Copy objective quantity", nil,
+			RenderContributionDescription(state), { descriptionState = state })
+	end
+
+	-- Opens an empty item ID field for copying the pale-mint count and localized item link.
+	function RQE:ShowContributionInventoryCountCopy()
+		if not ContributionLoaded() then return end
+		local state = { idKind = "item", inventoryCount = true, lookupSerial = 0 }
+		return self:ShowCopyableReferenceText("Copy inventory count", "Enter an item ID to look up its name.", "",
+			{ descriptionState = state })
 	end
 
 	-- Follows target changes only for visible single-NPC choices, preserving multi-NPC button assignments.
@@ -2628,6 +3591,7 @@ Shared quest selection, styled filter and context menus, and copyable quest-refe
 		if frame.targetNPCMode then
 			self:UpdateTargetNPCCopy(frame, true)
 		elseif frame.descriptionState and frame.descriptionState.hasNPCButton
+			and (not frame.descriptionState.targetMode or frame.descriptionState.targetMode == "npc")
 			and frame.descriptionState.followTargetNPC ~= false then
 			self:UpdateContributionDescriptionNPC(frame, true)
 		elseif frame.macroState and frame.macroState.primary and not frame.macroState.dualNPC then
