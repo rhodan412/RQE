@@ -32,6 +32,7 @@ local renderScripts = {
 	"OnUpdate", "OnEnter", "OnLeave", "OnMouseDown", "OnMouseUp", "OnClick",
 	"OnHyperlinkEnter", "OnHyperlinkLeave", "OnHyperlinkClick", "OnMouseWheel",
 }
+local inventoryTextRegions = {}
 
 -- Releases the pooled hover regions attached to this rich-text label.
 function RQE.API.ReleaseRichTextHovers(text)
@@ -45,8 +46,10 @@ end
 -- Resets a rendered UI object and returns it to its owner's free pool.
 function RQE.API.ReleaseRenderObject(object)
 	if not object then return end
+	if inventoryTextRegions[object] then inventoryTextRegions[object] = nil end
 	local pool = object._rqeRenderPool
 	if pool and not pool.active[object] then return end
+	if RQE.API.CancelPreviewHover then RQE.API.CancelPreviewHover(object) end
 	RQE.API.ReleaseRichTextHovers(object)
 	local ownsTooltip = RQE._coordblockTooltipOwner == object
 		or (GameTooltip and GameTooltip.GetOwner and GameTooltip:GetOwner() == object)
@@ -70,7 +73,7 @@ function RQE.API.ReleaseRenderObject(object)
 	object._rqeRichText, object._rqeRichFont, object._rqeRichFontSize = nil, nil, nil
 	object._rqeRichColor, object._rqeRichParent = nil, nil
 	object._rqeCoordblockLinks, object._rqeCoordblockByPoint = nil, nil
-	object._rqeObjectItemLinks = nil
+	object._rqeObjectItemLinks, object._rqeHoveredLink = nil, nil
 	object.questID, object.stepIndex, object.index, object.point, object.route = nil, nil, nil, nil, nil
 	if pool then
 		pool.active[object] = nil
@@ -141,6 +144,57 @@ function RQE:QueueSeparateFocusRefresh()
 	self._focusRefreshTimer = C_Timer.NewTimer(0.05, function()
 		self._focusRefreshTimer = nil
 		if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
+	end)
+end
+
+-- Remember the authored step and its displayed value for the lifetime of this text region.
+function RQE.API.WatchInventoryCountText(region, questID, step, displayedText, isFocus)
+	local source = step and step.description
+	if type(source) == "string" and source:find("{inventoryCount:", 1, true)
+		and source:find(RQE.API.InventoryCountPattern) then
+		inventoryTextRegions[region] = { questID = questID, step = step, text = displayedText, isFocus = isFocus }
+	end
+end
+
+-- Reserve the wrapped height of a coordinate block so the following step clears every line.
+function RQE.API.SizeCoordblockStep(region, fontSize)
+	local lineBreaks = select(2, (region:GetText() or ""):gsub("\n", ""))
+	local measuredHeight = region:GetStringHeight() or 0
+	region:SetHeight(math.max(20, measuredHeight + 4, (lineBreaks + 1) * (fontSize + 2)))
+	region:SetJustifyV("TOP")
+end
+
+-- Coalesce inventory events and repaint changed descriptions without moving the selected step or waypoint.
+function RQE:QueueInventoryCountDisplayRefresh()
+	self._inventoryRefreshAfterCombat = nil
+	if not next(inventoryTextRegions) or self._inventoryRefreshTimer then return end
+	-- Compare against the text actually rendered, even if the quest or current step changed during the delay.
+	self._inventoryRefreshTimer = C_Timer.NewTimer(0.05, function()
+		self._inventoryRefreshTimer = nil
+		if InCombatLockdown() then
+			self._inventoryRefreshAfterCombat = true
+			return
+		end
+		local snapshot = {}
+		local resizeSteps, refreshFocus
+		for region, entry in pairs(inventoryTextRegions) do
+			local text = RQE.FormatStepDescription(entry.questID, entry.step, snapshot)
+			if text ~= entry.text then
+				if entry.isFocus then
+					refreshFocus = true
+				else
+					self.RenderTextWithItemsSteps(region, text, region._rqeRichFont, region._rqeRichFontSize,
+						region._rqeRichColor, region._rqeRichParent)
+					if text:find("{coordblock:", 1, true) then
+						self.API.SizeCoordblockStep(region, region._rqeRichFontSize)
+					end
+					entry.text = text
+					resizeSteps = true
+				end
+			end
+		end
+		if resizeSteps then self:UpdateContentSize() end
+		if refreshFocus then self:UpdateSeparateFocusFrame(snapshot) end
 	end)
 end
 
@@ -241,16 +295,52 @@ function RQE:QueueSeparateFocusRecovery()
 	end)
 end
 
--- Combined links retain their item label but use a distinct color on every theme.
+-- Combined item links use warm orange. Standalone model links use Periwinkle.
 RQE.API.ObjectItemLinkColor = "ffff9955"
+RQE.API.Object3DLinkColor = "ffb5bcff"
 -- Colons separate the object name from the final item name; braces delimit the complete tag.
 RQE.API.ObjectItemTagPattern = "{objectitem:([%a%d]+):(%d+):([^:{}]+):([^{}]+)}"
+RQE.API.Object3DItemTagPattern = "{object3ditem:(%d+):(%d+):([^:{}]+):([^{}]+)}"
+RQE.API.Object3DTagPattern = "{object3d:(%d+):([^{}]+)}"
+
+-- Returns the visible link text and viewer title for a named object, a compact 3D tag, or a named 3D shortcut.
+function RQE.API.GetObject3DLinkLabel(objectKey, body)
+	if body == "3D" or body == "[3D]" then
+		return body, RQE.ObjectModelNames and RQE.ObjectModelNames[tonumber(objectKey)]
+	end
+	local title, shortcut = body:match("^(.+):([^:]+)$")
+	if shortcut == "3D" or shortcut == "[3D]" then return shortcut, title end
+	return "[" .. body .. "]", body
+end
+
+-- Retains the model's identity and title independently of the text displayed under the pointer.
+function RQE.API.GetObject3DLinkInfo(objectKey, body)
+	local label, title = RQE.API.GetObject3DLinkLabel(objectKey, body)
+	return { objectKey = objectKey, objectName = title, label = label, is3D = true }
+end
+
+-- Expands standalone model links with the same text for visible quest steps and hotspot measurements.
+function RQE.API.ReplaceObject3DTags(text, colorHex)
+	if type(text) ~= "string" then return text end
+	-- Keep literal names and compact labels intact when adding the requested font color.
+	return (text:gsub(RQE.API.Object3DTagPattern, function(key, body)
+		local label = RQE.API.GetObject3DLinkLabel(key, body)
+		return colorHex and ("|c" .. colorHex .. label .. "|r") or label
+	end))
+end
 
 -- Finds the next combined tag and keeps its object identity separate from its visible item label.
 function RQE.API.FindObjectItemTag(text, startIndex)
 	if type(text) ~= "string" then return nil end
 	local first, last, objectKey, itemID, objectName, itemName =
 		text:find(RQE.API.ObjectItemTagPattern, startIndex or 1)
+	local modelFirst, modelLast, modelKey, modelItemID, modelName, modelItemName =
+		text:find(RQE.API.Object3DItemTagPattern, startIndex or 1)
+	if modelFirst and (not first or modelFirst < first) then
+		return modelFirst, modelLast, {
+			objectKey = modelKey, itemID = tonumber(modelItemID), objectName = modelName, itemName = modelItemName, is3D = true,
+		}
+	end
 	if not first then return nil end
 	return first, last, {
 		objectKey = objectKey, itemID = tonumber(itemID), objectName = objectName, itemName = itemName,
@@ -266,11 +356,10 @@ end
 -- Replaces combined tags with their visible item labels for rendering and layout measurement.
 function RQE.API.ReplaceObjectItemTags(text, colorHex)
 	if type(text) ~= "string" then return text end
-	-- Keep replacement labels literal, including percent signs and punctuation in item names.
-	return (text:gsub(RQE.API.ObjectItemTagPattern, function(_, _, _, itemName)
-		local label = "[" .. itemName .. "]"
-		return colorHex and ("|c" .. colorHex .. label .. "|r") or label
-	end))
+	-- Both patterns capture the visible item name in their fourth field.
+	local itemLabel = colorHex and ("|c" .. colorHex .. "[%4]|r") or "[%4]"
+	text = text:gsub(RQE.API.ObjectItemTagPattern, itemLabel)
+	return (text:gsub(RQE.API.Object3DItemTagPattern, itemLabel))
 end
 
 -- Escapes entity labels as HTML text without changing their visible punctuation or color codes.
@@ -283,25 +372,53 @@ function RQE.API.UnescapeRichTextHTML(text)
 	return (tostring(text or ""):gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&amp;", "&"))
 end
 
--- Builds unique combined hyperlinks and a fresh per-frame map of their hidden object metadata.
-function RQE.API.BuildObjectItemHTML(text)
+-- Builds object hyperlinks and their hover data, including pictures for renderers without separate picture handling.
+function RQE.API.BuildObjectItemHTML(text, includePictures)
 	local links, nextIndex = {}, 0
 	if type(text) ~= "string" then return text, links end
-	-- Each occurrence gets its own key, even when several objects grant the same item.
-	local html = text:gsub(RQE.API.ObjectItemTagPattern, function(objectKey, itemID, objectName, itemName)
+	-- Gives each occurrence its own key even when several source objects grant the same item.
+	local function link(entry)
 		nextIndex = nextIndex + 1
-		local href = "rqeobjectitem:" .. nextIndex
-		links[href] = {
-			objectKey = objectKey, itemID = tonumber(itemID), objectName = objectName, itemName = itemName,
-		}
-		return string.format('<a href="%s">|c%s[%s]|r</a>', href,
-			RQE.API.ObjectItemLinkColor, RQE.API.EscapeRichTextHTML(itemName))
+		local href = (entry.is3D and "rqeobject3d:" or "rqeobjectitem:") .. nextIndex
+		links[href] = entry
+		local color = entry.itemID and RQE.API.ObjectItemLinkColor or RQE.API.Object3DLinkColor
+		local label = entry.label or ("[" .. entry.itemName .. "]")
+		return string.format('<a href="%s">|c%s%s|r</a>', href, color, RQE.API.EscapeRichTextHTML(label))
+	end
+	-- Preserves the existing picture link for each legacy object/item pair.
+	local html = text:gsub(RQE.API.ObjectItemTagPattern, function(key, itemID, name, itemName)
+		return link({objectKey = key, objectName = name, itemID = tonumber(itemID), itemName = itemName})
 	end)
+	-- Associates the visible item with the source object's model.
+	html = html:gsub(RQE.API.Object3DItemTagPattern, function(key, itemID, name, itemName)
+		return link({objectKey = key, objectName = name, itemID = tonumber(itemID), itemName = itemName, is3D = true})
+	end)
+	-- Associates the visible object name with its own model.
+	html = html:gsub(RQE.API.Object3DTagPattern, function(key, name)
+		return link(RQE.API.GetObject3DLinkInfo(key, name))
+	end)
+	if includePictures then
+		-- Give each picture its own title and hover target when it sits beside a compact model shortcut.
+		html = html:gsub("(){object:([%a%d]+):([^{}]+)}", function(position, key, name)
+			local href = "rqeobject:" .. position
+			links[href] = { objectKey = key, objectName = name }
+			return string.format('<a href="%s">|cffffd700[%s]|r</a>', href, RQE.API.EscapeRichTextHTML(name))
+		end)
+	end
 	return html, links
 end
 
--- Shows the item's tooltip and independently opens its quest-bound source-object preview.
-function RQE.API.ShowObjectItemTooltip(owner, data)
+-- Schedules the picture or model associated with a quest link after the pointer settles on it.
+local function QueueObjectLinkPreview(owner, data, group, occurrence)
+	if data.is3D then
+		RQE.API.QueuePreviewHover(owner, "object3d", tonumber(data.objectKey), data.objectName, group, occurrence)
+	else
+		RQE.API.QueuePreviewHover(owner, "object", data.objectKey, data.objectName, group, occurrence)
+	end
+end
+
+-- Shows the item tooltip immediately and schedules its source object's preview independently.
+function RQE.API.ShowObjectItemTooltip(owner, data, group, occurrence)
 	if type(data) ~= "table" or not tonumber(data.itemID) then return end
 	GameTooltip:Hide()
 	GameTooltip:SetOwner(owner or UIParent, "ANCHOR_CURSOR_RIGHT")
@@ -309,9 +426,21 @@ function RQE.API.ShowObjectItemTooltip(owner, data)
 	local count = RQE.API.Client.C_Item.GetItemCount(data.itemID) or 0
 	GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
 	GameTooltip:Show()
-	if RQE.ShowObjectImagePreview then
-		RQE.ShowObjectImagePreview(data.objectKey, data.objectName, nil, true)
+	QueueObjectLinkPreview(owner, data, group, occurrence)
+end
+
+-- Opens a clicked model immediately or starts the hover delay for the link's picture or model.
+function RQE.API.HandleObjectPreviewLink(owner, entry, clickOnly, group, occurrence)
+	if not entry then return false end
+	if clickOnly then
+		if not entry.is3D then return false end
+		RQE.ShowObject3DPreview(tonumber(entry.objectKey), entry.objectName, true)
+	elseif entry.itemID then
+		RQE.API.ShowObjectItemTooltip(owner, entry, group, occurrence)
+	else
+		QueueObjectLinkPreview(owner, entry, group, occurrence)
 	end
+	return true
 end
 
 -- Recognizes existing item references and the item portion of a combined object/item tag.
@@ -323,13 +452,46 @@ function RQE.API.RichTextContainsItem(text, itemID)
 	for _, taggedID in text:gmatch(RQE.API.ObjectItemTagPattern) do
 		if tonumber(taggedID) == requestedID then return true end
 	end
+	for _, taggedID in text:gmatch(RQE.API.Object3DItemTagPattern) do
+		if tonumber(taggedID) == requestedID then return true end
+	end
 	return false
+end
+
+-- Reads a positive item ID and an optional explicit name for items unavailable on the current client.
+function RQE.API.ReadAuthoringItemID(text)
+	text = (text or ""):match("^%s*(.-)%s*$")
+	local digits, name = text:match("^(%d+)%s*:%s*(.+)$")
+	local id = tonumber(digits or text:match("^%d+$"))
+	if not id or id < 1 or id > 2147483647 or (name and name:find("[{}\r\n]")) then return nil, nil, text end
+	return id, name, text
+end
+
+-- Returns the catalog or item title, preserving colons when the caller stores a standalone pickup name.
+function RQE.API.GetDefaultObjectTitle(itemName, objectKey, keepColons)
+	local digits = objectKey and tostring(objectKey):match("^%s*(%d+)%s*$")
+	local name = digits and RQE.ObjectModelNames and RQE.ObjectModelNames[tonumber(digits)]
+	if name then
+		-- Some in-game labels include a color or atlas escape, or braces reserved by the quest tag.
+		name = name:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|A.-|a", "")
+		name = name:gsub("{", "("):gsub("}", ")"):match("^%s*(.-)%s*$")
+	end
+	if not name or name == "" then name = itemName or "" end
+	if keepColons then return name end
+	return (name:gsub(":%s*", " - "))
 end
 
 -- Finds the editable item reference without confusing a source-object key with the item's ID.
 function RQE.API.GetGroundCollectionReference(text)
 	if type(text) ~= "string" then return nil end
 	local combinedFirst, combinedLast, combined = RQE.API.FindObjectItemTag(text)
+	local modelFirst, modelLast, draftItem, draftObjectName, draftItemName =
+		text:find("{object3ditem:OBJECTID:(%d+):([^:{}]+):([^{}]+)}")
+	if modelFirst and (not combinedFirst or modelFirst < combinedFirst) then
+		combinedFirst, combinedLast = modelFirst, modelLast
+		combined = { is3D = true, objectKey = "", objectName = draftObjectName,
+			itemID = tonumber(draftItem), itemName = draftItemName }
+	end
 	local first, last, itemID, itemName = text:find("{item:(%d+):([^{}]+)}")
 	if combinedFirst and (not first or combinedFirst < first) then
 		combined.first, combined.last, combined.useObjectItem = combinedFirst, combinedLast, true
@@ -358,11 +520,20 @@ function RQE.API.RewriteGroundCollectionReference(text, options)
 	if useObjectItem == nil then useObjectItem = reference.useObjectItem end
 	local replacement
 	if useObjectItem then
+		local is3D = options.is3D
+		if is3D == nil then is3D = reference.is3D end
 		local objectKey = options.objectKey ~= nil and options.objectKey or reference.objectKey or ""
 		objectKey = tostring(objectKey):match("^%s*(.-)%s*$")
-		if objectKey == "" then objectKey = "x99" end
-		if not objectKey:match("^[%a%d]+$") then
-			return nil, "Object ID must contain only letters and numbers; leave it blank to use x99."
+		if is3D then
+			if objectKey == "" and options.allowPlaceholder then
+				objectKey = "OBJECTID"
+			elseif not objectKey:match("^%d+$") or tonumber(objectKey) < 1 then
+				return nil, "Enter a positive whole-number object ID for a 3D preview."
+			end
+		elseif objectKey == "" then
+			objectKey = "x99"
+		elseif not objectKey:match("^[%a%d]+$") then
+			return nil, "Object ID must contain only letters and numbers. Leave it blank to use x99."
 		end
 		local objectName = options.objectName ~= nil and options.objectName or reference.objectName or ""
 		objectName = tostring(objectName):match("^%s*(.-)%s*$")
@@ -370,7 +541,8 @@ function RQE.API.RewriteGroundCollectionReference(text, options)
 		if objectName:find("[:{}\r\n]") then
 			return nil, "Object name cannot contain colons, braces, or line breaks."
 		end
-		replacement = string.format("{objectitem:%s:%d:%s:%s}", objectKey, itemID, objectName, itemName)
+		local tag = is3D and "object3ditem" or "objectitem"
+		replacement = string.format("{%s:%s:%d:%s:%s}", tag, objectKey, itemID, objectName, itemName)
 	else
 		replacement = string.format("{item:%d:%s}", itemID, itemName)
 	end
@@ -545,6 +717,35 @@ local function Has(api, method)
 end
 
 if isLegacyClient then
+	-- Opens the legacy quest log at the requested quest, or closes it if it is already open.
+	function RQE.API.ToggleLegacyQuestLog(questID)
+		-- Open through Blizzard's panel manager on TBC and pre-1.50 Classic so Escape can close the log.
+		local usePanelManager = major == 2 or (major == 1 and minor < 50)
+		if QuestLogFrame and QuestLogFrame:IsShown() then
+			if usePanelManager then
+				HideUIPanel(QuestLogFrame)
+			else
+				QuestLogFrame:Hide()
+			end
+			return
+		end
+
+		local questLogIndex = RQE.API.GetLogIndexForQuestID(questID)
+		if questLogIndex and SelectQuestLogEntry then
+			SelectQuestLogEntry(questLogIndex)
+		elseif questLogIndex and QuestLog_SetSelection then
+			QuestLog_SetSelection(questLogIndex)
+		end
+
+		if QuestLogFrame and usePanelManager then
+			ShowUIPanel(QuestLogFrame)
+		elseif QuestLogFrame then
+			QuestLogFrame:Show()
+		elseif ToggleQuestLog then
+			ToggleQuestLog()
+		end
+	end
+
 	-- Classic Era reverses the description/objectives return values. TBC does
 	-- not, so normalize both clients here for all callers.
 	function RQE.API.GetQuestLogText(questLogIndex)
@@ -1655,10 +1856,73 @@ function RQE.API.GetQuestObjectiveCounts(questID, objectiveIndex)
 	return nil, nil
 end
 
--- Replace only the opt-in count token at display time; keep DB text intact.
-function RQE.FormatStepDescription(questID, stepData)
+RQE.API.InventoryCountPattern = "{inventoryCount:0*([1-9]%d*)}"
+
+-- Skips a restricted inventory value before it can be compared or used in a count.
+local function readableInventoryValue(value)
+	if issecretvalue and issecretvalue(value) then return nil end
+	return value
+end
+
+-- Totals stack sizes in the backpack and carried bags, including any equipped reagent bag.
+local function getDescriptionBagCounts()
+	local counts = {}
+	local getSlots = RQE.API.ResolveClientAPI("C_Container.GetContainerNumSlots")
+	local getInfo = RQE.API.ResolveClientAPI("C_Container.GetContainerItemInfo")
+	if not getSlots or not getInfo then return counts end
+
+	local lastBag = NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4
+	for bag = 0, lastBag do
+		for slot = 1, readableInventoryValue(getSlots(bag)) or 0 do
+			local info = readableInventoryValue(getInfo(bag, slot))
+			if info then
+				local itemID = readableInventoryValue(info.itemID)
+				local stack = readableInventoryValue(info.stackCount)
+				if itemID and stack then counts[itemID] = (counts[itemID] or 0) + stack end
+			end
+		end
+	end
+	return counts
+end
+
+-- Adds only the Retail character bank's contribution to the carried stack count.
+local function getDescriptionItemCount(itemID, bagCounts)
+	local carried = bagCounts[itemID] or 0
+	if RQE.API.GameVersion.apiProfile ~= "retail" then return carried end
+	local getCount = RQE.API.ResolveClientAPI("C_Item.GetItemCount")
+	if not getCount then return carried end
+
+	-- Subtracting the unbanked total also removes any worn items included by GetItemCount.
+	local withBank = readableInventoryValue(getCount(itemID, true, false, false, false))
+	local withoutBank = readableInventoryValue(getCount(itemID, false, false, false, false))
+	if not withBank or not withoutBank then return carried end
+	return carried + math.max(0, withBank - withoutBank)
+end
+
+-- Replaces explicit item-count tokens while preserving the surrounding links, colors, and text.
+function RQE.API.FormatInventoryCounts(text, inventorySnapshot)
+	local counts = inventorySnapshot or {}
+	-- Scan the bags once per formatting pass and reuse the total for each repeated item ID.
+	local formatted = text:gsub(RQE.API.InventoryCountPattern, function(id)
+		local itemID = tonumber(id)
+		if not itemID or itemID > 2147483647 then return nil end
+		if counts[itemID] == nil then
+			counts.bags = counts.bags or getDescriptionBagCounts()
+			counts[itemID] = getDescriptionItemCount(itemID, counts.bags)
+		end
+		return tostring(counts[itemID])
+	end)
+	return formatted
+end
+
+-- Formats opted-in inventory and objective counts for display, preserving the authored step description.
+function RQE.FormatStepDescription(questID, stepData, inventorySnapshot)
 	local description = stepData and stepData.description
-	if type(description) ~= "string" or not description:find("{objectiveRemaining}", 1, true) then
+	if type(description) ~= "string" then return description end
+	if description:find("{inventoryCount:", 1, true) then
+		description = RQE.API.FormatInventoryCounts(description, inventorySnapshot)
+	end
+	if not description:find("{objectiveRemaining}", 1, true) then
 		return description
 	end
 
@@ -5312,6 +5576,31 @@ function RQE.API.SetCreaturePreviewFacing(model, facing)
 	return ok
 end
 
+-- Repositions the model around its widget's origin, keeping manual pan relative to that origin.
+function RQE.API.ApplyPreviewModelCenter(model, options, width, height)
+	local centerX, centerY = 0, 0
+	height = tonumber(height) or (type(model.GetHeight) == "function" and model:GetHeight()) or 0
+	height = math.max(0, height)
+	-- CinematicModel uses the lower-left origin. PlayerModel already centers its camera.
+	if model.RQEModelFrameType == "CinematicModel" then
+		width = tonumber(width) or (type(model.GetWidth) == "function" and model:GetWidth()) or 0
+		centerX, centerY = math.max(0, width) * 0.5, height * 0.5
+	end
+	centerY = centerY + height * (options.centerLiftRatio or 0)
+	local viewX, viewY = tonumber(options.viewX), tonumber(options.viewY)
+	if viewX == nil or options.centerViewX ~= nil then
+		options.viewX = centerX + (viewX or 0) - (tonumber(options.centerViewX) or 0)
+		options.centerViewX = centerX
+	end
+	if viewY == nil or options.centerViewY ~= nil then
+		options.viewY = centerY + (viewY or 0) - (tonumber(options.centerViewY) or 0)
+		options.centerViewY = centerY
+	end
+	if type(model.SetViewTranslation) == "function" then
+		pcall(model.SetViewTranslation, model, tonumber(options.viewX) or 0, options.viewY)
+	end
+end
+
 -- Applies the requested camera, position, and display options to a preview model.
 function RQE.API.ConfigureCreaturePreviewModel(model, options)
 	if not model then return end
@@ -5341,30 +5630,8 @@ function RQE.API.ConfigureCreaturePreviewModel(model, options)
 	if type(model.SetCamDistanceScale) == "function" then
 		pcall(model.SetCamDistanceScale, model, tonumber(options.scale) or 1)
 	end
-	-- CinematicModel's creature view starts at the lower-left of the viewport;
-	-- PlayerModel already supplies a centered full-body camera. Translate the
-	-- cinematic view to the actual viewport midpoint on both axes. Keep any
-	-- manual pan relative to that center if layout settles after model loading.
-	local centerX, centerY = 0, 0
-	if model.RQEModelFrameType == "CinematicModel" then
-		local width = type(model.GetWidth) == "function" and tonumber(model:GetWidth()) or 0
-		local height = type(model.GetHeight) == "function" and tonumber(model:GetHeight()) or 0
-		centerX, centerY = math.max(0, width or 0) * 0.5, math.max(0, height or 0) * 0.5
-	end
-	local viewX, viewY = tonumber(options.viewX), tonumber(options.viewY)
-	if viewX == nil or options.centerViewX ~= nil then
-		options.viewX = centerX + (viewX or 0) - (tonumber(options.centerViewX) or 0)
-		options.centerViewX = centerX
-	end
-	if viewY == nil or options.centerViewY ~= nil then
-		options.viewY = centerY + (viewY or 0) - (tonumber(options.centerViewY) or 0)
-		options.centerViewY = centerY
-	end
-	-- Apply translation last, after every setter that can rebuild the camera.
-	-- The existing NPC drag handler reads this resolved view as its starting point.
-	if type(model.SetViewTranslation) == "function" then
-		pcall(model.SetViewTranslation, model, tonumber(options.viewX) or 0, options.viewY)
-	end
+	-- Apply translation after the setters that can rebuild the camera.
+	RQE.API.ApplyPreviewModelCenter(model, options)
 end
 
 -- creatureID is a Creature/NPC entry ID, not a display ID. Blizzard resolves
