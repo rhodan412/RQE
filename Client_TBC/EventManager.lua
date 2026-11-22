@@ -803,8 +803,9 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	end
 
 
-	-- Re-evaluate inventory-based steps after the bag change has settled.
+	-- Refresh displayed item counts and recheck inventory-based steps after bag changes settle.
 	function RQE.handleBagUpdateDelayed()
+		RQE:QueueInventoryCountDisplayRefresh()
 		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not CurrentStepUsesInventoryCheck(questID) then return end
 		RQE:QueuePeriodicChecks("BAG_UPDATE_DELAYED", 0.2, questID)
@@ -1064,6 +1065,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	-- Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. 
 	-- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 	function RQE.handlePlayerRegenEnabled()
+		if RQE._inventoryRefreshAfterCombat then RQE:QueueInventoryCountDisplayRefresh() end
 		local mythicMode = RQE.db.profile.mythicScenarioMode
 		if RQE.EnforceObjectiveTrackerVisibility then RQE:EnforceObjectiveTrackerVisibility() end
 
