@@ -25,6 +25,7 @@ RQE.ObjectPreviewCatalog = {
 	["185213"] = { file = "185213 - Ripe Moonshine Keg.blp", name = "Ripe Moonshine Keg" },
 	["185214"] = { file = "185214 - Fermented Seed Beer Keg.blp", name = "Fermented Seed Beer Keg" },
 	["185234"] = { file = "185234 - Gorgrom's Altar.blp", name = "Gorgrom's Altar" },
+	["185302"] = { file = "185302 - Fei Fei's Cache.blp", name = "Fei Fei's Cache" },
 	["187677"] = { file = "187677 - Scourged Earth.blp", name = "Scourged Earth" },
 	["187900"] = { file = "187900 - Fizzcrank Spare Parts.blp", name = "Fizzcrank Spare Parts" },
 	["187984"] = { file = "187984 - West Point Station Valve.blp", name = "West Point Station Valve" },
