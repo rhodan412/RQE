@@ -6147,6 +6147,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.RenderTextWithItemTags(text)
 		if not text then return text end
 		text = RQE.API.ReplaceObjectItemTags(text, RQE.API.ObjectItemLinkColor)
+		text = RQE.API.ReplaceObject3DTags(text, RQE.API.Object3DLinkColor)
 		text = text:gsub("{item:(%d+):([^}]+)}", "|cffffffff[%2]|r")
 		text = text:gsub("%[item:(%d+):([^%]]+)%]", "|cffffffff[%2]|r")
 		return text
@@ -6158,7 +6159,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return '<html><body><p>No description available.</p></body></html>', {}
 		end
 
-		local html, objectItemLinks = RQE.API.BuildObjectItemHTML(raw)
+		local html, objectItemLinks = RQE.API.BuildObjectItemHTML(raw, true)
+		-- Give each NPC mention its own hover target even when its ID appears twice.
+		html = html:gsub("(){npc:(%d+):([^{}]+)}", function(position, id, name)
+			return string.format('<a href="rqenpc:%s:%d">|cff66ff66[%s]|r</a>', id, position, RQE.API.EscapeRichTextHTML(name))
+		end)
 
 		-- Items
 		html = html:gsub("{item:(%d+):([^}]+)}", function(itemID, name)
@@ -6219,6 +6224,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- ✅ Renders the HTML with proper spacing and working coords/items/spells used in the Separate Focus Frame and dealing with coords using SimpleHTML
 	function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor, customParent)
 		if not parentFrame then return end
+		RQE.API.CancelPreviewHover(parentFrame)
+		parentFrame._rqeHoveredLink = nil
 		if GameTooltip and GameTooltip.GetOwner and GameTooltip:GetOwner() == parentFrame then
 			GameTooltip:Hide()
 		end
@@ -6230,7 +6237,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Determine if HTML is needed
-		if rawText:match("{objectitem:") or rawText:match("{item:") or rawText:match("{spell:")
+		if rawText:match("{object:") or rawText:match("{objectitem:") or rawText:match("{object3d:")
+			or rawText:match("{object3ditem:") or rawText:match("{npc:") or rawText:match("{item:") or rawText:match("{spell:")
 			or rawText:match("{coords:") or rawText:match("{coordblock:") then
 		-- if rawText:match("{item:") or rawText:match("{spell:") or rawText:match("{coords:") then
 			local baseParent = customParent or parentFrame:GetParent() or UIParent
@@ -6254,13 +6262,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			-- Tooltip & click handling
 			-- Shows the tooltip and optional object preview associated with the current hyperlink.
-			Simple:SetScript("OnHyperlinkEnter", function(self, link)
+			Simple:SetScript("OnHyperlinkEnter", function(self, link, text)
 				if type(link) ~= "string" then return end
-				local linkType, id = link:match("^(%a+):(.+)$")
-				if linkType == "rqeobjectitem" then
-					local combined = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
-					if combined then RQE.API.ShowObjectItemTooltip(self, combined) end
-				elseif linkType == "item" then
+				self._rqeHoveredLink = link
+				local entry = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
+				if RQE.API.HandleObjectPreviewLink(self, entry, false, self, link) then return end
+				local linkType, id = link:match("^(%a+):([^:]+)")
+				if linkType == "rqenpc" then
+					local name = tostring(text or ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):match("^%[(.*)%]$")
+					RQE.API.QueuePreviewHover(self, "npc", tonumber(id), name, self, link)
+					return
+				end
+				RQE.API.CancelPreviewHover(self)
+				if linkType == "item" then
 					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
 					GameTooltip:SetItemByID(tonumber(id))
 					-- Previous Blizzard call changed 2026.09.25: local count = C_Item.GetItemCount(id) or 0
@@ -6279,10 +6293,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end)
 
 			-- Hides the tooltip when the pointer leaves this control.
-			Simple:SetScript("OnHyperlinkLeave", function() GameTooltip:Hide() end)
+			Simple:SetScript("OnHyperlinkLeave", function(self, link)
+				if link and self._rqeHoveredLink ~= link then return end
+				self._rqeHoveredLink = nil
+				RQE.API.CancelPreviewHover(self, false, link)
+				GameTooltip:Hide()
+			end)
 
-			-- Creates the waypoint.
-			Simple:SetScript("OnHyperlinkClick", function(_, link)
+			-- Opens a clicked 3D object or creates the selected coordinate waypoint.
+			Simple:SetScript("OnHyperlinkClick", function(self, link, _, button)
+				local entry = self._rqeObjectItemLinks and self._rqeObjectItemLinks[link]
+				if button == "LeftButton" and RQE.API.HandleObjectPreviewLink(self, entry, true, self, link) then return end
 				if not link:match("^coords:") then return end
 				local x, y, mapID, title =
 					link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+);title:(.+)")
@@ -6596,6 +6617,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		displayText = displayText:gsub("{spell:(%d+):([^}]+)}", "|cff66ccff[%2]|r")	-- ✨ NEW (color for spells)
 		displayText = displayText:gsub("{npc:(%d+):([^}]+)}", "|cff66ff66[%2]|r")
 		displayText = displayText:gsub("{object:([%a%d]+):([^}]+)}", "|cffffd700[%2]|r")
+		displayText = RQE.API.ReplaceObject3DTags(displayText, RQE.API.Object3DLinkColor)
 
 		-- Formats coordinate notation as a colored, readable map-position label.
 		displayText = displayText:gsub("{coords:([^}]+)}", function(data)
@@ -6683,7 +6705,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Create an interactive hover region for a rendered item, spell, or coordinate tag.
-		local function CreateTagHover(tagType, tagID, tagName, x, y, width)
+		local function CreateTagHover(tagType, tagID, tagName, x, y, width, occurrence)
 			if width <= 0 then return end
 
 			local hover = RQE.API.AcquireRenderObject(baseParent, "hover", "Frame")
@@ -6695,11 +6717,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			hover:SetSize(width, lineHeight)
 			hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", x, -y)
 
-			if tagType == "objectitem" then
-				-- Shows the item's tooltip and the associated quest-bound object preview together.
+			if tagType == "objectpreview" then
+				-- Schedules the object preview and shows any associated item tooltip immediately.
 				hover:SetScript("OnEnter", function(self)
-					RQE.API.ShowObjectItemTooltip(self, hoveredID)
+					RQE.API.HandleObjectPreviewLink(self, hoveredID, false, parentFrame, occurrence)
 				end)
+				if hoveredID.is3D then
+					-- Reopens the 3D preview when the player clicks the object or item label.
+					hover:SetScript("OnMouseDown", function(self, button)
+						if button == "LeftButton" then RQE.API.HandleObjectPreviewLink(self, hoveredID, true, parentFrame, occurrence) end
+					end)
+				end
 			elseif tagType == "item" then
 				-- Shows this control's tooltip while the pointer is over it.
 				hover:SetScript("OnEnter", function(self)
@@ -6719,22 +6747,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					GameTooltip:SetSpellByID(hoveredID)
 					GameTooltip:Show()
 				end)
-			elseif tagType == "npc" then
-				-- Shows the NPC preview.
-				hover:SetScript("OnEnter", function()
-					if RQE.ShowNPCPreview then RQE.ShowNPCPreview(hoveredID, tagName, true) end
-				end)
-			elseif tagType == "object" then
-				-- Shows the object image preview.
-				hover:SetScript("OnEnter", function()
-					if RQE.ShowObjectImagePreview then RQE.ShowObjectImagePreview(hoveredID, tagName, nil, true) end
+			elseif tagType == "npc" or tagType == "object" then
+				-- Wait for the pointer to settle before opening this NPC or picture.
+				hover:SetScript("OnEnter", function(self)
+					RQE.API.QueuePreviewHover(self, tagType, hoveredID, tagName, parentFrame, occurrence)
 				end)
 			end
 
-			if tagType == "objectitem" or tagType == "item" or tagType == "spell" then
-				-- Hides the tooltip when the pointer leaves this control.
-				hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
-			end
+			-- Carry the dwell across fragments of one link and dismiss only this fragment's item or spell tooltip.
+			hover:SetScript("OnLeave", function(self)
+				RQE.API.CancelPreviewHover(self, true)
+				if GameTooltip:IsOwned(self) then GameTooltip:Hide() end
+			end)
 			table.insert(parentFrame._rqeSegments, hover)
 		end
 
@@ -6747,6 +6771,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			local cursorX, cursorY = 0, 0
 			local focusLineText = ""
+			local occurrence
 
 			-- Advance the rich-text layout cursor to a new visual line.
 			local function NewVisualLine()
@@ -6774,7 +6799,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					measureFS:SetText(focusLineText)
 					cursorX = measureFS:GetStringWidth()
 					if tagType then
-						CreateTagHover(tagType, tagID, tagName, cursorX, cursorY, width)
+						CreateTagHover(tagType, tagID, tagName, cursorX, cursorY, width, occurrence)
 					end
 					focusLineText = focusLineText .. fragment
 					measureFS:SetText(focusLineText)
@@ -6787,7 +6812,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					NewVisualLine()
 				end
 				if tagType then
-					CreateTagHover(tagType, tagID, tagName, cursorX, cursorY, width)
+					CreateTagHover(tagType, tagID, tagName, cursorX, cursorY, width, occurrence)
 				end
 				cursorX = cursorX + width
 			end
@@ -6833,16 +6858,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				while start <= #visibleText do
 					local newline = visibleText:find("\n", start, true)
 					local visualLine = visibleText:sub(start, newline and newline - 1 or #visibleText)
-					if useSeparateFocusWrapping then
-						local leadingWhitespace = visualLine:match("^(%s+)")
-						if leadingWhitespace then
-							-- This is usually the separator following a parsed rich tag.
-							-- Advance it without wrapping on the separator itself; WoW
-							-- discards it if the following word moves to the next line.
-							measureFS:SetText(leadingWhitespace)
+					-- Count the space between neighboring links before placing the next hover region.
+					local leadingWhitespace = visualLine:match("^(%s+)")
+					if leadingWhitespace then
+						if useSeparateFocusWrapping then
 							focusLineText = focusLineText .. leadingWhitespace
 							measureFS:SetText(focusLineText)
 							cursorX = measureFS:GetStringWidth()
+						else
+							measureFS:SetText(leadingWhitespace)
+							cursorX = cursorX + measureFS:GetStringWidth()
 						end
 					end
 					for chunk in visualLine:gmatch("%S+%s*") do
@@ -6871,10 +6896,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			while rawPosition <= #text do
 				local combinedStart, combinedEnd, combined = RQE.API.FindObjectItemTag(text, rawPosition)
 				local tagStart, tagEnd, tagType, tagID, tagName =
-					text:find("{([%a]+):([%a%d]+):([^}]+)}", rawPosition)
+					text:find("{([%a%d]+):([%a%d]+):([^{}]+)}", rawPosition)
 				if combinedStart and (not tagStart or combinedStart <= tagStart) then
 					tagStart, tagEnd = combinedStart, combinedEnd
-					tagType, tagID, tagName = "objectitem", combined, combined.itemName
+					tagType, tagID, tagName = "objectpreview", combined, combined.itemName
+				elseif tagType == "object3d" and tagID:match("^%d+$") then
+					tagType, tagID = "objectpreview", RQE.API.GetObject3DLinkInfo(tagID, tagName)
 				end
 				if not tagStart then
 					AddPlainText(text:sub(rawPosition))
@@ -6883,7 +6910,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				AddPlainText(text:sub(rawPosition, tagStart - 1))
 				local numericTag = tagType == "item" or tagType == "spell" or tagType == "npc"
-				local supportedTag = (tagType == "objectitem" and type(tagID) == "table")
+				local supportedTag = (tagType == "objectpreview" and type(tagID) == "table")
 					or (numericTag and tonumber(tagID)) or (tagType == "object" and tagID:match("^[%a%d]+$"))
 				if supportedTag then
 					-- FontString word wrapping keeps punctuation directly after a rich tag
@@ -6897,8 +6924,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						adjacentSuffix = text:sub(tagEnd + 1):match("^([^%s{]+)") or ""
 					end
 
-					AddVisibleText("[" .. tagName .. "]" .. adjacentSuffix, tagType,
-						(tagType == "objectitem" or tagType == "object") and tagID or tonumber(tagID), tagName)
+					occurrence = tagStart
+					local label = tagType == "objectpreview" and tagID.label or ("[" .. tagName .. "]")
+					AddVisibleText(label .. adjacentSuffix, tagType,
+						(tagType == "objectpreview" or tagType == "object") and tagID or tonumber(tagID), tagName)
 					rawPosition = tagEnd + 1 + #adjacentSuffix
 				else
 					AddPlainText(text:sub(tagStart, tagEnd))
@@ -6929,7 +6958,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 					if x and y and mapID then
 						local preText = rawLine:sub(1, startTag - 1)
-						preText = RQE.API.ReplaceObjectItemTags(preText)
+						preText = RQE.API.ReplaceObject3DTags(RQE.API.ReplaceObjectItemTags(preText))
+							:gsub("{object:[%a%d]+:([^}]+)}", "[%1]")
 							:gsub("{item:%d+:([^}]+)}", "[%1]")
 							:gsub("{spell:%d+:([^}]+)}", "[%1]")
 							-- Formats coordinate notation as a plain-text map-position label.
@@ -7021,7 +7051,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 					if x and y and mapID then
 						local preText = rawLine:sub(1, startTag - 1)
-						preText = RQE.API.ReplaceObjectItemTags(preText)
+						preText = RQE.API.ReplaceObject3DTags(RQE.API.ReplaceObjectItemTags(preText))
+							:gsub("{object:[%a%d]+:([^}]+)}", "[%1]")
 							:gsub("{item:%d+:([^}]+)}", "[%1]")
 							:gsub("{spell:%d+:([^}]+)}", "[%1]")
 							-- Returns the coordblock display label.
@@ -7878,9 +7909,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
 		local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
 		local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
+		local inventorySnapshot = {}
 
 		for i, step in ipairs(questInfo) do
-			local desc = RQE.FormatStepDescription(questID, step) or ""
+			local desc = RQE.FormatStepDescription(questID, step, inventorySnapshot) or ""
 			StepsText[i] = desc
 
 			-- choose display coords from hotspots (preferred) or legacy single
